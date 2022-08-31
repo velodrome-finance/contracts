@@ -19,7 +19,7 @@ task("deploy:op", "Deploys Optimism contracts").setAction(async function (
   const [
     Velo,
     GaugeFactory,
-    BribeFactory,
+    VotingRewardsFactory,
     PairFactory,
     Router,
     Library,
@@ -34,7 +34,7 @@ task("deploy:op", "Deploys Optimism contracts").setAction(async function (
   ] = await Promise.all([
     ethers.getContractFactory("Velo"),
     ethers.getContractFactory("GaugeFactory"),
-    ethers.getContractFactory("BribeFactory"),
+    ethers.getContractFactory("VotingRewardsFactory"),
     ethers.getContractFactory("PairFactory"),
     ethers.getContractFactory("Router"),
     ethers.getContractFactory("VelodromeLibrary"),
@@ -56,9 +56,9 @@ task("deploy:op", "Deploys Optimism contracts").setAction(async function (
   await gaugeFactory.deployed();
   console.log("GaugeFactory deployed to: ", gaugeFactory.address);
 
-  const bribeFactory = await BribeFactory.deploy();
-  await bribeFactory.deployed();
-  console.log("BribeFactory deployed to: ", bribeFactory.address);
+  const votingRewardsFactory = await VotingRewardsFactory.deploy();
+  await votingRewardsFactory.deployed();
+  console.log("VotingRewardsFactory deployed to: ", votingRewardsFactory.address);
 
   const pairFactory = await PairFactory.deploy();
   await pairFactory.deployed();
@@ -92,7 +92,7 @@ task("deploy:op", "Deploys Optimism contracts").setAction(async function (
     escrow.address,
     pairFactory.address,
     gaugeFactory.address,
-    bribeFactory.address
+    votingRewardsFactory.address
   );
   await voter.deployed();
   console.log("Voter deployed to: ", voter.address);
@@ -100,7 +100,7 @@ task("deploy:op", "Deploys Optimism contracts").setAction(async function (
     escrow.address,
     pairFactory.address,
     gaugeFactory.address,
-    bribeFactory.address,
+    votingRewardsFactory.address,
     "\n"
   );
 

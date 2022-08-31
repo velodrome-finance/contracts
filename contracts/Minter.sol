@@ -1,140 +1,123 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.13;
 
-import "contracts/libraries/Math.sol";
-import "contracts/interfaces/IMinter.sol";
-import "contracts/interfaces/IRewardsDistributor.sol";
-import "contracts/interfaces/IVelo.sol";
-import "contracts/interfaces/IVoter.sol";
-import "contracts/interfaces/IVotingEscrow.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
+import {IMinter} from "./interfaces/IMinter.sol";
+import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
+import {IVelo} from "./interfaces/IVelo.sol";
+import {IVoter} from "./interfaces/IVoter.sol";
+import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
+import {IEpochGovernor} from "./interfaces/IEpochGovernor.sol";
 
-// codifies the minting rules as per ve(3,3), abstracted from the token to support any token that allows minting
-
+/// @title Minter
+/// @notice Controls minting of emissions and rebases for Velodrome
 contract Minter is IMinter {
-    uint internal constant WEEK = 86400 * 7; // allows minting once per week (reset every Thursday 00:00 UTC)
-    uint internal constant EMISSION = 990;
-    uint internal constant TAIL_EMISSION = 2;
-    uint internal constant PRECISION = 1000;
-    IVelo public immutable _velo;
-    IVoter public immutable _voter;
-    IVotingEscrow public immutable _ve;
-    IRewardsDistributor public immutable _rewards_distributor;
-    uint public weekly = 15_000_000 * 1e18; // represents a starting weekly emission of 15M VELO (VELO has 18 decimals)
-    uint public active_period;
-    uint internal constant LOCK = 86400 * 7 * 52 * 4;
+    IVelo public immutable velo;
+    IVoter public immutable voter;
+    IVotingEscrow public immutable ve;
+    IRewardsDistributor public immutable rewardsDistributor;
 
-    address internal initializer;
-    address public team;
-    address public pendingTeam;
-    uint public teamRate;
-    uint public constant MAX_TEAM_RATE = 50; // 50 bps = 0.05%
-
-    event Mint(address indexed sender, uint weekly, uint circulating_supply, uint circulating_emission);
+    /// @notice Duration of epoch (resets every Thursday 00:00 UTC)
+    uint256 public constant WEEK = 1 weeks;
+    /// @notice Decay rate of emissions as percentage of `MAX_BPS`
+    uint256 public constant EMISSION = 9_900;
+    /// @notice Maximum tail emission rate in basis points.
+    uint256 public constant MAXIMUM_TAIL_RATE = 100;
+    /// @notice Minimum tail emission rate in basis points.
+    uint256 public constant MINIMUM_TAIL_RATE = 1;
+    /// @notice Denominator for emissions calculations (as basis points)
+    uint256 public constant MAX_BPS = 10_000;
+    /// @notice Rate change per proposal
+    uint256 public constant NUDGE = 1;
+    /// @notice When emissions fall below this amount, begin tail emissions
+    uint256 public constant TAIL_START = 5_000_000 * 1e18;
+    /// @notice Tail emissions rate in basis points
+    uint256 public tailEmissionRate = 30;
+    /// @notice Starting weekly emission of 15M VELO (VELO has 18 decimals)
+    uint256 public weekly = 15_000_000 * 1e18;
+    /// @notice Start time of currently active epoch
+    uint256 public active_period;
+    /// @dev active_period => proposal existing, used to enforce one proposal per epoch
+    mapping(uint256 => bool) public proposals;
+    /// @notice Indicates whether using tail emission schedule or not
+    bool public tail;
 
     constructor(
-        address __voter, // the voting & distribution system
-        address __ve, // the ve(3,3) system that will be locked into
-        address __rewards_distributor // the distribution system that ensures users aren't diluted
+        address _voter, // the voting & distribution system
+        address _ve, // the ve(3,3) system that will be locked into
+        address _rewardsDistributor // the distribution system that ensures users aren't diluted
     ) {
-        initializer = msg.sender;
-        team = msg.sender;
-        teamRate = 30; // 30 bps = 0.03%
-        _velo = IVelo(IVotingEscrow(__ve).token());
-        _voter = IVoter(__voter);
-        _ve = IVotingEscrow(__ve);
-        _rewards_distributor = IRewardsDistributor(__rewards_distributor);
-        active_period = ((block.timestamp + (2 * WEEK)) / WEEK) * WEEK;
+        velo = IVelo(IVotingEscrow(_ve).token());
+        voter = IVoter(_voter);
+        ve = IVotingEscrow(_ve);
+        rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
+        active_period = ((block.timestamp) / WEEK) * WEEK; // allow emissions this coming epoch
     }
 
-    function initialize(
-        address[] memory claimants,
-        uint[] memory amounts,
-        uint max // sum amounts / max = % ownership of top protocols, so if initial 20m is distributed, and target is 25% protocol ownership, then max - 4 x 20m = 80m
-    ) external {
-        require(initializer == msg.sender);
-        _velo.mint(address(this), max);
-        _velo.approve(address(_ve), type(uint).max);
-        for (uint i = 0; i < claimants.length; i++) {
-            _ve.create_lock_for(amounts[i], LOCK, claimants[i]);
+    /// @inheritdoc IMinter
+    function calculate_growth(uint256 _minted) public view returns (uint256 _growth) {
+        uint256 _veTotal = ve.totalSupply();
+        uint256 _veloTotal = velo.totalSupply();
+        return (((((_minted * _veTotal) / _veloTotal) * _veTotal) / _veloTotal) * _veTotal) / _veloTotal / 2;
+    }
+
+    /// @inheritdoc IMinter
+    function nudge() external {
+        address _epochGovernor = voter.epochGovernor();
+        require(msg.sender == _epochGovernor, "Minter: not epoch governor");
+        IEpochGovernor.ProposalState _state = IEpochGovernor(_epochGovernor).result();
+        require(tail, "Minter: not in tail emissions yet");
+        uint256 _period = active_period;
+        require(!proposals[_period], "Minter: tail rate already nudged this epoch");
+        uint256 _newRate = tailEmissionRate;
+        uint256 _oldRate = _newRate;
+        uint256 _nudge = NUDGE;
+        require(_oldRate + _nudge <= MAXIMUM_TAIL_RATE, "Minter: cannot nudge above maximum rate");
+        require(_oldRate - _nudge >= MINIMUM_TAIL_RATE, "Minter: cannot nudge below minimum rate");
+
+        if (_state != IEpochGovernor.ProposalState.Expired) {
+            _newRate = _state == IEpochGovernor.ProposalState.Succeeded ? _newRate + _nudge : _newRate - _nudge;
+            tailEmissionRate = _newRate;
         }
-        initializer = address(0);
-        active_period = ((block.timestamp) / WEEK) * WEEK; // allow minter.update_period() to mint new emissions THIS Thursday
+        proposals[_period] = true;
+        emit Nudge(_period, _oldRate, _newRate);
     }
 
-    function setTeam(address _team) external {
-        require(msg.sender == team, "not team");
-        pendingTeam = _team;
-    }
-
-    function acceptTeam() external {
-        require(msg.sender == pendingTeam, "not pending team");
-        team = pendingTeam;
-    }
-
-    function setTeamRate(uint _teamRate) external {
-        require(msg.sender == team, "not team");
-        require(_teamRate <= MAX_TEAM_RATE, "rate too high");
-        teamRate = _teamRate;
-    }
-
-    // calculate circulating supply as total token supply - locked supply
-    function circulating_supply() public view returns (uint) {
-        return _velo.totalSupply() - _ve.totalSupply();
-    }
-
-    // emission calculation is 1% of available supply to mint adjusted by circulating / total supply
-    function calculate_emission() public view returns (uint) {
-        return (weekly * EMISSION) / PRECISION;
-    }
-
-    // weekly emission takes the max of calculated (aka target) emission versus circulating tail end emission
-    function weekly_emission() public view returns (uint) {
-        return Math.max(calculate_emission(), circulating_emission());
-    }
-
-    // calculates tail end (infinity) emissions as 0.2% of total supply
-    function circulating_emission() public view returns (uint) {
-        return (circulating_supply() * TAIL_EMISSION) / PRECISION;
-    }
-
-    // calculate inflation and adjust ve balances accordingly
-    function calculate_growth(uint _minted) public view returns (uint) {
-        uint _veTotal = _ve.totalSupply();
-        uint _veloTotal = _velo.totalSupply();
-        return
-            (((((_minted * _veTotal) / _veloTotal) * _veTotal) / _veloTotal) *
-                _veTotal) /
-            _veloTotal /
-            2;
-    }
-
-    // update period can only be called once per cycle (1 week)
-    function update_period() external returns (uint) {
-        uint _period = active_period;
-        if (block.timestamp >= _period + WEEK && initializer == address(0)) { // only trigger if new week
+    /// @inheritdoc IMinter
+    function update_period() external returns (uint256 _period) {
+        _period = active_period;
+        if (block.timestamp >= _period + WEEK) {
             _period = (block.timestamp / WEEK) * WEEK;
             active_period = _period;
-            weekly = weekly_emission();
+            uint256 _weekly = weekly;
+            uint256 _emission;
+            uint256 _totalSupply = velo.totalSupply();
+            bool _tail = tail;
 
-            uint _growth = calculate_growth(weekly);
-            uint _teamEmissions = (teamRate * (_growth + weekly)) /
-                (PRECISION - teamRate);
-            uint _required = _growth + weekly + _teamEmissions;
-            uint _balanceOf = _velo.balanceOf(address(this));
-            if (_balanceOf < _required) {
-                _velo.mint(address(this), _required - _balanceOf);
+            if (_tail) {
+                _emission = (_totalSupply * tailEmissionRate) / MAX_BPS;
+            } else {
+                _emission = _weekly;
+                _weekly = (_weekly * EMISSION) / MAX_BPS;
+                weekly = _weekly;
+                if (_weekly < TAIL_START) tail = true;
             }
 
-            require(_velo.transfer(team, _teamEmissions));
-            require(_velo.transfer(address(_rewards_distributor), _growth));
-            _rewards_distributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
-            _rewards_distributor.checkpoint_total_supply(); // checkpoint supply
+            uint256 _growth = calculate_growth(_emission);
+            uint256 _required = _growth + _emission;
+            uint256 _balanceOf = velo.balanceOf(address(this));
+            if (_balanceOf < _required) {
+                velo.mint(address(this), _required - _balanceOf);
+            }
 
-            _velo.approve(address(_voter), weekly);
-            _voter.notifyRewardAmount(weekly);
+            require(velo.transfer(address(rewardsDistributor), _growth));
+            rewardsDistributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
+            rewardsDistributor.checkpoint_total_supply(); // checkpoint supply
 
-            emit Mint(msg.sender, weekly, circulating_supply(), circulating_emission());
+            velo.approve(address(voter), _emission);
+            voter.notifyRewardAmount(_emission);
+
+            emit Mint(msg.sender, _emission, _totalSupply, _tail);
         }
-        return _period;
     }
 }

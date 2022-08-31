@@ -41,6 +41,8 @@ jobs:
 
       - name: Run tests
         run: FOUNDRY_PROFILE=ci forge test
+        env:
+          OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
         
       - name: slither-static-analysis
         continue-on-error: true

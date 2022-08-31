@@ -1,35 +1,32 @@
 // 1:1 with Hardhat test
 pragma solidity 0.8.13;
 
-import './BaseTest.sol';
+import "./BaseTest.sol";
 
 contract WashTradeTest is BaseTest {
-    VotingEscrow escrow;
-    GaugeFactory gaugeFactory;
-    BribeFactory bribeFactory;
-    Voter voter;
-    Gauge gauge3;
-    InternalBribe bribe3;
+    constructor() {
+        deploymentType = Deployment.CUSTOM;
+    }
 
     function deployBaseCoins() public {
-        vm.warp(block.timestamp + 1 weeks); // put some initial time in
+        skip(1 weeks);
 
         deployOwners();
         deployCoins();
         mintStables();
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = 1e25;
-        mintVelo(owners, amounts);
+        mintToken(address(VELO), owners, amounts);
 
         VeArtProxy artProxy = new VeArtProxy();
-        escrow = new VotingEscrow(address(VELO), address(artProxy));
+        escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
     }
 
     function createLock() public {
         deployBaseCoins();
 
         VELO.approve(address(escrow), TOKEN_1);
-        escrow.create_lock(TOKEN_1, 4 * 365 * 86400);
+        escrow.createLock(TOKEN_1, MAXTIME);
         vm.roll(block.number + 1); // fwd 1 block because escrow.balanceOfNFT() returns 0 in same block
         assertGt(escrow.balanceOfNFT(1), 995063075414519385);
         assertEq(VELO.balanceOf(address(escrow)), TOKEN_1);
@@ -39,7 +36,7 @@ contract WashTradeTest is BaseTest {
         createLock();
 
         VELO.approve(address(escrow), TOKEN_1);
-        escrow.create_lock(TOKEN_1, 4 * 365 * 86400);
+        escrow.createLock(TOKEN_1, MAXTIME);
         vm.roll(block.number + 1);
         assertGt(escrow.balanceOfNFT(2), 995063075414519385);
         assertEq(VELO.balanceOf(address(escrow)), 2 * TOKEN_1);
@@ -50,7 +47,10 @@ contract WashTradeTest is BaseTest {
 
     function confirmTokensForFraxUsdc() public {
         votingEscrowMerge();
-        deployPairFactoryAndRouter();
+        deployFactoriesAndRouter();
+        voter = new Voter(address(escrow), address(factoryRegistry));
+        router = new Router(address(factory), address(voter), address(WETH));
+        lib = new VelodromeLibrary(address(router));
         deployPairWithOwner(address(owner));
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));
@@ -72,21 +72,49 @@ contract WashTradeTest is BaseTest {
 
         USDC.approve(address(router), USDC_100K);
         FRAX.approve(address(router), TOKEN_100K);
-        router.addLiquidity(address(FRAX), address(USDC), true, TOKEN_100K, USDC_100K, TOKEN_100K, USDC_100K, address(owner), block.timestamp);
+        router.addLiquidity(
+            address(FRAX),
+            address(USDC),
+            true,
+            TOKEN_100K,
+            USDC_100K,
+            TOKEN_100K,
+            USDC_100K,
+            address(owner),
+            block.timestamp
+        );
         USDC.approve(address(router), USDC_100K);
         FRAX.approve(address(router), TOKEN_100K);
-        router.addLiquidity(address(FRAX), address(USDC), false, TOKEN_100K, USDC_100K, TOKEN_100K, USDC_100K, address(owner), block.timestamp);
+        router.addLiquidity(
+            address(FRAX),
+            address(USDC),
+            false,
+            TOKEN_100K,
+            USDC_100K,
+            TOKEN_100K,
+            USDC_100K,
+            address(owner),
+            block.timestamp
+        );
         DAI.approve(address(router), TOKEN_100M);
         FRAX.approve(address(router), TOKEN_100M);
-        router.addLiquidity(address(FRAX), address(DAI), true, TOKEN_100M, TOKEN_100M, 0, 0, address(owner), block.timestamp);
+        router.addLiquidity(
+            address(FRAX),
+            address(DAI),
+            true,
+            TOKEN_100M,
+            TOKEN_100M,
+            0,
+            0,
+            address(owner),
+            block.timestamp
+        );
     }
 
     function deployVoter() public {
         routerAddLiquidity();
 
-        gaugeFactory = new GaugeFactory();
-        bribeFactory = new BribeFactory();
-        voter = new Voter(address(escrow), address(factory), address(gaugeFactory), address(bribeFactory));
+        voter = new Voter(address(escrow), address(factoryRegistry));
         address[] memory tokens = new address[](4);
         tokens[0] = address(USDC);
         tokens[1] = address(FRAX);
@@ -101,29 +129,29 @@ contract WashTradeTest is BaseTest {
         deployVoter();
 
         VELO.approve(address(gaugeFactory), 5 * TOKEN_100K);
-        voter.createGauge(address(pair3));
+        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair3));
         assertFalse(voter.gauges(address(pair3)) == address(0));
 
         address gaugeAddr3 = voter.gauges(address(pair3));
-        address bribeAddr3 = voter.internal_bribes(gaugeAddr3);
+        address feesVotingRewardAddr3 = voter.gaugeToFees(gaugeAddr3);
 
         gauge3 = Gauge(gaugeAddr3);
 
-        bribe3 = InternalBribe(bribeAddr3);
+        feesVotingReward3 = FeesVotingReward(feesVotingRewardAddr3);
         uint256 total = pair3.balanceOf(address(owner));
         pair3.approve(address(gauge3), total);
-        gauge3.deposit(total, 0);
+        gauge3.deposit(total);
         assertEq(gauge3.totalSupply(), total);
-        assertEq(gauge3.earned(address(escrow), address(owner)), 0);
+        assertEq(gauge3.earned(address(owner)), 0);
     }
 
     function routerPair3GetAmountsOutAndSwapExactTokensForTokens() public {
         deployPairFactoryGauge();
 
-        Router.route[] memory routes = new Router.route[](1);
-        routes[0] = Router.route(address(FRAX), address(DAI), true);
-        Router.route[] memory routes2 = new Router.route[](1);
-        routes2[0] = Router.route(address(DAI), address(FRAX), true);
+        IRouter.Route[] memory routes = new IRouter.Route[](1);
+        routes[0] = IRouter.Route(address(FRAX), address(DAI), true, address(0));
+        IRouter.Route[] memory routes2 = new IRouter.Route[](1);
+        routes2[0] = IRouter.Route(address(DAI), address(FRAX), true, address(0));
 
         uint256 i;
         for (i = 0; i < 10; i++) {
@@ -154,10 +182,10 @@ contract WashTradeTest is BaseTest {
         voter.poke(1);
     }
 
-    function voterVoteAndBribeBalanceOf() public {
+    function voterVoteAndFeesVotingRewardBalanceOf() public {
         voterPokeSelf();
 
-        vm.warp(block.timestamp + 1 weeks);
+        skip(1 weeks);
 
         address[] memory pairs = new address[](2);
         pairs[0] = address(pair3);
@@ -167,30 +195,30 @@ contract WashTradeTest is BaseTest {
         weights[1] = 5000;
         voter.vote(1, pairs, weights);
         assertFalse(voter.totalWeight() == 0);
-        assertFalse(bribe3.balanceOf(1) == 0);
+        assertFalse(feesVotingReward3.balanceOf(1) == 0);
     }
 
-    function bribeClaimRewards() public {
-        voterVoteAndBribeBalanceOf();
+    function feesVotingRewardClaimRewards() public {
+        voterVoteAndFeesVotingRewardBalanceOf();
 
         address[] memory tokens = new address[](2);
         tokens[0] = address(FRAX);
         tokens[1] = address(DAI);
-        bribe3.getReward(1, tokens);
-        vm.warp(block.timestamp + 691200);
+        feesVotingReward3.getReward(1, tokens);
+        skip(8 days);
         vm.roll(block.number + 1);
-        bribe3.getReward(1, tokens);
+        feesVotingReward3.getReward(1, tokens);
     }
 
     function distributeAndClaimFees() public {
-        bribeClaimRewards();
+        feesVotingRewardClaimRewards();
 
-        vm.warp(block.timestamp + 691200);
+        skip(8 days);
         vm.roll(block.number + 1);
         address[] memory tokens = new address[](2);
         tokens[0] = address(FRAX);
         tokens[1] = address(DAI);
-        bribe3.getReward(1, tokens);
+        feesVotingReward3.getReward(1, tokens);
 
         address[] memory gauges = new address[](1);
         gauges[0] = address(gauge3);
@@ -200,23 +228,21 @@ contract WashTradeTest is BaseTest {
     function testBribeClaimRewards() public {
         distributeAndClaimFees();
 
-        console2.log(bribe3.earned(address(FRAX), 1));
+        console2.log(feesVotingReward3.earned(address(FRAX), 1));
         console2.log(FRAX.balanceOf(address(owner)));
-        console2.log(FRAX.balanceOf(address(bribe3)));
-        bribe3.batchRewardPerToken(address(FRAX), 200);
-        bribe3.batchRewardPerToken(address(DAI), 200);
+        console2.log(FRAX.balanceOf(address(feesVotingReward3)));
         address[] memory tokens = new address[](2);
         tokens[0] = address(FRAX);
         tokens[1] = address(DAI);
-        bribe3.getReward(1, tokens);
-        vm.warp(block.timestamp + 691200);
+        feesVotingReward3.getReward(1, tokens);
+        skip(8 days);
         vm.roll(block.number + 1);
-        console2.log(bribe3.earned(address(FRAX), 1));
+        console2.log(feesVotingReward3.earned(address(FRAX), 1));
         console2.log(FRAX.balanceOf(address(owner)));
-        console2.log(FRAX.balanceOf(address(bribe3)));
-        bribe3.getReward(1, tokens);
-        console2.log(bribe3.earned(address(FRAX), 1));
+        console2.log(FRAX.balanceOf(address(feesVotingReward3)));
+        feesVotingReward3.getReward(1, tokens);
+        console2.log(feesVotingReward3.earned(address(FRAX), 1));
         console2.log(FRAX.balanceOf(address(owner)));
-        console2.log(FRAX.balanceOf(address(bribe3)));
+        console2.log(FRAX.balanceOf(address(feesVotingReward3)));
     }
 }

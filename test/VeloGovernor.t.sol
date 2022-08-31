@@ -1,192 +1,130 @@
 pragma solidity 0.8.13;
 
 import "./BaseTest.sol";
-import "contracts/VeloGovernor.sol";
+import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 
 contract VeloGovernorTest is BaseTest {
-    VotingEscrow escrow;
-    GaugeFactory gaugeFactory;
-    BribeFactory bribeFactory;
-    Voter voter;
-    RewardsDistributor distributor;
-    Minter minter;
-    Gauge gauge;
-    InternalBribe bribe;
-    VeloGovernor governor;
-
-    function setUp() public {
-        deployOwners();
-        deployCoins();
-        mintStables();
-        uint256[] memory amounts = new uint256[](3);
-        amounts[0] = 2e25;
-        amounts[1] = 1e25;
-        amounts[2] = 1e25;
-        mintVelo(owners, amounts);
-
-        VeArtProxy artProxy = new VeArtProxy();
-        escrow = new VotingEscrow(address(VELO), address(artProxy));
-
+    function _setUp() public override {
         VELO.approve(address(escrow), 97 * TOKEN_1);
-        escrow.create_lock(97 * TOKEN_1, 4 * 365 * 86400);
+        escrow.createLock(97 * TOKEN_1, MAXTIME);
         vm.roll(block.number + 1);
 
         // owner2 owns less than quorum, 3%
         vm.startPrank(address(owner2));
         VELO.approve(address(escrow), 3 * TOKEN_1);
-        escrow.create_lock(3 * TOKEN_1, 4 * 365 * 86400);
+        escrow.createLock(3 * TOKEN_1, MAXTIME);
         vm.roll(block.number + 1);
         vm.stopPrank();
-
-        deployPairFactoryAndRouter();
-
-        USDC.approve(address(router), USDC_100K);
-        FRAX.approve(address(router), TOKEN_100K);
-        router.addLiquidity(address(FRAX), address(USDC), true, TOKEN_100K, USDC_100K, TOKEN_100K, USDC_100K, address(owner), block.timestamp);
-
-        gaugeFactory = new GaugeFactory();
-        bribeFactory = new BribeFactory();
-        voter = new Voter(address(escrow), address(factory), address(gaugeFactory), address(bribeFactory));
-
-        escrow.setVoter(address(voter));
-
-        distributor = new RewardsDistributor(address(escrow));
-
-        minter = new Minter(address(voter), address(escrow), address(distributor));
-        distributor.setDepositor(address(minter));
-        VELO.setMinter(address(minter));
-
-        VELO.approve(address(gaugeFactory), 15 * TOKEN_100K);
-        voter.createGauge(address(pair));
-        address gaugeAddress = voter.gauges(address(pair));
-        address bribeAddress = voter.internal_bribes(gaugeAddress);
-        gauge = Gauge(gaugeAddress);
-        bribe = InternalBribe(bribeAddress);
-
-        governor = new VeloGovernor(escrow);
-        voter.setGovernor(address(governor));
     }
 
-    function testGovernorCanWhitelistTokens(address token) public {
-        vm.startPrank(address(governor));
-        voter.whitelist(token);
-        vm.stopPrank();
+    function testGovernorCanCreateGaugesForAnyAddress() public {
+        vm.prank(address(governor));
+        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(1));
     }
 
-    function testFailNonGovernorCannotWhitelistTokens(address user, address token) public {
-        vm.assume(user != address(governor));
-
-        vm.startPrank(address(user));
-        voter.whitelist(token);
-        vm.stopPrank();
+    function testCannotSetTeamIfNotTeam() public {
+        vm.prank(address(owner2));
+        vm.expectRevert("VeloGovernor: not team");
+        governor.setTeam(address(owner2));
     }
 
-    function testGovernorCanCreateGaugesForAnyAddress(address a) public {
-        vm.assume(a != address(0));
+    function testSetTeam() public {
+        governor.setTeam(address(owner2));
 
-        vm.startPrank(address(governor));
-        voter.createGauge(a);
-        vm.stopPrank();
+        assertEq(governor.team(), address(owner2));
     }
 
-    function testVeVeloMergesAutoDelegates() public {
-        // owner2 + owner3 > quorum
-        vm.startPrank(address(owner3));
-        VELO.approve(address(escrow), 3 * TOKEN_1);
-        escrow.create_lock(3 * TOKEN_1, 4 * 365 * 86400);
-        vm.roll(block.number + 1);
-        uint256 pre2 = escrow.getVotes(address(owner2));
-        uint256 pre3 = escrow.getVotes(address(owner3));
-
-        // merge
-        escrow.approve(address(owner2), 3);
-        escrow.transferFrom(address(owner3), address(owner2), 3);
-        vm.stopPrank();
-        vm.startPrank(address(owner2));
-        escrow.merge(3, 2);
-        vm.stopPrank();
-
-        // assert vote balances
-        uint256 post2 = escrow.getVotes(address(owner2));
-        assertApproxEqAbs(
-            pre2 + pre3,
-            post2,
-            4 * 365 * 86400 // merge rounds down time lock
-        );
+    function testCannotSetProposalNumeratorAboveMaximum() public {
+        vm.expectRevert("VeloGovernor: numerator too high");
+        governor.setProposalNumerator(51);
     }
 
-    function testFailCannotProposeWithoutSufficientBalance() public {
-        // propose
-        vm.startPrank(address(owner3));
+    function testCannotSetProposalNumeratorIfNotTeam() public {
+        vm.prank(address(owner2));
+        vm.expectRevert("VeloGovernor: not team");
+        governor.setProposalNumerator(1);
+    }
+
+    function testSetProposalNumerator() public {
+        governor.setProposalNumerator(50);
+        assertEq(governor.proposalNumerator(), 50);
+    }
+
+    function testCannotProposeWithoutSufficientBalance() public {
         address[] memory targets = new address[](1);
         targets[0] = address(voter);
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
         bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(voter.whitelist.selector, address(USDC));
+        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, address(USDC));
         string memory description = "Whitelist USDC";
 
+        vm.prank(address(owner3));
+        vm.expectRevert("Governor: proposer votes below proposal threshold");
         governor.propose(targets, values, calldatas, description);
-        vm.stopPrank();
     }
 
-    function testFailProposalsNeedQuorumToPass() public {
-        assertFalse(voter.isWhitelisted(address(USDC)));
+    function testCannotExecuteWithoutQuorum() public {
+        address token = address(new MockERC20("TEST", "TEST", 18));
+        assertFalse(voter.isWhitelistedToken(token));
 
         address[] memory targets = new address[](1);
         targets[0] = address(voter);
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
         bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(voter.whitelist.selector, address(USDC));
-        string memory description = "Whitelist USDC";
+        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, token);
+        string memory description = "Whitelist Token";
 
         // propose
-        vm.startPrank(address(owner));
+        vm.prank(address(owner));
         uint256 pid = governor.propose(targets, values, calldatas, description);
-        vm.warp(block.timestamp + 16 minutes); // delay
-        vm.stopPrank();
+
+        vm.roll(block.number + 101); // voting delay period
 
         // vote
-        vm.startPrank(address(owner2));
+        vm.prank(address(owner2));
         governor.castVote(pid, 1);
-        vm.warp(block.timestamp + 1 weeks); // voting period
-        vm.stopPrank();
+
+        vm.roll(block.number + 302400); // voting period
 
         // execute
-        vm.startPrank(address(owner));
+        vm.prank(address(owner));
+        vm.expectRevert("Governor: proposal not successful");
         governor.execute(targets, values, calldatas, keccak256(bytes(description)));
-        vm.stopPrank();
     }
 
     function testProposalHasQuorum() public {
-        assertFalse(voter.isWhitelisted(address(USDC)));
+        address token = address(new MockERC20("TEST", "TEST", 18));
+        assertFalse(voter.isWhitelistedToken(token));
 
         address[] memory targets = new address[](1);
         targets[0] = address(voter);
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
         bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(voter.whitelist.selector, address(USDC));
-        string memory description = "Whitelist USDC";
+        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, token);
+        string memory description = "Whitelist Token";
 
         // propose
-        vm.startPrank(address(owner));
         uint256 pid = governor.propose(targets, values, calldatas, description);
-        vm.warp(block.timestamp + 16 minutes); // delay
-        vm.stopPrank();
+
+        vm.expectRevert("Governor: vote not currently active");
+        governor.castVote(pid, 1);
+        assertEq(uint256(governor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+
+        vm.roll(block.number + 101); // voting delay period
+        assertEq(uint256(governor.state(pid)), uint256(IGovernor.ProposalState.Active));
 
         // vote
-        vm.startPrank(address(owner));
         governor.castVote(pid, 1);
-        vm.warp(block.timestamp + 1 weeks); // voting period
-        vm.stopPrank();
+        assertEq(uint256(governor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        vm.roll(block.number + 302400); // voting period
+        assertEq(uint256(governor.state(pid)), uint256(IGovernor.ProposalState.Succeeded));
 
         // execute
-        vm.startPrank(address(owner));
         governor.execute(targets, values, calldatas, keccak256(bytes(description)));
-        vm.stopPrank();
-
-        assertTrue(voter.isWhitelisted(address(USDC)));
+        assertEq(uint256(governor.state(pid)), uint256(IGovernor.ProposalState.Executed));
+        assertTrue(voter.isWhitelistedToken(token));
     }
 }

@@ -17,7 +17,7 @@
     "chai": "^4.3.6",
     "dotenv": "^16.0.0",
     "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.0.0",
+    "ethers": "^5.6.6",
     "hardhat": "^2.9.5",
     "hardhat-abi-exporter": "^2.9.0",
     "hardhat-preprocessor": "^0.1.4",
@@ -25,6 +25,14 @@
     "prettier-plugin-solidity": "^1.0.0-beta.19",
     "ts-node": "^10.7.0",
     "typechain": "^8.0.0",
-    "typescript": "^4.6.4"
+    "typescript": "^4.6.4",
+    "solhint": "^3.3.7",
+    "solhint-plugin-prettier": "^0.0.5"
+  },
+  "scripts": {
+    "format": "prettier --write 'contracts/**/*.(sol|json)' 'test/**/*.(sol|json)'",
+    "format:check": "prettier --check 'contracts/**/*.*(sol|json)' 'test/**/*.(sol|json)'",
+    "lint": "solhint --fix 'contracts/**/*.sol' 'test/**/*.sol'",
+    "lint:check": "solhint 'contracts/**/*.sol' 'test/**/*.sol'"
   }
 }

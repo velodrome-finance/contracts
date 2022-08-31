@@ -1,15 +1,12 @@
 // 1:1 with Hardhat test
 pragma solidity 0.8.13;
 
-import './BaseTest.sol';
+import "./BaseTest.sol";
 
 contract ImbalanceTest is BaseTest {
-    VotingEscrow escrow;
-    GaugeFactory gaugeFactory;
-    BribeFactory bribeFactory;
-    Voter voter;
-    Gauge gauge;
-    InternalBribe bribe;
+    constructor() {
+        deploymentType = Deployment.CUSTOM;
+    }
 
     function deployBaseCoins() public {
         deployOwners();
@@ -17,16 +14,16 @@ contract ImbalanceTest is BaseTest {
         mintStables();
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = 1e25;
-        mintVelo(owners, amounts);
+        mintToken(address(VELO), owners, amounts);
         VeArtProxy artProxy = new VeArtProxy();
-        escrow = new VotingEscrow(address(VELO), address(artProxy));
+        escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
     }
 
     function createLock() public {
         deployBaseCoins();
 
         VELO.approve(address(escrow), TOKEN_1);
-        escrow.create_lock(TOKEN_1, 4 * 365 * 86400);
+        escrow.createLock(TOKEN_1, MAXTIME);
         vm.warp(1);
         assertGt(escrow.balanceOfNFT(1), 995063075414519385);
         assertEq(VELO.balanceOf(address(escrow)), TOKEN_1);
@@ -36,7 +33,7 @@ contract ImbalanceTest is BaseTest {
         createLock();
 
         VELO.approve(address(escrow), TOKEN_1);
-        escrow.create_lock(TOKEN_1, 4 * 365 * 86400);
+        escrow.createLock(TOKEN_1, MAXTIME);
         assertGt(escrow.balanceOfNFT(2), 995063075414519385);
         assertEq(VELO.balanceOf(address(escrow)), 2 * TOKEN_1);
         escrow.merge(2, 1);
@@ -46,7 +43,12 @@ contract ImbalanceTest is BaseTest {
 
     function confirmTokensForFraxUsdc() public {
         votingEscrowMerge();
-        deployPairFactoryAndRouter();
+        deployFactoriesAndRouter();
+        VeArtProxy artProxy = new VeArtProxy();
+        escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
+        voter = new Voter(address(escrow), address(factoryRegistry));
+        router = new Router(address(factory), address(voter), address(WETH));
+        lib = new VelodromeLibrary(address(router));
         deployPairWithOwner(address(owner));
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));
@@ -68,21 +70,49 @@ contract ImbalanceTest is BaseTest {
 
         USDC.approve(address(router), USDC_100K);
         FRAX.approve(address(router), TOKEN_100K);
-        router.addLiquidity(address(FRAX), address(USDC), true, TOKEN_100K, USDC_100K, TOKEN_100K, USDC_100K, address(owner), block.timestamp);
+        router.addLiquidity(
+            address(FRAX),
+            address(USDC),
+            true,
+            TOKEN_100K,
+            USDC_100K,
+            TOKEN_100K,
+            USDC_100K,
+            address(owner),
+            block.timestamp
+        );
         USDC.approve(address(router), USDC_100K);
         FRAX.approve(address(router), TOKEN_100K);
-        router.addLiquidity(address(FRAX), address(USDC), false, TOKEN_100K, USDC_100K, TOKEN_100K, USDC_100K, address(owner), block.timestamp);
+        router.addLiquidity(
+            address(FRAX),
+            address(USDC),
+            false,
+            TOKEN_100K,
+            USDC_100K,
+            TOKEN_100K,
+            USDC_100K,
+            address(owner),
+            block.timestamp
+        );
         DAI.approve(address(router), TOKEN_100M);
         FRAX.approve(address(router), TOKEN_100M);
-        router.addLiquidity(address(FRAX), address(DAI), true, TOKEN_100M, TOKEN_100M, 0, 0, address(owner), block.timestamp);
+        router.addLiquidity(
+            address(FRAX),
+            address(DAI),
+            true,
+            TOKEN_100M,
+            TOKEN_100M,
+            0,
+            0,
+            address(owner),
+            block.timestamp
+        );
     }
 
     function deployVoter() public {
         routerAddLiquidity();
 
-        gaugeFactory = new GaugeFactory();
-        bribeFactory = new BribeFactory();
-        voter = new Voter(address(escrow), address(factory), address(gaugeFactory), address(bribeFactory));
+        voter = new Voter(address(escrow), address(factoryRegistry));
         address[] memory tokens = new address[](4);
         tokens[0] = address(USDC);
         tokens[1] = address(FRAX);
@@ -97,7 +127,7 @@ contract ImbalanceTest is BaseTest {
         deployVoter();
 
         VELO.approve(address(gaugeFactory), 5 * TOKEN_100K);
-        voter.createGauge(address(pair3));
+        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair3));
         assertFalse(voter.gauges(address(pair3)) == address(0));
 
         address gaugeAddr3 = voter.gauges(address(pair3));
@@ -106,18 +136,18 @@ contract ImbalanceTest is BaseTest {
 
         uint256 total = pair3.balanceOf(address(owner));
         pair3.approve(address(gauge3), total);
-        gauge3.deposit(total, 0);
+        gauge3.deposit(total);
         assertEq(gauge3.totalSupply(), total);
-        assertEq(gauge3.earned(address(escrow), address(owner)), 0);
+        assertEq(gauge3.earned(address(owner)), 0);
     }
 
     function testRouterPair3GetAmountsOutAndSwapExactTokensForTokens() public {
         deployPairFactoryGauge();
 
-        Router.route[] memory routes = new Router.route[](1);
-        routes[0] = Router.route(address(FRAX), address(DAI), true);
-        Router.route[] memory routes2 = new Router.route[](1);
-        routes2[0] = Router.route(address(DAI), address(FRAX), true);
+        IRouter.Route[] memory routes = new IRouter.Route[](1);
+        routes[0] = IRouter.Route(address(FRAX), address(DAI), true, address(0));
+        IRouter.Route[] memory routes2 = new IRouter.Route[](1);
+        routes2[0] = IRouter.Route(address(DAI), address(FRAX), true, address(0));
 
         uint256 fb = FRAX.balanceOf(address(owner));
         uint256 db = DAI.balanceOf(address(owner));
@@ -134,7 +164,17 @@ contract ImbalanceTest is BaseTest {
         DAI.approve(address(router), TOKEN_10B);
         FRAX.approve(address(router), TOKEN_10B);
         uint256 pairBefore = pair3.balanceOf(address(owner));
-        router.addLiquidity(address(FRAX), address(DAI), true, TOKEN_10B, TOKEN_10B, 0, 0, address(owner), block.timestamp);
+        router.addLiquidity(
+            address(FRAX),
+            address(DAI),
+            true,
+            TOKEN_10B,
+            TOKEN_10B,
+            0,
+            0,
+            address(owner),
+            block.timestamp
+        );
         uint256 pairAfter = pair3.balanceOf(address(owner));
         uint256 LPBal = pairAfter - pairBefore;
 

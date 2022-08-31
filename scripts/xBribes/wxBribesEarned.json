@@ -1,0 +1,598 @@
+[
+  {
+    "xBribe": "0x4b65981490f51a02955842a4fcd40a8ca07e62ef",
+    "wxBribe": "0xC576837F4e7b8579c4e3F2586E49F970cb017cdc"
+  },
+  {
+    "xBribe": "0x882ebad89cced0c3ec9cc7c253ec77b9e9b5c5b3",
+    "wxBribe": "0x771Cd54E0E9d65580Eb87211f133c5b744437830"
+  },
+  {
+    "xBribe": "0x78fe9d8fe0af3c0d925a1d2e681a924a3fda02f7",
+    "wxBribe": "0x4972CE41712266BE91CB6d50d0B8DA346A6C30a4"
+  },
+  {
+    "xBribe": "0x907272913f305e99823d491fe802ee6a4d84b5a4",
+    "wxBribe": "0x80bAf3D18ddE20d2a95F7FAfBCb2DF974758c43B"
+  },
+  {
+    "xBribe": "0xa6a2239dee80af95fbaaa02311712512526e6556",
+    "wxBribe": "0x13446D177Ea2511ceB95FA6b31124C035d2E90C6"
+  },
+  {
+    "xBribe": "0x6b1f3fcb5892d643e9f6e86fe1de5e9392d2f424",
+    "wxBribe": "0x0e363791c96188b33BD75B1d18b10Aa9E6D7DB66"
+  },
+  {
+    "xBribe": "0xae7a6e90f88c5e39151b22cdd225b101611eba70",
+    "wxBribe": "0xBfe82BA76909F45DaAC5CA3c7f93263501f30Df8"
+  },
+  {
+    "xBribe": "0x97d93d6f4abc762e054d283a83c97e883227a4ad",
+    "wxBribe": "0xB3A15d59c09028cF0575CC361A99945D2cA509C3"
+  },
+  {
+    "xBribe": "0xaf105f8d36fbf410937121dd5be888024547bc17",
+    "wxBribe": "0x4b25F75d72Fc829c18267479f5b86fDa156E1492"
+  },
+  {
+    "xBribe": "0x3208da4b75b9a9bd5126e395d1b78d50ec15af1b",
+    "wxBribe": "0xCE92fC0732bc20b278ff509D1473D1F3d494B56f"
+  },
+  {
+    "xBribe": "0x624f1a2edd85e6b5c0d994f944c6d5b88f9d020a",
+    "wxBribe": "0x4Ea2e39626de031A011C3CA7360878202454Ce75"
+  },
+  {
+    "xBribe": "0x2a861721dd94668dbb8493fa9b6bb23e5b6f700f",
+    "wxBribe": "0x79707f213c700b7e30Ead921cE0823339613a2C2"
+  },
+  {
+    "xBribe": "0x0383f166408748d5a7b7299289675639fc131036",
+    "wxBribe": "0xE4545c839EDa55B7EBf3b7ABed0271Fbac9A8b41"
+  },
+  {
+    "xBribe": "0xcbeb11935da106a41bfd8531dd36e993e1acf02e",
+    "wxBribe": "0xD5A04dE9e27cae93dA0F6E246D3243A89f799148"
+  },
+  {
+    "xBribe": "0xbc3fc61020dfa601e33629d89d83c7ce2d9e8423",
+    "wxBribe": "0x727DA2D6Fb224Bad6c79Cbde4fF215be6Bb19135"
+  },
+  {
+    "xBribe": "0x188a5932cc1bc330f1b561d313aa329834d2cdba",
+    "wxBribe": "0x6CdF03722C5008bE30E425987475d3B77f8eADae"
+  },
+  {
+    "xBribe": "0x42268e8b20b96aa26293e9250740decfce28aa9c",
+    "wxBribe": "0x7Df40Eb2929F1648C52e9fAf0dCD52DBE280883b"
+  },
+  {
+    "xBribe": "0x9960fc5209fc66949380ddfb8b034c92cdb417df",
+    "wxBribe": "0x7Efd8AeA089a440b7cC8ec65b1dA8840708F1060"
+  },
+  {
+    "xBribe": "0xe2d67deedf06936dbed80676fdd0e107e490e689",
+    "wxBribe": "0x78CF9CAc800074355402E338348061d9D81Aa868"
+  },
+  {
+    "xBribe": "0xf3e9445ee92900fd6514857c7513cf8ac30eaeaa",
+    "wxBribe": "0x0C7cfa11ab5C75e3b62aC2EB070e0780939a630f"
+  },
+  {
+    "xBribe": "0x73af9a7bccdbe813ed249725ecf7ed9818a57fbb",
+    "wxBribe": "0xFE476c293c0C622A85Dc1C9a4963343391aBD82d"
+  },
+  {
+    "xBribe": "0x30af5fcd77a437374105dae206d86971c1b49d1b",
+    "wxBribe": "0x4A52B481da87e9E92978A2931BB81F5f16583E9F"
+  },
+  {
+    "xBribe": "0x97be754ae730f582d3145b08915c1db212e25a83",
+    "wxBribe": "0x721c8A840917f11C0BB1596908d9B57018AC6f43"
+  },
+  {
+    "xBribe": "0xcd270c408bee767121b3c5f5998f34faf36d375d",
+    "wxBribe": "0xB1AdEAEeC68E71b030C5c798D4874F65049E4E74"
+  },
+  {
+    "xBribe": "0x434105374ed633414c75ce11b8c8df53804a36d0",
+    "wxBribe": "0x43a1C37f4B2465C4498B936850A3D50420D0718C"
+  },
+  {
+    "xBribe": "0x1120f25d5316ccb3e9616f20f822fb2b61c632ee",
+    "wxBribe": "0xf03C462990CbcCF917C106233532e58175D1BD0a"
+  },
+  {
+    "xBribe": "0x47bdc24161e0a6b85df1e257604dee5e1a137039",
+    "wxBribe": "0x43C6C997D9F41954886e796Ff64741CB67B51c9d"
+  },
+  {
+    "xBribe": "0xf1025d7b35dbaaaa7172125d014cca8aab8c5687",
+    "wxBribe": "0x5e52953B276654E89efb2B600498A7834B1783cc"
+  },
+  {
+    "xBribe": "0xfffe2f8862f7560ef496324028d5a5ade64679c5",
+    "wxBribe": "0x6c4A33805c5872FF1A28c1490950BED55c73DB94"
+  },
+  {
+    "xBribe": "0x3a51ce88be806a7844a52d23660a7d694962f094",
+    "wxBribe": "0xC68Afa46A1498015779155011b7935C41982A0C3"
+  },
+  {
+    "xBribe": "0x892b164a47279fb2790b0dc2b924538fd9bfec73",
+    "wxBribe": "0x393F244085C33C03A9E6554f4BB5f5CCCA0d9004"
+  },
+  {
+    "xBribe": "0x451b04f34640ecb78ff839c96e35fec8c9bb8fa4",
+    "wxBribe": "0xA22c837C4C8E2Ef19ED471f1767994Cf734Ca073"
+  },
+  {
+    "xBribe": "0x4448195c444629e06610b30ea15f3a33d32d910e",
+    "wxBribe": "0x40a58B5B735Ba6596d04c88E7b262f6E79100EBb"
+  },
+  {
+    "xBribe": "0x42ea76108c3cf6614153c7ac0239678753d88046",
+    "wxBribe": "0x4022e57784b2fF8DceE839c16161F283223aE87B"
+  },
+  {
+    "xBribe": "0x4a067cd6d7b32621fac26d16c27192800a0e0178",
+    "wxBribe": "0x0A651764f87160577d892CbB676270749501F1F3"
+  },
+  {
+    "xBribe": "0x43ea1512fd7091ae2f486685685bb8bf0ec4387a",
+    "wxBribe": "0x9710cF2f0368882b22BC44aB520D9b4b9305225d"
+  },
+  {
+    "xBribe": "0x6de48cfc4e1566cae55e2a0ad25ffe3107c2b458",
+    "wxBribe": "0xBD14E409f07824EF605b6DC4cC05527ed657B4E9"
+  },
+  {
+    "xBribe": "0x1b6aac43261d7b7a289d9e89683c220ef19391ec",
+    "wxBribe": "0x1534768e212297CE0b37d7D250520Cdf2da4cD84"
+  },
+  {
+    "xBribe": "0x19e8a5e3490d64f0481a1f1f354eb1794baed18c",
+    "wxBribe": "0x90a855AB2E555653Efc1d5A014571600EFA2bc02"
+  },
+  {
+    "xBribe": "0x64c4596956066439287f68db77ac802ab01ce103",
+    "wxBribe": "0x58410843D526ca162DafE9f23620ecdE80Cbdd8C"
+  },
+  {
+    "xBribe": "0xd17d5de103aaf109fba486e0ec4bfbbee606fe6d",
+    "wxBribe": "0xBA918DF3494756dD29d19C73EE738c5460F0bb3D"
+  },
+  {
+    "xBribe": "0xdc054d991674b60b66cda9c9515596dd9093aee9",
+    "wxBribe": "0x352ad9eAbe174efc1c746110F1002a5B740781C0"
+  },
+  {
+    "xBribe": "0x9840861e943d7aae35e61fc07c0f216c4b24d2e9",
+    "wxBribe": "0xa383Ce365CD90ff2968f1F54B5E56D8Ab90b8801"
+  },
+  {
+    "xBribe": "0x92cda895205391962d833226825f41e2ca0a9a7a",
+    "wxBribe": "0x334058D9D6d71438cAC29e579224cE577d75EE69"
+  },
+  {
+    "xBribe": "0xe25288cedf434878ef043a72abf3b0a44a6e40e6",
+    "wxBribe": "0x6Fb70C8CF07A33479645d5574CAA53590798bAaF"
+  },
+  {
+    "xBribe": "0x45159f1d8cc5bc42ea231fb2213b0d317eaa4490",
+    "wxBribe": "0x8e9bfDE6AfF39AF48d1f25eb086813b5DC843DEB"
+  },
+  {
+    "xBribe": "0x5dfe77c7628c0fa142ab85ab590cdfd5d34d819c",
+    "wxBribe": "0xa523f4bc7CC3188f69859b3d804e912663367271"
+  },
+  {
+    "xBribe": "0x3fb8a73de2b325ca7f27ebb9ade5ca7e2a12a3db",
+    "wxBribe": "0x40428EAe2C630bC1F36d899c033B8Dcf7Fe78bB1"
+  },
+  {
+    "xBribe": "0xb917feb62953d6dfa96951d3f1a418001fd95ea7",
+    "wxBribe": "0xc1114C68484017EE55fb2170fa66078032B37c58"
+  },
+  {
+    "xBribe": "0xdcbe926a40cae30deb5cb5b99d69336d0b4ac323",
+    "wxBribe": "0x19490e54398F98c02eFB54C13D27E1b7F58238a7"
+  },
+  {
+    "xBribe": "0x1aaf1ce9684c177b44f53edaa76a2a7c8d7fcf0b",
+    "wxBribe": "0x88f07613eC687FEE8B7c56F29f3C857657E2F864"
+  },
+  {
+    "xBribe": "0xfb548e53c30c90c368e4ad929df98b8a5c4bf6be",
+    "wxBribe": "0xbd4F080ac505722025C2b4246bEFf5581d5d8f17"
+  },
+  {
+    "xBribe": "0xa530a2d6c22103b77509713fe79d460b26348901",
+    "wxBribe": "0xBd89ea63BD00eA9462F9B28b655Cb17527c9C163"
+  },
+  {
+    "xBribe": "0xabe69975c7cea72e7af80e2bf220996579a96923",
+    "wxBribe": "0xF6c76BB63C7994A41Ce50e144Be2879248171E7E"
+  },
+  {
+    "xBribe": "0x34e29f18a542c00c3819a71aee59b45591f73aba",
+    "wxBribe": "0xa1090e8641345B1ba62209a6E729A5650cBC5F4c"
+  },
+  {
+    "xBribe": "0x33a257ceae9b9c5fe044c3608c9465d7cd6312a3",
+    "wxBribe": "0x7A00DC886649d4fB05E2252EF064D26530Bfb17b"
+  },
+  {
+    "xBribe": "0x40709c24b01fa561e7860058779252ddabdb3829",
+    "wxBribe": "0xD7A5DC8D76010325edc6676c7cFf291Cff59e8f6"
+  },
+  {
+    "xBribe": "0x9ac80dbaa1721fd421c1c5dc3da998b8cfdc1607",
+    "wxBribe": "0xcfB8299D8EE5E6F89f95148c707b42042667D098"
+  },
+  {
+    "xBribe": "0x3bbcd67ebb4bcaafa1a6acf05e2c76a12fe34400",
+    "wxBribe": "0x29b271CfC5d82567CdB51A281D47105b5eE10d6E"
+  },
+  {
+    "xBribe": "0xa0edf63e29f4761480c3f7d1f8e38426fb134ffa",
+    "wxBribe": "0x7ef58d9CD21ECeeEd1098F607b3012D0D6d2c960"
+  },
+  {
+    "xBribe": "0x9e54d7c86fc4c94ce5d0d9252daee98002c9288f",
+    "wxBribe": "0xEbA77969d8Df5a03E1D36223830364D9847A8314"
+  },
+  {
+    "xBribe": "0x6194479e0b3a7b28aa1120408aad8183cddb2cf5",
+    "wxBribe": "0x071F1a165b7F2490407aa72ec56C5df49B65bE68"
+  },
+  {
+    "xBribe": "0x19c32c392d00dbc2bee970246c05d0d5fcb45d0e",
+    "wxBribe": "0xF93491Ad3AAB02F2D66edD62AA77A1507Be8516C"
+  },
+  {
+    "xBribe": "0x92bffa31eb4f3392ac6e15c256cddb577e495345",
+    "wxBribe": "0xd1b1f5b294432aAa399F9EB3069af13A8D327F45"
+  },
+  {
+    "xBribe": "0x1b54b60f261188ee06c214f11a46888630c6851d",
+    "wxBribe": "0xb964CeDfF0A4c3813bca088198415fC0e75b2e9C"
+  },
+  {
+    "xBribe": "0x682857e6365595297d18fd672cdf48d041632826",
+    "wxBribe": "0x25Dfe44D4D3d1d6ef7850f26D8334e83Df78bbbb"
+  },
+  {
+    "xBribe": "0x5a1e9b31cb553fcd0a7331d6aa3798b926635884",
+    "wxBribe": "0xBD8e65bF62216fE04Bb34E94085C4D887f243BD2"
+  },
+  {
+    "xBribe": "0x6f132d3ab4013b055e6fc347fa812c2075e34ff0",
+    "wxBribe": "0xEeaeE78D1c6200A10D7630D3552fc8864e6C5065"
+  },
+  {
+    "xBribe": "0xafa876c47509f11fe250735e8e94a58565b01aee",
+    "wxBribe": "0xa8e64305242E438C66d7C5A3340Caac0b43Dca69"
+  },
+  {
+    "xBribe": "0xec745a3dcb123ecf0fb80d9260738756cfae1eb5",
+    "wxBribe": "0x43a768e5cCc8E02E57ee275d1FD7E89e6416E58e"
+  },
+  {
+    "xBribe": "0x321da059e587c75cd8b94fc672714ff4142ee606",
+    "wxBribe": "0xdB0418Dde6D37b8BE545BbC0d9f85AE16ceF819d"
+  },
+  {
+    "xBribe": "0x15bb5cb37c00ee511a599bf7f87ba405becf1101",
+    "wxBribe": "0x40C2B5309f34531Ef1832F32dCC9B462bE89F96F"
+  },
+  {
+    "xBribe": "0x6980b6b04c0ced08512a451b2e3c3341849fca1c",
+    "wxBribe": "0x0C118aB683663aD12Ed241433972aAbD94D59B9A"
+  },
+  {
+    "xBribe": "0x12c81cb71463471b8876581596be41e1f5a9ac8e",
+    "wxBribe": "0xfF34BDd9A6521DFd3d1b6Ee89023A0c9aE798b6f"
+  },
+  {
+    "xBribe": "0x2f24c0e92e2e6b87c5db02105f996cd0ec27b217",
+    "wxBribe": "0x65d16E7504f8E4B733338Be4111dDF53e78035B9"
+  },
+  {
+    "xBribe": "0xa9d721e712376843957b2f9a98e0622efdbcdf03",
+    "wxBribe": "0xfA46dbc011d4570da826C5a26d2B2A9705e999B3"
+  },
+  {
+    "xBribe": "0x8f263a9e802444a366f9d5799c1b14911d72f2d6",
+    "wxBribe": "0xCFda7a75549D7917Fd8d3c2C41A4Fbaca7D67973"
+  },
+  {
+    "xBribe": "0x1f551dd33a21d1bb446d99ac77fdf2c8e899ab59",
+    "wxBribe": "0xE11F60daf4A203600eFC3E0f99CBa71037F5E227"
+  },
+  {
+    "xBribe": "0xda9667436fbd2fe8b3928c8fe765ba923ae9c725",
+    "wxBribe": "0x477AefCb3BB9936E22a2D8685a7464A4bB03842c"
+  },
+  {
+    "xBribe": "0x9f94f6b6c27e1d5dd699a5a0b7fc36cde8145486",
+    "wxBribe": "0x35391D1CD59A7704583B2003f36f6E188BeF054e"
+  },
+  {
+    "xBribe": "0x9e5eed80f932128f72b481036d88fe9b795e2db4",
+    "wxBribe": "0x8Ae7d31bda6A2d18182AD57e88Cf053C276D8888"
+  },
+  {
+    "xBribe": "0xbccb1c4e403150c559c0baf29ce254870ed20ece",
+    "wxBribe": "0xD186858f769F2B7f9a637218FDe6330aB8835d10"
+  },
+  {
+    "xBribe": "0x29ebee84f2762572f0f70c29b2549db9e00f3fcf",
+    "wxBribe": "0x4D58E08D6512C938231D899a76E77E3257aBb04D"
+  },
+  {
+    "xBribe": "0x5e1892ac417fc289b46ff9096acabc4977ca2963",
+    "wxBribe": "0x8f00487d3b203b0D7d156b921Ff5A60699E0b595"
+  },
+  {
+    "xBribe": "0x4da5a8f23a0853c8fa61a28db847ba29784ffc70",
+    "wxBribe": "0xA2805AB5f7a9f8b92FD895614909E4bCB6398251"
+  },
+  {
+    "xBribe": "0x8953a564598ffbaa9ce48a4dee5cd63364860883",
+    "wxBribe": "0x25D4fAb3fEA8C82f5bBddfc411A26DA34c25cDA2"
+  },
+  {
+    "xBribe": "0x666a133076b51f6c30f08dd41b9ca1d47cb2c8d5",
+    "wxBribe": "0x7C23c66fF3cEFEd34Ded0C43e01459a33aE73aC1"
+  },
+  {
+    "xBribe": "0x2bc666ab7b925a833aff79ee8ca36f2058727e5c",
+    "wxBribe": "0xc934785E5D2b0f4Fe7D5Bf14c055FD5ccFA38de6"
+  },
+  {
+    "xBribe": "0x177a1f03e43ace55b6af0b9bea7bbd6b4992dc0b",
+    "wxBribe": "0x889cad4d812979bA087200236B8bF4286f3fb7A1"
+  },
+  {
+    "xBribe": "0x6e708e6bd78d14599038b8f945c2f22e478e04f8",
+    "wxBribe": "0x43F9b5127d91302bC97e0b1dc5AFD24Cf1d5B49e"
+  },
+  {
+    "xBribe": "0xf3bddbfc3ce58a9ba6bfb6ecf1b74a6ccdda2e51",
+    "wxBribe": "0x48e5bF9c1Df0cA0275166e87D61eb6D05f9DeD96"
+  },
+  {
+    "xBribe": "0x52591f8ecedd8670371bfda9e30beba03e043a48",
+    "wxBribe": "0x629AE97248324cD3A7A784FE8482dc1c0af3780f"
+  },
+  {
+    "xBribe": "0x4ae8a7351f7e85151f8967454e4258dc0ea5e5ea",
+    "wxBribe": "0x3eFf6dec1E223960A9302ff811026AE93C737498"
+  },
+  {
+    "xBribe": "0xaf159c4b50873f144234c99056ab1052e0ed6d4b",
+    "wxBribe": "0xB1148a9D3AA8bc88750F43d57e95E7F4ab38a882"
+  },
+  {
+    "xBribe": "0x0c94c838cc8751adf9759b6ae9f17429f9fc4654",
+    "wxBribe": "0x5B829545FA5e6a87d019b489ea68161146c10150"
+  },
+  {
+    "xBribe": "0x973beeaa87d24087774020f4e85c01bdb265d7c2",
+    "wxBribe": "0xbA108fa3BAa85182aB1D9D7F8F9f9987064D3705"
+  },
+  {
+    "xBribe": "0x4ef058910ce20c7d70d4dc258055a86a18bb992d",
+    "wxBribe": "0x98A1D0556684da556f02D65FC13e4e394810783b"
+  },
+  {
+    "xBribe": "0xa77d56c79dea07a3a2cfa14ea7a38c64f1805c67",
+    "wxBribe": "0xBCB66B4F6E45b64a85069b9e49831Ea349924E2B"
+  },
+  {
+    "xBribe": "0xc0e634babd2ef06b8a87f9c142b0a7bbea1db0fb",
+    "wxBribe": "0x0af728b800421d7b9eb53b72EFd85cBDE68c51E4"
+  },
+  {
+    "xBribe": "0xe1a47685096ccc47389a4cb9aa885bdbdcf0ce65",
+    "wxBribe": "0x10bD6C3Af2633b92884D8BA74037B223c3fD44A6"
+  },
+  {
+    "xBribe": "0x75c40f7bd67c58a5746377e6455cb414a659bada",
+    "wxBribe": "0xE23A0d5D54eBa62B58c6D3A588052ebB7C721c9D"
+  },
+  {
+    "xBribe": "0xc54ce67d0061f0b9f3db17a4f16e92551237b75f",
+    "wxBribe": "0x8b50D942bb4EFfe0Db32393a141Ea083DB0c4E7f"
+  },
+  {
+    "xBribe": "0x19ae99dc9dbbbc24cce4d2cb5ce20ac18b966de9",
+    "wxBribe": "0x01e551F9775b4BAfFC835372d679ad8688bb39a4"
+  },
+  {
+    "xBribe": "0xaccc672b4f9047ae9950d9af9a48824a626f9b30",
+    "wxBribe": "0xd0775cE5747F32847BB060D5E49B7D176470Bb2c"
+  },
+  {
+    "xBribe": "0xb91dd4a3b464ce8eb329a5cfe367a02cfda6f62c",
+    "wxBribe": "0xBee1E4C4276687A8350C2E44eCBe79d676637f86"
+  },
+  {
+    "xBribe": "0x18260707f20ed3ddd505d618e10660320019e56a",
+    "wxBribe": "0x515C9448a48F7495621A7E2a5e34e7428B0f64b4"
+  },
+  {
+    "xBribe": "0xfbea2d06892a13e860ed67e95454909c20646c7d",
+    "wxBribe": "0xE01A297289f0aE9e745DdDC61F139537ab733710"
+  },
+  {
+    "xBribe": "0xf573ca27b70407ccac0d0e4ad0e36af9895e372b",
+    "wxBribe": "0x332B3e79c377b7b2C77185b72EF3f0E6Abae66d5"
+  },
+  {
+    "xBribe": "0x85849d59434428df75e4bdb9e4556dc7a64b2726",
+    "wxBribe": "0xcc758d84d1903c53Dd115369231927b4893F7c9b"
+  },
+  {
+    "xBribe": "0x2eb772f0e1052aa894fc876ef2a6816e7c886c2b",
+    "wxBribe": "0xc66004bb86D689696b784Ef5774c0f424e0251c3"
+  },
+  {
+    "xBribe": "0xbd5cbca59cd3c29737dc6c23f32978c7418bcf74",
+    "wxBribe": "0x5B5F3a5714ACD9f51605640aa019a4Bf19A4fE29"
+  },
+  {
+    "xBribe": "0x9e7e0d736ac3000ac8af3a1ca95c3c8b93bfaf51",
+    "wxBribe": "0xA3795274e173866B64AFD1123Fce62813076af82"
+  },
+  {
+    "xBribe": "0x7928f8d5c549cc738d278172e82094939258dfd7",
+    "wxBribe": "0xad2b0bf46D2dA4F31E1Acb2bF0a451f99B75e459"
+  },
+  {
+    "xBribe": "0x5d1e0eaf893f8de1bce11e7ee12ae8694c909732",
+    "wxBribe": "0x6F63A93CDcB388eC9d801702d645aFEc9f4389C3"
+  },
+  {
+    "xBribe": "0x9ec018866e037f88feac519e3dbc5bc41f2478ea",
+    "wxBribe": "0x81aee18570C950a0bBb29fc60e59c2e2274504Cb"
+  },
+  {
+    "xBribe": "0x9692bac952abe0012f41dc32c02269c34f2f51e5",
+    "wxBribe": "0xdD5bFE292E377308abB58a211A572BD9732B62b7"
+  },
+  {
+    "xBribe": "0xe58e82a5e9b65246826060c5f7a3d16fbaf21801",
+    "wxBribe": "0x7804AC73081f675053A895a5b7D193Cf4be755F1"
+  },
+  {
+    "xBribe": "0xc0bd63a7f0e08a8d21258134cd85efc96b9ee3e1",
+    "wxBribe": "0x888Dbd0ECf6747CA43F66E4918f9fB4514470A50"
+  },
+  {
+    "xBribe": "0x649266fd114885026a77e6db670c9aba63164066",
+    "wxBribe": "0x7E579e12c8739AE2b36975972dE8f340CA86a674"
+  },
+  {
+    "xBribe": "0x44a76defca88ec215b31bd26626af24acf82a234",
+    "wxBribe": "0x80B787d2b85B1811323E3c19D82BDaB666A38552"
+  },
+  {
+    "xBribe": "0x19ebf3abb233981bb914708f8ef8f45568c3e3a9",
+    "wxBribe": "0x15C8e7855E19552232f873dd0B635665C78e1Ac1"
+  },
+  {
+    "xBribe": "0xf14d7a84c1ceb816ee75d50cd238ee2e9b3fedd5",
+    "wxBribe": "0x1bD70debbde1041BcCf7C2cCac7C210155Bf9CB2"
+  },
+  {
+    "xBribe": "0x6ac3a8117d53e0a9e3dbc3ec99b2da1152b6317a",
+    "wxBribe": "0xe1B742f9c2764D24E4C26207B1aD584f904411F3"
+  },
+  {
+    "xBribe": "0x1f4c4e9f90a362b732ab74bfdf540d5234600b7f",
+    "wxBribe": "0x507B3A59acADafcCB54D37B0d7916a61576d18C2"
+  },
+  {
+    "xBribe": "0xb4da890a552afbf0f536c362ec21ca644a7c4141",
+    "wxBribe": "0x668868c58C8468f6EBF529CEED5793ea3503fDA4"
+  },
+  {
+    "xBribe": "0xe440a5bcfc6ab7d186b24f00293c47d63a11d9f1",
+    "wxBribe": "0x12B3E8Ae89b697714262923050AB745E606B4A07"
+  },
+  {
+    "xBribe": "0x2c7419e22f7633f9a49ec39908dc67bd1c226733",
+    "wxBribe": "0xa7D819770723505faa978d1bFb5CC74435de96C1"
+  },
+  {
+    "xBribe": "0x291e4f612e5c62ee8ebbe3492d7abefbd456319f",
+    "wxBribe": "0x76293A443A808A1Ea93bb673EC3A9533f896df42"
+  },
+  {
+    "xBribe": "0xed4486147c076f1920df72df10d0628ba5d84450",
+    "wxBribe": "0xa69e3E3f606353cD7D4c4B5c977231faB2eE3E15"
+  },
+  {
+    "xBribe": "0x4596ccf78354d2910620d5a0ed56d8d2b52aa2c6",
+    "wxBribe": "0xFaAebb6cf1a1575CB369FCBbEbbc10BA1A23Fb08"
+  },
+  {
+    "xBribe": "0x3c76fc93afe2aa604629af505e84b99e6f213c63",
+    "wxBribe": "0x370bDa9d3589dfe1b7a9B0f4139944691a106bF5"
+  },
+  {
+    "xBribe": "0x42e39300a4b2cb69a372f0e1e1d980ab5c34bb92",
+    "wxBribe": "0x5F8330745436d7c2FEb2DF6A9129C80f7074A946"
+  },
+  {
+    "xBribe": "0x7fd44736fb8f77d0f0e38612afdbf3bfabf9d175",
+    "wxBribe": "0xc1F3C578b8783906672a5D766F188daE4Ceb1e38"
+  },
+  {
+    "xBribe": "0x6060f695c7b41f365da07d86ad9e4539909ad8db",
+    "wxBribe": "0x7862d8203B66c87748e4Bf1c6f897207B2b0cEf8"
+  },
+  {
+    "xBribe": "0x64635cd6af0c4848ab297dddb4b92d74b4316854",
+    "wxBribe": "0x1398A192208B879040AbF5248566833ee24Ba42A"
+  },
+  {
+    "xBribe": "0xe4149ae38ab568d507e387985aaa25e0649e65bd",
+    "wxBribe": "0xe9A339b844A2C0F518185b7e02bF438E575D1d6d"
+  },
+  {
+    "xBribe": "0x9532c300d7e7cffa245ec6ea52a0312ce59747a2",
+    "wxBribe": "0x91D2b4D844C40dc0F15CaCA110c3bF303686Fb54"
+  },
+  {
+    "xBribe": "0x80e90b4d4f152292950b5ce0054ca5c3b02edfda",
+    "wxBribe": "0xA8d28d9023d575A590dBc7a5790A3b4A43308431"
+  },
+  {
+    "xBribe": "0x87f10de37df12381819361e049e827f5aaddce6e",
+    "wxBribe": "0x11c338044E43582cEd93660137307CfAE5B4ba50"
+  },
+  {
+    "xBribe": "0x913698a49c4df255938fc5e7d8f1f9c481079895",
+    "wxBribe": "0xf2BE3CC002Ebc2328a8f21E55b985cBB6508AF21"
+  },
+  {
+    "xBribe": "0x78512216e6b71229475b43bb938ef23dfc3d8bc8",
+    "wxBribe": "0x7eD9084cBACbE1708c7f3A1b25D0DF4430800a1A"
+  },
+  {
+    "xBribe": "0xe0c02b163d13ac79f8e55f2cc3adf86e1fb21619",
+    "wxBribe": "0xbF932569fc7Fe2F7D587bA09aB4f10995b438c0d"
+  },
+  {
+    "xBribe": "0x1111996061a83a250855fc186f787797c6df4bb8",
+    "wxBribe": "0x516521933829079F0D5B1fD3b4288DDba53Be6d2"
+  },
+  {
+    "xBribe": "0x078ffb42dced237c84fc145c8f3330bc17448e4e",
+    "wxBribe": "0x978d8Ed89Eec4EaCb2Cd3C5476C7D56e24f650F5"
+  },
+  {
+    "xBribe": "0x200fe166b0fbd223e713276f1da7aa908981c2e2",
+    "wxBribe": "0xE1bab51C0D1e359fe46287596E5d759B36D43491"
+  },
+  {
+    "xBribe": "0x46fd9ba79c766ffb39f7390dfdbab3b70b3f7715",
+    "wxBribe": "0xe310e5Da1ED2B783b994AfdC5290487eAf9bfd79"
+  },
+  {
+    "xBribe": "0x8745b754b73b77a8053868589e3436464a7a6e2e",
+    "wxBribe": "0xcB4268b70ba2E04d6A5201D769562bF867de7c69"
+  },
+  {
+    "xBribe": "0x526a4280d38a9fc609e77ab1584c690f4bde9fb7",
+    "wxBribe": "0x68a1d9a49b82c5A0a3431aAE6178F89Ad5214730"
+  },
+  {
+    "xBribe": "0x3b277e18d056ddfccbff3db11fddf608cbf2d9c9",
+    "wxBribe": "0x3F604120bf5f2653b6F53f2AbfB40D4cd651f528"
+  }
+]

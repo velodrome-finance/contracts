@@ -1,0 +1,199 @@
+# Velodrome Finance Specification (DRAFT)
+
+## Definitions
+
+- VELO: The native token in the Velodrome ecosystem. It is emitted by the Minter and is an ERC-20 compliant token.
+- Epoch: An epoch is one week in length, beginning at Thursday midnight UTC time.
+- Pool: AMM constant-product implementation similar to Uniswap V2 liquidity pools.
+
+
+## Permissions
+
+The following roles are granted various positions in the protocol:
+- Governor: Governance contract for most issues around governance.
+- EpochGovernor: Epoch governance contract for minter emissions governance. 
+- Emergency Council: A Curve-esque emergency DAO consisting of seven members from both the Velodrome team and prominent figures within the Optimism community. 
+
+## AMM
+
+### Pair
+
+AMM constant-product implementation similar to Uniswap V2 liquidity pools. 
+
+Lightly modified to allow for the following:
+- Support for both stable and volatile pools. Stable pools use a different formula which assumes little to no volatility. The formula used for pricing the assets allows for low slippage even on large traded volumes. Volatile pools use the standard constant product formula. 
+- Custom fees per pool.
+- Modifying a pool's name and symbol (requires `emergencyCouncil` permissions).
+- Delegating the voting power of tokens in the pool (requires `governor` permissions).
+
+### PairFees
+
+Pair helper contract that stores pool trading fees to keep them separate from the liquidity pool. 
+
+
+### VelodromeLibrary 
+
+A helper library containing router related utilities e.g. for price-impact calculations. 
+
+### Router
+
+Standard UniswapV2-like Router interface. Supports multi-pool swaps, lp deposits and withdrawals. 
+
+In addition, the router also supports:
+- Swapping and lp depositing/withdrawing of fee-on-transfer tokens.
+- Zapping in and out of a pool from one of the tokens in the pool.
+- Zapping and staking into a pool from one of the tokens in the pool. 
+
+### FactoryRegistry
+
+Registry of pair, gauge, bribe and managed rewards factories. Contains a default list of factories so swaps via the router will always work. 
+
+
+## Token
+
+### Velo
+
+Standard ERC20 token. Minting permissions granted to both Minter and BlackHole. 
+
+### VotingEscrow
+
+The VotingEscrow contracts allow users to escrow their VELO tokens in an veVELO NFT. The (ERC-721 compliant) NFT has a balance which represents the voting weight of the escrowed tokens, which decays linearly over time. Tokens can be locked for a maximum of four years. veVELO NFT vote weights can be used to vote for pools, which in turn determines the proportion of weekly emissions that go to each pool.
+
+There are three states that veVELO NFTs can be in: `NORMAL`, `LOCKED`, `MANAGED`. `NORMAL` NFTs are the NFTs that users are familiar with. `Managed` NFTs are a new type of NFT (see below). When a user deposits a normal NFT into a managed NFT, it becomes a `LOCKED` NFT. `NORMAL` NFTs are not restricted in functionality whereas `LOCKED` NFTs have extremely restricted functionality and `MANAGED` NFTs have limited functionality. 
+
+Standard Operations:
+All of these operations require ownership of the underlying NFT or tokens being escrowed. 
+- Can create a NFT by escrowing VELO tokens and "locking" them for a time period.
+- Can do anything with the NFT as supported by the ERC-721 interface (requires normal or managed NFT).
+- Can merge one NFT into another (requires normal NFT).
+- Can split a single NFT into two NFTs (requires normal NFT).
+- Can withdraw escrowed VELO tokens once the NFT lock expires (requires normal NFT). 
+- Can add to an existing NFT position by escrowing additional VELO tokens (requires normal or managed NFT).
+- Can increase the lock duration of an NFT (and thus increasing voting power, requires normal or managed NFT).
+- Can deposit into a managed NFT (requires normal NFT).
+- Can withdraw from a managed NFT (requires locked NFT).
+- Can delegate votes for use in Velodrome governance to other addresses based on voting power (requires normal or managed NFT).
+
+In addition, Velodrome supports "managed NFTs" which aggregates NFT voting power whilst perpetually locking the underlying tokens. These NFTs function as a single NFT, with rewards accrued by the NFT going to the manager, who can then distribute (net of fees) to the depositors. 
+- NFTs can exist in one of three states: normal, locked or managed. By default, they are in normal state.
+- Only governance or an allowed manager can create managed NFTs, special NFTs in the managed state.
+- An NFT can deposit into one managed NFT at a time, converting it from normal state to locked state. 
+- The deposited NFT can be withdraw at any time, with its balance restored and locktime extended to the maximum (4 years). Any rebases collected by the manager will be distributed pro-rata to the user. 
+
+### Minter
+
+The minting contract handles emissions for the Velodrome protocol. Emissions start at 15m per epoch, decaying at a rate of 1% per epoch. Rebases (which are sent to `RewardsDistributor`) are added on top of the base emissions to produce the total emission. 
+
+The minter has a modified emissions schedule that turns on once emissions fall below 5m per epoch (~110 epochs). After it turns on, weekly emissions will become a percentage of circulating supply, with the initial percentage starting at 30 basis points (i.e. 0.003). Every epoch, the emissions can be modified by one basis point with a vote conducted by `EpochGovernor`. See `EpochGovernor` for information on the vote. 
+
+## RewardsDistributor
+
+Standard Curve-fee distribution contract, modified for use with rebases. 
+
+## VeArtProxy
+
+ve(NFT) art proxy contract, exists for upgradability purposes.
+
+## Protocol
+
+### Voter
+
+The `Voter` contract is in charge of managing votes, emission distribution as well as gauge creation in the Velodrome ecosystem. Votes can be cast once per epoch via Voter, with the votes earning NFT owners both bribes and fees from the pool they voted for. Voting can take place at any time during the epoch except in the last hour prior to the epoch flip. In this time window, only approved NFTs can vote. 
+
+`Voter` is in charge of creating and mantaining gauge liveness states. Gauges that are killed will not receive emissions. Once per epoch, the corresponding gauge for a pool will receive emissions from `Voter` proportionate to the amount of votes they receive. Voter also contains several utility functions that make claiming rewards or distributing emissions easier. 
+
+Standard Operations:
+- Can vote with an NFT once per epoch.
+- Can reset an NFT any time (you can still vote that week, as long as you did not vote already that epoch).
+- Can poke an NFT. This updates the balance of that NFT in the rewards contracts. 
+- Can bulk claim rewards (i.e. bribes + fees), bribes or fees. 
+- Can distribute that epoch's emissions to pools.
+- Can create gauge and reward contracts for a pool (must be a pool created as a part of Velodrome).
+
+Permissioned Operations:
+- Can set `governor` (requires `governor` permissions).
+- Can set `emergencyCouncil` (requires `emergencyCouncil` permissions).
+- Can whitelist a token for use in bribe contracts (requires `governor` permissions).
+- Can whitelist an NFT for voting in the restricted window prior to epoch flip (requires `governor` permissions).
+- Can create gauge and reward contracts for a pool (pool address can be any address, requires `governor` permissions).
+- Can kill a gauge (requires `emergencyCouncil` permissions).
+- Can revive a gauge (requires `emergencyCouncil` persmissions).
+- Can add emissions to Voter (requires `Minter`).
+
+### Gauge
+
+The gauge contract is a standard rewards contract in charge of distributing emissions to LP depositors. Users that deposit LP tokens can forgo their fee reward in exchange for a proportional distribution of emissions (proportional to their share of LP deposits in the gauge). The fee rewards that the LP depositors forgo are transferred to the `FeeVotingReward` contract. 
+
+Standard Operations:
+- Can deposit LP tokens.
+- Can withdraw LP tokens. 
+- Can get emission rewards for an account. 
+- Can deposit emissions into gauge (requires `Voter`).
+
+### Reward
+
+The base reward contract for all reward contracts. Individual voting balance checkpoints and total supply checkpoints are created in a reward contract whenever a user votes for a pool. Checkpoints do not automatically update when voting power decays (requires `Voter.poke`). Rewards in these contracts are distributed proportionally to an NFT's voting power contribution to a pool. An NFT is distributed rewards in each epoch proportional to its voting power contribution in that epoch. 
+
+### VotingReward
+
+Voting rewards are rewards that accrue to users that vote for a specific pool. They can be broken down into fees and bribes.
+
+### FeesVotingReward
+
+The fee voting reward derives from the fees relinquished by LP depositors depositing their LP token in to the gauge. 
+
+### BribeVotingReward
+
+Bribe voting rewards are externally deposited rewards of whitelisted tokens (see `Voter`) used to incentivize users to vote for a given pool. 
+
+### ManagedReward
+
+Managed rewards are rewards that accrue to users that deposited their voting power into a managed NFT. 
+
+### LockedManagedReward
+
+Locked rewards are VELO token rewards that have been compounded into the managed NFT (usually rebases but can also include non-VELO rewards that have converted to VELO to be compounded into the NFT). This contract functions similar to `PairFees`, as it separates "reward" VELO from the "locked" VotingEscrow VELO. These rewards are not distributed and are returned to `VotingEscrow` when a user withdraws their NFT from a managed NFT. 
+
+### FreeManagedReward
+
+Free rewards are rewards that have been distributed to users depositing into a managed NFT. Any rewards earned by a managed NFT that a manager passes on will be distributed to the users that deposited into the managed NFT.
+
+
+## V2 Migration
+
+### Sink Manager
+
+The sink manager has helper functions that allow users to convert v1 assets to v2 assets. The sink manager also manages a veNFT which it uses to absorb and compound v1 VELO, ensuring that v1 emissions will be locked up over time.
+
+Users can:
+- Convert v1 VELO to v2 VELO.
+- Convert v1 NFTs to an equivalent v2 NFT (lock time will not be exactly the same, but rounded to the nearest week).
+
+v1 VELO that is converted will be added to the sink manager's veNFT, while v1 NFTs will be merged into the sink manager's ve NFT. Any v1 VELO captured via the `SinkConverter` will also be added to the sink manager's veNFT. Rebases and emissions will be compounded weekly to ensure emissions are captured.
+
+### Sink Drain
+
+A "fake" pair used solely for the purpose of collecting gauge emissions from V1. LP tokens for the Sink Drain are minted only to the Sink Manager. 
+
+### Sink Converter
+
+A "fake" pair used to provide liquidity to routers for routes going from v1 VELO to any other token (via v2 pools). Any VELO captured in this way ends up in the `SinkDrain`.
+
+
+## Governance
+
+### VeloGovernor
+
+Standard OpenZeppelin governor for yes/no governance. Voting period is 1 week long. Implicitly assumes block times of 2 seconds on Optimism (post-Optimism Bedrock deployment).
+
+### EpochGovernor
+
+An epoch based governance contract modified lightly from VeloGovernor. It has been modified in such a way that it continues to adhere with OpenZeppelin's `IGovernor` interface. Once tail emissions in the `Minter` are turned on, every epoch a proposal can be created to either increase, hold or decrease the Minter's emission for the following epoch. The winning decision is selected via simple majority (also known as [plurality](https://en.wikipedia.org/wiki/Plurality_(voting))). Implicitly assumes block times of 2 seconds on Optimism (post-Optimism Bedrock deployment).
+
+Notable changes:
+- No quorum.
+- No proposal threshold.
+- Cannot relay via the governor. 
+- Can only make a single proposal per epoch, to adjust the emissions in Minter once tail emissions have turned on. 
+- A proposal created in epoch `n` will be executable in epoch `n+1` once the proposal voting period has gone through.
+- Has three options (similar to Governor Bravo). The winner is selected based on which option has the most absolute votes at the end of the voting period. 
