@@ -1,4 +1,10 @@
-# Velodrome Finance Specification (DRAFT)
+# Velodrome Finance Specification
+
+Velodrome V2 is a partial rewrite and redesign of the Solidly architecture.
+
+Velodrome V2 will be operating in parallel with V1, this is necessary to not
+disrupt any existing operations and allow a smooth transition for existing
+protocol users.
 
 ## Definitions
 
@@ -14,6 +20,13 @@ The following roles are granted various positions in the protocol:
 - EpochGovernor: Epoch governance contract for minter emissions governance. 
 - Emergency Council: A Curve-esque emergency DAO consisting of seven members from both the Velodrome team and prominent figures within the Optimism community. 
 
+## Protocol Upgradability
+
+Velodrome V2 is immutable, just like V1. To allow improving the protocol, V2
+factories are all upgradable. This means we can release new versions of
+factories for our pairs and gauges, and leave it up to the users to decide if
+they want to migrate their positions.
+
 ## AMM
 
 ### Pair
@@ -24,25 +37,19 @@ Lightly modified to allow for the following:
 - Support for both stable and volatile pools. Stable pools use a different formula which assumes little to no volatility. The formula used for pricing the assets allows for low slippage even on large traded volumes. Volatile pools use the standard constant product formula. 
 - Custom fees per pool.
 - Modifying a pool's name and symbol (requires `emergencyCouncil` permissions).
-- Delegating the voting power of tokens in the pool (requires `governor` permissions).
 
 ### PairFees
 
 Pair helper contract that stores pool trading fees to keep them separate from the liquidity pool. 
 
-
-### VelodromeLibrary 
-
-A helper library containing router related utilities e.g. for price-impact calculations. 
-
 ### Router
 
-Standard UniswapV2-like Router interface. Supports multi-pool swaps, lp deposits and withdrawals. 
+Standard UniswapV2-like Router interface. Supports multi-pool swaps, lp deposits and withdrawals. All functions support both V1 / V2 pools EXCEPT `addLiquidity` and `removeLiquidity`. These support V2 pools only.
 
 In addition, the router also supports:
 - Swapping and lp depositing/withdrawing of fee-on-transfer tokens.
-- Zapping in and out of a pool from one of the tokens in the pool.
-- Zapping and staking into a pool from one of the tokens in the pool. 
+- Zapping in and out of a pool from any token (i.e. A->(B,C) or (B,C) -> A). A can be the same as B or C.
+- Zapping and staking into a pool from any token. 
 
 ### FactoryRegistry
 
@@ -53,7 +60,7 @@ Registry of pair, gauge, bribe and managed rewards factories. Contains a default
 
 ### Velo
 
-Standard ERC20 token. Minting permissions granted to both Minter and BlackHole. 
+Standard ERC20 token. Minting permissions granted to both Minter and Sink Manager.
 
 ### VotingEscrow
 
@@ -66,19 +73,20 @@ All of these operations require ownership of the underlying NFT or tokens being 
 - Can create a NFT by escrowing VELO tokens and "locking" them for a time period.
 - Can do anything with the NFT as supported by the ERC-721 interface (requires normal or managed NFT).
 - Can merge one NFT into another (requires normal NFT).
-- Can split a single NFT into two NFTs (requires normal NFT).
+- Can split a single NFT into two NFTs (requires normal NFT). This function is initially permissioned by tokenId (requires team). 
+- Can disable permissions for split (requires team).
 - Can withdraw escrowed VELO tokens once the NFT lock expires (requires normal NFT). 
 - Can add to an existing NFT position by escrowing additional VELO tokens (requires normal or managed NFT).
 - Can increase the lock duration of an NFT (and thus increasing voting power, requires normal or managed NFT).
 - Can deposit into a managed NFT (requires normal NFT).
 - Can withdraw from a managed NFT (requires locked NFT).
-- Can delegate votes for use in Velodrome governance to other addresses based on voting power (requires normal or managed NFT).
+- Can delegate votes for use in Velodrome governance to other addresses based on voting power (requires normal or managed NFT). The balances in this method do not reflect real coins, they are used only for voting.
 
 In addition, Velodrome supports "managed NFTs" which aggregates NFT voting power whilst perpetually locking the underlying tokens. These NFTs function as a single NFT, with rewards accrued by the NFT going to the manager, who can then distribute (net of fees) to the depositors. 
 - NFTs can exist in one of three states: normal, locked or managed. By default, they are in normal state.
 - Only governance or an allowed manager can create managed NFTs, special NFTs in the managed state.
 - An NFT can deposit into one managed NFT at a time, converting it from normal state to locked state. 
-- The deposited NFT can be withdraw at any time, with its balance restored and locktime extended to the maximum (4 years). Any rebases collected by the manager will be distributed pro-rata to the user. 
+- The deposited NFT can be withdrawn at any time, with its balance restored and locktime extended to the maximum (4 years). Any rebases collected by the manager will be distributed pro-rata to the user. 
 
 ### Minter
 
@@ -103,7 +111,7 @@ The `Voter` contract is in charge of managing votes, emission distribution as we
 `Voter` is in charge of creating and mantaining gauge liveness states. Gauges that are killed will not receive emissions. Once per epoch, the corresponding gauge for a pool will receive emissions from `Voter` proportionate to the amount of votes they receive. Voter also contains several utility functions that make claiming rewards or distributing emissions easier. 
 
 Standard Operations:
-- Can vote with an NFT once per epoch.
+- Can vote with an NFT once per epoch. For regular users, the epoch voting window ends an hour prior to epoch flip. Certain privileged NFTs can continue to vote in this one hour window.
 - Can reset an NFT any time (you can still vote that week, as long as you did not vote already that epoch).
 - Can poke an NFT. This updates the balance of that NFT in the rewards contracts. 
 - Can bulk claim rewards (i.e. bribes + fees), bribes or fees. 
@@ -126,6 +134,7 @@ The gauge contract is a standard rewards contract in charge of distributing emis
 
 Standard Operations:
 - Can deposit LP tokens.
+- Can deposit LP tokens for another receipient. 
 - Can withdraw LP tokens. 
 - Can get emission rewards for an account. 
 - Can deposit emissions into gauge (requires `Voter`).
@@ -160,6 +169,22 @@ Free rewards are rewards that have been distributed to users depositing into a m
 
 
 ## V2 Migration
+
+Velodrome V2 is designed to eventually replace the V1 token. To achieve that,
+V2 Minter was designed to respect the schedule of V1 and provide a solution to
+automatically convert the V1 emissions into V2 tokens. This is done by the Sink
+Manager, Drainer and Converter.
+
+For existing LPs/stake the V2 gauges will be provided for V1 pools, allowing
+those users to switch to V2 by simply re-staking their LPs. Any new liquidity
+pools, will be using V2 Pair Factory after the V1 release.
+
+The V2 Router allows swaps between V1 and V2 pairs. Swapping V1 tokens into any
+other tokens on V2 will automatically route through the right pairs seamlessly.
+
+The V2 UI will allow converting an existing V1 veNFT into a V2 veNFT. The user
+will have to reset their V1 veNFT to allow the operation to succeed, but they
+can use the V2 veNFT right away.
 
 ### Sink Manager
 
