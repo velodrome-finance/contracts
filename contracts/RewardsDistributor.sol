@@ -42,10 +42,6 @@ contract RewardsDistributor is IRewardsDistributor {
         require(IERC20(_token).approve(_ve, type(uint256).max));
     }
 
-    function timestamp() external view returns (uint256) {
-        return (block.timestamp / WEEK) * WEEK;
-    }
-
     function _checkpointToken() internal {
         uint256 tokenBalance = IERC20(token).balanceOf(address(this));
         uint256 toDistribute = tokenBalance - tokenLastBalance;
