@@ -1,9 +1,12 @@
 pragma solidity 0.8.13;
 
 interface IRewardsDistributor {
-    function checkpoint_token() external;
+    event CheckpointToken(uint256 time, uint256 tokens);
+    event Claimed(uint256 tokenId, uint256 amount, uint256 claimEpoch, uint256 maxEpoch);
 
-    function checkpoint_total_supply() external;
+    function checkpointToken() external;
+
+    function checkpointTotalSupply() external;
 
     function claimable(uint256 tokenId) external view returns (uint256);
 

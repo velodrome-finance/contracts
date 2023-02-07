@@ -181,7 +181,7 @@ contract MinterTest is BaseTest {
 
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = 1;
-        distributor.claim_many(tokenIds);
+        distributor.claimMany(tokenIds);
 
         skip(1 weeks);
         vm.roll(block.number + 1);
@@ -191,7 +191,7 @@ contract MinterTest is BaseTest {
         skip(1 weeks);
         vm.roll(block.number + 1);
         minter.update_period();
-        distributor.claim_many(tokenIds);
+        distributor.claimMany(tokenIds);
 
         skip(1 weeks);
         vm.roll(block.number + 1);

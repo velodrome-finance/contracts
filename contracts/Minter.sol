@@ -111,8 +111,8 @@ contract Minter is IMinter {
             }
 
             require(velo.transfer(address(rewardsDistributor), _growth));
-            rewardsDistributor.checkpoint_token(); // checkpoint token balance that was just minted in rewards distributor
-            rewardsDistributor.checkpoint_total_supply(); // checkpoint supply
+            rewardsDistributor.checkpointToken(); // checkpoint token balance that was just minted in rewards distributor
+            rewardsDistributor.checkpointTotalSupply(); // checkpoint supply
 
             velo.approve(address(voter), _emission);
             voter.notifyRewardAmount(_emission);
