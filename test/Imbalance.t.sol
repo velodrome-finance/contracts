@@ -43,7 +43,7 @@ contract ImbalanceTest is BaseTest {
 
     function confirmTokensForFraxUsdc() public {
         votingEscrowMerge();
-        deployFactoriesAndRouter();
+        deployFactories();
         VeArtProxy artProxy = new VeArtProxy();
         escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
         voter = new Voter(address(escrow), address(factoryRegistry));

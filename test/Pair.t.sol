@@ -20,7 +20,7 @@ contract PairTest is BaseTest {
         amounts[2] = 1e25;
         mintToken(address(VELO), owners, amounts);
         mintToken(address(LR), owners, amounts);
-        deployFactoriesAndRouter();
+        deployFactories();
 
         VeArtProxy artProxy = new VeArtProxy();
         escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));

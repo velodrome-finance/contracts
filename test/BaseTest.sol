@@ -2,43 +2,14 @@ pragma solidity 0.8.13;
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
-import {ManagedRewardsFactory} from "contracts/factories/ManagedRewardsFactory.sol";
-import {VotingRewardsFactory} from "contracts/factories/VotingRewardsFactory.sol";
-import {GaugeFactory} from "contracts/factories/GaugeFactory.sol";
-import {PairFactory} from "contracts/factories/PairFactory.sol";
-import {IPairFactory} from "contracts/interfaces/IPairFactory.sol";
-import {FactoryRegistry} from "contracts/FactoryRegistry.sol";
-import {Reward} from "contracts/rewards/Reward.sol";
-import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
-import {BribeVotingReward} from "contracts/rewards/BribeVotingReward.sol";
-import {FreeManagedReward} from "contracts/rewards/FreeManagedReward.sol";
-import {LockedManagedReward} from "contracts/rewards/LockedManagedReward.sol";
-import {Gauge} from "contracts/Gauge.sol";
-import {Minter} from "contracts/Minter.sol";
+
+import "./Base.sol";
 import {Pair} from "contracts/Pair.sol";
-import {PairFees} from "contracts/PairFees.sol";
-import {RewardsDistributor} from "contracts/RewardsDistributor.sol";
-import {IRouter, Router} from "contracts/Router.sol";
-import {IVelo, Velo} from "contracts/Velo.sol";
-import {Voter} from "contracts/Voter.sol";
-import {VeArtProxy} from "contracts/VeArtProxy.sol";
-import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
 import {TestOwner} from "utils/TestOwner.sol";
 import {MockERC20} from "utils/MockERC20.sol";
 import {MockWETH} from "utils/MockWETH.sol";
-import {VeloGovernor} from "contracts/VeloGovernor.sol";
-import {EpochGovernor} from "contracts/EpochGovernor.sol";
-import {SinkManager} from "contracts/v1/sink/SinkManager.sol";
-import {SinkDrain} from "contracts/v1/sink/SinkDrain.sol";
-import {SinkConverter} from "contracts/v1/sink/SinkConverter.sol";
-import {IGaugeV1} from "contracts/interfaces/v1/IGaugeV1.sol";
-import {IVoterV1} from "contracts/interfaces/v1/IVoterV1.sol";
-import {IVotingEscrowV1} from "contracts/interfaces/v1/IVotingEscrowV1.sol";
-import {IWETH} from "contracts/interfaces/IWETH.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-abstract contract BaseTest is Test, TestOwner {
+abstract contract BaseTest is Base, TestOwner {
     uint256 constant USDC_1 = 1e6;
     uint256 constant USDC_10K = 1e10; // 1e4 = 10K tokens with 6 decimals
     uint256 constant USDC_100K = 1e11; // 1e5 = 100K tokens with 6 decimals
@@ -67,28 +38,13 @@ abstract contract BaseTest is Test, TestOwner {
     IERC20 USDC;
     IERC20 FRAX;
     IERC20 DAI;
-    IWETH WETH; // Mock WETH token
-    Velo VELO;
+    MockERC20 WEVE;
     MockERC20 LR; // late reward
 
-    /// @dev Core v2 Deployment
-    Router router;
     Pair pair;
     Pair pair2;
     Pair pair3;
 
-    VotingEscrow escrow;
-    PairFactory factory;
-    FactoryRegistry factoryRegistry;
-    GaugeFactory gaugeFactory;
-    VotingRewardsFactory votingRewardsFactory;
-    ManagedRewardsFactory managedRewardsFactory;
-    Voter voter;
-    RewardsDistributor distributor;
-    Minter minter;
-    Gauge gauge;
-    VeloGovernor governor;
-    EpochGovernor epochGovernor;
     FeesVotingReward feesVotingReward;
     BribeVotingReward bribeVotingReward;
     Gauge gauge2;
@@ -98,39 +54,11 @@ abstract contract BaseTest is Test, TestOwner {
     FeesVotingReward feesVotingReward3;
     BribeVotingReward bribeVotingReward3;
 
-    /// @dev v1 contracts for fork testing
-    Velo vVELO;
-    IVotingEscrowV1 vEscrow;
-    IVoterV1 vVoter;
-    PairFactory vFactory;
-    Router vRouter;
-    VeloGovernor vGov;
-    RewardsDistributor vDistributor;
-    Minter vMinter;
-
-    /// @dev additional contracts required by v2
-    SinkManager sinkManager;
-    IGaugeV1 gaugeSinkDrain;
-    SinkDrain sinkDrain;
-    SinkConverter sinkConverter;
-    /// @dev tokenId of nft owned by black hole
-    uint256 ownedTokenId;
-
     uint256 optimismFork;
     /// @dev set OPTIMISM_RPC_URL in .env to run mainnet tests
     string OPTIMISM_RPC_URL = vm.envString("OPTIMISM_RPC_URL");
     /// @dev optionally set FORK_BLOCK_NUMBER in .env / test set up for faster tests / fixed tests
     uint256 BLOCK_NUMBER = vm.envOr("FORK_BLOCK_NUMBER", uint256(0));
-
-    enum Deployment {
-        DEFAULT,
-        FORK,
-        CUSTOM
-    }
-
-    /// @dev Determines whether or not to use the base set up configuration
-    ///      Local v2 deployment used by default
-    Deployment deploymentType;
 
     /// @dev Default set up of local v2 deployment run if Deployment.DEFAULT selected
     ///      Mainnet fork + v2 deployment + sink deployed if Deployment.FORK selected
@@ -140,9 +68,9 @@ abstract contract BaseTest is Test, TestOwner {
     ///      Use a CUSTOM deployment, and call _forkSetUp with the desired block number
     function setUp() public {
         if (deploymentType == Deployment.DEFAULT) {
-            _baseSetUp();
+            _testSetup();
         } else if (deploymentType == Deployment.FORK) {
-            _forkSetUp(BLOCK_NUMBER);
+            _forkSetup();
         }
         _setUp();
     }
@@ -150,9 +78,21 @@ abstract contract BaseTest is Test, TestOwner {
     /// @dev Implement this if you want a custom configured deployment
     function _setUp() public virtual {}
 
-    /// @dev Default configuration (local v2 deployment)
-    ///      Note that most permissions are given to owner
-    function _baseSetUp() public {
+    /// @dev Note that most permissions are given to owner
+    function _testSetup() public {
+        _testSetupBefore();
+        _coreSetup();
+        _testSetupAfter();
+    }
+
+    function _forkSetup() public {
+        _forkSetupBefore();
+        _testSetup();
+        _sinkSetup();
+        _forkSetupAfter();
+    }
+
+    function _testSetupBefore() public {
         // seed set up with initial time
         skip(1 weeks);
 
@@ -167,38 +107,23 @@ abstract contract BaseTest is Test, TestOwner {
         amounts[4] = TOKEN_10M;
         mintToken(address(VELO), owners, amounts);
         mintToken(address(LR), owners, amounts);
-        deployFactoriesAndRouter();
 
-        VeArtProxy artProxy = new VeArtProxy();
-        escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
+        tokens.push(address(USDC));
+        tokens.push(address(FRAX));
+        tokens.push(address(DAI));
+        tokens.push(address(VELO));
+        tokens.push(address(LR));
+        tokens.push(address(WETH));
 
-        // deployVoter()
-        voter = new Voter(address(escrow), address(factoryRegistry));
+        allowedManager = address(owner);
+        team = address(owner);
+    }
 
-        router = new Router(address(factory), address(voter), address(WETH));
+    function _testSetupAfter() public {
+        assertEq(factory.allPairsLength(), 0);
+        assertEq(router.defaultFactory(), address(factory));
+
         deployPairWithOwner(address(owner));
-
-        escrow.setVoter(address(voter));
-        escrow.setAllowedManager(address(owner));
-
-        // deployMinter()
-        distributor = new RewardsDistributor(address(escrow));
-        minter = new Minter(address(voter), address(escrow), address(distributor));
-        distributor.setDepositor(address(minter));
-        VELO.setMinter(address(minter));
-        address[] memory tokens = new address[](6);
-        tokens[0] = address(USDC);
-        tokens[1] = address(FRAX);
-        tokens[2] = address(DAI);
-        tokens[3] = address(VELO);
-        tokens[4] = address(LR);
-        tokens[5] = address(WETH);
-        voter.initialize(tokens, address(minter));
-
-        governor = new VeloGovernor(escrow);
-        epochGovernor = new EpochGovernor(escrow, address(minter));
-        voter.setEpochGovernor(address(epochGovernor));
-        voter.setGovernor(address(governor));
 
         // USDC - FRAX stable
         gauge = Gauge(
@@ -256,27 +181,18 @@ abstract contract BaseTest is Test, TestOwner {
         vm.label(address(bribeVotingReward3), "Bribe Voting Reward 3");
     }
 
-    function _forkSetUp(uint256 _blockNumber) public {
-        if (_blockNumber != 0) {
-            optimismFork = vm.createFork(OPTIMISM_RPC_URL, _blockNumber);
+    function _forkSetupBefore() public {
+        if (BLOCK_NUMBER != 0) {
+            optimismFork = vm.createFork(OPTIMISM_RPC_URL, BLOCK_NUMBER);
         } else {
             optimismFork = vm.createFork(OPTIMISM_RPC_URL);
         }
         vm.selectFork(optimismFork);
 
-        // fetch version one from mainnet fork
-        vVELO = Velo(0x3c8B650257cFb5f272f799F5e2b4e65093a11a05);
-        vEscrow = IVotingEscrowV1(0x9c7305eb78a432ced5C4D14Cac27E8Ed569A2e26);
-        vVoter = IVoterV1(0x09236cfF45047DBee6B921e00704bed6D6B8Cf7e);
-        vFactory = PairFactory(0x25CbdDb98b35ab1FF77413456B31EC81A6B6B746);
-        vRouter = Router(payable(0x9c12939390052919aF3155f41Bf4160Fd3666A6f));
-        vGov = VeloGovernor(payable(0x64DD805aa894dc001f8505e000c7535179D96C9E));
-        vDistributor = RewardsDistributor(0x5d5Bea9f0Fc13d967511668a60a3369fD53F784F);
-        vMinter = Minter(0x3460Dc71A8863710D1C907B8d9D5DBC053a4102d);
+        _loadV1("Optimism");
+    }
 
-        // set up v2 core deployment on fork
-        _baseSetUp();
-
+    function _forkSetupAfter() public {
         // mint v1 velo so we can create v1 nfts for testing
         uint256[] memory amounts = new uint256[](5);
         amounts[0] = 1e25;
@@ -286,19 +202,11 @@ abstract contract BaseTest is Test, TestOwner {
         amounts[4] = 1e25;
         mintToken(address(vVELO), owners, amounts);
 
-        // layer on additional contracts required by v2 deployment
-        sinkManager = new SinkManager(
-            address(vVoter),
-            address(vVELO),
-            address(VELO),
-            address(vEscrow),
-            address(escrow),
-            address(vDistributor)
-        );
-
         // create v1 nft to seed black hole
         vVELO.approve(address(vEscrow), TOKEN_1 / 4);
         ownedTokenId = vEscrow.create_lock(TOKEN_1 / 4, 4 * 365 * 86400);
+
+        // Set ownedTokenId
         vEscrow.safeTransferFrom(address(owner), address(sinkManager), ownedTokenId);
         sinkManager.setOwnedTokenId(ownedTokenId);
 
@@ -306,19 +214,11 @@ abstract contract BaseTest is Test, TestOwner {
         skip(1);
         vm.roll(block.number + 1);
 
-        // Setup SinkDrain
-        sinkDrain = new SinkDrain(address(sinkManager));
+        // Set SinkDrain
         assertEq(sinkDrain.totalSupply(), sinkDrain.balanceOf(address(sinkManager)));
         vm.prank(vVoter.governor());
         gaugeSinkDrain = IGaugeV1(vVoter.createGauge(address(sinkDrain)));
         sinkManager.setupSinkDrain(address(gaugeSinkDrain));
-
-        // Setup SinkConverter
-        sinkConverter = new SinkConverter(address(sinkManager));
-        factory.setSinkConverter(address(sinkConverter), address(vVELO), address(VELO));
-
-        vm.prank(address(owner));
-        VELO.setSinkManager(address(sinkManager));
 
         vm.label(address(vVELO), "V1 Velo");
         vm.label(address(vEscrow), "V1 Voting Escrow");
@@ -393,23 +293,6 @@ abstract contract BaseTest is Test, TestOwner {
         for (uint256 i = 0; i < _accounts.length; i++) {
             vm.deal(_accounts[i], _amounts[i]);
         }
-    }
-
-    function deployFactoriesAndRouter() public {
-        factory = new PairFactory();
-        assertEq(factory.allPairsLength(), 0);
-        factory.setFee(true, 1); // set fee back to 0.01% for old tests
-        factory.setFee(false, 1);
-
-        votingRewardsFactory = new VotingRewardsFactory();
-        gaugeFactory = new GaugeFactory();
-        managedRewardsFactory = new ManagedRewardsFactory();
-        factoryRegistry = new FactoryRegistry(
-            address(factory),
-            address(votingRewardsFactory),
-            address(gaugeFactory),
-            address(managedRewardsFactory)
-        );
     }
 
     function deployPairWithOwner(address _owner) public {

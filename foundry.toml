@@ -1,3 +1,13 @@
 [profile.default]
 src = 'contracts'
 out = 'artifacts'
+
+fs_permissions = [{ access = "read", path = "./"}]
+
+[rpc_endpoints]
+goerli = "${GOERLI_RPC_URL}"
+optimism = "${OPTIMISM_RPC_URL}"
+
+[etherscan]
+goerli = { key = "${OP_SCAN_API_KEY}" }
+optimism = { key = "${OP_SCAN_API_KEY}" }

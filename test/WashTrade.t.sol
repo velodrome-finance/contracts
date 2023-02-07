@@ -47,7 +47,7 @@ contract WashTradeTest is BaseTest {
 
     function confirmTokensForFraxUsdc() public {
         votingEscrowMerge();
-        deployFactoriesAndRouter();
+        deployFactories();
         voter = new Voter(address(escrow), address(factoryRegistry));
         router = new Router(address(factory), address(voter), address(WETH));
         deployPairWithOwner(address(owner));
