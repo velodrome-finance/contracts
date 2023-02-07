@@ -323,7 +323,6 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(post - pre, 749095297039448925);
     }
 
-    // TODO: add test where transfer + votes / withdrawals work
     function testTransferManagedNftFlow() public {
         // epoch 0:
         // create managed nft

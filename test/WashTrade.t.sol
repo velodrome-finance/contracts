@@ -50,7 +50,6 @@ contract WashTradeTest is BaseTest {
         deployFactoriesAndRouter();
         voter = new Voter(address(escrow), address(factoryRegistry));
         router = new Router(address(factory), address(voter), address(WETH));
-        lib = new VelodromeLibrary(address(router));
         deployPairWithOwner(address(owner));
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));

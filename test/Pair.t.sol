@@ -26,7 +26,6 @@ contract PairTest is BaseTest {
         escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
         voter = new Voter(address(escrow), address(factoryRegistry));
         router = new Router(address(factory), address(voter), address(WETH));
-        lib = new VelodromeLibrary(address(router));
 
         escrow.setVoter(address(voter));
         factory.setVoter(address(voter));

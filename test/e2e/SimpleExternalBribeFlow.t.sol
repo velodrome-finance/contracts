@@ -418,8 +418,6 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         assertEq(post - pre, expected);
         expected = (USDC_1 * 8 + USDC_1 * 9 + USDC_1 * 10) / 2;
         assertEq(usdcPost - usdcPre, expected);
-
-        // TODO: add zero supply test
     }
 
     function testCanClaimRewardAfterTransferWhileVoted() public {

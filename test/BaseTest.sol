@@ -20,7 +20,6 @@ import {PairFees} from "contracts/PairFees.sol";
 import {RewardsDistributor} from "contracts/RewardsDistributor.sol";
 import {IRouter, Router} from "contracts/Router.sol";
 import {IVelo, Velo} from "contracts/Velo.sol";
-import {VelodromeLibrary} from "contracts/VelodromeLibrary.sol";
 import {Voter} from "contracts/Voter.sol";
 import {VeArtProxy} from "contracts/VeArtProxy.sol";
 import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
@@ -74,7 +73,6 @@ abstract contract BaseTest is Test, TestOwner {
 
     /// @dev Core v2 Deployment
     Router router;
-    VelodromeLibrary lib;
     Pair pair;
     Pair pair2;
     Pair pair3;
@@ -130,10 +128,6 @@ abstract contract BaseTest is Test, TestOwner {
         CUSTOM
     }
 
-    /// Misc Testing TODO:
-    // - [ ] create e2e tests for gauge (low priority)
-    // - [ ] proper tests for rewards distributor, incl with managed nfts
-
     /// @dev Determines whether or not to use the base set up configuration
     ///      Local v2 deployment used by default
     Deployment deploymentType;
@@ -182,7 +176,6 @@ abstract contract BaseTest is Test, TestOwner {
         voter = new Voter(address(escrow), address(factoryRegistry));
 
         router = new Router(address(factory), address(voter), address(WETH));
-        lib = new VelodromeLibrary(address(router));
         deployPairWithOwner(address(owner));
 
         escrow.setVoter(address(voter));
@@ -241,7 +234,6 @@ abstract contract BaseTest is Test, TestOwner {
         vm.label(address(factory), "Pair Factory");
         vm.label(address(factoryRegistry), "Factory Registry");
         vm.label(address(router), "Router");
-        vm.label(address(lib), "Velodrome Library");
         vm.label(address(pair), "Pair");
         vm.label(address(pair2), "Pair 2");
         vm.label(address(pair3), "Pair 3");
@@ -435,7 +427,6 @@ abstract contract BaseTest is Test, TestOwner {
         address address3 = factory.getPair(address(FRAX), address(DAI), true);
         pair3 = Pair(address3);
         assertEq(address(pair), create2address);
-        assertGt(lib.getAmountOut(USDC_1, address(USDC), address(FRAX), true, address(factory)), 0);
     }
 
     /// @dev Helper utility to forward time to next week
