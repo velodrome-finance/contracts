@@ -85,6 +85,7 @@ All of these operations require ownership of the underlying NFT or tokens being 
 In addition, Velodrome supports "managed NFTs" which aggregates NFT voting power whilst perpetually locking the underlying tokens. These NFTs function as a single NFT, with rewards accrued by the NFT going to the manager, who can then distribute (net of fees) to the depositors. 
 - NFTs can exist in one of three states: normal, locked or managed. By default, they are in normal state.
 - Only governance or an allowed manager can create managed NFTs, special NFTs in the managed state.
+- Managed NFTs can be deactivated, a process which prevents the NFT from voting and from receiving deposits (requires emergency council).
 - An NFT can deposit into one managed NFT at a time, converting it from normal state to locked state. 
 - The deposited NFT can be withdrawn at any time, with its balance restored and locktime extended to the maximum (4 years). Any rebases collected by the manager will be distributed pro-rata to the user. 
 
