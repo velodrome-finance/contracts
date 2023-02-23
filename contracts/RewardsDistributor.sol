@@ -5,6 +5,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /*
  * @title Curve Fee Distribution modified for ve(3,3) emissions
@@ -12,6 +13,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
  * @license MIT
  */
 contract RewardsDistributor is IRewardsDistributor {
+    using SafeERC20 for IERC20;
     uint256 constant WEEK = 7 * 86400;
 
     uint256 public startTime;
@@ -22,7 +24,7 @@ contract RewardsDistributor is IRewardsDistributor {
     uint256 public lastTokenTime;
     uint256[1000000000000000] public tokensPerWeek;
 
-    address public ve;
+    address public immutable ve;
     address public token;
     uint256 public tokenLastBalance;
 
@@ -269,19 +271,27 @@ contract RewardsDistributor is IRewardsDistributor {
     }
 
     function claim(uint256 _tokenId) external returns (uint256) {
-        if (block.timestamp >= timeCursor) _checkpointTotalSupply();
+        uint256 _timestamp = block.timestamp;
+        if (_timestamp >= timeCursor) _checkpointTotalSupply();
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
         uint256 amount = _claim(_tokenId, _lastTokenTime);
         if (amount != 0) {
-            IVotingEscrow(ve).depositFor(_tokenId, amount);
+            IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve).locked(_tokenId);
+            if (_timestamp > _locked.end) {
+                address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
+                IERC20(token).safeTransfer(_owner, amount);
+            } else {
+                IVotingEscrow(ve).depositFor(_tokenId, amount);
+            }
             tokenLastBalance -= amount;
         }
         return amount;
     }
 
     function claimMany(uint256[] memory _tokenIds) external returns (bool) {
-        if (block.timestamp >= timeCursor) _checkpointTotalSupply();
+        uint256 _timestamp = block.timestamp;
+        if (_timestamp >= timeCursor) _checkpointTotalSupply();
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
         uint256 total = 0;
@@ -291,7 +301,13 @@ contract RewardsDistributor is IRewardsDistributor {
             if (_tokenId == 0) break;
             uint256 amount = _claim(_tokenId, _lastTokenTime);
             if (amount != 0) {
-                IVotingEscrow(ve).depositFor(_tokenId, amount);
+                IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve).locked(_tokenId);
+                if (_timestamp > _locked.end) {
+                    address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
+                    IERC20(token).safeTransfer(_owner, amount);
+                } else {
+                    IVotingEscrow(ve).depositFor(_tokenId, amount);
+                }
                 total += amount;
             }
         }

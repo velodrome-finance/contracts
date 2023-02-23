@@ -97,7 +97,7 @@ The minter has a modified emissions schedule that turns on once emissions fall b
 
 ## RewardsDistributor
 
-Standard Curve-fee distribution contract, modified for use with rebases. 
+Standard Curve-fee distribution contract, modified for use with rebases. Rebase claims against expired veNFTs will be distributed as unlocked VELO to the owner of the veNFT.
 
 ## VeArtProxy
 
