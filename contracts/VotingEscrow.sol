@@ -128,6 +128,7 @@ contract VotingEscrow is IVotingEscrow, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function depositManaged(uint256 _tokenId, uint256 _mTokenId) external nonReentrant {
+        require(_isApprovedOrOwner(_msgSender(), _tokenId), "VotingEscrow: not owner or approved");
         require(escrowType[_mTokenId] == EscrowType.MANAGED, "VotingEscrow: can only deposit into managed nft");
         require(!deactivated[_mTokenId], "VotingEscrow: inactive managed nft");
         require(escrowType[_tokenId] == EscrowType.NORMAL, "VotingEscrow: can only deposit normal nft");

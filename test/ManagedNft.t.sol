@@ -53,6 +53,17 @@ contract ManagedNftTest is BaseTest {
         assertFalse(escrow.deactivated(mTokenId));
     }
 
+    function testCannotDepositManagedIfNotOwnerOrApproved() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        escrow.createManagedLockFor(address(owner));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, 4 * 365 * 86400);
+
+        vm.prank(address(owner2));
+        vm.expectRevert("VotingEscrow: not owner or approved");
+        escrow.depositManaged(tokenId, mTokenId);
+    }
+
     function testDepositManaged() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
 
