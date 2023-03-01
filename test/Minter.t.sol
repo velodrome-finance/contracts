@@ -79,32 +79,88 @@ contract MinterTest is BaseTest {
         minter.nudge();
     }
 
-    function testCannotNudgeAboveMaximumRate() public {
-        /// put in tail emission schedule
+    function testNudgeWhenAtUpperBoundary() public {
         stdstore.target(address(minter)).sig("tail()").checked_write(true);
         stdstore.target(address(minter)).sig("tailEmissionRate()").checked_write(100);
+        /// note: see IGovernor.ProposalState for enum numbering
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(4); // nudge up
         assertEq(minter.tailEmissionRate(), 100);
 
-        vm.expectRevert("Minter: cannot nudge above maximum rate");
         vm.prank(address(epochGovernor));
         minter.nudge();
+
+        assertEq(minter.tailEmissionRate(), 100); // nudge above at maximum does nothing
+
+        skipToNextEpoch(1);
+        minter.update_period();
+
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(3); // nudge down
+
+        vm.expectEmit(true, false, false, true, address(minter));
+        emit Nudge(1209600, 100, 99);
+        vm.prank(address(epochGovernor));
+        minter.nudge();
+
+        assertEq(minter.tailEmissionRate(), 99);
+        assertTrue(minter.proposals(1209600));
+
+        skipToNextEpoch(1);
+        minter.update_period();
+
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(6); // no nudge
+
+        vm.expectEmit(true, false, false, true, address(minter));
+        emit Nudge(1814400, 99, 99);
+        vm.prank(address(epochGovernor));
+        minter.nudge();
+
+        assertEq(minter.tailEmissionRate(), 99);
+        assertTrue(minter.proposals(1814400));
     }
 
-    function testCannotNudgeBelowMinimumRate() public {
-        /// put in tail emission schedule
+    function testNudgeWhenAtLowerBoundary() public {
         stdstore.target(address(minter)).sig("tail()").checked_write(true);
         stdstore.target(address(minter)).sig("tailEmissionRate()").checked_write(1);
+        /// note: see IGovernor.ProposalState for enum numbering
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(3); // nudge down
         assertEq(minter.tailEmissionRate(), 1);
 
-        vm.expectRevert("Minter: cannot nudge below minimum rate");
         vm.prank(address(epochGovernor));
         minter.nudge();
+
+        assertEq(minter.tailEmissionRate(), 1); // nudge below at minimum does nothing
+
+        skipToNextEpoch(1);
+        minter.update_period();
+
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(4); // nudge up
+
+        vm.expectEmit(true, false, false, true, address(minter));
+        emit Nudge(1209600, 1, 2);
+        vm.prank(address(epochGovernor));
+        minter.nudge();
+
+        assertEq(minter.tailEmissionRate(), 2);
+        assertTrue(minter.proposals(1209600));
+
+        skipToNextEpoch(1);
+        minter.update_period();
+
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(6); // no nudge
+
+        vm.expectEmit(true, false, false, true, address(minter));
+        emit Nudge(1814400, 2, 2);
+        vm.prank(address(epochGovernor));
+        minter.nudge();
+
+        assertEq(minter.tailEmissionRate(), 2);
+        assertTrue(minter.proposals(1814400));
     }
 
     function testNudge() public {
         stdstore.target(address(minter)).sig("tail()").checked_write(true);
         /// note: see IGovernor.ProposalState for enum numbering
-        stdstore.target(address(epochGovernor)).sig("result()").checked_write(4);
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(4); // nudge up
         assertEq(minter.tailEmissionRate(), 30);
 
         vm.expectEmit(true, false, false, true, address(minter));
@@ -118,7 +174,7 @@ contract MinterTest is BaseTest {
         skipToNextEpoch(1);
         minter.update_period();
 
-        stdstore.target(address(epochGovernor)).sig("result()").checked_write(3);
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(3); // nudge down
 
         vm.expectEmit(true, false, false, true, address(minter));
         emit Nudge(1209600, 31, 30);
@@ -131,7 +187,7 @@ contract MinterTest is BaseTest {
         skipToNextEpoch(1);
         minter.update_period();
 
-        stdstore.target(address(epochGovernor)).sig("result()").checked_write(6);
+        stdstore.target(address(epochGovernor)).sig("result()").checked_write(6); // no nudge
 
         vm.expectEmit(true, false, false, true, address(minter));
         emit Nudge(1814400, 30, 30);

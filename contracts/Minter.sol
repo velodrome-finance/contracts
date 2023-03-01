@@ -72,11 +72,13 @@ contract Minter is IMinter {
         uint256 _newRate = tailEmissionRate;
         uint256 _oldRate = _newRate;
         uint256 _nudge = NUDGE;
-        require(_oldRate + _nudge <= MAXIMUM_TAIL_RATE, "Minter: cannot nudge above maximum rate");
-        require(_oldRate - _nudge >= MINIMUM_TAIL_RATE, "Minter: cannot nudge below minimum rate");
 
         if (_state != IEpochGovernor.ProposalState.Expired) {
-            _newRate = _state == IEpochGovernor.ProposalState.Succeeded ? _newRate + _nudge : _newRate - _nudge;
+            if (_state == IEpochGovernor.ProposalState.Succeeded) {
+                _newRate = _oldRate + NUDGE > MAXIMUM_TAIL_RATE ? MAXIMUM_TAIL_RATE : _oldRate + NUDGE;
+            } else {
+                _newRate = _oldRate - NUDGE < MINIMUM_TAIL_RATE ? MINIMUM_TAIL_RATE : _oldRate - NUDGE;
+            }
             tailEmissionRate = _newRate;
         }
         proposals[_period] = true;
