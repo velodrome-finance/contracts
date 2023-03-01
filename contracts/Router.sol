@@ -605,8 +605,9 @@ contract Router is IRouter, Context {
         if (stake) {
             liquidity = IPair(pair).mint(address(this));
             address gauge = IVoter(voter).gauges(pair);
-            _approve(address(pair), address(gauge));
+            IERC20(pair).safeApprove(address(gauge), liquidity);
             IGauge(gauge).deposit(liquidity, to);
+            IERC20(pair).safeApprove(address(gauge), 0);
         } else {
             liquidity = IPair(pair).mint(to);
         }
@@ -653,8 +654,6 @@ contract Router is IRouter, Context {
         bool stable = zapInPair.stable;
         address factory = zapInPair.factory;
         address pair = pairFor(tokenA, tokenB, stable, factory);
-        _approve(tokenA, pair);
-        _approve(tokenB, pair);
         (uint256 amountA, uint256 amountB) = _quoteZapLiquidity(
             tokenA,
             tokenB,
@@ -709,7 +708,6 @@ contract Router is IRouter, Context {
         uint256[] memory amounts = getAmountsOut(amountIn, routes);
         require(amounts[amounts.length - 1] >= amountOutMin, "Router: insufficient output amount for zap");
         address pair = pairFor(routes[0].from, routes[0].to, routes[0].stable, routes[0].factory);
-        _approve(tokenIn, pair);
         _safeTransfer(tokenIn, pair, amountIn);
         _swap(amounts, routes, address(this));
     }
@@ -819,14 +817,6 @@ contract Router is IRouter, Context {
         if (routesB.length > 0) {
             amounts = getAmountsOut(amountBMin, routesB);
             amountOutMinB = amounts[amounts.length - 1];
-        }
-    }
-
-    /// @dev Approve spending for pair contract if not already approved.
-    ///      Spender will ALWAYS be a pair contract.
-    function _approve(address token, address spender) internal {
-        if (IERC20(token).allowance(address(this), spender) == 0) {
-            IERC20(token).approve(spender, type(uint256).max);
         }
     }
 

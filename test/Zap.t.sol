@@ -148,6 +148,7 @@ contract ZapTest is BaseTest {
         assertGt(sGauge.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(FRAX.balanceOf(address(_router)), 0);
+        assertEq(sPair.allowance(address(_router), address(sGauge)), 0);
         vm.stopPrank();
     }
 
@@ -324,6 +325,7 @@ contract ZapTest is BaseTest {
         assertGt(vGauge.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
+        assertEq(vPair.allowance(address(_router), address(vGauge)), 0);
         vm.stopPrank();
     }
 
@@ -379,6 +381,7 @@ contract ZapTest is BaseTest {
         assertGt(vGauge.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
+        assertEq(vPair.allowance(address(_router), address(vGauge)), 0);
         vm.stopPrank();
     }
 
