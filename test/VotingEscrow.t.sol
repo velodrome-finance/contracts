@@ -26,7 +26,7 @@ contract VotingEscrowTest is BaseTest {
         );
         assertEq(escrow.numCheckpoints(address(owner)), 1);
         IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(address(owner), 0);
-        assertEq(checkpoint.fromBlock, 0);
+        assertEq(checkpoint.fromTimestamp, 0);
         assertEq(checkpoint.tokenIds.length, 1);
         assertEq(checkpoint.tokenIds[0], 1);
         uint256[] memory tokenIds = escrow.getTokenIdsAt(address(owner), 1);
@@ -533,6 +533,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testDelegateVotingPower() public {
+        // timestamp: 604801
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -542,16 +543,16 @@ contract VotingEscrowTest is BaseTest {
         escrow.createLock(TOKEN_1, MAXTIME);
         vm.stopPrank();
 
-        skipAndRoll(1);
+        skipAndRoll(1); // 604802
 
-        uint256[] memory tokenIds = escrow.getTokenIdsAt(address(owner), 1);
+        uint256[] memory tokenIds = escrow.getTokenIdsAt(address(owner), 604801);
         assertEq(tokenIds.length, 1);
         assertEq(tokenIds[0], 1);
 
         vm.prank(address(owner2));
         escrow.delegate(address(owner));
 
-        tokenIds = escrow.getTokenIdsAt(address(owner), 2);
+        tokenIds = escrow.getTokenIdsAt(address(owner), 604802);
         assertEq(tokenIds.length, 3);
         assertEq(tokenIds[0], 1);
         assertEq(tokenIds[1], 2);
@@ -559,7 +560,7 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.delegates(address(owner2)), address(owner));
         assertEq(escrow.getVotes(address(owner)), 2991780773997936030);
         assertEq(escrow.getVotes(address(owner2)), 0);
-        assertEq(escrow.getPastTotalSupply(2), 2991780773997936030);
+        assertEq(escrow.getPastTotalSupply(604802), 2991780773997936030);
     }
 
     function testMergeAutoDelegatesVotingPower() public {

@@ -16,9 +16,9 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
         uint256 blk; // block
     }
 
-    /// @notice A checkpoint for marking delegated tokenIds from a given block
+    /// @notice A checkpoint for marking delegated tokenIds from a given timestamp
     struct Checkpoint {
-        uint256 fromBlock;
+        uint256 fromTimestamp;
         uint256[] tokenIds;
     }
 

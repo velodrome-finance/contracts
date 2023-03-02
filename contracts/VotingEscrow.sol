@@ -7,6 +7,7 @@ import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IReward} from "./interfaces/IReward.sol";
 import {IFactoryRegistry} from "./interfaces/IFactoryRegistry.sol";
 import {IManagedRewardsFactory} from "./interfaces/IManagedRewardsFactory.sol";
@@ -20,7 +21,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @author Modified from Curve (https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy)
 /// @author Modified from Nouns DAO (https://github.com/withtally/my-nft-dao-project/blob/main/contracts/ERC721Checkpointable.sol)
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
-contract VotingEscrow is IVotingEscrow, Context, ReentrancyGuard {
+contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
@@ -1038,7 +1039,7 @@ contract VotingEscrow is IVotingEscrow, Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVotingEscrow
-    function totalSupplyAt(uint256 _block) public view returns (uint256) {
+    function totalSupplyAt(uint256 _block) external view returns (uint256) {
         assert(_block <= block.number);
         uint256 _epoch = epoch;
         uint256 targetEpoch = _findBlockEpoch(_block, _epoch);
@@ -1248,24 +1249,24 @@ contract VotingEscrow is IVotingEscrow, Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVotingEscrow
-    function getTokenIdsAt(address account, uint256 blockNumber) public view returns (uint256[] memory _tokenIds) {
-        uint32 _checkIndex = getPastVotesIndex(account, blockNumber);
+    function getTokenIdsAt(address account, uint256 timestamp) external view returns (uint256[] memory _tokenIds) {
+        uint32 _checkIndex = getPastVotesIndex(account, timestamp);
         _tokenIds = _checkpoints[account][_checkIndex].tokenIds;
     }
 
     /// @inheritdoc IVotingEscrow
-    function getPastVotesIndex(address account, uint256 blockNumber) public view returns (uint32) {
+    function getPastVotesIndex(address account, uint256 timestamp) public view returns (uint32) {
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
             return 0;
         }
         // First check most recent balance
-        if (_checkpoints[account][nCheckpoints - 1].fromBlock <= blockNumber) {
+        if (_checkpoints[account][nCheckpoints - 1].fromTimestamp <= timestamp) {
             return (nCheckpoints - 1);
         }
 
         // Next check implicit zero balance
-        if (_checkpoints[account][0].fromBlock > blockNumber) {
+        if (_checkpoints[account][0].fromTimestamp > timestamp) {
             return 0;
         }
 
@@ -1274,9 +1275,9 @@ contract VotingEscrow is IVotingEscrow, Context, ReentrancyGuard {
         while (upper > lower) {
             uint32 center = upper - (upper - lower) / 2; // ceil, avoiding overflow
             Checkpoint storage cp = _checkpoints[account][center];
-            if (cp.fromBlock == blockNumber) {
+            if (cp.fromTimestamp == timestamp) {
                 return center;
-            } else if (cp.fromBlock < blockNumber) {
+            } else if (cp.fromTimestamp < timestamp) {
                 lower = center;
             } else {
                 upper = center - 1;
@@ -1286,21 +1287,21 @@ contract VotingEscrow is IVotingEscrow, Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVotingEscrow
-    function getPastVotes(address account, uint256 blockNumber) public view returns (uint256) {
-        uint32 _checkIndex = getPastVotesIndex(account, blockNumber);
+    function getPastVotes(address account, uint256 timestamp) external view returns (uint256) {
+        uint32 _checkIndex = getPastVotesIndex(account, timestamp);
         // Sum votes
         uint256[] storage _tokenIds = _checkpoints[account][_checkIndex].tokenIds;
         uint256 votes = 0;
         for (uint256 i = 0; i < _tokenIds.length; i++) {
             uint256 tId = _tokenIds[i];
-            votes = votes + _balanceOfAtNFT(tId, blockNumber);
+            votes = votes + _balanceOfNFT(tId, timestamp);
         }
         return votes;
     }
 
     /// @inheritdoc IVotingEscrow
-    function getPastTotalSupply(uint256 blockNumber) external view returns (uint256) {
-        return totalSupplyAt(blockNumber);
+    function getPastTotalSupply(uint256 timestamp) external view returns (uint256) {
+        return totalSupplyAtT(timestamp);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -1352,10 +1353,10 @@ contract VotingEscrow is IVotingEscrow, Context, ReentrancyGuard {
     }
 
     function _findWhatCheckpointToWrite(address account) internal view returns (uint32) {
-        uint256 _blockNumber = block.number;
+        uint256 _timestamp = block.timestamp;
         uint32 _nCheckPoints = numCheckpoints[account];
 
-        if (_nCheckPoints > 0 && _checkpoints[account][_nCheckPoints - 1].fromBlock == _blockNumber) {
+        if (_nCheckPoints > 0 && _checkpoints[account][_nCheckPoints - 1].fromTimestamp == _timestamp) {
             return _nCheckPoints - 1;
         } else {
             return _nCheckPoints;
@@ -1451,5 +1452,13 @@ contract VotingEscrow is IVotingEscrow, Context, ReentrancyGuard {
         require(nonce == nonces[signatory]++, "VotingEscrow: invalid nonce");
         require(block.timestamp <= expiry, "VotingEscrow: signature expired");
         return _delegate(signatory, delegatee);
+    }
+
+    function clock() external view returns (uint48) {
+        return uint48(block.timestamp);
+    }
+
+    function CLOCK_MODE() external view returns (string memory) {
+        return "mode=timestamp";
     }
 }

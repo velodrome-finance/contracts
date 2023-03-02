@@ -1,15 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+// OpenZeppelin Contracts (last updated v4.6.0) (governance/extensions/GovernorVotes.sol)
 
+pragma solidity ^0.8.0;
+
+import {VetoGovernor} from "./VetoGovernor.sol";
 import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
-import {GovernorSimple} from "./GovernorSimple.sol";
 
 /**
- * @dev Modified lightly from OpenZeppelin's GovernorVotes
+ * @dev OpenZeppelin's GovernorVotes using VetoGovernor
  */
-abstract contract GovernorSimpleVotes is GovernorSimple {
+abstract contract VetoGovernorVotes is VetoGovernor {
     IERC5805 public immutable token;
 
     constructor(IVotes tokenAddress) {

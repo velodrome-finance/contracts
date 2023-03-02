@@ -67,6 +67,7 @@ contract Deploy is Base {
         factory.setPauser(team);
         voter.setEmergencyCouncil(team);
         governor.setTeam(team);
+        governor.setVetoer(team); // note: requires acceptance
 
         // Deploy all pairs and gauges
         Pair[] memory pairs = abi.decode(json.parseRaw(".pairs"), (Pair[]));

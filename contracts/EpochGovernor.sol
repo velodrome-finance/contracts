@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
 
+import {IGovernor} from "./governance/IGovernor.sol";
 import {GovernorSimple} from "./governance/GovernorSimple.sol";
 import {GovernorCountingMajority} from "./governance/GovernorCountingMajority.sol";
 import {GovernorSimpleVotes} from "./governance/GovernorSimpleVotes.sol";
@@ -18,10 +18,10 @@ contract EpochGovernor is GovernorSimple, GovernorCountingMajority, GovernorSimp
     constructor(IVotes _ve, address _minter) GovernorSimple("Epoch Governor", _minter) GovernorSimpleVotes(_ve) {}
 
     function votingDelay() public pure override(IGovernor) returns (uint256) {
-        return 100;
+        return (15 minutes);
     }
 
     function votingPeriod() public pure override(IGovernor) returns (uint256) {
-        return (1 weeks) / 2; // assumes block every two seconds
+        return (1 weeks);
     }
 }

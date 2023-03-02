@@ -1,7 +1,10 @@
 pragma solidity 0.8.13;
 
 import "./BaseTest.sol";
-import {IGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
+import {IGovernor as OZGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
+import {IGovernor} from "contracts/governance/IGovernor.sol";
 
 contract EpochGovernorTest is BaseTest {
     using stdStorage for StdStorage;
@@ -30,6 +33,35 @@ contract EpochGovernorTest is BaseTest {
         vm.roll(block.number + 1);
 
         stdstore.target(address(minter)).sig("tail()").checked_write(true);
+    }
+
+    function testSupportInterfacesExcludesCancel() public {
+        assertTrue(
+            epochGovernor.supportsInterface(
+                type(IGovernor).interfaceId ^
+                    type(IERC6372).interfaceId ^
+                    IGovernor.castVoteWithReasonAndParams.selector ^
+                    IGovernor.castVoteWithReasonAndParamsBySig.selector ^
+                    IGovernor.getVotesWithParams.selector
+            )
+        );
+        assertTrue(epochGovernor.supportsInterface(type(IGovernor).interfaceId ^ type(IERC6372).interfaceId));
+        assertTrue(epochGovernor.supportsInterface(type(IERC1155Receiver).interfaceId));
+        assertFalse(
+            epochGovernor.supportsInterface(
+                type(IGovernor).interfaceId ^ type(IERC6372).interfaceId ^ OZGovernor.cancel.selector
+            )
+        );
+        assertFalse(
+            epochGovernor.supportsInterface(
+                type(IGovernor).interfaceId ^
+                    type(IERC6372).interfaceId ^
+                    OZGovernor.cancel.selector ^
+                    IGovernor.castVoteWithReasonAndParams.selector ^
+                    IGovernor.castVoteWithReasonAndParamsBySig.selector ^
+                    IGovernor.getVotesWithParams.selector
+            )
+        );
     }
 
     function testCannotProposeWithOtherTarget() public {
@@ -72,11 +104,12 @@ contract EpochGovernorTest is BaseTest {
         // propose
         uint256 pid = epochGovernor.propose(targets, values, calldatas, description);
 
+        skipAndRoll(15 minutes);
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
 
-        vm.roll(block.number + 101);
+        skipAndRoll(1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
 
         // vote
@@ -87,8 +120,7 @@ contract EpochGovernorTest is BaseTest {
         epochGovernor.castVote(pid, 2); // abstain: 1
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
 
-        skipToNextEpoch(1);
-        vm.roll(block.number + 302400); // voting period
+        skipAndRoll(1 weeks);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Succeeded));
 
         // execute
@@ -113,11 +145,12 @@ contract EpochGovernorTest is BaseTest {
         // propose
         uint256 pid = epochGovernor.propose(targets, values, calldatas, description);
 
+        skipAndRoll(15 minutes);
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
 
-        vm.roll(block.number + 101);
+        skipAndRoll(1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
 
         // vote
@@ -128,8 +161,7 @@ contract EpochGovernorTest is BaseTest {
         epochGovernor.castVote(pid, 2); // abstain: 1
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
 
-        skipToNextEpoch(1);
-        vm.roll(block.number + 302400); // voting period
+        skipAndRoll(1 weeks);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Defeated));
 
         // execute
@@ -154,11 +186,12 @@ contract EpochGovernorTest is BaseTest {
         // propose
         uint256 pid = epochGovernor.propose(targets, values, calldatas, description);
 
+        skipAndRoll(15 minutes);
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
 
-        vm.roll(block.number + 101);
+        skipAndRoll(1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
 
         // vote
@@ -171,8 +204,7 @@ contract EpochGovernorTest is BaseTest {
         // tie: should still expire
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
 
-        skipToNextEpoch(1);
-        vm.roll(block.number + 302400); // voting period
+        skipAndRoll(1 weeks);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Expired));
 
         // execute

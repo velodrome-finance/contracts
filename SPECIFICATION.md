@@ -64,7 +64,7 @@ Standard ERC20 token. Minting permissions granted to both Minter and Sink Manage
 
 ### VotingEscrow
 
-The VotingEscrow contracts allow users to escrow their VELO tokens in an veVELO NFT. The (ERC-721 compliant) NFT has a balance which represents the voting weight of the escrowed tokens, which decays linearly over time. Tokens can be locked for a maximum of four years. veVELO NFT vote weights can be used to vote for pools, which in turn determines the proportion of weekly emissions that go to each pool.
+The VotingEscrow contracts allow users to escrow their VELO tokens in an veVELO NFT. The (ERC-721 compliant) NFT has a balance which represents the voting weight of the escrowed tokens, which decays linearly over time. Tokens can be locked for a maximum of four years. veVELO NFT vote weights can be used to vote for pools, which in turn determines the proportion of weekly emissions that go to each pool. VotingEscrow's clock mode is timestamps (see EIP-6372).
 
 There are three states that veVELO NFTs can be in: `NORMAL`, `LOCKED`, `MANAGED`. `NORMAL` NFTs are the NFTs that users are familiar with. `Managed` NFTs are a new type of NFT (see below). When a user deposits a normal NFT into a managed NFT, it becomes a `LOCKED` NFT. `NORMAL` NFTs are not restricted in functionality whereas `LOCKED` NFTs have extremely restricted functionality and `MANAGED` NFTs have limited functionality. 
 
@@ -210,11 +210,14 @@ A "fake" pair used to provide liquidity to routers for routes going from v1 VELO
 
 ### VeloGovernor
 
-Standard OpenZeppelin governor for yes/no governance. Voting period is 1 week long. Implicitly assumes block times of 2 seconds on Optimism (post-Optimism Bedrock deployment).
+Lightly modified from OpenZeppelin's Governor contract. Enables governance by using 
+timestamp based voting power from VotingEscrow NFTs. Includes support for vetoing of 
+proposals as mitigation against 51% attacks. `proposalHash` has also been modified to 
+include the `proposer` to prevent griefing attacks from proposal frontrunning. 
 
 ### EpochGovernor
 
-An epoch based governance contract modified lightly from VeloGovernor. It has been modified in such a way that it continues to adhere with OpenZeppelin's `IGovernor` interface. Once tail emissions in the `Minter` are turned on, every epoch a proposal can be created to either increase, hold or decrease the Minter's emission for the following epoch. The winning decision is selected via simple majority (also known as [plurality](https://en.wikipedia.org/wiki/Plurality_(voting))). Implicitly assumes block times of 2 seconds on Optimism (post-Optimism Bedrock deployment).
+An epoch based governance contract modified lightly from OpenZeppelin's Governor contract to exclude the `cancel` function. It has been modified in such a way that it continues to adhere with OpenZeppelin's `IGovernor` interface. Once tail emissions in the `Minter` are turned on, every epoch a proposal can be created to either increase, hold or decrease the Minter's emission for the following epoch. The winning decision is selected via simple majority (also known as [plurality](https://en.wikipedia.org/wiki/Plurality_(voting))). Also uses timestamp based voting power from VotingEscrow NFTs. 
 
 Notable changes:
 - No quorum.
@@ -223,3 +226,4 @@ Notable changes:
 - Can only make a single proposal per epoch, to adjust the emissions in Minter once tail emissions have turned on. 
 - A proposal created in epoch `n` will be executable in epoch `n+1` once the proposal voting period has gone through.
 - Has three options (similar to Governor Bravo). The winner is selected based on which option has the most absolute votes at the end of the voting period. 
+- The proposer of a proposal cannot cancel the proposal.
