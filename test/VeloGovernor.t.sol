@@ -148,7 +148,7 @@ contract VeloGovernorTest is BaseTest {
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
         bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, address(USDC));
+        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, address(USDC), true);
         string memory description = "Whitelist USDC";
 
         vm.prank(address(owner3));
@@ -165,7 +165,7 @@ contract VeloGovernorTest is BaseTest {
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
         bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, token);
+        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, token, true);
         string memory description = "Whitelist Token";
 
         // propose
@@ -198,7 +198,7 @@ contract VeloGovernorTest is BaseTest {
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
         bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, token);
+        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, token, true);
         string memory description = "Whitelist Token";
 
         // propose

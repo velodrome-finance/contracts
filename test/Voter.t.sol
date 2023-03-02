@@ -4,6 +4,8 @@ pragma solidity 0.8.13;
 import "./BaseTest.sol";
 
 contract VoterTest is BaseTest {
+    event WhitelistToken(address indexed whitelister, address indexed token, bool _bool);
+    event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool _bool);
     event Voted(address indexed voter, uint256 tokenId, uint256 weight);
     event NotifyReward(address indexed sender, address indexed reward, uint256 amount);
 
@@ -240,7 +242,7 @@ contract VoterTest is BaseTest {
         voter.vote(1, pools, weights);
 
         vm.prank(address(governor));
-        voter.whitelistNFT(1);
+        voter.whitelistNFT(1, true);
         voter.vote(1, pools, weights);
 
         skip(1); /// new epoch
@@ -288,51 +290,71 @@ contract VoterTest is BaseTest {
     function testCannotWhitelistIfNotGovernor() public {
         vm.prank(address(owner2));
         vm.expectRevert("Voter: not governor");
-        voter.whitelistToken(address(WETH));
+        voter.whitelistToken(address(WETH), true);
     }
 
-    function testCannotWhitelistAlreadyWhitelistedToken() public {
-        assertTrue(voter.isWhitelistedToken(address(VELO)));
-
-        vm.expectRevert("Voter: token already whitelisted");
-        vm.prank(address(governor));
-        voter.whitelistToken(address(VELO));
-    }
-
-    function testWhitelistToken() public {
+    function testWhitelistTokenWithTrueExpectWhitelisted() public {
         address token = address(new MockERC20("TEST", "TEST", 18));
 
         assertFalse(voter.isWhitelistedToken(token));
 
         vm.prank(address(governor));
-        voter.whitelistToken(token);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit WhitelistToken(address(governor), address(token), true);
+        voter.whitelistToken(token, true);
 
         assertTrue(voter.isWhitelistedToken(token));
+    }
+
+    function testWhitelistTokenWithFalseExpectUnwhitelisted() public {
+        address token = address(new MockERC20("TEST", "TEST", 18));
+
+        assertFalse(voter.isWhitelistedToken(token));
+
+        vm.prank(address(governor));
+        voter.whitelistToken(token, true);
+
+        assertTrue(voter.isWhitelistedToken(token));
+
+        vm.prank(address(governor));
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit WhitelistToken(address(governor), address(token), false);
+        voter.whitelistToken(token, false);
+
+        assertFalse(voter.isWhitelistedToken(token));
     }
 
     function testCannotwhitelistNFTIfNotGovernor() public {
         vm.prank(address(owner2));
         vm.expectRevert("Voter: not governor");
-        voter.whitelistNFT(1);
+        voter.whitelistNFT(1, true);
     }
 
-    function testCannotWhitelistAlreadyWhitelistedVoter() public {
-        vm.prank(address(governor));
-        voter.whitelistNFT(1);
-        assertTrue(voter.isWhitelistedNFT(1));
-
-        vm.expectRevert("Voter: nft already whitelisted");
-        vm.prank(address(governor));
-        voter.whitelistNFT(1);
-    }
-
-    function testwhitelistNFT() public {
+    function testwhitelistNFTWithTrueExpectWhitelisted() public {
         assertFalse(voter.isWhitelistedNFT(1));
 
         vm.prank(address(governor));
-        voter.whitelistNFT(1);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit WhitelistNFT(address(governor), 1, true);
+        voter.whitelistNFT(1, true);
 
         assertTrue(voter.isWhitelistedNFT(1));
+    }
+
+    function testwhitelistNFTWithFalseExpectUnwhitelisted() public {
+        assertFalse(voter.isWhitelistedNFT(1));
+
+        vm.prank(address(governor));
+        voter.whitelistNFT(1, true);
+
+        assertTrue(voter.isWhitelistedNFT(1));
+
+        vm.prank(address(governor));
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit WhitelistNFT(address(governor), 1, false);
+        voter.whitelistNFT(1, false);
+
+        assertFalse(voter.isWhitelistedNFT(1));
     }
 
     function testKillGauge() public {

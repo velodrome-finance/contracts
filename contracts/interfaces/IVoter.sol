@@ -16,8 +16,8 @@ interface IVoter {
     event Withdraw(address indexed lp, address indexed gauge, uint256 amount);
     event NotifyReward(address indexed sender, address indexed reward, uint256 amount);
     event DistributeReward(address indexed sender, address indexed gauge, uint256 amount);
-    event WhitelistToken(address indexed whitelister, address indexed token);
-    event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId);
+    event WhitelistToken(address indexed whitelister, address indexed token, bool _bool);
+    event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool _bool);
 
     function gauges(address pool) external view returns (address);
 
@@ -120,16 +120,18 @@ interface IVoter {
     /// @param _emergencyCouncil .
     function setEmergencyCouncil(address _emergencyCouncil) external;
 
-    /// @notice Whitelist token for use in bribes.
+    /// @notice Whitelist (or unwhitelist) token for use in bribes.
     /// @dev Throws if not called by governor.
     /// @param _token .
-    function whitelistToken(address _token) external;
+    /// @param _bool .
+    function whitelistToken(address _token, bool _bool) external;
 
-    /// @notice Whitelist token id for voting in last hour prior to epoch flip.
+    /// @notice Whitelist (or unwhitelist) token id for voting in last hour prior to epoch flip.
     /// @dev Throws if not called by governor.
     ///      Throws if already whitelisted.
     /// @param _tokenId .
-    function whitelistNFT(uint256 _tokenId) external;
+    /// @param _bool .
+    function whitelistNFT(uint256 _tokenId, bool _bool) external;
 
     /// @notice Create a new gauge (unpermissioned).
     /// @dev Governor can create a new gauge for a pair with any address.

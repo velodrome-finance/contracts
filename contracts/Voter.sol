@@ -96,7 +96,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     function initialize(address[] memory _tokens, address _minter) external {
         require(_msgSender() == minter);
         for (uint256 i = 0; i < _tokens.length; i++) {
-            _whitelistToken(_tokens[i]);
+            _whitelistToken(_tokens[i], true);
         }
         minter = _minter;
     }
@@ -224,24 +224,22 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVoter
-    function whitelistToken(address _token) external {
+    function whitelistToken(address _token, bool _bool) external {
         require(_msgSender() == governor, "Voter: not governor");
-        _whitelistToken(_token);
+        _whitelistToken(_token, _bool);
     }
 
-    function _whitelistToken(address _token) internal {
-        require(!isWhitelistedToken[_token], "Voter: token already whitelisted");
-        isWhitelistedToken[_token] = true;
-        emit WhitelistToken(_msgSender(), _token);
+    function _whitelistToken(address _token, bool _bool) internal {
+        isWhitelistedToken[_token] = _bool;
+        emit WhitelistToken(_msgSender(), _token, _bool);
     }
 
     /// @inheritdoc IVoter
-    function whitelistNFT(uint256 _tokenId) external {
+    function whitelistNFT(uint256 _tokenId, bool _bool) external {
         address _sender = _msgSender();
         require(_sender == governor, "Voter: not governor");
-        require(!isWhitelistedNFT[_tokenId], "Voter: nft already whitelisted");
-        isWhitelistedNFT[_tokenId] = true;
-        emit WhitelistNFT(_sender, _tokenId);
+        isWhitelistedNFT[_tokenId] = _bool;
+        emit WhitelistNFT(_sender, _tokenId, _bool);
     }
 
     /// @inheritdoc IVoter
