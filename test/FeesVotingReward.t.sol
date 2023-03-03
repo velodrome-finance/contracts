@@ -1242,6 +1242,33 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(post - pre, TOKEN_1);
     }
 
+    function testCannotGetRewardInSameEpochAsVoteWithFuzz(uint256 ts) public {
+        skipToNextEpoch(0);
+
+        // rewards
+        address[] memory rewards = new address[](1);
+        rewards[0] = address(FRAX);
+
+        // set up votes
+        address[] memory pools = new address[](1);
+        uint256[] memory weights = new uint256[](1);
+        pools[0] = address(pair);
+        weights[0] = 10000;
+
+        // create a bribe for pair in epoch 0
+        FRAX.approve(address(feesVotingReward), TOKEN_1);
+        feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+
+        // vote for pair in epoch 0
+        voter.vote(1, pools, weights);
+        vm.prank(address(owner2));
+
+        ts = bound(ts, 0, 1 weeks - 1);
+        skipAndRoll(ts);
+
+        assertEq(feesVotingReward.earned(address(FRAX), 1), 0);
+    }
+
     function testCannotGetRewardIfNotVoterOrOwnerOrApproved() public {
         skip(1 weeks / 2);
 
@@ -1565,6 +1592,36 @@ contract FeesVotingRewardTest is BaseTest {
         feesVotingReward.getReward(1, rewards);
         post = USDC.balanceOf(address(owner));
         assertEq(post - pre, USDC_1 / 2);
+    }
+
+    function testGetRewardWithVoteOnFlip() public {
+        skip(1 weeks / 2);
+
+        // create a LR bribe
+        FRAX.approve(address(feesVotingReward), TOKEN_1);
+        feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+
+        // vote
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+        voter.vote(1, pools, weights);
+
+        // rewards
+        address[] memory rewards = new address[](1);
+        rewards[0] = address(FRAX);
+
+        skipToNextEpoch(0); // on epoch flip
+
+        vm.prank(address(owner2));
+        voter.vote(2, pools, weights);
+
+        uint256 pre = FRAX.balanceOf(address(owner));
+        vm.prank(address(voter));
+        feesVotingReward.getReward(1, rewards);
+        uint256 post = FRAX.balanceOf(address(owner));
+        assertEq(post - pre, TOKEN_1);
     }
 
     function testCannotNotifyRewardWithZeroAmount() public {

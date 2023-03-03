@@ -66,7 +66,7 @@ Standard ERC20 token. Minting permissions granted to both Minter and Sink Manage
 
 The VotingEscrow contracts allow users to escrow their VELO tokens in an veVELO NFT. The (ERC-721 compliant) NFT has a balance which represents the voting weight of the escrowed tokens, which decays linearly over time. Tokens can be locked for a maximum of four years. veVELO NFT vote weights can be used to vote for pools, which in turn determines the proportion of weekly emissions that go to each pool. VotingEscrow's clock mode is timestamps (see EIP-6372).
 
-There are three states that veVELO NFTs can be in: `NORMAL`, `LOCKED`, `MANAGED`. `NORMAL` NFTs are the NFTs that users are familiar with. `Managed` NFTs are a new type of NFT (see below). When a user deposits a normal NFT into a managed NFT, it becomes a `LOCKED` NFT. `NORMAL` NFTs are not restricted in functionality whereas `LOCKED` NFTs have extremely restricted functionality and `MANAGED` NFTs have limited functionality. 
+There are three states that veVELO NFTs can be in: `NORMAL`, `LOCKED`, `MANAGED`. `NORMAL` NFTs are the NFTs that users are familiar with. `Managed` NFTs are a new type of NFT (see below). When a user deposits a normal NFT into a managed NFT, it becomes a `LOCKED` NFT. `NORMAL` NFTs are not restricted in functionality whereas `LOCKED` NFTs have extremely restricted functionality and `MANAGED` NFTs have limited functionality. Managed NFT deposits and withdrawals are handled by `Voter`.
 
 Standard Operations:
 All of these operations require ownership of the underlying NFT or tokens being escrowed. 
@@ -78,8 +78,6 @@ All of these operations require ownership of the underlying NFT or tokens being 
 - Can withdraw escrowed VELO tokens once the NFT lock expires (requires normal NFT). 
 - Can add to an existing NFT position by escrowing additional VELO tokens (requires normal or managed NFT).
 - Can increase the lock duration of an NFT (and thus increasing voting power, requires normal or managed NFT).
-- Can deposit into a managed NFT (requires normal NFT).
-- Can withdraw from a managed NFT (requires locked NFT).
 - Can delegate votes for use in Velodrome governance to other addresses based on voting power (requires normal or managed NFT). The balances in this method do not reflect real coins, they are used only for voting.
 
 In addition, Velodrome supports "managed NFTs" which aggregates NFT voting power whilst perpetually locking the underlying tokens. These NFTs function as a single NFT, with rewards accrued by the NFT going to the manager, who can then distribute (net of fees) to the depositors. 
@@ -109,11 +107,15 @@ ve(NFT) art proxy contract, exists for upgradability purposes.
 
 The `Voter` contract is in charge of managing votes, emission distribution as well as gauge creation in the Velodrome ecosystem. Votes can be cast once per epoch via Voter, with the votes earning NFT owners both bribes and fees from the pool they voted for. Voting can take place at any time during the epoch except in the last hour prior to the epoch flip. In this time window, only approved NFTs can vote. 
 
+In addition, `Voter` also provides support for depositing and withdrawing from managed NFTs. Voting and depositing into a managed NFT are mutually exclusive (i.e. you may only do one per epoch). In the same way you cannot reset your NFT in the same epoch that you vote, you also cannot withdraw your NFT in the same epoch that you deposited. For more information about managed NFTs, see the `VotingEscrow` section. 
+
 `Voter` is in charge of creating and mantaining gauge liveness states. Gauges that are killed will not receive emissions. Once per epoch, the corresponding gauge for a pool will receive emissions from `Voter` proportionate to the amount of votes they receive. Voter also contains several utility functions that make claiming rewards or distributing emissions easier. 
 
 Standard Operations:
-- Can vote with an NFT once per epoch. For regular users, the epoch voting window ends an hour prior to epoch flip. Certain privileged NFTs can continue to vote in this one hour window.
-- Can reset an NFT any time (you can still vote that week, as long as you did not vote already that epoch).
+- Can vote with an NFT once per epoch if you did not deposit into a managed NFT that epoch. For regular users, the epoch voting window ends an hour prior to epoch flip. Certain privileged NFTs can continue to vote in this one hour window.
+- Can deposit into a managed NFT once per epoch if you did not vote that epoch (requires normal NFT). Depositing into a managed NFT is disabled in the last hour prior to epoch flip.
+- Can reset an NFT at any time after the epoch that you voted. Your ability to vote or deposit into a managed NFT in the week that you reset is preserved.
+- Can withdraw from a managed NFT at any time after the epoch that you deposited into a managed NFT (requires locked NFT). Your ability to vote or deposit into a managed NFT is preserved. 
 - Can poke an NFT. This updates the balance of that NFT in the rewards contracts. 
 - Can bulk claim rewards (i.e. bribes + fees), bribes or fees. 
 - Can distribute that epoch's emissions to pools.

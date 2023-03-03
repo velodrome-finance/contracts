@@ -80,7 +80,10 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     modifier onlyNewEpoch(uint256 _tokenId) {
         // ensure new epoch since last vote
-        require((block.timestamp / DURATION) * DURATION > lastVoted[_tokenId], "Voter: already voted this epoch");
+        require(
+            (block.timestamp / DURATION) * DURATION > lastVoted[_tokenId],
+            "Voter: already voted or deposited this epoch"
+        );
         _;
     }
 
@@ -221,6 +224,23 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         }
         lastVoted[_tokenId] = _timestamp;
         _vote(_tokenId, _poolVote, _weights);
+    }
+
+    /// @inheritdoc IVoter
+    function depositManaged(uint256 _tokenId, uint256 _mTokenId) external nonReentrant onlyNewEpoch(_tokenId) {
+        address _sender = _msgSender();
+        require(IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId), "Voter: not owner or approved");
+        require(!IVotingEscrow(ve).deactivated(_mTokenId), "Voter: inactive managed nft");
+        uint256 _timestamp = block.timestamp;
+        require(_timestamp <= VelodromeTimeLibrary.epochEnd(_timestamp), "Voter: cannot deposit in window");
+        lastVoted[_tokenId] = _timestamp;
+        IVotingEscrow(ve).depositManaged(_tokenId, _mTokenId);
+    }
+
+    /// @inheritdoc IVoter
+    function withdrawManaged(uint256 _tokenId) external nonReentrant onlyNewEpoch(_tokenId) {
+        require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId), "Voter: not owner or approved");
+        IVotingEscrow(ve).withdrawManaged(_tokenId);
     }
 
     /// @inheritdoc IVoter

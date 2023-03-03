@@ -129,14 +129,14 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     ///      Throws if deposit nft is managed.
     ///      Throws if recipient nft is not managed.
     ///      Throws if deposit nft is already locked.
-    ///      Throws if deposit nft already voted.
+    ///      Throws if not called by voter.
     /// @param _tokenId tokenId of NFT being deposited
     /// @param _mTokenId tokenId of managed NFT that will receive the deposit
     function depositManaged(uint256 _tokenId, uint256 _mTokenId) external;
 
     /// @notice Retrieves locked rewards and withdraws balance from managed nft.
     /// @dev Throws if NFT not locked.
-    ///      Throws if msg.sender not approved or owner.
+    ///      Throws if not called by voter.
     /// @param _tokenId tokenId of NFT being deposited.
     function withdrawManaged(uint256 _tokenId) external;
 

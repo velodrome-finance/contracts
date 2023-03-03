@@ -77,7 +77,7 @@ contract FreeManagedRewardTest is BaseTest {
         LR.approve(address(freeManagedReward), reward);
         freeManagedReward.notifyRewardAmount((address(LR)), reward);
 
-        escrow.depositManaged(1, mTokenId);
+        voter.depositManaged(1, mTokenId);
 
         skipToNextEpoch(1);
 
@@ -99,7 +99,7 @@ contract FreeManagedRewardTest is BaseTest {
         LR.approve(address(freeManagedReward), reward);
         freeManagedReward.notifyRewardAmount((address(LR)), reward);
 
-        escrow.depositManaged(1, mTokenId);
+        voter.depositManaged(1, mTokenId);
 
         skipToNextEpoch(1);
 
@@ -112,5 +112,33 @@ contract FreeManagedRewardTest is BaseTest {
         uint256 post = LR.balanceOf(address(owner));
 
         assertEq(post - pre, TOKEN_1);
+    }
+
+    function testGetRewardWithDepositOnEpochFlip() public {
+        skip(1 weeks / 2);
+
+        uint256 reward = TOKEN_1;
+
+        // create a bribe
+        LR.approve(address(freeManagedReward), reward);
+        freeManagedReward.notifyRewardAmount((address(LR)), reward);
+
+        voter.depositManaged(1, mTokenId);
+
+        skipToNextEpoch(0);
+
+        vm.prank(address(owner2));
+        voter.depositManaged(2, mTokenId); // deposit on flip has no impact
+
+        // rewards
+        address[] memory rewards = new address[](1);
+        rewards[0] = address(LR);
+
+        uint256 pre = LR.balanceOf(address(owner));
+        freeManagedReward.getReward(1, rewards);
+        uint256 post = LR.balanceOf(address(owner));
+
+        assertEq(post - pre, TOKEN_1);
+        assertEq(freeManagedReward.earned(address(VELO), 2), 0);
     }
 }

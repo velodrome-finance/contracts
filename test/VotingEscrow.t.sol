@@ -407,7 +407,7 @@ contract VotingEscrowTest is BaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, 4 * 365 * 86400);
-        escrow.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId, mTokenId);
 
         vm.expectRevert("VotingEscrow: split requires normal nft");
         escrow.split(mTokenId, TOKEN_1 / 2);

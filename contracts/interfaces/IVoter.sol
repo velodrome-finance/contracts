@@ -61,7 +61,7 @@ interface IVoter {
     function poke(uint256 _tokenId) external;
 
     /// @notice Called by users to vote for pools. Votes distributed proportionally based on weights.
-    ///         Can only vote once per epoch.
+    ///         Can only vote or deposit into a managed NFT once per epoch.
     /// @dev Weights are distributed proportional to the sum of the weights in the array.
     ///      Throws if length of _poolVote and _weights do not match.
     /// @param _tokenId     Id of veNFT you are voting with.
@@ -75,9 +75,22 @@ interface IVoter {
 
     /// @notice Called by users to reset voting state. Required if you wish to make changes to
     ///         veNFT state (e.g. merge, split, deposit into managed etc).
-    ///         Can vote again after reset as long as you did not reset in the same week that you voted.
+    ///         Cannot reset in the same epoch that you voted in.
+    ///         Can vote or deposit into a managed NFT again after reset.
     /// @param _tokenId Id of veNFT you are reseting.
     function reset(uint256 _tokenId) external;
+
+    /// @notice Called by users to deposit into a managed NFT.
+    ///         Can only vote or deposit into a managed NFT once per epoch.
+    /// @dev Throws if not approved or owner.
+    ///      Throws if managed NFT is inactive.
+    ///      Throws if depositing within privileged window (one hour prior to epoch flip).
+    function depositManaged(uint256 _tokenId, uint256 _mTokenId) external;
+
+    /// @notice Called by users to withdraw from a managed NFT.
+    ///         Cannot do it in the same epoch that you deposited into a managed NFT.
+    ///         Can vote or deposit into a managed NFT again after withdrawing.
+    function withdrawManaged(uint256 _tokenId) external;
 
     /// @notice Claim emissions from gauges.
     /// @param _gauges Array of gauges to collect emissions from.

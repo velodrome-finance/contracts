@@ -30,7 +30,7 @@ contract VoterTest is BaseTest {
 
         // try voting again and fail
         pools[0] = address(pair2);
-        vm.expectRevert("Voter: already voted this epoch");
+        vm.expectRevert("Voter: already voted or deposited this epoch");
         voter.vote(1, pools, weights);
     }
 
@@ -50,7 +50,7 @@ contract VoterTest is BaseTest {
         skip(1 weeks / 2);
 
         // try resetting and fail
-        vm.expectRevert("Voter: already voted this epoch");
+        vm.expectRevert("Voter: already voted or deposited this epoch");
         voter.reset(1);
     }
 
@@ -198,7 +198,7 @@ contract VoterTest is BaseTest {
         voter.poolVote(tokenId, 0);
     }
 
-    function testCannotVoteWithInactiveNFT() public {
+    function testCannotVoteWithInactiveManagedNFT() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
 
         skipAndRoll(1);
@@ -216,8 +216,7 @@ contract VoterTest is BaseTest {
     }
 
     function testCannotVoteAnHourBeforeEpochFlips() public {
-        skipToNextEpoch(1);
-        rewind(1);
+        skipToNextEpoch(0);
 
         VELO.approve(address(escrow), TOKEN_1);
         escrow.createLock(TOKEN_1, MAXTIME);
@@ -502,6 +501,82 @@ contract VoterTest is BaseTest {
 
         assertEq(voterPost - voterPre, TOKEN_1);
         assertEq(minterPre - minterPost, TOKEN_1);
+    }
+
+    function testCannotDepositManagedIfNotOwnerOrApproved() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        escrow.createManagedLockFor(address(owner));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        vm.prank(address(owner2));
+        vm.expectRevert("Voter: not owner or approved");
+        voter.depositManaged(tokenId, mTokenId);
+    }
+
+    function testCannotDepositManagedWithInactiveManagedNft() public {
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
+
+        skipAndRoll(1);
+        escrow.setManagedState(mTokenId, true);
+
+        vm.expectRevert("Voter: inactive managed nft");
+        voter.depositManaged(tokenId, mTokenId);
+    }
+
+    function testCannotDepositManagedAnHourBeforeEpochFlips() public {
+        skipToNextEpoch(0);
+
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
+
+        skip(7 days - 1 hours);
+        uint256 sid = vm.snapshot();
+        voter.depositManaged(tokenId, mTokenId);
+
+        vm.revertTo(sid);
+        skip(1);
+        vm.expectRevert("Voter: cannot deposit in window");
+        voter.depositManaged(tokenId, mTokenId);
+
+        skip(1 hours - 2); /// one second prior to epoch flip
+        vm.expectRevert("Voter: cannot deposit in window");
+        voter.depositManaged(tokenId, mTokenId);
+
+        skip(1); /// new epoch
+        voter.depositManaged(tokenId, mTokenId);
+    }
+
+    function testCannotWithdrawManagedIfDepositManagedInSameEpoch() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        escrow.createManagedLockFor(address(owner));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        voter.depositManaged(tokenId, mTokenId);
+
+        skip(1 weeks / 2);
+
+        vm.expectRevert("Voter: already voted or deposited this epoch");
+        voter.withdrawManaged(tokenId);
+    }
+
+    function testCannotWithdrawManagedIfNotOwnerOrApproved() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        escrow.createManagedLockFor(address(owner));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        voter.depositManaged(tokenId, mTokenId);
+
+        skipToNextEpoch(1);
+
+        vm.prank(address(owner3));
+        vm.expectRevert("Voter: not owner or approved");
+        voter.withdrawManaged(tokenId);
     }
 
     function _seedVoterWithVotingSupply() internal {

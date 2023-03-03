@@ -45,7 +45,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
 
-        escrow.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId, mTokenId);
 
         // check deposit successful
         assertEq(escrow.idToManaged(tokenId), mTokenId);
@@ -53,7 +53,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(escrow.balanceOfNFT(tokenId), 0);
 
         vm.prank(address(owner2));
-        escrow.depositManaged(tokenId2, mTokenId);
+        voter.depositManaged(tokenId2, mTokenId);
 
         assertEq(escrow.idToManaged(tokenId2), mTokenId);
         assertEq(escrow.weights(tokenId2, mTokenId), TOKEN_1);
@@ -207,7 +207,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         /// not entitled to rewards distributed this week (both free / locked)
         pre = VELO.balanceOf(address(escrow));
         vm.prank(address(owner2));
-        escrow.withdrawManaged(tokenId2);
+        voter.withdrawManaged(tokenId2);
         post = VELO.balanceOf(address(escrow));
 
         // check locked rewards transferred to VotingEscrow
@@ -262,7 +262,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         skip(1 hours);
 
         pre = VELO.balanceOf(address(escrow));
-        escrow.withdrawManaged(tokenId);
+        voter.withdrawManaged(tokenId);
         post = VELO.balanceOf(address(escrow));
 
         // check locked rewards transferred to VotingEscrow
@@ -342,7 +342,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
 
-        escrow.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId, mTokenId);
 
         // check deposit successful
         assertEq(escrow.idToManaged(tokenId), mTokenId);
@@ -350,7 +350,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(escrow.balanceOfNFT(tokenId), 0);
 
         vm.prank(address(owner2));
-        escrow.depositManaged(tokenId2, mTokenId);
+        voter.depositManaged(tokenId2, mTokenId);
 
         assertEq(escrow.idToManaged(tokenId2), mTokenId);
         assertEq(escrow.weights(tokenId2, mTokenId), TOKEN_1);
@@ -425,7 +425,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // user withdraws from nft
         pre = VELO.balanceOf(address(escrow));
-        escrow.withdrawManaged(tokenId);
+        voter.withdrawManaged(tokenId);
         post = VELO.balanceOf(address(escrow));
 
         assertEq(post - pre, 0);
@@ -478,7 +478,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         pre = VELO.balanceOf(address(escrow));
         vm.prank(address(owner2));
-        escrow.withdrawManaged(tokenId2);
+        voter.withdrawManaged(tokenId2);
         post = VELO.balanceOf(address(escrow));
 
         assertEq(post - pre, 0);

@@ -178,11 +178,11 @@ abstract contract Reward is IReward, Context, ReentrancyGuard {
         if (numEpochs > 0) {
             for (uint256 i = 0; i < numEpochs; i++) {
                 // get index of last checkpoint in this epoch
-                _index = getPriorBalanceIndex(tokenId, _currTs + DURATION);
+                _index = getPriorBalanceIndex(tokenId, _currTs + DURATION - 1);
                 // get checkpoint in this epoch
                 cp0 = checkpoints[tokenId][_index];
                 // get supply of last checkpoint in this epoch
-                _supply = Math.max(supplyCheckpoints[getPriorSupplyIndex(_currTs + DURATION)].supply, 1);
+                _supply = Math.max(supplyCheckpoints[getPriorSupplyIndex(_currTs + DURATION - 1)].supply, 1);
                 reward += (cp0.balanceOf * tokenRewardsPerEpoch[token][_currTs]) / _supply;
                 _currTs += DURATION;
             }

@@ -130,11 +130,9 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function depositManaged(uint256 _tokenId, uint256 _mTokenId) external nonReentrant {
-        require(_isApprovedOrOwner(_msgSender(), _tokenId), "VotingEscrow: not owner or approved");
+        require(_msgSender() == voter, "VotingEscrow: not voter");
         require(escrowType[_mTokenId] == EscrowType.MANAGED, "VotingEscrow: can only deposit into managed nft");
-        require(!deactivated[_mTokenId], "VotingEscrow: inactive managed nft");
         require(escrowType[_tokenId] == EscrowType.NORMAL, "VotingEscrow: can only deposit normal nft");
-        require(!voted[_tokenId], "VotingEscrow: nft voted");
         require(ownershipChange[_tokenId] != block.number, "VotingEscrow: flash nft protection");
         require(_balanceOfNFT(_tokenId, block.timestamp) > 0, "VotingEscrow: no balance to deposit");
 
@@ -167,9 +165,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     /// @inheritdoc IVotingEscrow
     function withdrawManaged(uint256 _tokenId) external nonReentrant {
         uint256 _mTokenId = idToManaged[_tokenId];
-        address sender = _msgSender();
+        require(_msgSender() == voter, "VotingEscrow: not voter");
         require(escrowType[_tokenId] == EscrowType.LOCKED, "VotingEscrow: nft not locked");
-        require(_isApprovedOrOwner(sender, _tokenId), "VotingEscrow: not owner or approved");
 
         // update accrued rewards
         address _lockedManagedReward = managedToLocked[_mTokenId];
@@ -204,7 +201,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         delete escrowType[_tokenId];
 
         // TODO: make this withdraw with updated weight (incl rebase)
-        emit WithdrawManaged(sender, _tokenId, _mTokenId, _weight, block.timestamp);
+        emit WithdrawManaged(idToOwner[_tokenId], _tokenId, _mTokenId, _weight, block.timestamp);
     }
 
     /// @inheritdoc IVotingEscrow
