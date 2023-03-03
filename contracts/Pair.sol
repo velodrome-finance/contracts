@@ -26,6 +26,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
     bool public immutable stable;
 
     uint256 internal constant MINIMUM_LIQUIDITY = 10**3;
+    uint256 internal constant MINIMUM_K = 10**10;
 
     address public immutable token0;
     address public immutable token1;
@@ -352,6 +353,13 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         if (_totalSupply == 0) {
             liquidity = Math.sqrt(_amount0 * _amount1) - MINIMUM_LIQUIDITY;
             _mint(address(1), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens - cannot be address(0)
+            if (stable) {
+                require(
+                    (_amount0 * 1e18) / decimals0 == (_amount1 * 1e18) / decimals1,
+                    "Pair: stable deposits must be equal"
+                );
+                require(_k(_amount0, _amount1) > MINIMUM_K, "Pair: stable deposits must be above minimum k");
+            }
         } else {
             liquidity = Math.min((_amount0 * _totalSupply) / _reserve0, (_amount1 * _totalSupply) / _reserve1);
         }
