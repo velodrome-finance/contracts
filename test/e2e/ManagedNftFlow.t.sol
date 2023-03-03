@@ -95,10 +95,11 @@ contract ManagedNftFlow is ExtendedBaseTest {
         vm.prank(address(owner3));
         voter.vote(tokenId3, pools, weights);
 
-        // simulate rebases for epoch 0:
-        vm.startPrank(address(owner4));
+        // simulate rebases for epoch 0
+        deal(address(VELO), address(distributor), TOKEN_1);
+        vm.startPrank(address(distributor));
         VELO.approve(address(escrow), TOKEN_1);
-        escrow.increaseAmount(mTokenId, TOKEN_1);
+        escrow.depositFor(mTokenId, TOKEN_1);
         vm.stopPrank();
         supply += TOKEN_1;
 
@@ -142,9 +143,10 @@ contract ManagedNftFlow is ExtendedBaseTest {
         vm.stopPrank();
 
         // simulate rebases for epoch 1:
-        vm.startPrank(address(owner4));
+        deal(address(VELO), address(distributor), TOKEN_1);
+        vm.startPrank(address(distributor));
         VELO.approve(address(escrow), TOKEN_1);
-        escrow.increaseAmount(mTokenId, TOKEN_1);
+        escrow.depositFor(mTokenId, TOKEN_1);
         vm.stopPrank();
         supply += TOKEN_1;
 
@@ -194,9 +196,10 @@ contract ManagedNftFlow is ExtendedBaseTest {
         vm.stopPrank();
 
         // simulate rebases for epoch 2:
-        vm.startPrank(address(owner4));
+        deal(address(VELO), address(distributor), TOKEN_1);
+        vm.startPrank(address(distributor));
         VELO.approve(address(escrow), TOKEN_1);
-        escrow.increaseAmount(mTokenId, TOKEN_1);
+        escrow.depositFor(mTokenId, TOKEN_1);
         vm.stopPrank();
         supply += TOKEN_1;
 
@@ -479,5 +482,115 @@ contract ManagedNftFlow is ExtendedBaseTest {
         post = VELO.balanceOf(address(escrow));
 
         assertEq(post - pre, 0);
+    }
+
+    function testManagedNftRebaseFlow() public {
+        // simple multi epoch rebase claim flow
+        // epoch 0: minter does not mint
+        VELO.approve(address(escrow), TOKEN_1M);
+        tokenId = escrow.createLock(TOKEN_1M, MAX_TIME);
+        vm.startPrank(address(owner2));
+        VELO.approve(address(escrow), TOKEN_1M);
+        tokenId2 = escrow.createLock(TOKEN_1M, MAX_TIME);
+        vm.stopPrank();
+        uint256 supply = escrow.supply();
+
+        vm.prank(address(governor));
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner4));
+        lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+
+        escrow.depositManaged(tokenId, mTokenId);
+
+        assertEq(escrow.idToManaged(tokenId), mTokenId);
+        assertEq(escrow.weights(tokenId, mTokenId), TOKEN_1M);
+        assertEq(escrow.balanceOfNFT(tokenId), 0);
+
+        IVotingEscrow.LockedBalance memory locked;
+        locked = escrow.locked(mTokenId);
+        assertEq(uint256(uint128(locked.amount)), TOKEN_1M);
+        assertEq(locked.end, 126403200);
+        locked = escrow.locked(tokenId);
+        assertEq(uint256(uint128(locked.amount)), 0);
+        assertEq(locked.end, 0);
+        locked = escrow.locked(tokenId2);
+        assertEq(uint256(uint128(locked.amount)), TOKEN_1M);
+        assertEq(locked.end, 126403200);
+
+        assertEq(escrow.supply(), supply);
+
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+
+        vm.prank(address(owner4));
+        voter.vote(mTokenId, pools, weights);
+
+        vm.prank(address(owner2));
+        voter.vote(tokenId2, pools, weights);
+
+        // epoch 1: minter mints rebases, but not claimable until epoch 2
+        skipToNextEpoch(1);
+        minter.update_period(); // rebases not claimable until following week
+
+        skip(1 hours);
+        assertEq(distributor.claimable(mTokenId), 0);
+        assertEq(distributor.claimable(tokenId2), 0);
+        assertGt(VELO.balanceOf(address(distributor)), 0);
+
+        // epoch 2: claim rebases
+        skipToNextEpoch(1);
+        minter.update_period();
+
+        uint256 rebase = distributor.claim(mTokenId);
+        uint256 managedRebaseTotal = rebase;
+        assertGt(rebase, 0);
+        assertEq(distributor.claim(tokenId2), rebase);
+        uint256 tokenAmount = TOKEN_1M + rebase;
+        supply += rebase * 2;
+
+        // check rebase accrues to nfts + lmr
+        assertEq(uint256(uint128(escrow.locked(mTokenId).amount)), tokenAmount);
+        assertEq(uint256(uint128(escrow.locked(tokenId2).amount)), tokenAmount);
+        assertEq(VELO.balanceOf(address(lockedManagedReward)), managedRebaseTotal);
+        assertEq(lockedManagedReward.earned(address(VELO), tokenId), 0);
+        assertEq(escrow.supply(), supply);
+
+        // epoch 3: claim rebases
+        skipToNextEpoch(1);
+        assertEq(lockedManagedReward.earned(address(VELO), tokenId), managedRebaseTotal);
+        minter.update_period();
+
+        rebase = distributor.claim(mTokenId);
+        managedRebaseTotal += rebase;
+        assertGt(rebase, 0);
+        assertEq(distributor.claim(tokenId2), rebase);
+        tokenAmount += rebase;
+        supply += rebase * 2;
+
+        assertEq(uint256(uint128(escrow.locked(mTokenId).amount)), tokenAmount);
+        assertEq(uint256(uint128(escrow.locked(tokenId2).amount)), tokenAmount);
+        assertEq(VELO.balanceOf(address(lockedManagedReward)), managedRebaseTotal);
+        // current epoch's rebases yet to accrue
+        assertEq(lockedManagedReward.earned(address(VELO), tokenId), managedRebaseTotal - rebase);
+        assertEq(escrow.supply(), supply);
+
+        // epoch 4: withdraw from managed
+        skipToNextEpoch(1);
+        assertEq(lockedManagedReward.earned(address(VELO), tokenId), managedRebaseTotal);
+
+        uint256 pre = VELO.balanceOf(address(escrow));
+        escrow.withdrawManaged(tokenId);
+        uint256 post = VELO.balanceOf(address(escrow));
+
+        assertEq(post - pre, managedRebaseTotal);
+        locked = escrow.locked(mTokenId);
+        assertEq(uint256(uint128(locked.amount)), 0);
+        assertEq(locked.end, 128822400);
+        locked = escrow.locked(tokenId);
+        assertEq(uint256(uint128(locked.amount)), TOKEN_1M + managedRebaseTotal);
+        assertEq(locked.end, 128822400);
+        assertEq(lockedManagedReward.earned(address(VELO), tokenId), 0);
+        assertEq(VELO.balanceOf(address(lockedManagedReward)), 0);
     }
 }

@@ -28,6 +28,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     address public immutable factoryRegistry;
     address public immutable token;
+    address public distributor;
     address public voter;
     address public team;
     address public artProxy;
@@ -807,12 +808,9 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function depositFor(uint256 _tokenId, uint256 _value) external nonReentrant {
-        LockedBalance memory oldLocked = _locked[_tokenId];
-
-        require(_value > 0, "VotingEscrow: zero amount");
-        require(oldLocked.amount > 0, "VotingEscrow: no existing lock found");
-        require(oldLocked.end > block.timestamp, "VotingEscrow: cannot add to expired lock, withdraw");
-        _depositFor(_tokenId, _value, 0, oldLocked, DepositType.DEPOSIT_FOR_TYPE);
+        if (escrowType[_tokenId] == EscrowType.MANAGED)
+            require(_msgSender() == distributor, "VotingEscrow: not distributor");
+        _increaseAmountFor(_tokenId, _value, DepositType.DEPOSIT_FOR_TYPE);
     }
 
     /// @dev Deposit `_value` tokens for `_to` and lock for `_lockDuration`
@@ -852,25 +850,33 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         return _createLock(_value, _lockDuration, _to);
     }
 
-    /// @inheritdoc IVotingEscrow
-    function increaseAmount(uint256 _tokenId, uint256 _value) external nonReentrant {
-        assert(_isApprovedOrOwner(_msgSender(), _tokenId));
+    function _increaseAmountFor(
+        uint256 _tokenId,
+        uint256 _value,
+        DepositType _depositType
+    ) internal {
         EscrowType _escrowType = escrowType[_tokenId];
         require(_escrowType != EscrowType.LOCKED, "VotingEscrow: nft locked");
 
         LockedBalance memory oldLocked = _locked[_tokenId];
 
-        assert(_value > 0); // dev: need non-zero value
+        require(_value > 0); // dev: need non-zero value
         require(oldLocked.amount > 0, "VotingEscrow: no existing lock found");
         require(oldLocked.end > block.timestamp, "VotingEscrow: cannot add to expired lock. Withdraw");
 
-        _depositFor(_tokenId, _value, 0, oldLocked, DepositType.INCREASE_LOCK_AMOUNT);
+        _depositFor(_tokenId, _value, 0, oldLocked, _depositType);
 
         if (_escrowType == EscrowType.MANAGED) {
             // increaseAmount called on managed tokens are treated as locked rewards
             address _lockedManagedReward = managedToLocked[_tokenId];
             IReward(_lockedManagedReward).notifyRewardAmount(address(token), _value);
         }
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function increaseAmount(uint256 _tokenId, uint256 _value) external nonReentrant {
+        assert(_isApprovedOrOwner(_msgSender(), _tokenId));
+        _increaseAmountFor(_tokenId, _value, DepositType.INCREASE_LOCK_AMOUNT);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -1111,9 +1117,10 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     bool public anyoneCanSplit;
 
     /// @inheritdoc IVotingEscrow
-    function setVoter(address _voter) external {
+    function setVoterAndDistributor(address _voter, address _distributor) external {
         require(_msgSender() == voter);
         voter = _voter;
+        distributor = _distributor;
     }
 
     /// @inheritdoc IVotingEscrow

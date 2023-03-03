@@ -171,7 +171,8 @@ contract WashTradeTest is BaseTest {
     function voterReset() public {
         routerPair3GetAmountsOutAndSwapExactTokensForTokens();
 
-        escrow.setVoter(address(voter));
+        distributor = new RewardsDistributor(address(escrow));
+        escrow.setVoterAndDistributor(address(voter), address(distributor));
         voter.reset(1);
     }
 

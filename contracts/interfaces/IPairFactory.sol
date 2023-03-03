@@ -13,7 +13,7 @@ interface IPairFactory {
 
     /// @dev Only called once to set to Voter.sol - Voter does not have a function
     ///      to call this contract method, so once set it's immutable.
-    ///      This also follows convention of setVoter() within VotingEscrow.sol
+    ///      This also follows convention of setVoterAndDistributor() in VotingEscrow.sol
     /// @param _voter .
     function setVoter(address _voter) external;
 

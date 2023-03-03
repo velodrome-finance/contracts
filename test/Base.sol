@@ -94,17 +94,17 @@ abstract contract Base is Script, Test {
         VeArtProxy artProxy = new VeArtProxy();
         escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), team);
 
-        // Setup voter
+        // Setup voter and distributor
+        distributor = new RewardsDistributor(address(escrow));
         voter = new Voter(address(escrow), address(factoryRegistry));
 
-        escrow.setVoter(address(voter));
+        escrow.setVoterAndDistributor(address(voter), address(distributor));
         escrow.setAllowedManager(allowedManager);
 
         // Setup router
         router = new Router(address(factory), address(voter), address(WETH));
 
         // Setup minter
-        distributor = new RewardsDistributor(address(escrow));
         minter = new Minter(address(voter), address(escrow), address(distributor));
         distributor.setDepositor(address(minter));
         VELO.setMinter(address(minter));

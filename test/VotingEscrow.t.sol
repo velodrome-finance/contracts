@@ -4,11 +4,70 @@ pragma solidity 0.8.13;
 import "./BaseTest.sol";
 
 contract VotingEscrowTest is BaseTest {
+    event NotifyReward(address indexed from, address indexed reward, uint256 epoch, uint256 amount);
+
     function testInitialState() public {
         assertEq(escrow.team(), address(owner));
         assertEq(escrow.allowedManager(), address(owner));
         // voter should already have been setup
         assertEq(escrow.voter(), address(voter));
+    }
+
+    function testCannotDepositForWithLockedNFT() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        escrow.depositManaged(tokenId, mTokenId);
+        assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.LOCKED));
+
+        vm.expectRevert("VotingEscrow: nft locked");
+        escrow.depositFor(tokenId, TOKEN_1);
+    }
+
+    function testCannotDepositForWithManagedNFTIfNotDistributor() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.depositManaged(tokenId, mTokenId);
+
+        vm.expectRevert("VotingEscrow: not distributor");
+        escrow.depositFor(mTokenId, TOKEN_1);
+    }
+
+    function testDepositForWithManagedNFT() public {
+        uint256 reward = TOKEN_1;
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        LockedManagedReward lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.depositManaged(tokenId, mTokenId);
+        deal(address(VELO), address(distributor), TOKEN_1);
+
+        uint256 pre = VELO.balanceOf(address(lockedManagedReward));
+        IVotingEscrow.LockedBalance memory preLocked = escrow.locked(mTokenId);
+        vm.prank(address(distributor));
+        vm.expectEmit(true, false, false, true, address(lockedManagedReward));
+        emit NotifyReward(address(escrow), address(VELO), 604800, reward);
+        escrow.depositFor(mTokenId, reward);
+        uint256 post = VELO.balanceOf(address(lockedManagedReward));
+        IVotingEscrow.LockedBalance memory postLocked = escrow.locked(mTokenId);
+
+        assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), reward);
+        assertEq(post - pre, reward);
+    }
+
+    function testDepositFor() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        IVotingEscrow.LockedBalance memory preLocked = escrow.locked(tokenId);
+        VELO.approve(address(escrow), TOKEN_1);
+        escrow.depositFor(tokenId, TOKEN_1);
+        IVotingEscrow.LockedBalance memory postLocked = escrow.locked(tokenId);
+
+        assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), TOKEN_1);
     }
 
     function testCreateLock() public {

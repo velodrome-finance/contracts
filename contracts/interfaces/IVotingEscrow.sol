@@ -372,9 +372,9 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @return True if voted, else false
     function voted(uint256 _tokenId) external view returns (bool);
 
-    /// @notice Set the global state voter
+    /// @notice Set the global state voter and distributor
     /// @dev This is only called once, at setup
-    function setVoter(address _voter) external;
+    function setVoterAndDistributor(address _voter, address _distributor) external;
 
     /// @notice Set `voted` for _tokenId to true
     /// @dev only callable by voter

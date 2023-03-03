@@ -24,10 +24,11 @@ contract PairTest is BaseTest {
 
         VeArtProxy artProxy = new VeArtProxy();
         escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
+        distributor = new RewardsDistributor(address(escrow));
         voter = new Voter(address(escrow), address(factoryRegistry));
         router = new Router(address(factory), address(voter), address(WETH));
 
-        escrow.setVoter(address(voter));
+        escrow.setVoterAndDistributor(address(voter), address(distributor));
         factory.setVoter(address(voter));
 
         deployPairWithOwner(address(owner));
