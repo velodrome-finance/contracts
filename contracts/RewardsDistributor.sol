@@ -125,7 +125,7 @@ contract RewardsDistributor is IRewardsDistributor {
         uint256 maxUserEpoch = IVotingEscrow(_ve).userPointEpoch(_tokenId);
         uint256 epoch = _findTimestampUserEpoch(_tokenId, _timestamp, maxUserEpoch);
         IVotingEscrow.Point memory pt = IVotingEscrow(_ve).userPointHistory(_tokenId, epoch);
-        return Math.max(uint256(int256(pt.bias - pt.slope * (int128(int256(_timestamp - pt.ts))))), 0);
+        return uint256(int256(max(pt.bias - pt.slope * int128(int256(_timestamp - pt.ts)), 0)));
     }
 
     function _checkpointTotalSupply() internal {
@@ -144,7 +144,7 @@ contract RewardsDistributor is IRewardsDistributor {
                 if (t > pt.ts) {
                     dt = int128(int256(t - pt.ts));
                 }
-                veSupply[t] = Math.max(uint256(int256(pt.bias - pt.slope * dt)), 0);
+                veSupply[t] = uint256(int256(max(pt.bias - pt.slope * dt, 0)));
             }
             t += WEEK;
         }
@@ -195,7 +195,7 @@ contract RewardsDistributor is IRewardsDistributor {
                 }
             } else {
                 int128 dt = int128(int256(weekCursor - oldUserPoint.ts));
-                uint256 balance = Math.max(uint256(int256(oldUserPoint.bias - dt * oldUserPoint.slope)), 0);
+                uint256 balance = uint256(int256(max(oldUserPoint.bias - dt * oldUserPoint.slope, 0)));
                 if (balance == 0 && userEpoch > maxUserEpoch) break;
                 if (balance != 0) {
                     toDistribute += (balance * tokensPerWeek[weekCursor]) / veSupply[weekCursor];
@@ -253,7 +253,7 @@ contract RewardsDistributor is IRewardsDistributor {
                 }
             } else {
                 int128 dt = int128(int256(weekCursor - oldUserPoint.ts));
-                uint256 balance = Math.max(uint256(int256(oldUserPoint.bias - dt * oldUserPoint.slope)), 0);
+                uint256 balance = uint256(int256(max(oldUserPoint.bias - dt * oldUserPoint.slope, 0)));
                 if (balance == 0 && userEpoch > maxUserEpoch) break;
                 if (balance != 0) {
                     toDistribute += (balance * tokensPerWeek[weekCursor]) / veSupply[weekCursor];
@@ -322,5 +322,9 @@ contract RewardsDistributor is IRewardsDistributor {
     function setDepositor(address _depositor) external {
         require(msg.sender == depositor);
         depositor = _depositor;
+    }
+
+    function max(int128 a, int128 b) internal pure returns (int128) {
+        return a > b ? a : b;
     }
 }
