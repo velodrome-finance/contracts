@@ -17,7 +17,7 @@ contract GaugeTest is BaseTest {
         vm.stopPrank();
         vm.warp(block.timestamp + 1);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(0);
     }
 
     event Deposit(address indexed from, address indexed to, uint256 amount);
@@ -385,7 +385,7 @@ contract GaugeTest is BaseTest {
         assertApproxEqRel(gauge.earned(address(owner2)), owner2Bal, 1e6);
     }
 
-    function testGetRewardWithOverlappingRewards() public {
+    function testGetRewardWithLateRewards() public {
         // add deposits
         pair.approve(address(gauge), PAIR_1);
         gauge.deposit(PAIR_1);
@@ -402,40 +402,43 @@ contract GaugeTest is BaseTest {
         // reward added late in epoch
         uint256 reward = TOKEN_1;
         _addRewardToGauge(address(voter), address(gauge), reward);
-        uint256 expectedRewardRate = TOKEN_1 / DURATION;
+        uint256 expectedRewardRate = reward / (DURATION / 2);
         assertApproxEqRel(gauge.rewardRate(), expectedRewardRate, 1e6);
 
-        skipToNextEpoch(1);
-        // half the epoch has passed
-        uint256 expectedReward = reward / 2 / 2;
+        skipToNextEpoch(0);
+        // half the epoch has passed, all rewards distributed
+        uint256 expectedReward = reward / 2;
         assertApproxEqRel(gauge.earned(address(owner)), expectedReward, 1e6);
         assertApproxEqRel(gauge.earned(address(owner2)), expectedReward, 1e6);
-        // two deposits, owner with half the size of owner 2
-        gauge.withdraw(PAIR_1 / 2);
         gauge.getReward(address(owner));
+        assertEq(gauge.earned(address(owner)), 0);
 
+        skip(1 days);
         uint256 reward2 = TOKEN_1 * 2;
-        expectedRewardRate = (reward / 2) / DURATION + (reward2) / DURATION;
+        expectedRewardRate = reward2 / (6 days);
         _addRewardToGauge(address(voter), address(gauge), reward2);
         assertApproxEqRel(gauge.rewardRate(), expectedRewardRate, 1e6);
 
-        skipToNextEpoch(1);
-        uint256 remainingRewards = TOKEN_1 / 2 + TOKEN_1 * 2;
-        assertApproxEqRel(gauge.earned(address(owner)), remainingRewards / 3, 1e6);
-        assertApproxEqRel(gauge.earned(address(owner2)), (remainingRewards * 2) / 3 + expectedReward, 1e6);
+        skip(1 days);
+        assertApproxEqRel(gauge.earned(address(owner)), reward2 / 2 / 6, 1e6);
+        assertApproxEqRel(gauge.earned(address(owner2)), reward / 2 + reward2 / 2 / 6, 1e6);
+
+        skipToNextEpoch(0);
+        assertApproxEqRel(gauge.earned(address(owner)), reward2 / 2, 1e6);
+        assertApproxEqRel(gauge.earned(address(owner2)), (reward + reward2) / 2, 1e6);
 
         uint256 pre = VELO.balanceOf(address(owner));
         vm.prank(address(owner));
         gauge.getReward(address(owner));
         uint256 post = VELO.balanceOf(address(owner));
-        assertApproxEqRel(post - pre, remainingRewards / 3, 1e6);
+        assertApproxEqRel(post - pre, reward2 / 2, 1e6);
 
         pre = VELO.balanceOf(address(owner2));
         vm.prank(address(owner2));
         gauge.getReward(address(owner2));
         post = VELO.balanceOf(address(owner2));
 
-        assertApproxEqRel(post - pre, (remainingRewards * 2) / 3 + expectedReward, 1e6);
+        assertApproxEqRel(post - pre, (reward + reward2) / 2, 1e6);
     }
 
     function testGetRewardWithNonOverlappingRewards() public {
@@ -455,18 +458,23 @@ contract GaugeTest is BaseTest {
         uint256 expectedRewardRate = TOKEN_1 / DURATION;
         assertApproxEqRel(gauge.rewardRate(), expectedRewardRate, 1e6);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(0);
         uint256 expectedReward = reward / 2;
         assertApproxEqRel(gauge.earned(address(owner)), expectedReward, 1e6);
         assertApproxEqRel(gauge.earned(address(owner2)), expectedReward, 1e6);
 
-        skip(1 days);
+        skip(1 days); // rewards distributed over 6 days intead of 7
         uint256 reward2 = TOKEN_1 * 2;
         _addRewardToGauge(address(voter), address(gauge), reward2);
-        expectedRewardRate = (TOKEN_1 * 2) / DURATION;
+        expectedRewardRate = reward2 / (6 days);
         assertApproxEqRel(gauge.rewardRate(), expectedRewardRate, 1e6);
 
-        skipToNextEpoch(1 days + 1);
+        skip(1 days); // accrue 1/6 th of remaining rewards
+        expectedReward = reward / 2 + reward2 / 2 / 6;
+        assertApproxEqRel(gauge.earned(address(owner)), expectedReward, 1e6);
+        assertApproxEqRel(gauge.earned(address(owner2)), expectedReward, 1e6);
+
+        skipToNextEpoch(0); // accrue all of remaining rewards
         expectedReward = (reward + reward2) / 2;
         assertApproxEqRel(gauge.earned(address(owner)), expectedReward, 1e6);
         assertApproxEqRel(gauge.earned(address(owner2)), expectedReward, 1e6);
@@ -474,21 +482,36 @@ contract GaugeTest is BaseTest {
 
     function testNotifyRewardAmountWithNonZeroAmount() public {
         uint256 reward = TOKEN_1;
-
         deal(address(VELO), address(voter), reward);
         vm.startPrank(address(voter));
         VELO.approve(address(gauge), reward);
         Gauge(gauge).notifyRewardAmount(reward);
         vm.stopPrank();
 
-        // TODO: test it correctly transfers fees
-
         uint256 epochStart = _getEpochStart(block.timestamp);
         assertApproxEqRel(gauge.rewardRate(), reward / DURATION, 1e6);
         assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), reward / DURATION, 1e6);
         assertEq(VELO.balanceOf(address(gauge)), TOKEN_1);
         assertEq(gauge.lastUpdateTime(), block.timestamp);
-        assertEq(gauge.periodFinish(), block.timestamp + DURATION);
+        assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
+    }
+
+    function testNotifyRewardAmountWithNonZeroAmountOneDayAfterEpochFlip() public {
+        skipAndRoll(1 days);
+
+        uint256 reward = TOKEN_1;
+        deal(address(VELO), address(voter), reward);
+        vm.startPrank(address(voter));
+        VELO.approve(address(gauge), reward);
+        Gauge(gauge).notifyRewardAmount(reward);
+        vm.stopPrank();
+
+        uint256 epochStart = _getEpochStart(block.timestamp);
+        assertApproxEqRel(gauge.rewardRate(), (reward / (6 days)), 1e6);
+        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), reward / (6 days), 1e6);
+        assertEq(VELO.balanceOf(address(gauge)), TOKEN_1);
+        assertEq(gauge.lastUpdateTime(), block.timestamp);
+        assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
     }
 
     function testCannotNotifyRewardAmountWithZeroAmount() public {

@@ -18,7 +18,7 @@ contract VotingEscrowTest is BaseTest {
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
-        escrow.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId, mTokenId);
         assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.LOCKED));
 
         vm.expectRevert("VotingEscrow: nft locked");
@@ -29,7 +29,7 @@ contract VotingEscrowTest is BaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        escrow.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId, mTokenId);
 
         vm.expectRevert("VotingEscrow: not distributor");
         escrow.depositFor(mTokenId, TOKEN_1);
@@ -42,7 +42,7 @@ contract VotingEscrowTest is BaseTest {
 
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        escrow.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId, mTokenId);
         deal(address(VELO), address(distributor), TOKEN_1);
 
         uint256 pre = VELO.balanceOf(address(lockedManagedReward));

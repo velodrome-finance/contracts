@@ -25,7 +25,6 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
 
     uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
     uint256 internal constant PRECISION = 10**18;
-    uint256 internal constant MAX_REWARD_TOKENS = 16;
 
     // default snx staking contract implementation
     uint256 public periodFinish;
@@ -106,10 +105,7 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
         address sender = _msgSender();
         require(sender == _account || sender == voter, "Gauge: unpermissioned");
 
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
-        rewards[_account] = earned(_account);
-        userRewardPerTokenPaid[_account] = rewardPerTokenStored;
+        _updateRewards(_account);
 
         uint256 reward = rewards[_account];
         if (reward > 0) {
@@ -142,10 +138,7 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
         require(IVoter(voter).isAlive(address(this)), "Gauge: not alive");
 
         address sender = _msgSender();
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
-        rewards[_recipient] = earned(_recipient);
-        userRewardPerTokenPaid[_recipient] = rewardPerTokenStored;
+        _updateRewards(_recipient);
 
         IERC20(stakingToken).safeTransferFrom(sender, address(this), _amount);
         totalSupply += _amount;
@@ -158,16 +151,20 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
     function withdraw(uint256 _amount) external nonReentrant {
         address sender = _msgSender();
 
-        rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
-        rewards[sender] = earned(sender);
-        userRewardPerTokenPaid[sender] = rewardPerTokenStored;
+        _updateRewards(sender);
 
         totalSupply -= _amount;
         balanceOf[sender] -= _amount;
         IERC20(stakingToken).safeTransfer(sender, _amount);
 
         emit Withdraw(sender, _amount);
+    }
+
+    function _updateRewards(address _account) internal {
+        rewardPerTokenStored = rewardPerToken();
+        lastUpdateTime = lastTimeRewardApplicable();
+        rewards[_account] = earned(_account);
+        userRewardPerTokenPaid[_account] = rewardPerTokenStored;
     }
 
     function left() external view returns (uint256) {
@@ -183,17 +180,17 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
         require(_amount > 0, "Gauge: zero amount");
         _claimFees();
         rewardPerTokenStored = rewardPerToken();
-        lastUpdateTime = lastTimeRewardApplicable();
         uint256 timestamp = block.timestamp;
+        uint256 timeUntilNext = VelodromeTimeLibrary.epochNext(timestamp) - timestamp;
 
         if (timestamp >= periodFinish) {
             IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
-            rewardRate = _amount / DURATION;
+            rewardRate = _amount / timeUntilNext;
         } else {
             uint256 _remaining = periodFinish - timestamp;
             uint256 _leftover = _remaining * rewardRate;
             IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount);
-            rewardRate = (_amount + _leftover) / DURATION;
+            rewardRate = (_amount + _leftover) / timeUntilNext;
         }
         rewardRateByEpoch[VelodromeTimeLibrary.epochStart(timestamp)] = rewardRate;
         require(rewardRate > 0, "Gauge: zero rewardRate");
@@ -203,10 +200,10 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(rewardRate <= balance / DURATION, "Gauge: provided reward too high");
+        require(rewardRate <= balance / timeUntilNext, "Gauge: provided reward too high");
 
         lastUpdateTime = timestamp;
-        periodFinish = timestamp + DURATION;
+        periodFinish = timestamp + timeUntilNext;
         emit NotifyReward(sender, _amount);
     }
 }

@@ -745,7 +745,7 @@ contract PairTest is BaseTest {
         voter.updateFor(gauges);
         voter.distribute(0, voter.length());
         voter.claimRewards(gauges);
-        assertEq(gauge.rewardRate(), 12154017857142857142);
+        assertEq(gauge.rewardRate(), 86895487806319671840);
         console2.log(gauge.rewardPerTokenStored());
     }
 

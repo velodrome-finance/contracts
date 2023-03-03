@@ -11,9 +11,6 @@ contract MinterTestFlow is ExtendedBaseTest {
         minter.update_period();
         assertEq(VELO.balanceOf(address(voter)), 0);
 
-        /// epoch 1
-        skipToNextEpoch(1);
-
         VELO.approve(address(escrow), TOKEN_100K);
         uint256 tokenId = escrow.createLock(TOKEN_100K, MAXTIME);
 
@@ -40,24 +37,26 @@ contract MinterTestFlow is ExtendedBaseTest {
         pair.approve(address(gauge), PAIR_1);
         gauge.deposit(PAIR_1);
 
+        /// epoch 1
+        skipToNextEpoch(2 days); // gauge distributions spread out over 5 days
+
         /// 15000000000000000000000000
         uint256 expectedMint = _expectedMintAfter(1);
         vm.expectEmit(true, true, false, false, address(minter));
         emit Mint(address(owner), expectedMint, 0, false);
         minter.update_period();
         assertEq(VELO.balanceOf(address(voter)), expectedMint);
-        skipAndRoll(1);
-
-        minter.update_period();
-        assertEq(VELO.balanceOf(address(voter)), expectedMint);
-        skipAndRoll(1);
 
         uint256 epochStart = _getEpochStart(block.timestamp);
         voter.distribute(address(gauge));
         assertApproxEqRel(VELO.balanceOf(address(gauge)), expectedMint / 2, 1e6);
         assertApproxEqRel(VELO.balanceOf(address(voter)), expectedMint / 2, 1e6);
-        assertApproxEqRel(gauge.rewardRate(), expectedMint / 2 / DURATION, 1e6);
-        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), expectedMint / 2 / DURATION, 1e6);
+        assertApproxEqRel(gauge.rewardRate(), expectedMint / 2 / (5 days), 1e6);
+        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), expectedMint / 2 / (5 days), 1e6);
+        skipAndRoll(1);
+
+        minter.update_period();
+        assertApproxEqRel(VELO.balanceOf(address(voter)), expectedMint / 2, 1e6);
         skipAndRoll(1);
 
         voter.distribute(address(gauge2));
@@ -69,8 +68,8 @@ contract MinterTestFlow is ExtendedBaseTest {
         voter.distribute(address(gauge)); // second distribute should make no difference to gauge
         assertApproxEqRel(VELO.balanceOf(address(gauge)), expectedMint / 2, 1e6);
         assertLt(VELO.balanceOf(address(voter)), 1e6); // dust
-        assertApproxEqRel(gauge.rewardRate(), expectedMint / 2 / DURATION, 1e6);
-        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), expectedMint / 2 / DURATION, 1e6);
+        assertApproxEqRel(gauge.rewardRate(), expectedMint / 2 / (5 days), 1e6);
+        assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), expectedMint / 2 / (5 days), 1e6);
 
         /// epoch 2
         skipToNextEpoch(1);

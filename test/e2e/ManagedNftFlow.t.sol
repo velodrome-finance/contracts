@@ -499,7 +499,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner4));
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
 
-        escrow.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId, mTokenId);
 
         assertEq(escrow.idToManaged(tokenId), mTokenId);
         assertEq(escrow.weights(tokenId, mTokenId), TOKEN_1M);
@@ -580,7 +580,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(lockedManagedReward.earned(address(VELO), tokenId), managedRebaseTotal);
 
         uint256 pre = VELO.balanceOf(address(escrow));
-        escrow.withdrawManaged(tokenId);
+        voter.withdrawManaged(tokenId);
         uint256 post = VELO.balanceOf(address(escrow));
 
         assertEq(post - pre, managedRebaseTotal);
