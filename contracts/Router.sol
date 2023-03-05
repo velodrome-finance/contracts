@@ -62,14 +62,17 @@ contract Router is IRouter, Context {
         bool stable,
         address _factory
     ) public view returns (address pair) {
-        address factory = _factory == address(0) ? defaultFactory : _factory;
-        bytes32 pairCodeHash_ = factory == defaultFactory ? pairCodeHash : IPairFactory(factory).pairCodeHash();
+        address _defaultFactory = defaultFactory;
+        address factory = _factory == address(0) ? _defaultFactory : _factory;
+        bytes32 pairCodeHash_ = factory == _defaultFactory ? pairCodeHash : IPairFactory(factory).pairCodeHash();
 
-        // override for SinkConverter
-        if (factory == defaultFactory) {
-            if ((tokenA == IPairFactory(defaultFactory).velo()) && (tokenB == IPairFactory(defaultFactory).veloV2())) {
-                return IPairFactory(defaultFactory).sinkConverter();
-            }
+        address velo = IPairFactory(_defaultFactory).velo();
+        address veloV2 = IPairFactory(_defaultFactory).veloV2();
+        // Disable routing v2 -> v1 velo
+        require(!((tokenA == veloV2) && (tokenB == velo)), "Cannot convert VELO from V2 to V1");
+        // Override for sink converter
+        if ((tokenA == velo) && (tokenB == veloV2)) {
+            return IPairFactory(_defaultFactory).sinkConverter();
         }
 
         (address token0, address token1) = sortTokens(tokenA, tokenB);
