@@ -81,7 +81,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     modifier onlyNewEpoch(uint256 _tokenId) {
         // ensure new epoch since last vote
         require(
-            (block.timestamp / DURATION) * DURATION > lastVoted[_tokenId],
+            VelodromeTimeLibrary.epochStart(block.timestamp) > lastVoted[_tokenId],
             "Voter: already voted or deposited this epoch"
         );
         _;
@@ -149,20 +149,20 @@ contract Voter is IVoter, Context, ReentrancyGuard {
             if (_votes != 0) {
                 _updateFor(gauges[_pool]);
                 weights[_pool] -= _votes;
-                votes[_tokenId][_pool] -= _votes;
+                delete votes[_tokenId][_pool];
                 IReward(gaugeToFees[gauges[_pool]])._withdraw(uint256(_votes), _tokenId);
                 IReward(gaugeToBribe[gauges[_pool]])._withdraw(uint256(_votes), _tokenId);
                 _totalWeight += _votes;
                 emit Abstained(_tokenId, _votes);
             }
         }
-        totalWeight -= uint256(_totalWeight);
+        totalWeight -= _totalWeight;
         usedWeights[_tokenId] = 0;
         delete poolVote[_tokenId];
     }
 
     /// @inheritdoc IVoter
-    function poke(uint256 _tokenId) external {
+    function poke(uint256 _tokenId) external nonReentrant {
         address[] memory _poolVote = poolVote[_tokenId];
         uint256 _poolCnt = _poolVote.length;
         uint256[] memory _weights = new uint256[](_poolCnt);
@@ -178,7 +178,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         uint256 _tokenId,
         address[] memory _poolVote,
         uint256[] memory _weights
-    ) internal nonReentrant {
+    ) internal {
         _reset(_tokenId);
         uint256 _poolCnt = _poolVote.length;
         uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
@@ -221,7 +221,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         uint256 _tokenId,
         address[] calldata _poolVote,
         uint256[] calldata _weights
-    ) external onlyNewEpoch(_tokenId) {
+    ) external onlyNewEpoch(_tokenId) nonReentrant {
         address _sender = _msgSender();
         require(IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId));
         require(_poolVote.length == _weights.length);
@@ -439,7 +439,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         IMinter(minter).update_period();
         _updateFor(_gauge); // should set claimable to 0 if killed
         uint256 _claimable = claimable[_gauge];
-        if (_claimable > IGauge(_gauge).left() && _claimable / DURATION > 0) {
+        if (_claimable > IGauge(_gauge).left() && _claimable > DURATION) {
             claimable[_gauge] = 0;
             IGauge(_gauge).notifyRewardAmount(_claimable);
             emit DistributeReward(_msgSender(), _gauge, _claimable);

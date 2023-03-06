@@ -67,14 +67,14 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
             uint256 _fees0 = fees0 + claimed0;
             uint256 _fees1 = fees1 + claimed1;
             (address _token0, address _token1) = IPair(stakingToken).tokens();
-            if (_fees0 > IReward(feesVotingReward).left(_token0) && _fees0 / DURATION > 0) {
+            if (_fees0 > IReward(feesVotingReward).left(_token0) && _fees0 > DURATION) {
                 fees0 = 0;
                 IERC20(_token0).safeApprove(feesVotingReward, _fees0);
                 IReward(feesVotingReward).notifyRewardAmount(_token0, _fees0);
             } else {
                 fees0 = _fees0;
             }
-            if (_fees1 > IReward(feesVotingReward).left(_token1) && _fees1 / DURATION > 0) {
+            if (_fees1 > IReward(feesVotingReward).left(_token1) && _fees1 > DURATION) {
                 fees1 = 0;
                 IERC20(_token1).safeApprove(feesVotingReward, _fees1);
                 IReward(feesVotingReward).notifyRewardAmount(_token1, _fees1);
