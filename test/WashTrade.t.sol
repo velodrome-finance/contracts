@@ -185,7 +185,7 @@ contract WashTradeTest is BaseTest {
     function voterVoteAndFeesVotingRewardBalanceOf() public {
         voterPokeSelf();
 
-        skip(1 weeks);
+        skipToNextEpoch(1 hours + 1);
 
         address[] memory pairs = new address[](2);
         pairs[0] = address(pair3);

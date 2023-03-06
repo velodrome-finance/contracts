@@ -151,6 +151,8 @@ contract ManagedNftTest is BaseTest {
     }
 
     function testCannotDepositManagedWithAlreadyVotedNft() public {
+        skip(1 hours + 1);
+
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME);
 

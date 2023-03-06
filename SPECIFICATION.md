@@ -105,11 +105,26 @@ ve(NFT) art proxy contract, exists for upgradability purposes.
 
 ### Voter
 
-The `Voter` contract is in charge of managing votes, emission distribution as well as gauge creation in the Velodrome ecosystem. Votes can be cast once per epoch via Voter, with the votes earning NFT owners both bribes and fees from the pool they voted for. Voting can take place at any time during the epoch except in the last hour prior to the epoch flip. In this time window, only approved NFTs can vote. 
+The `Voter` contract is in charge of managing votes, emission distribution
+as well as gauge creation in the Velodrome ecosystem. Votes can be cast once 
+per epoch via Voter, with the votes earning NFT owners both bribes and fees 
+from the pool they voted for. Voting can take place at any time during an epoch
+except during the first and last hour of that epoch. Distributions to gauges will 
+take place at the beginning of every epoch. In the last hour prior to epoch flip, 
+only approved NFTs can vote. 
 
-In addition, `Voter` also provides support for depositing and withdrawing from managed NFTs. Voting and depositing into a managed NFT are mutually exclusive (i.e. you may only do one per epoch). In the same way you cannot reset your NFT in the same epoch that you vote, you also cannot withdraw your NFT in the same epoch that you deposited. For more information about managed NFTs, see the `VotingEscrow` section. 
+In addition, `Voter` also provides support for depositing and withdrawing from 
+managed NFTs. Voting and depositing into a managed NFT are mutually exclusive 
+(i.e. you may only do one per epoch). In the same way you cannot reset your NFT 
+in the same epoch that you vote, you also cannot withdraw your NFT in the same 
+epoch that you deposited. For more information about managed NFTs, see the 
+`VotingEscrow` section. 
 
-`Voter` is in charge of creating and mantaining gauge liveness states. Gauges that are killed will not receive emissions. Once per epoch, the corresponding gauge for a pool will receive emissions from `Voter` proportionate to the amount of votes they receive. Voter also contains several utility functions that make claiming rewards or distributing emissions easier. 
+`Voter` is in charge of creating and mantaining gauge liveness states. Gauges that 
+are killed will not receive emissions. Once per epoch, the corresponding gauge for 
+a pool will receive emissions from `Voter` proportionate to the amount of votes they 
+receive. Voter also contains several utility functions that make claiming rewards or 
+distributing emissions easier. 
 
 Standard Operations:
 - Can vote with an NFT once per epoch if you did not deposit into a managed NFT that epoch. For regular users, the epoch voting window ends an hour prior to epoch flip. Certain privileged NFTs can continue to vote in this one hour window.

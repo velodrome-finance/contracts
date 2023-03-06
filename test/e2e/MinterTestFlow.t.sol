@@ -22,6 +22,8 @@ contract MinterTestFlow is ExtendedBaseTest {
         assertEq(distributor.claimable(tokenId), 0);
         assertEq(distributor.claimable(tokenId), 0);
 
+        skip(1 hours + 1);
+
         // equal votes for both pools
         address[] memory pools = new address[](2);
         pools[0] = address(pair);

@@ -24,6 +24,8 @@ contract PokeVoteFlow is ExtendedBaseTest {
     }
 
     function testPokeVoteBribeVotingRewardFlow() public {
+        skip(1 hours + 1);
+
         // set up votes and rewards
         address[] memory pools = new address[](2);
         pools[0] = address(pair);
@@ -123,6 +125,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
             voter.poke(1);
             skip(1 days);
         }
+        skip(1 hours);
 
         // final vote occurs at same time, expect rewards to be the same
         voter.vote(1, pools, weights);
@@ -170,6 +173,8 @@ contract PokeVoteFlow is ExtendedBaseTest {
         singlePool[0] = address(pair);
         uint256[] memory singleWeight = new uint256[](2);
         singleWeight[0] = 1;
+
+        skip(1 hours);
         // deposit into pair to provide supply
         vm.prank(address(owner3));
         voter.vote(3, singlePool, singleWeight);
@@ -223,7 +228,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
         _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
         _createBribeWithAmount(bribeVotingReward2, address(USDC), usdcBribe);
         _createBribeWithAmount(bribeVotingReward3, address(LR), currentBribe);
-        skip(1);
+        skip(1 hours);
 
         // deposit into pair3 to provide supply
         singlePool[0] = address(pair3);

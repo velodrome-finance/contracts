@@ -43,6 +43,8 @@ contract BribeVotingRewardTest is BaseTest {
         // add bribe for epoch 2
         LR.approve(address(bribeVotingReward), TOKEN_1 * 2);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1 * 2);
+        skip(1 hours);
+
         // remove supply by voting for other pair
         pools[0] = address(pair2);
         voter.vote(1, pools, weights);
@@ -232,7 +234,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         voter.vote(1, pools, weights);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         // create another bribe for the same pool the following week
         LR.approve(address(bribeVotingReward), reward2);
@@ -275,7 +277,7 @@ contract BribeVotingRewardTest is BaseTest {
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         // create a bribe for pair2 in epoch 1
         LR.approve(address(bribeVotingReward2), reward2);
@@ -717,6 +719,8 @@ contract BribeVotingRewardTest is BaseTest {
         bribeVotingReward.notifyRewardAmount(address(LR), reward2);
         assertEq(LR.balanceOf(address(bribeVotingReward)), reward + reward2);
 
+        skip(1 hours);
+
         // vote again for same pool
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
@@ -814,7 +818,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // poke causes id 1 to "vote" for pair
         voter.poke(1);
-        skip(1);
+        skip(1 hours);
 
         // vote for pair2 in epoch 1
         voter.vote(1, pools2, weights);
@@ -885,14 +889,14 @@ contract BribeVotingRewardTest is BaseTest {
         // create a bribe for pair2 in epoch 1
         LR.approve(address(bribeVotingReward2), TOKEN_1 * 2);
         bribeVotingReward2.notifyRewardAmount(address(LR), TOKEN_1 * 2);
-        skip(1);
+        skip(1 hours);
 
         voter.vote(1, pools2, weights);
         vm.prank(address(owner3));
         voter.vote(3, pools2, weights);
 
         // go to next week
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         earned = bribeVotingReward.earned(address(LR), 1);
         assertEq(earned, 0);
@@ -933,10 +937,9 @@ contract BribeVotingRewardTest is BaseTest {
             voter.vote(1, pools, weights);
             vm.prank(address(owner2));
             voter.vote(2, pools, weights);
-            skip(1);
 
             // fwd half a week
-            skipToNextEpoch(1);
+            skipToNextEpoch(1 hours + 1);
         }
 
         // create a bribe in epoch 0
@@ -968,14 +971,14 @@ contract BribeVotingRewardTest is BaseTest {
         // create a bribe for pair2 in epoch 1
         LR.approve(address(bribeVotingReward2), TOKEN_1 * 2);
         bribeVotingReward2.notifyRewardAmount(address(LR), TOKEN_1 * 2);
-        skip(1);
+        skip(1 hours);
 
         voter.vote(1, pools2, weights);
         vm.prank(address(owner3));
         voter.vote(3, pools2, weights);
 
         // go to next week
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         earned = bribeVotingReward.earned(address(LR), 1);
         assertEq(earned, 0);
@@ -1080,7 +1083,7 @@ contract BribeVotingRewardTest is BaseTest {
         // create a bribe for pair in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
-        skip(1);
+        skip(1 hours);
 
         voter.vote(1, pools, weights);
         skip(1 hours);
@@ -1189,7 +1192,7 @@ contract BribeVotingRewardTest is BaseTest {
         voter.vote(3, pools, weights);
 
         // go to next epoch but do not distribute
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         // vote for pair2 shortly after epoch flips
         voter.vote(1, pools, weights);
@@ -1245,7 +1248,7 @@ contract BribeVotingRewardTest is BaseTest {
         // create a bribe for pair in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1 * 2);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1 * 2);
-        skip(1);
+        skip(1 hours);
 
         // vote for pair in epoch 1
         voter.vote(1, pools, weights);
@@ -1270,7 +1273,7 @@ contract BribeVotingRewardTest is BaseTest {
     }
 
     function testCannotGetRewardInSameEpochAsVoteWithFuzz(uint256 ts) public {
-        skipToNextEpoch(0);
+        skipToNextEpoch(1 hours + 1);
 
         // rewards
         address[] memory rewards = new address[](1);
@@ -1290,7 +1293,7 @@ contract BribeVotingRewardTest is BaseTest {
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
 
-        ts = bound(ts, 0, 1 weeks - 1);
+        ts = bound(ts, 0, 1 weeks - (1 hours) - 2);
         skipAndRoll(ts);
 
         assertEq(bribeVotingReward.earned(address(LR), 1), 0);
@@ -1312,7 +1315,7 @@ contract BribeVotingRewardTest is BaseTest {
         // create a bribe for pair in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
-        skip(1);
+        skip(1 hours);
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights);
@@ -1327,6 +1330,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         earned = bribeVotingReward.earned(address(LR), 1);
         assertEq(earned, TOKEN_1 / 2);
+        skip(1 hours);
 
         // vote first, then create bribe
         voter.vote(1, pools, weights);
@@ -1387,7 +1391,7 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(ts, expectedTs);
         assertEq(balance, expectedBal);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         // withdraw by voting for other pool
         pools[0] = address(pair2);
@@ -1405,8 +1409,6 @@ contract BribeVotingRewardTest is BaseTest {
         (sTs, sBalance) = bribeVotingReward.supplyCheckpoints(1);
         assertEq(sTs, expectedTs);
         assertEq(sBalance, 0);
-
-        skipToNextEpoch(1);
     }
 
     function testDepositAndWithdrawFWithinSameEpochOverwritesCheckpoints() public {
@@ -1592,36 +1594,6 @@ contract BribeVotingRewardTest is BaseTest {
         bribeVotingReward.getReward(1, rewards);
         post = USDC.balanceOf(address(owner));
         assertEq(post - pre, USDC_1 / 2);
-    }
-
-    function testGetRewardWithVoteOnFlip() public {
-        skip(1 weeks / 2);
-
-        // create a LR bribe
-        LR.approve(address(bribeVotingReward), TOKEN_1);
-        bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
-
-        // vote
-        address[] memory pools = new address[](1);
-        pools[0] = address(pair);
-        uint256[] memory weights = new uint256[](1);
-        weights[0] = 10000;
-        voter.vote(1, pools, weights);
-
-        // rewards
-        address[] memory rewards = new address[](1);
-        rewards[0] = address(LR);
-
-        skipToNextEpoch(0); // on epoch flip
-
-        vm.prank(address(owner2));
-        voter.vote(2, pools, weights);
-
-        uint256 pre = LR.balanceOf(address(owner));
-        vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
-        uint256 post = LR.balanceOf(address(owner));
-        assertEq(post - pre, TOKEN_1);
     }
 
     function testCannotNotifyRewardWithZeroAmount() public {

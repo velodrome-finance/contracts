@@ -20,6 +20,8 @@ contract MinterTest is BaseTest {
         uint256[] memory weights = new uint256[](2);
         weights[0] = 1;
         weights[1] = 1;
+
+        skip(1 hours);
         voter.vote(tokenId, pools, weights);
     }
 

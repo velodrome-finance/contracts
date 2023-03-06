@@ -395,7 +395,7 @@ contract PairTest is BaseTest {
         pools[0] = address(pair);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
-        skip(1 weeks);
+        skip(1 weeks + 1 hours + 1);
 
         voter.vote(1, pools, weights);
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
@@ -428,7 +428,7 @@ contract PairTest is BaseTest {
         uint256[] memory weights = new uint256[](2);
         weights[0] = 5000;
         weights[1] = 5000;
-        skip(1 weeks);
+        skip(1 weeks + 1 hours + 1);
 
         voter.vote(1, pools, weights);
         weights[0] = 50000;
@@ -745,7 +745,7 @@ contract PairTest is BaseTest {
         voter.updateFor(gauges);
         voter.distribute(0, voter.length());
         voter.claimRewards(gauges);
-        assertEq(gauge.rewardRate(), 86895487806319671840);
+        assertEq(gauge.rewardRate(), 94981974648214908710);
         console2.log(gauge.rewardPerTokenStored());
     }
 

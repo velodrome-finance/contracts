@@ -193,6 +193,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotMergeAlreadyVotedFromVeNFT() public {
+        skip(1 hours);
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
         VELO.approve(address(escrow), type(uint256).max);
@@ -446,6 +447,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotSplitWithAlreadyVotedVeNFT() public {
+        skip(1 hours);
         escrow.enableSplitForAll();
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);

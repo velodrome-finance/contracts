@@ -91,8 +91,16 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         return VelodromeTimeLibrary.epochStart(_timestamp);
     }
 
-    function epochEnd(uint256 _timestamp) external pure returns (uint256) {
-        return VelodromeTimeLibrary.epochEnd(_timestamp);
+    function epochNext(uint256 _timestamp) external pure returns (uint256) {
+        return VelodromeTimeLibrary.epochNext(_timestamp);
+    }
+
+    function epochVoteStart(uint256 _timestamp) external pure returns (uint256) {
+        return VelodromeTimeLibrary.epochStart(_timestamp);
+    }
+
+    function epochVoteEnd(uint256 _timestamp) external pure returns (uint256) {
+        return VelodromeTimeLibrary.epochVoteEnd(_timestamp);
     }
 
     /// @dev requires initialization with at least rewardToken
@@ -219,7 +227,8 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         require(_poolVote.length == _weights.length);
         require(!IVotingEscrow(ve).deactivated(_tokenId), "Voter: inactive managed nft");
         uint256 _timestamp = block.timestamp;
-        if (_timestamp > VelodromeTimeLibrary.epochEnd(_timestamp)) {
+        require(_timestamp > VelodromeTimeLibrary.epochVoteStart(_timestamp), "Voter: distribute window");
+        if (_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) {
             require(isWhitelistedNFT[_tokenId], "Voter: nft not whitelisted");
         }
         lastVoted[_tokenId] = _timestamp;
@@ -232,7 +241,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         require(IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId), "Voter: not owner or approved");
         require(!IVotingEscrow(ve).deactivated(_mTokenId), "Voter: inactive managed nft");
         uint256 _timestamp = block.timestamp;
-        require(_timestamp <= VelodromeTimeLibrary.epochEnd(_timestamp), "Voter: cannot deposit in window");
+        require(_timestamp <= VelodromeTimeLibrary.epochVoteEnd(_timestamp), "Voter: cannot deposit in window");
         lastVoted[_tokenId] = _timestamp;
         IVotingEscrow(ve).depositManaged(_tokenId, _mTokenId);
     }

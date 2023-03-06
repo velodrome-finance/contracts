@@ -13,8 +13,13 @@ library VelodromeTimeLibrary {
         return timestamp - (timestamp % WEEK) + WEEK;
     }
 
-    /// @dev Returns unrestricted voting window
-    function epochEnd(uint256 timestamp) internal pure returns (uint256) {
+    /// @dev Returns start of voting window
+    function epochVoteStart(uint256 timestamp) internal pure returns (uint256) {
+        return timestamp - (timestamp % WEEK) + 1 hours;
+    }
+
+    /// @dev Returns end of voting window / beginning of unrestricted voting window
+    function epochVoteEnd(uint256 timestamp) internal pure returns (uint256) {
         return timestamp - (timestamp % WEEK) + WEEK - 1 hours;
     }
 }

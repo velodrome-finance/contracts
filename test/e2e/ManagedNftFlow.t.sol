@@ -85,6 +85,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         // create velo bribe for next epoch
         _createBribeWithAmount(bribeVotingReward, address(VELO), TOKEN_1 * 2);
 
+        skip(1 hours + 1);
+
         /// total votes:
         /// managed nft: TOKEN_1 * 2
         /// owner3: TOKEN_1 * 2
@@ -297,7 +299,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         vm.prank(address(owner4));
         voter.reset(mTokenId);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         // epoch 4:
         // test normal operation of nft post-withdrawal
@@ -316,14 +318,14 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // test normal nft behavior post withdrawal
         // ~= approx TOKEN_1 * 3 / 4, some drift due to voting power decay
-        assertEq(bribeVotingReward.earned(address(VELO), tokenId), 749095297039448925);
+        assertEq(bribeVotingReward.earned(address(VELO), tokenId), 749095272549042521);
 
         pre = VELO.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward.getReward(tokenId, rewards);
         post = VELO.balanceOf(address(owner));
 
-        assertEq(post - pre, 749095297039448925);
+        assertEq(post - pre, 749095272549042521);
     }
 
     function testTransferManagedNftFlow() public {
@@ -381,6 +383,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // create velo bribe for next epoch
         _createBribeWithAmount(bribeVotingReward, address(VELO), TOKEN_1);
+
+        skip(1 hours + 1);
 
         vm.prank(address(owner4));
         voter.vote(mTokenId, pools, weights);
@@ -522,6 +526,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         pools[0] = address(pair);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
+
+        skip(1 hours + 1);
 
         vm.prank(address(owner4));
         voter.vote(mTokenId, pools, weights);
