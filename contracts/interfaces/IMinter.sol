@@ -7,6 +7,8 @@ interface IMinter {
 
     /// @notice Allows epoch governor to modify the tail emission rate by at most 1 basis point
     ///         per epoch to a maximum of 100 basis points or to a minimum of 1 basis point.
+    ///         Note: the very first nudge proposal must take place the week prior
+    ///         to the tail emission schedule starting.
     /// @dev Throws if not epoch governor.
     ///      Throws if not currently in tail emission schedule.
     ///      Throws if already nudged this epoch.

@@ -9,7 +9,7 @@ protocol users.
 ## Definitions
 
 - VELO: The native token in the Velodrome ecosystem. It is emitted by the Minter and is an ERC-20 compliant token.
-- Epoch: An epoch is one week in length, beginning at Thursday midnight UTC time.
+- Epoch: An epoch is one week in length, beginning at Thursday midnight UTC time. After 4 years, the day of the week it resets on will shift. 
 - Pool: AMM constant-product implementation similar to Uniswap V2 liquidity pools.
 
 
@@ -37,6 +37,16 @@ Lightly modified to allow for the following:
 - Support for both stable and volatile pools. Stable pools use a different formula which assumes little to no volatility. The formula used for pricing the assets allows for low slippage even on large traded volumes. Volatile pools use the standard constant product formula. 
 - Custom fees per pool.
 - Modifying a pool's name and symbol (requires `emergencyCouncil` permissions).
+
+Stable pairs use the `x^3 * y + y^3 * x` curve, which may have a larger
+rounding error when calculating the invariant `K` when compared to Uniswap
+V2's constant product formula. The invariant `K` can temporarily decrease
+when a user performs certain actions like depositing liquidity, doing
+a swap and withdrawing liquidity. This means that the ratio of `K` to the
+total supply of the pool is not monotonically increasing. This temporary decrease 
+is negligible and the ratio will eventually increase again. In most cases, this issue
+is not critical. This is mentioned as a courtesy to integrators that may depend
+ on the ratio of `K` to `totalSupply`as a way of measuring the value of LP tokens.
 
 ### PairFees
 
@@ -234,7 +244,14 @@ include the `proposer` to prevent griefing attacks from proposal frontrunning.
 
 ### EpochGovernor
 
-An epoch based governance contract modified lightly from OpenZeppelin's Governor contract to exclude the `cancel` function. It has been modified in such a way that it continues to adhere with OpenZeppelin's `IGovernor` interface. Once tail emissions in the `Minter` are turned on, every epoch a proposal can be created to either increase, hold or decrease the Minter's emission for the following epoch. The winning decision is selected via simple majority (also known as [plurality](https://en.wikipedia.org/wiki/Plurality_(voting))). Also uses timestamp based voting power from VotingEscrow NFTs. 
+An epoch based governance contract modified lightly from OpenZeppelin's Governor
+contract to exclude the `cancel` function. It has been modified in such a way 
+that it continues to adhere with OpenZeppelin's `IGovernor` interface. Once tail
+emissions in the `Minter` are turned on, every epoch a proposal can be created
+to either increase, hold or decrease the Minter's emission for the following 
+epoch. The winning decision is selected via simple majority (also known as [plurality](https://en.wikipedia.org/wiki/Plurality_(voting))). Also uses timestamp based voting power 
+from VotingEscrow NFTs. Note that the very first nudge proposal must be initiated in 
+the epoch prior to the tail emission schedule starting. 
 
 Notable changes:
 - No quorum.

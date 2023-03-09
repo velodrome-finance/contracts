@@ -209,6 +209,9 @@ interface IRouter {
     ) external;
 
     /// @notice Zap a token A into a pool (B, C). (A can be equal to B or C).
+    ///         Slippage is required for the initial swap.
+    ///         Additional slippage may be required when adding liquidity as the
+    ///         price of the token may have changed.
     /// @param tokenIn Token you are zapping in from (i.e. input token).
     /// @param amountInA Amount of input token you wish to send down routesA
     /// @param amountInB Amount of input token you wish to send down routesB
@@ -230,6 +233,9 @@ interface IRouter {
     ) external payable returns (uint256 liquidity);
 
     /// @notice Zap out a pool (B, C) into A.
+    ///         Slippage is required for the removal of liquidity.
+    ///         Additional slippage may be required on the swap as the
+    ///         price of the token may have changed.
     /// @param tokenOut Token you are zapping out to (i.e. output token).
     /// @param liquidity Amount of liquidity you wish to remove.
     /// @param zapOutPair Contains zap struct information. See Zap struct.

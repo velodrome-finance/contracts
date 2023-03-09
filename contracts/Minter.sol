@@ -17,7 +17,7 @@ contract Minter is IMinter {
     IVotingEscrow public immutable ve;
     IRewardsDistributor public immutable rewardsDistributor;
 
-    /// @notice Duration of epoch (resets every Thursday 00:00 UTC)
+    /// @notice Duration of epoch in seconds
     uint256 public constant WEEK = 1 weeks;
     /// @notice Decay rate of emissions as percentage of `MAX_BPS`
     uint256 public constant EMISSION = 9_900;

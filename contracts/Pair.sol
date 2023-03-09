@@ -233,7 +233,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         uint256 _reserve1
     ) internal {
         uint256 blockTimestamp = block.timestamp;
-        uint256 timeElapsed = blockTimestamp - blockTimestampLast; // overflow is desired
+        uint256 timeElapsed = blockTimestamp - blockTimestampLast;
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
             reserve0CumulativeLast += _reserve0 * timeElapsed;
             reserve1CumulativeLast += _reserve1 * timeElapsed;
