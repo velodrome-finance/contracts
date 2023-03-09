@@ -39,6 +39,7 @@ contract VotingEscrowTest is BaseTest {
         uint256 reward = TOKEN_1;
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
         LockedManagedReward lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
+        assertEq(VELO.allowance(address(escrow), address(lockedManagedReward)), 0);
 
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
@@ -56,6 +57,7 @@ contract VotingEscrowTest is BaseTest {
 
         assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), reward);
         assertEq(post - pre, reward);
+        assertEq(VELO.allowance(address(escrow), address(lockedManagedReward)), 0);
     }
 
     function testDepositFor() public {

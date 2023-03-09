@@ -43,6 +43,9 @@ contract LockedManagedRewardTest is BaseTest {
     }
 
     function testNotifyRewardAmount() public {
+        deal(address(VELO), address(escrow), TOKEN_1 * 3);
+
+        vm.prank(address(escrow));
         VELO.approve(address(lockedManagedReward), TOKEN_1);
         uint256 pre = VELO.balanceOf(address(escrow));
         vm.prank(address(escrow));
@@ -58,6 +61,7 @@ contract LockedManagedRewardTest is BaseTest {
 
         skip(1 hours);
 
+        vm.prank(address(escrow));
         VELO.approve(address(lockedManagedReward), TOKEN_1 * 2);
         pre = VELO.balanceOf(address(escrow));
         vm.prank(address(escrow));

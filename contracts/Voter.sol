@@ -305,7 +305,6 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
         address _gauge = IGaugeFactory(_gaugeFactory).createGauge(_pool, _feeVotingReward, rewardToken, isPair);
 
-        IERC20(rewardToken).approve(_gauge, type(uint256).max);
         gaugeToFees[_gauge] = _feeVotingReward;
         gaugeToBribe[_gauge] = _bribeVotingReward;
         gauges[_pool] = _gauge;
@@ -441,7 +440,9 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         uint256 _claimable = claimable[_gauge];
         if (_claimable > IGauge(_gauge).left() && _claimable > DURATION) {
             claimable[_gauge] = 0;
+            IERC20(rewardToken).safeApprove(_gauge, _claimable);
             IGauge(_gauge).notifyRewardAmount(_claimable);
+            IERC20(rewardToken).safeApprove(_gauge, 0);
             emit DistributeReward(_msgSender(), _gauge, _claimable);
         }
     }

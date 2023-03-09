@@ -50,7 +50,9 @@ contract MinterTestFlow is ExtendedBaseTest {
         assertEq(VELO.balanceOf(address(voter)), expectedMint);
 
         uint256 epochStart = _getEpochStart(block.timestamp);
+        assertEq(VELO.allowance(address(voter), address(gauge)), 0);
         voter.distribute(address(gauge));
+        assertEq(VELO.allowance(address(voter), address(gauge)), 0);
         assertApproxEqRel(VELO.balanceOf(address(gauge)), expectedMint / 2, 1e6);
         assertApproxEqRel(VELO.balanceOf(address(voter)), expectedMint / 2, 1e6);
         assertApproxEqRel(gauge.rewardRate(), expectedMint / 2 / (5 days), 1e6);

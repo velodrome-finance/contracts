@@ -7,6 +7,7 @@ import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IReward} from "./interfaces/IReward.sol";
 import {IFactoryRegistry} from "./interfaces/IFactoryRegistry.sol";
@@ -22,6 +23,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @author Modified from Nouns DAO (https://github.com/withtally/my-nft-dao-project/blob/main/contracts/ERC721Checkpointable.sol)
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
 contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
+    using SafeERC20 for IERC20;
     /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
@@ -121,7 +123,6 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         (address _lockedManagedReward, address _freeManagedReward) = IManagedRewardsFactory(
             IFactoryRegistry(factoryRegistry).managedRewardsFactory()
         ).createRewards(voter);
-        IERC20(token).approve(_lockedManagedReward, type(uint256).max);
         managedToLocked[_mTokenId] = _lockedManagedReward;
         managedToFree[_mTokenId] = _freeManagedReward;
 
@@ -791,7 +792,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
         address from = _msgSender();
         if (_value != 0) {
-            assert(IERC20(token).transferFrom(from, address(this), _value));
+            IERC20(token).safeTransferFrom(from, address(this), _value);
         }
 
         emit Deposit(from, _tokenId, _value, newLocked.end, _depositType, block.timestamp);
@@ -866,7 +867,10 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         if (_escrowType == EscrowType.MANAGED) {
             // increaseAmount called on managed tokens are treated as locked rewards
             address _lockedManagedReward = managedToLocked[_tokenId];
-            IReward(_lockedManagedReward).notifyRewardAmount(address(token), _value);
+            address _token = token;
+            IERC20(_token).safeApprove(_lockedManagedReward, _value);
+            IReward(_lockedManagedReward).notifyRewardAmount(_token, _value);
+            IERC20(_token).safeApprove(_lockedManagedReward, 0);
         }
     }
 
@@ -912,7 +916,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         // Both can have >= 0 amount
         _checkpoint(_tokenId, oldLocked, LockedBalance(0, 0));
 
-        assert(IERC20(token).transfer(sender, value));
+        IERC20(token).safeTransfer(sender, value);
 
         // Burn the NFT
         _burn(_tokenId);
