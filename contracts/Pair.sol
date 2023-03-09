@@ -274,21 +274,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         }
     }
 
-    // gives the current twap price measured from amountIn * tokenIn gives amountOut
-    function current(address tokenIn, uint256 amountIn) external view returns (uint256 amountOut) {
-        Observation memory _observation = lastObservation();
-        (uint256 reserve0Cumulative, uint256 reserve1Cumulative, ) = currentCumulativePrices();
-        if (block.timestamp == _observation.timestamp) {
-            _observation = observations[observations.length - 2];
-        }
-
-        uint256 timeElapsed = block.timestamp - _observation.timestamp;
-        uint256 _reserve0 = (reserve0Cumulative - _observation.reserve0Cumulative) / timeElapsed;
-        uint256 _reserve1 = (reserve1Cumulative - _observation.reserve1Cumulative) / timeElapsed;
-        amountOut = _getAmountOut(amountIn, tokenIn, _reserve0, _reserve1);
-    }
-
-    // as per `current`, however allows user configured granularity, up to the full window size
+    // provides twap price with user configured granularity, up to the full window size
     function quote(
         address tokenIn,
         uint256 amountIn,

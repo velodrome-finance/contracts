@@ -118,8 +118,7 @@ contract OracleTest is BaseTest {
     function testOracle() public {
         routerPair1GetAmountsOutAndSwapExactTokensForTokens();
 
-        assertEq(pair.current(address(USDC), 1e9), 999999494004424240546); // hardhat: 999999491983679298588
-        assertEq(pair.current(address(FRAX), 1e21), 999999506); // hardhat: 999999507
+        assertEq(pair.quote(address(USDC), 1e9, 1), 999999494004424240546);
         assertEq(pair.quote(address(FRAX), 1e21, 1), 999999506);
     }
 }
