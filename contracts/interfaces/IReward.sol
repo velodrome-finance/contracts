@@ -41,11 +41,6 @@ interface IReward {
     /// @return Index of supply checkpoint
     function getPriorSupplyIndex(uint256 timestamp) external view returns (uint256);
 
-    /// @notice Determine how much rewards are left in the period of earning
-    /// @param token Address of token to check rewards of
-    /// @return Amount of rewards for token queried
-    function left(address token) external view returns (uint256);
-
     /// @notice Calculate how much in rewards are earned for a specific token and veNFT
     /// @param token Address of token to fetch rewards of
     /// @param tokenId Unique identifier of the veNFT

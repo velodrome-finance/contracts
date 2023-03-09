@@ -220,12 +220,6 @@ abstract contract Reward is IReward, Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IReward
-    function left(address token) external view returns (uint256) {
-        uint256 adjustedTstamp = VelodromeTimeLibrary.epochStart(block.timestamp);
-        return tokenRewardsPerEpoch[token][adjustedTstamp];
-    }
-
-    /// @inheritdoc IReward
     function getReward(uint256 tokenId, address[] memory tokens) external virtual nonReentrant {}
 
     /// @dev used with all getReward implementations

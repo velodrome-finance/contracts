@@ -184,8 +184,4 @@ interface IVoter {
     /// @dev Update claims to emissions for single gauge
     /// @param _gauge .
     function updateFor(address _gauge) external;
-
-    /// @dev Claim fees from an array of gauges. Skips gauges not attached to pools.
-    /// @param _gauges Array of gauges to claim from.
-    function distributeFees(address[] memory _gauges) external;
 }

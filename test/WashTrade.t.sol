@@ -222,7 +222,6 @@ contract WashTradeTest is BaseTest {
 
         address[] memory gauges = new address[](1);
         gauges[0] = address(gauge3);
-        voter.distributeFees(gauges);
     }
 
     function testBribeClaimRewards() public {

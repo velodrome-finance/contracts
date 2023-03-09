@@ -425,14 +425,6 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         }
     }
 
-    function distributeFees(address[] memory _gauges) external {
-        for (uint256 i = 0; i < _gauges.length; i++) {
-            if (IGauge(_gauges[i]).isForPair()) {
-                IGauge(_gauges[i]).claimFees();
-            }
-        }
-    }
-
     /// @inheritdoc IVoter
     function distribute(address _gauge) public nonReentrant {
         IMinter(minter).update_period();

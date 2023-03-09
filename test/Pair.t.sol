@@ -569,7 +569,6 @@ contract PairTest is BaseTest {
 
         address[] memory gauges = new address[](1);
         gauges[0] = address(gauge);
-        voter.distributeFees(gauges);
     }
 
     function minterMint() public {
