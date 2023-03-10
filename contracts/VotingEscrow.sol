@@ -800,7 +800,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVotingEscrow
-    function checkpoint() external {
+    function checkpoint() external nonReentrant {
         _checkpoint(0, LockedBalance(0, 0), LockedBalance(0, 0));
     }
 
