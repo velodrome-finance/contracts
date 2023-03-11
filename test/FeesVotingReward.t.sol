@@ -18,14 +18,21 @@ contract FeesVotingRewardTest is BaseTest {
         escrow.createLock(TOKEN_1, MAXTIME);
         vm.stopPrank();
         skip(1);
+
+        FRAX.transfer(address(gauge), TOKEN_1 * 100);
+        FRAX.transfer(address(gauge2), TOKEN_1 * 100);
+        USDC.transfer(address(gauge), USDC_1 * 100);
+        USDC.transfer(address(gauge2), USDC_1 * 100);
     }
 
     function testGetRewardWithZeroTotalSupply() public {
         skip(1 weeks / 2);
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -41,8 +48,11 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(earned, TOKEN_1);
 
         // add reward for epoch 2
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
+        vm.stopPrank();
+
         skip(1 hours);
 
         // remove supply by voting for other pair
@@ -75,8 +85,10 @@ contract FeesVotingRewardTest is BaseTest {
         uint256 reward2 = TOKEN_1 * 2;
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward);
-        feesVotingReward.notifyRewardAmount((address(FRAX)), reward);
+        feesVotingReward.notifyRewardAmount(address(FRAX), reward);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -88,8 +100,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 days);
 
         // create another reward for the same pool in the same epoch
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward2);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward2);
+        vm.stopPrank();
 
         skipToNextEpoch(1);
 
@@ -111,8 +125,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -152,8 +168,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -196,8 +214,10 @@ contract FeesVotingRewardTest is BaseTest {
         uint256 reward2 = TOKEN_1 * 2;
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -210,8 +230,10 @@ contract FeesVotingRewardTest is BaseTest {
         skipToNextEpoch(1 hours + 1);
 
         // create another reward for the same pool the following week
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward2);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward2);
+        vm.stopPrank();
 
         voter.vote(1, pools, weights);
 
@@ -237,8 +259,10 @@ contract FeesVotingRewardTest is BaseTest {
         uint256 reward2 = TOKEN_1 * 2;
 
         // create a reward for pair in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -253,8 +277,10 @@ contract FeesVotingRewardTest is BaseTest {
         skipToNextEpoch(1 hours + 1);
 
         // create a reward for pair2 in epoch 1
+        vm.startPrank(address(gauge2));
         FRAX.approve(address(feesVotingReward2), reward2);
         feesVotingReward2.notifyRewardAmount((address(FRAX)), reward2);
+        vm.stopPrank();
         pools[0] = address(pair2);
 
         voter.vote(1, pools, weights);
@@ -286,8 +312,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create a reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), TOKEN_1);
 
         // vote
@@ -317,8 +345,10 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(earned, 0);
 
         // create another reward in epoch 1 but do not vote
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
+        vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), TOKEN_1 * 2);
 
         earned = feesVotingReward.earned(address(FRAX), 1);
@@ -340,8 +370,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount((address(FRAX)), TOKEN_1);
+        vm.stopPrank();
 
         // vote in epoch 0
         address[] memory pools = new address[](1);
@@ -361,8 +393,10 @@ contract FeesVotingRewardTest is BaseTest {
         earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1);
 
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount((address(FRAX)), TOKEN_1 * 2);
+        vm.stopPrank();
         skip(1);
 
         earned = feesVotingReward.earned(address(FRAX), 1);
@@ -374,8 +408,10 @@ contract FeesVotingRewardTest is BaseTest {
         earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1 * 3);
 
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 3);
         feesVotingReward.notifyRewardAmount((address(FRAX)), TOKEN_1 * 3);
+        vm.stopPrank();
         skip(1);
 
         earned = feesVotingReward.earned(address(FRAX), 1);
@@ -387,8 +423,10 @@ contract FeesVotingRewardTest is BaseTest {
         earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1 * 6);
 
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 4);
         feesVotingReward.notifyRewardAmount((address(FRAX)), TOKEN_1 * 4);
+        vm.stopPrank();
         skip(1);
 
         earned = feesVotingReward.earned(address(FRAX), 1);
@@ -400,8 +438,10 @@ contract FeesVotingRewardTest is BaseTest {
         earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1 * 10);
 
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 5);
         feesVotingReward.notifyRewardAmount((address(FRAX)), TOKEN_1 * 5);
+        vm.stopPrank();
         skip(1);
 
         earned = feesVotingReward.earned(address(FRAX), 1);
@@ -413,8 +453,10 @@ contract FeesVotingRewardTest is BaseTest {
         earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1 * 15);
 
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 6);
         feesVotingReward.notifyRewardAmount((address(FRAX)), TOKEN_1 * 6);
+        vm.stopPrank();
         skip(1);
 
         earned = feesVotingReward.earned(address(FRAX), 1);
@@ -440,8 +482,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount((address(FRAX)), TOKEN_1);
+        vm.stopPrank();
 
         // vote in epoch 0
         address[] memory pools = new address[](1);
@@ -454,8 +498,10 @@ contract FeesVotingRewardTest is BaseTest {
         skipToNextEpoch(1);
 
         // create reward in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount((address(FRAX)), TOKEN_1 * 2);
+        vm.stopPrank();
 
         // rewards
         address[] memory rewards = new address[](1);
@@ -485,8 +531,10 @@ contract FeesVotingRewardTest is BaseTest {
         uint256 reward2 = TOKEN_1 * 2;
 
         // create a reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -506,8 +554,10 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(earned, TOKEN_1);
 
         // create a reward in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward2);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward2);
+        vm.stopPrank();
         skip(1);
 
         earned = feesVotingReward.earned(address(FRAX), 1);
@@ -538,8 +588,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), TOKEN_1);
 
         // vote
@@ -575,8 +627,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), TOKEN_1);
 
         // vote
@@ -614,8 +668,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create a reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), TOKEN_1);
 
         // vote
@@ -664,8 +720,10 @@ contract FeesVotingRewardTest is BaseTest {
         uint256 reward3 = TOKEN_1 * 3; // epoch3 reward
 
         // create reward with amount reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward);
         feesVotingReward.notifyRewardAmount(address(FRAX), reward);
+        vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), reward);
 
         // vote for pool
@@ -688,8 +746,10 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(earned, expectedReward);
 
         // create reward with amount reward2 in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward2);
         feesVotingReward.notifyRewardAmount(address(FRAX), reward2);
+        vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), reward + reward2);
 
         skip(1 hours);
@@ -708,8 +768,10 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(earned, expectedReward);
 
         // create reward with amount reward3 in epoch 2
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward3);
         feesVotingReward.notifyRewardAmount(address(FRAX), reward3);
+        vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), reward + reward2 + reward3);
 
         // poked into voting for same pool
@@ -757,8 +819,10 @@ contract FeesVotingRewardTest is BaseTest {
         weights[0] = 10000;
 
         // create a reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights);
@@ -782,11 +846,15 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1);
 
         // create a reward for pair in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         // create a reward for pair2 in epoch 1
+        vm.startPrank(address(gauge2));
         FRAX.approve(address(feesVotingReward2), TOKEN_1 * 2);
         feesVotingReward2.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
+        vm.stopPrank();
         skip(1);
 
         // poke causes id 1 to "vote" for pair
@@ -834,8 +902,10 @@ contract FeesVotingRewardTest is BaseTest {
         weights[0] = 10000;
 
         // create a reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights);
@@ -857,11 +927,16 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1);
 
         // create a reward for pair in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         // create a reward for pair2 in epoch 1
+        vm.startPrank(address(gauge2));
         FRAX.approve(address(feesVotingReward2), TOKEN_1 * 2);
         feesVotingReward2.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
+        vm.stopPrank();
+
         skip(1 hours);
 
         voter.vote(1, pools2, weights);
@@ -916,8 +991,10 @@ contract FeesVotingRewardTest is BaseTest {
         }
 
         // create a reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights);
@@ -939,11 +1016,15 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1);
 
         // create a reward for pair in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         // create a reward for pair2 in epoch 1
+        vm.startPrank(address(gauge2));
         FRAX.approve(address(feesVotingReward2), TOKEN_1 * 2);
         feesVotingReward2.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
+        vm.stopPrank();
         skip(1 hours);
 
         voter.vote(1, pools2, weights);
@@ -984,8 +1065,10 @@ contract FeesVotingRewardTest is BaseTest {
         weights[0] = 10000;
 
         // create a reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights);
@@ -1002,8 +1085,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1);
 
         // create a reward for pair in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         skip(1);
 
         // poke causes id 1 to "vote" for pair
@@ -1036,8 +1121,10 @@ contract FeesVotingRewardTest is BaseTest {
         weights[0] = 10000;
 
         // create a reward in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights);
@@ -1054,8 +1141,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1);
 
         // create a reward for pair in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         skip(1 hours);
 
         voter.vote(1, pools, weights);
@@ -1090,11 +1179,15 @@ contract FeesVotingRewardTest is BaseTest {
         weights[1] = 8;
 
         // create a reward in epoch 0 for pair
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         // create a usdc reward in epoch 1 for pair2
+        vm.startPrank(address(gauge2));
         USDC.approve(address(feesVotingReward2), USDC_1);
         feesVotingReward2.notifyRewardAmount(address(USDC), USDC_1);
+        vm.stopPrank();
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights); // 20% to pair, 80% to pair2
@@ -1149,10 +1242,14 @@ contract FeesVotingRewardTest is BaseTest {
         weights[0] = 10000;
 
         // create a reward for pair and pair2 in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
+        vm.startPrank(address(gauge2));
         USDC.approve(address(feesVotingReward2), USDC_1);
         feesVotingReward2.notifyRewardAmount(address(USDC), USDC_1);
+        vm.stopPrank();
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights);
@@ -1200,8 +1297,10 @@ contract FeesVotingRewardTest is BaseTest {
         weights[0] = 10000;
 
         // create a reward for pair in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         skip(1);
 
         // vote for pair in epoch 0
@@ -1219,8 +1318,10 @@ contract FeesVotingRewardTest is BaseTest {
         skipToNextEpoch(1);
 
         // create a reward for pair in epoch 1
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
+        vm.stopPrank();
         skip(1 hours);
 
         // vote for pair in epoch 1
@@ -1259,8 +1360,10 @@ contract FeesVotingRewardTest is BaseTest {
         weights[0] = 10000;
 
         // create a bribe for pair in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote for pair in epoch 0
         voter.vote(1, pools, weights);
@@ -1278,8 +1381,10 @@ contract FeesVotingRewardTest is BaseTest {
         uint256 reward = TOKEN_1;
 
         // create a bribe
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -1313,8 +1418,10 @@ contract FeesVotingRewardTest is BaseTest {
         weights[0] = 10000;
 
         // create a reward for pair in epoch 0
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
         skip(1 hours);
 
         // vote for pair in epoch 0
@@ -1341,8 +1448,10 @@ contract FeesVotingRewardTest is BaseTest {
         earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1 / 2);
 
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
+        vm.stopPrank();
         skip(1);
 
         earned = feesVotingReward.earned(address(FRAX), 1);
@@ -1547,8 +1656,10 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 weeks / 2);
 
         // create a FRAX reward
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
 
         // vote
         address[] memory pools = new address[](1);
@@ -1563,8 +1674,11 @@ contract FeesVotingRewardTest is BaseTest {
         skipToNextEpoch(1);
 
         // create usdc reward, vote passively this epoch
+        USDC.transfer(address(gauge), USDC_1);
+        vm.startPrank(address(gauge));
         USDC.approve(address(feesVotingReward), USDC_1);
         feesVotingReward.notifyRewardAmount(address(USDC), USDC_1);
+        vm.stopPrank();
 
         uint256 earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1 / 2);
@@ -1598,18 +1712,21 @@ contract FeesVotingRewardTest is BaseTest {
 
     function testCannotNotifyRewardWithZeroAmount() public {
         vm.expectRevert("Reward: zero amount");
+        vm.prank(address(gauge));
         feesVotingReward.notifyRewardAmount(address(FRAX), 0);
     }
 
     function testCannotNotifyRewardWithInvalidRewardToken() public {
         vm.expectRevert("FeesVotingReward: invalid reward");
+        vm.prank(address(gauge));
         feesVotingReward.notifyRewardAmount(address(WETH), TOKEN_1);
     }
 
     function testNotifyRewardAmountWithValidRewardToken() public {
+        vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         vm.expectEmit(true, false, false, true, address(feesVotingReward));
-        emit NotifyReward(address(owner), address(FRAX), 604800, TOKEN_1);
+        emit NotifyReward(address(gauge), address(FRAX), 604800, TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
 
         assertEq(feesVotingReward.tokenRewardsPerEpoch(address(FRAX), 604800), TOKEN_1);
@@ -1619,7 +1736,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
         vm.expectEmit(true, false, false, true, address(feesVotingReward));
-        emit NotifyReward(address(owner), address(FRAX), 604800, TOKEN_1 * 2);
+        emit NotifyReward(address(gauge), address(FRAX), 604800, TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
 
         assertEq(feesVotingReward.tokenRewardsPerEpoch(address(FRAX), 604800), TOKEN_1 * 3);

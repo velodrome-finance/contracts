@@ -19,7 +19,30 @@ interface IVoter {
     event WhitelistToken(address indexed whitelister, address indexed token, bool _bool);
     event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool _bool);
 
+    // mappings
     function gauges(address pool) external view returns (address);
+
+    function poolForGauge(address gauge) external view returns (address);
+
+    function gaugeToFees(address gauge) external view returns (address);
+
+    function gaugeToBribe(address gauge) external view returns (address);
+
+    function weights(address pool) external view returns (uint256);
+
+    function votes(uint256 tokenId, address pool) external view returns (uint256);
+
+    function usedWeights(uint256 tokenId) external view returns (uint256);
+
+    function lastVoted(uint256 tokenId) external view returns (uint256);
+
+    function isGauge(address) external view returns (bool);
+
+    function isWhitelistedToken(address token) external view returns (bool);
+
+    function isWhitelistedNFT(uint256 tokenId) external view returns (bool);
+
+    function isAlive(address gauge) external view returns (bool);
 
     function ve() external view returns (address);
 
@@ -28,12 +51,6 @@ interface IVoter {
     function epochGovernor() external view returns (address);
 
     function emergencyCouncil() external view returns (address);
-
-    function isWhitelistedToken(address token) external view returns (bool);
-
-    function isAlive(address _gauge) external view returns (bool);
-
-    function usedWeights(uint256 _tokenId) external view returns (uint256);
 
     function length() external view returns (uint256);
 
