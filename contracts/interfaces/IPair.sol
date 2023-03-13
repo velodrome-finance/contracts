@@ -43,4 +43,10 @@ interface IPair {
     function getAmountOut(uint256, address) external view returns (uint256);
 
     function skim(address to) external;
+
+    function initialize(
+        address _token0,
+        address _token1,
+        bool _stable
+    ) external;
 }

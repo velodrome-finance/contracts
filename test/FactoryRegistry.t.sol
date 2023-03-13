@@ -11,10 +11,12 @@ contract FactoryRegistryTest is BaseTest {
     Router router2;
     Pair newPair;
     Pair newPair2;
+    Pair implementation2;
 
     function _setUp() public override {
+        implementation2 = new Pair();
         // create new factories to test against factory registry
-        factory2 = new PairFactory();
+        factory2 = new PairFactory(address(implementation2));
         assertEq(factory2.allPairsLength(), 0);
         factory2.setFee(true, 1); // set fee back to 0.01% for old tests
         factory2.setFee(false, 1);

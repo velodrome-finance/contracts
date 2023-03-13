@@ -2,9 +2,12 @@
 pragma solidity 0.8.13;
 
 import {IPairFactory} from "../interfaces/IPairFactory.sol";
-import {Pair} from "../Pair.sol";
+import {IPair} from "../interfaces/IPair.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract PairFactory is IPairFactory {
+    address public immutable implementation;
+
     bool public isPaused;
     address public pauser;
 
@@ -33,7 +36,8 @@ contract PairFactory is IPairFactory {
     address internal _temp1;
     bool internal _temp;
 
-    constructor() {
+    constructor(address _implementation) {
+        implementation = _implementation;
         voter = msg.sender;
         pauser = msg.sender;
         feeManager = msg.sender;
@@ -117,26 +121,10 @@ contract PairFactory is IPairFactory {
         emit SetCustomFee(pair, fee);
     }
 
+    /// @inheritdoc IPairFactory
     function getFee(address pair, bool _stable) public view returns (uint256) {
         uint256 fee = customFee[pair];
         return fee == ZERO_FEE_INDICATOR ? 0 : fee != 0 ? fee : _stable ? stableFee : volatileFee;
-    }
-
-    /// @inheritdoc IPairFactory
-    function pairCodeHash() external pure returns (bytes32) {
-        return keccak256(type(Pair).creationCode);
-    }
-
-    function getInitializable()
-        external
-        view
-        returns (
-            address,
-            address,
-            bool
-        )
-    {
-        return (_temp0, _temp1, _temp);
     }
 
     function createPair(
@@ -149,8 +137,8 @@ contract PairFactory is IPairFactory {
         require(token0 != address(0), "PairFactory: zero address");
         require(getPair[token0][token1][stable] == address(0), "PairFactory: pair already exists");
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable)); // salt includes stable as well, 3 parameters
-        (_temp0, _temp1, _temp) = (token0, token1, stable);
-        pair = address(new Pair{salt: salt}());
+        pair = Clones.cloneDeterministic(implementation, salt);
+        IPair(pair).initialize(token0, token1, stable);
         getPair[token0][token1][stable] = pair;
         getPair[token1][token0][stable] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);

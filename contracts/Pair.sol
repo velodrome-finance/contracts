@@ -5,7 +5,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IPair} from "./interfaces/IPair.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IPairCallee} from "./interfaces/IPairCallee.sol";
-import {PairFactory} from "./factories/PairFactory.sol";
+import {IPairFactory} from "./interfaces/IPairFactory.sol";
 import {PairFees} from "./PairFees.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -20,18 +20,18 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
 
     string private _name;
     string private _symbol;
-    address private immutable _voter;
+    address private _voter;
 
-    // Used to denote stable or volatile pair, not immutable since construction happens in the initialize method for CREATE2 deterministic addresses
-    bool public immutable stable;
+    // Used to denote stable or volatile pair
+    bool public stable;
 
     uint256 internal constant MINIMUM_LIQUIDITY = 10**3;
     uint256 internal constant MINIMUM_K = 10**10;
 
-    address public immutable token0;
-    address public immutable token1;
-    address public immutable pairFees;
-    address public immutable factory;
+    address public token0;
+    address public token1;
+    address public pairFees;
+    address public factory;
 
     // Structure to capture time period obervations every 30 minutes, used for local oracles
     struct Observation {
@@ -45,8 +45,8 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
 
     Observation[] public observations;
 
-    uint256 internal immutable decimals0;
-    uint256 internal immutable decimals1;
+    uint256 internal decimals0;
+    uint256 internal decimals1;
 
     uint256 public reserve0;
     uint256 public reserve1;
@@ -82,10 +82,16 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
     event Sync(uint256 reserve0, uint256 reserve1);
     event Claim(address indexed sender, address indexed recipient, uint256 amount0, uint256 amount1);
 
-    constructor() ERC20("", "") ERC20Permit("") {
+    constructor() ERC20("", "") ERC20Permit("") {}
+
+    function initialize(
+        address _token0,
+        address _token1,
+        bool _stable
+    ) external {
+        require(factory == address(0), "Pair: factory set");
         factory = _msgSender();
-        (address _token0, address _token1, bool _stable) = PairFactory(factory).getInitializable();
-        _voter = PairFactory(factory).voter();
+        _voter = IPairFactory(factory).voter();
         (token0, token1, stable) = (_token0, _token1, _stable);
         pairFees = address(new PairFees(_token0, _token1));
         if (_stable) {
@@ -386,7 +392,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         address to,
         bytes calldata data
     ) external nonReentrant {
-        require(!PairFactory(factory).isPaused(), "Pair: paused");
+        require(!IPairFactory(factory).isPaused(), "Pair: paused");
         require(amount0Out > 0 || amount1Out > 0, "Pair: insufficient output amount");
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
         require(amount0Out < _reserve0 && amount1Out < _reserve1, "Pair: insufficient liquidity");
@@ -409,8 +415,8 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         {
             // scope for reserve{0,1}Adjusted, avoids stack too deep errors
             (address _token0, address _token1) = (token0, token1);
-            if (amount0In > 0) _update0((amount0In * PairFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token0 and move them out of pool
-            if (amount1In > 0) _update1((amount1In * PairFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token1 and move them out of pool
+            if (amount0In > 0) _update0((amount0In * IPairFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token0 and move them out of pool
+            if (amount1In > 0) _update1((amount1In * IPairFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token1 and move them out of pool
             _balance0 = IERC20(_token0).balanceOf(address(this)); // since we removed tokens, we need to reconfirm balances, can also simply use previous balance - amountIn/ 10000, but doing balanceOf again as safety check
             _balance1 = IERC20(_token1).balanceOf(address(this));
             // The curve, either x3y+y3x for stable pools, or x*y for volatile pools
@@ -471,7 +477,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
 
     function getAmountOut(uint256 amountIn, address tokenIn) external view returns (uint256) {
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
-        amountIn -= (amountIn * PairFactory(factory).getFee(address(this), stable)) / 10000; // remove fee from amount received
+        amountIn -= (amountIn * IPairFactory(factory).getFee(address(this), stable)) / 10000; // remove fee from amount received
         return _getAmountOut(amountIn, tokenIn, _reserve0, _reserve1);
     }
 

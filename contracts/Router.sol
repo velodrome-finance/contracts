@@ -5,6 +5,7 @@ pragma solidity 0.8.13;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IPair} from "./interfaces/IPair.sol";
 import {IPairFactory} from "./interfaces/IPairFactory.sol";
+import {IPairFactoryV1} from "./interfaces/v1/IPairFactoryV1.sol";
 import {IRouter} from "./interfaces/IRouter.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IGauge} from "./interfaces/IGauge.sol";
@@ -14,6 +15,7 @@ import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC2
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 /// @notice Router allows routes through any pairs created by any factory adhering to univ2 interface.
 /// @dev Zapping and swapping support both v1 and v2. Adding liquidity supports v2 only.
@@ -24,10 +26,10 @@ contract Router is IRouter, Context {
     address public immutable defaultFactory;
     address public immutable voter;
     IWETH public immutable weth;
-    bytes32 public immutable pairCodeHash;
     uint256 internal constant MINIMUM_LIQUIDITY = 10**3;
     /// @dev Represents Ether. Used by zapper to determine whether to return assets as ETH/WETH.
     address public constant ETHER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
+    address public constant v1Factory = 0x25CbdDb98b35ab1FF77413456B31EC81A6B6B746;
 
     modifier ensure(uint256 deadline) {
         require(deadline >= block.timestamp, "Router: expired");
@@ -41,7 +43,6 @@ contract Router is IRouter, Context {
     ) {
         defaultFactory = _factory;
         voter = _voter;
-        pairCodeHash = IPairFactory(_factory).pairCodeHash();
         weth = IWETH(_weth);
     }
 
@@ -55,7 +56,7 @@ contract Router is IRouter, Context {
         require(token0 != address(0), "Router: zero address");
     }
 
-    // calculates the CREATE2 address for a pair without making any external calls
+    /// @dev calculates the CREATE2 address for a pair
     function pairFor(
         address tokenA,
         address tokenB,
@@ -64,8 +65,6 @@ contract Router is IRouter, Context {
     ) public view returns (address pair) {
         address _defaultFactory = defaultFactory;
         address factory = _factory == address(0) ? _defaultFactory : _factory;
-        bytes32 pairCodeHash_ = factory == _defaultFactory ? pairCodeHash : IPairFactory(factory).pairCodeHash();
-
         address velo = IPairFactory(_defaultFactory).velo();
         address veloV2 = IPairFactory(_defaultFactory).veloV2();
         // Disable routing v2 -> v1 velo
@@ -76,20 +75,27 @@ contract Router is IRouter, Context {
         }
 
         (address token0, address token1) = sortTokens(tokenA, tokenB);
-        pair = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            hex"ff",
-                            factory,
-                            keccak256(abi.encodePacked(token0, token1, stable)),
-                            pairCodeHash_ // init code hash
+        if (factory != v1Factory) {
+            bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable));
+            pair = Clones.predictDeterministicAddress(IPairFactory(factory).implementation(), salt, factory);
+        } else {
+            // backwards compatible with v1
+            bytes32 pairCodeHash = IPairFactoryV1(factory).pairCodeHash();
+            pair = address(
+                uint160(
+                    uint256(
+                        keccak256(
+                            abi.encodePacked(
+                                hex"ff",
+                                factory,
+                                keccak256(abi.encodePacked(token0, token1, stable)),
+                                pairCodeHash // init code hash
+                            )
                         )
                     )
                 )
-            )
-        );
+            );
+        }
     }
 
     /// @dev given some amount of an asset and pair reserves, returns an equivalent amount of the other asset

@@ -5,6 +5,7 @@ import {VotingRewardsFactory} from "contracts/factories/VotingRewardsFactory.sol
 import {GaugeFactory} from "contracts/factories/GaugeFactory.sol";
 import {PairFactory, IPairFactory} from "contracts/factories/PairFactory.sol";
 import {FactoryRegistry} from "contracts/FactoryRegistry.sol";
+import {Pair} from "contracts/Pair.sol";
 import {Minter} from "contracts/Minter.sol";
 import {Reward} from "contracts/rewards/Reward.sol";
 import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
@@ -51,6 +52,7 @@ abstract contract Base is Script, Test {
     address[] tokens;
 
     /// @dev Core v2 Deployment
+    Pair implementation;
     Router router;
     VotingEscrow escrow;
     PairFactory factory;
@@ -157,7 +159,8 @@ abstract contract Base is Script, Test {
     }
 
     function deployFactories() public {
-        factory = new PairFactory();
+        implementation = new Pair();
+        factory = new PairFactory(address(implementation));
         // TODO: set correct fees
         factory.setFee(true, 1); // set fee back to 0.01% for old tests
         factory.setFee(false, 1);

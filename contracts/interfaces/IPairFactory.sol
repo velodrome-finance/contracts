@@ -40,8 +40,8 @@ interface IPairFactory {
     /// @dev A custom fee of zero means the default fee will be used.
     function setCustomFee(address _pair, uint256 _fee) external;
 
-    /// @dev This is required on all velodrome pair factories
-    function pairCodeHash() external pure returns (bytes32);
+    /// @notice Returns fee for a pair, as custom fees are possible.
+    function getFee(address _pair, bool _stable) external view returns (uint256);
 
     function getPair(
         address tokenA,
@@ -55,9 +55,15 @@ interface IPairFactory {
         bool stable
     ) external returns (address pair);
 
+    function isPaused() external view returns (bool);
+
     function velo() external view returns (address);
 
     function veloV2() external view returns (address);
 
+    function voter() external view returns (address);
+
     function sinkConverter() external view returns (address);
+
+    function implementation() external view returns (address);
 }
