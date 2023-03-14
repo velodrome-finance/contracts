@@ -228,7 +228,8 @@ abstract contract Reward is IReward, Context, ReentrancyGuard {
         uint256 tokenId,
         address[] memory tokens
     ) internal {
-        for (uint256 i = 0; i < tokens.length; i++) {
+        uint256 _length = tokens.length;
+        for (uint256 i = 0; i < _length; i++) {
             uint256 _reward = earned(tokens[i], tokenId);
             lastEarn[tokens[i]][tokenId] = block.timestamp;
             if (_reward > 0) IERC20(tokens[i]).safeTransfer(recipient, _reward);

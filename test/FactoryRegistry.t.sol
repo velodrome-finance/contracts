@@ -46,11 +46,6 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(create2Address, address(newPair2));
     }
 
-    function testCannotUnapproveFallbackFactories() external {
-        vm.expectRevert("FactoryRegistry: Cannot delete the fallback route");
-        factoryRegistry.unapprove(address(factory), address(votingRewardsFactory), address(gaugeFactory));
-    }
-
     function testCannotUnapproveNonExistentPath() external {
         vm.expectRevert("FactoryRegistry: not approved");
         factoryRegistry.unapprove(address(factory2), address(votingRewardsFactory), address(gaugeFactory));
@@ -81,11 +76,6 @@ contract FactoryRegistryTest is BaseTest {
             address(newPair)
         );
         vm.stopPrank();
-    }
-
-    function testCannotApproveSameFactoryPathTwice() external {
-        vm.expectRevert("FactoryRegistry: already approved");
-        factoryRegistry.approve(address(factory), address(votingRewardsFactory), address(gaugeFactory));
     }
 
     function testApprove() external {

@@ -8,7 +8,8 @@ import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 ///        on a weekly basis
 abstract contract VotingReward is Reward {
     constructor(address _voter, address[] memory _rewards) Reward(_voter) {
-        for (uint256 i; i < _rewards.length; i++) {
+        uint256 _length = _rewards.length;
+        for (uint256 i; i < _length; i++) {
             if (_rewards[i] != address(0)) {
                 isReward[_rewards[i]] = true;
                 rewards.push(_rewards[i]);

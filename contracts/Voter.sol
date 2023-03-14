@@ -67,15 +67,22 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     mapping(uint256 => bool) public isWhitelistedNFT;
     /// @dev Gauge => Liveness status
     mapping(address => bool) public isAlive;
+    /// @dev Accumulated distributions per vote
+    uint256 internal index;
+    /// @dev Gauge => Accumulated gauge distributions
+    mapping(address => uint256) internal supplyIndex;
+    /// @dev Gauge => Amount claimable
+    mapping(address => uint256) public claimable;
 
     constructor(address _ve, address _factoryRegistry) {
         ve = _ve;
         factoryRegistry = _factoryRegistry;
         rewardToken = IVotingEscrow(_ve).token();
-        minter = msg.sender;
-        governor = msg.sender;
-        epochGovernor = msg.sender;
-        emergencyCouncil = msg.sender;
+        address _sender = _msgSender();
+        minter = _sender;
+        governor = _sender;
+        epochGovernor = _sender;
+        emergencyCouncil = _sender;
     }
 
     modifier onlyNewEpoch(uint256 _tokenId) {
@@ -104,9 +111,10 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     }
 
     /// @dev requires initialization with at least rewardToken
-    function initialize(address[] memory _tokens, address _minter) external {
+    function initialize(address[] calldata _tokens, address _minter) external {
         require(_msgSender() == minter);
-        for (uint256 i = 0; i < _tokens.length; i++) {
+        uint256 _length = _tokens.length;
+        for (uint256 i = 0; i < _length; i++) {
             _whitelistToken(_tokens[i], true);
         }
         minter = _minter;
@@ -132,7 +140,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function reset(uint256 _tokenId) external onlyNewEpoch(_tokenId) nonReentrant {
-        require(IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId));
+        require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId));
         _reset(_tokenId);
         IVotingEscrow(ve).abstain(_tokenId);
     }
@@ -340,10 +348,6 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         return pools.length;
     }
 
-    uint256 internal index;
-    mapping(address => uint256) internal supplyIndex;
-    mapping(address => uint256) public claimable;
-
     /// @inheritdoc IVoter
     function notifyRewardAmount(uint256 _amount) external {
         address sender = _msgSender();
@@ -358,7 +362,8 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function updateFor(address[] memory _gauges) external {
-        for (uint256 i = 0; i < _gauges.length; i++) {
+        uint256 _length = _gauges.length;
+        for (uint256 i = 0; i < _length; i++) {
             _updateFor(_gauges[i]);
         }
     }
@@ -396,7 +401,8 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function claimRewards(address[] memory _gauges) external {
-        for (uint256 i = 0; i < _gauges.length; i++) {
+        uint256 _length = _gauges.length;
+        for (uint256 i = 0; i < _length; i++) {
             IGauge(_gauges[i]).getReward(_msgSender());
         }
     }
@@ -408,7 +414,8 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         uint256 _tokenId
     ) external {
         require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId));
-        for (uint256 i = 0; i < _bribes.length; i++) {
+        uint256 _length = _bribes.length;
+        for (uint256 i = 0; i < _length; i++) {
             IReward(_bribes[i]).getReward(_tokenId, _tokens[i]);
         }
     }
@@ -420,14 +427,13 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         uint256 _tokenId
     ) external {
         require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId));
-        for (uint256 i = 0; i < _fees.length; i++) {
+        uint256 _length = _fees.length;
+        for (uint256 i = 0; i < _length; i++) {
             IReward(_fees[i]).getReward(_tokenId, _tokens[i]);
         }
     }
 
-    /// @inheritdoc IVoter
-    function distribute(address _gauge) public nonReentrant {
-        IMinter(minter).update_period();
+    function _distribute(address _gauge) internal {
         _updateFor(_gauge); // should set claimable to 0 if killed
         uint256 _claimable = claimable[_gauge];
         if (_claimable > IGauge(_gauge).left() && _claimable > DURATION) {
@@ -440,16 +446,19 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVoter
-    function distribute(uint256 _start, uint256 _finish) public {
+    function distribute(uint256 _start, uint256 _finish) external nonReentrant {
+        IMinter(minter).update_period();
         for (uint256 x = _start; x < _finish; x++) {
-            distribute(gauges[pools[x]]);
+            _distribute(gauges[pools[x]]);
         }
     }
 
     /// @inheritdoc IVoter
-    function distribute(address[] memory _gauges) external {
-        for (uint256 x = 0; x < _gauges.length; x++) {
-            distribute(_gauges[x]);
+    function distribute(address[] memory _gauges) external nonReentrant {
+        IMinter(minter).update_period();
+        uint256 _length = _gauges.length;
+        for (uint256 x = 0; x < _length; x++) {
+            _distribute(_gauges[x]);
         }
     }
 }

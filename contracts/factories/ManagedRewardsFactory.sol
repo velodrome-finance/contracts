@@ -10,5 +10,6 @@ contract ManagedRewardsFactory is IManagedRewardsFactory {
     function createRewards(address voter) external returns (address lockedManagedReward, address freeManagedReward) {
         lockedManagedReward = address(new LockedManagedReward(voter));
         freeManagedReward = address(new FreeManagedReward(voter));
+        emit ManagedRewardCreated(voter, lockedManagedReward, freeManagedReward);
     }
 }

@@ -6,7 +6,7 @@ import {FeesVotingReward} from "../rewards/FeesVotingReward.sol";
 import {BribeVotingReward} from "../rewards/BribeVotingReward.sol";
 
 contract VotingRewardsFactory is IVotingRewardsFactory {
-    function createRewards(address[] memory rewards)
+    function createRewards(address[] calldata rewards)
         external
         returns (address feesVotingReward, address bribeVotingReward)
     {

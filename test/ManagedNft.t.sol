@@ -605,7 +605,7 @@ contract ManagedNftTest is BaseTest {
         escrow.setManagedState(tokenId, false);
     }
 
-    function testCannotSetManagedStateIfNotEmergencyCouncil() public {
+    function testCannotSetManagedStateIfNotEmergencyCouncilOrGovernor() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
 
         vm.expectRevert("VotingEscrow: not emergency council");
@@ -613,7 +613,7 @@ contract ManagedNftTest is BaseTest {
         escrow.setManagedState(mTokenId, false);
     }
 
-    function testSetManagedState() public {
+    function testSetManagedStateWithEmergencyCouncil() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         assertFalse(escrow.deactivated(mTokenId));
 
@@ -624,6 +624,23 @@ contract ManagedNftTest is BaseTest {
 
         skipAndRoll(1);
 
+        escrow.setManagedState(mTokenId, false);
+        assertFalse(escrow.deactivated(mTokenId));
+    }
+
+    function testSetManagedStateWithGovernor() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
+        assertFalse(escrow.deactivated(mTokenId));
+
+        skipAndRoll(1);
+
+        vm.prank(address(governor));
+        escrow.setManagedState(mTokenId, true);
+        assertTrue(escrow.deactivated(mTokenId));
+
+        skipAndRoll(1);
+
+        vm.prank(address(governor));
         escrow.setManagedState(mTokenId, false);
         assertFalse(escrow.deactivated(mTokenId));
     }

@@ -124,7 +124,10 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     function createManagedLockFor(address _to) external returns (uint256 _mTokenId);
 
     /// @notice Delegates balance to managed nft
-    /// @dev Managed nft will remain max-locked as long as there is at least one deposit or withdrawal per week.
+    ///         Note that NFTs deposited into a managed NFT will be re-locked
+    ///         to the maximum lock time on withdrawal.
+    /// @dev Managed nft will remain max-locked as long as there is at least one
+    ///      deposit or withdrawal per week.
     ///      Throws if NFT was transferred in same block (flash NFT protection).
     ///      Throws if deposit nft is managed.
     ///      Throws if recipient nft is not managed.
@@ -135,6 +138,7 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     function depositManaged(uint256 _tokenId, uint256 _mTokenId) external;
 
     /// @notice Retrieves locked rewards and withdraws balance from managed nft.
+    ///         Note that the NFT withdrawn is re-locked to the maximum lock time.
     /// @dev Throws if NFT not locked.
     ///      Throws if not called by voter.
     /// @param _tokenId tokenId of NFT being deposited.

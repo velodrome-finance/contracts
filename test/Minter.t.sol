@@ -28,7 +28,7 @@ contract MinterTest is BaseTest {
     function testMinterDeploy() public {
         assertEq(minter.MAXIMUM_TAIL_RATE(), 100); // 1%
         assertEq(minter.MINIMUM_TAIL_RATE(), 1); // .01%
-        assertEq(minter.EMISSION(), 9_900);
+        assertEq(minter.WEEKLY_DECAY(), 9_900);
         assertEq(minter.TAIL_START(), 5_000_000 * 1e18);
         assertEq(minter.weekly(), 15_000_000 * 1e18);
         assertEq(minter.tailEmissionRate(), 30); // .3%
@@ -59,7 +59,7 @@ contract MinterTest is BaseTest {
 
     function testCannotNudgeIfNotEpochGovernor() public {
         /// put in tail emission schedule
-        stdstore.target(address(minter)).sig("tail()").checked_write(true);
+        stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
 
         vm.prank(address(owner2));
         vm.expectRevert("Minter: not epoch governor");
@@ -68,7 +68,7 @@ contract MinterTest is BaseTest {
 
     function testCannotNudgeIfAlreadyNudged() public {
         /// put in tail emission schedule
-        stdstore.target(address(minter)).sig("tail()").checked_write(true);
+        stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
         assertFalse(minter.proposals(604800));
 
         vm.prank(address(epochGovernor));
@@ -82,7 +82,7 @@ contract MinterTest is BaseTest {
     }
 
     function testNudgeWhenAtUpperBoundary() public {
-        stdstore.target(address(minter)).sig("tail()").checked_write(true);
+        stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
         stdstore.target(address(minter)).sig("tailEmissionRate()").checked_write(100);
         /// note: see IGovernor.ProposalState for enum numbering
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(4); // nudge up
@@ -121,7 +121,7 @@ contract MinterTest is BaseTest {
     }
 
     function testNudgeWhenAtLowerBoundary() public {
-        stdstore.target(address(minter)).sig("tail()").checked_write(true);
+        stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
         stdstore.target(address(minter)).sig("tailEmissionRate()").checked_write(1);
         /// note: see IGovernor.ProposalState for enum numbering
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(3); // nudge down
@@ -160,7 +160,7 @@ contract MinterTest is BaseTest {
     }
 
     function testNudge() public {
-        stdstore.target(address(minter)).sig("tail()").checked_write(true);
+        stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
         /// note: see IGovernor.ProposalState for enum numbering
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(4); // nudge up
         assertEq(minter.tailEmissionRate(), 30);

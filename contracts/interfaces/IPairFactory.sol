@@ -1,6 +1,10 @@
 pragma solidity 0.8.13;
 
 interface IPairFactory {
+    event SetFeeManager(address feeManager);
+    event SetPauser(address pauser);
+    event SetPauseState(bool state);
+    event SetVoter(address voter);
     event PairCreated(address indexed token0, address indexed token1, bool stable, address pair, uint256);
     event SetCustomFee(address pair, uint256 fee);
 

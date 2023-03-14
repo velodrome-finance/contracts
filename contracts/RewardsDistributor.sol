@@ -295,8 +295,9 @@ contract RewardsDistributor is IRewardsDistributor {
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
         uint256 total = 0;
+        uint256 _length = _tokenIds.length;
 
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
+        for (uint256 i = 0; i < _length; i++) {
             uint256 _tokenId = _tokenIds[i];
             if (_tokenId == 0) break;
             uint256 amount = _claim(_tokenId, _lastTokenTime);

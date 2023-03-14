@@ -209,6 +209,7 @@ interface IRouter {
     ) external;
 
     /// @notice Zap a token A into a pool (B, C). (A can be equal to B or C).
+    ///         Supports standard ERC20 tokens only (i.e. not fee-on-transfer tokens etc).
     ///         Slippage is required for the initial swap.
     ///         Additional slippage may be required when adding liquidity as the
     ///         price of the token may have changed.
@@ -233,6 +234,7 @@ interface IRouter {
     ) external payable returns (uint256 liquidity);
 
     /// @notice Zap out a pool (B, C) into A.
+    ///         Supports standard ERC20 tokens only (i.e. not fee-on-transfer tokens etc).
     ///         Slippage is required for the removal of liquidity.
     ///         Additional slippage may be required on the swap as the
     ///         price of the token may have changed.

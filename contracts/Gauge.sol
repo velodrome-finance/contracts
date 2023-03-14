@@ -21,7 +21,7 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
     address public immutable feesVotingReward;
     address public immutable voter;
 
-    bool public isForPair;
+    bool public immutable isForPair;
 
     uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
     uint256 internal constant PRECISION = 10**18;

@@ -288,7 +288,8 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
     ) external view returns (uint256 amountOut) {
         uint256[] memory _prices = sample(tokenIn, amountIn, granularity, 1);
         uint256 priceAverageCumulative;
-        for (uint256 i = 0; i < _prices.length; i++) {
+        uint256 _length = _prices.length;
+        for (uint256 i = 0; i < _length; i++) {
             priceAverageCumulative += _prices[i];
         }
         return priceAverageCumulative / granularity;

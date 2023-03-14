@@ -49,9 +49,12 @@ contract MinterTestFlow is ExtendedBaseTest {
         minter.update_period();
         assertEq(VELO.balanceOf(address(voter)), expectedMint);
 
+        address[] memory gauges = new address[](1);
+        gauges[0] = address(gauge);
+
         uint256 epochStart = _getEpochStart(block.timestamp);
         assertEq(VELO.allowance(address(voter), address(gauge)), 0);
-        voter.distribute(address(gauge));
+        voter.distribute(gauges);
         assertEq(VELO.allowance(address(voter), address(gauge)), 0);
         assertApproxEqRel(VELO.balanceOf(address(gauge)), expectedMint / 2, 1e6);
         assertApproxEqRel(VELO.balanceOf(address(voter)), expectedMint / 2, 1e6);
@@ -63,13 +66,15 @@ contract MinterTestFlow is ExtendedBaseTest {
         assertApproxEqRel(VELO.balanceOf(address(voter)), expectedMint / 2, 1e6);
         skipAndRoll(1);
 
-        voter.distribute(address(gauge2));
+        gauges[0] = address(gauge2);
+        voter.distribute(gauges);
         assertApproxEqRel(VELO.balanceOf(address(gauge2)), expectedMint / 2, 1e6);
         assertLt(VELO.balanceOf(address(voter)), 1e6); // dust
         skipAndRoll(1);
 
         skip(1 hours);
-        voter.distribute(address(gauge)); // second distribute should make no difference to gauge
+        gauges[0] = address(gauge);
+        voter.distribute(gauges); // second distribute should make no difference to gauge
         assertApproxEqRel(VELO.balanceOf(address(gauge)), expectedMint / 2, 1e6);
         assertLt(VELO.balanceOf(address(voter)), 1e6); // dust
         assertApproxEqRel(gauge.rewardRate(), expectedMint / 2 / (5 days), 1e6);
@@ -95,7 +100,7 @@ contract MinterTestFlow is ExtendedBaseTest {
             minter.update_period();
         }
         voter.distribute(0, voter.length());
-        assertTrue(minter.tail());
+        assertTrue(minter.weekly() < minter.TAIL_START());
 
         // skip to first tail distribution
         skipToNextEpoch(1);

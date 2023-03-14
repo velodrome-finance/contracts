@@ -99,8 +99,7 @@ contract Router is IRouter, Context {
     }
 
     /// @dev given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
-    /// @dev this only accounts for volatile pairs and may return insufficient liquidity for stable pairs - hence
-    /// why in adding/removing liquidity there is a skim() to ensure no imbalance in liquidity provided
+    /// @dev this only accounts for volatile pairs and may return insufficient liquidity for stable pairs
     function quoteLiquidity(
         uint256 amountA,
         uint256 reserveA,
@@ -128,7 +127,8 @@ contract Router is IRouter, Context {
         require(routes.length >= 1, "Router: INVALID_PATH");
         amounts = new uint256[](routes.length + 1);
         amounts[0] = amountIn;
-        for (uint256 i = 0; i < routes.length; i++) {
+        uint256 _length = routes.length;
+        for (uint256 i = 0; i < _length; i++) {
             address factory = routes[i].factory == address(0) ? defaultFactory : routes[i].factory; // default to v2
             address pair = pairFor(routes[i].from, routes[i].to, routes[i].stable, factory);
             if (IPairFactory(factory).isPair(pair)) {
@@ -154,7 +154,6 @@ contract Router is IRouter, Context {
             uint256 liquidity
         )
     {
-        // create the pair if it doesn't exist yet
         address _pair = IPairFactory(_factory).getPair(tokenA, tokenB, stable);
         (uint256 reserveA, uint256 reserveB) = (0, 0);
         uint256 _totalSupply = 0;
@@ -185,7 +184,6 @@ contract Router is IRouter, Context {
         address _factory,
         uint256 liquidity
     ) public view returns (uint256 amountA, uint256 amountB) {
-        // create the pair if it doesn't exist yet
         address _pair = IPairFactory(_factory).getPair(tokenA, tokenB, stable);
 
         if (_pair == address(0)) {
@@ -264,7 +262,6 @@ contract Router is IRouter, Context {
         _safeTransferFrom(tokenA, _msgSender(), pair, amountA);
         _safeTransferFrom(tokenB, _msgSender(), pair, amountB);
         liquidity = IPair(pair).mint(to);
-        IPair(pair).skim(to);
     }
 
     function addLiquidityETH(
@@ -317,7 +314,6 @@ contract Router is IRouter, Context {
         address pair = pairFor(tokenA, tokenB, stable, defaultFactory);
         require(IERC20(pair).transferFrom(_msgSender(), pair, liquidity)); // send liquidity to pair
         (uint256 amount0, uint256 amount1) = IPair(pair).burn(to);
-        IPair(pair).skim(to);
         (address token0, ) = sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
         require(amountA >= amountAMin, "Router: insufficient A amount");
@@ -407,7 +403,8 @@ contract Router is IRouter, Context {
         Route[] memory routes,
         address _to
     ) internal virtual {
-        for (uint256 i = 0; i < routes.length; i++) {
+        uint256 _length = routes.length;
+        for (uint256 i = 0; i < _length; i++) {
             (address token0, ) = sortTokens(routes[i].from, routes[i].to);
             uint256 amountOut = amounts[i + 1];
             (uint256 amount0Out, uint256 amount1Out) = routes[i].from == token0
@@ -497,7 +494,8 @@ contract Router is IRouter, Context {
     // **** SWAP (supporting fee-on-transfer tokens) ****
     // requires the initial amount to have already been sent to the first pair
     function _swapSupportingFeeOnTransferTokens(Route[] memory routes, address _to) internal virtual {
-        for (uint256 i; i < routes.length; i++) {
+        uint256 _length = routes.length;
+        for (uint256 i; i < _length; i++) {
             (address token0, ) = sortTokens(routes[i].from, routes[i].to);
             address pair = pairFor(routes[i].from, routes[i].to, routes[i].stable, routes[i].factory);
             uint256 amountInput;
@@ -537,10 +535,11 @@ contract Router is IRouter, Context {
             pairFor(routes[0].from, routes[0].to, routes[0].stable, routes[0].factory),
             amountIn
         );
-        uint256 balanceBefore = IERC20(routes[routes.length - 1].to).balanceOf(to);
+        uint256 _length = routes.length - 1;
+        uint256 balanceBefore = IERC20(routes[_length].to).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(routes, to);
         require(
-            IERC20(routes[routes.length - 1].to).balanceOf(to) - balanceBefore >= amountOutMin,
+            IERC20(routes[_length].to).balanceOf(to) - balanceBefore >= amountOutMin,
             "Router: insufficient output amount"
         );
     }
@@ -555,10 +554,11 @@ contract Router is IRouter, Context {
         uint256 amountIn = msg.value;
         weth.deposit{value: amountIn}();
         assert(weth.transfer(pairFor(routes[0].from, routes[0].to, routes[0].stable, routes[0].factory), amountIn));
-        uint256 balanceBefore = IERC20(routes[routes.length - 1].to).balanceOf(to);
+        uint256 _length = routes.length - 1;
+        uint256 balanceBefore = IERC20(routes[_length].to).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(routes, to);
         require(
-            IERC20(routes[routes.length - 1].to).balanceOf(to) - balanceBefore >= amountOutMin,
+            IERC20(routes[_length].to).balanceOf(to) - balanceBefore >= amountOutMin,
             "Router: insufficient output amount"
         );
     }

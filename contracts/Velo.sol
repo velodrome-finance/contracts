@@ -4,9 +4,8 @@ pragma solidity 0.8.13;
 import {IVelo} from "./interfaces/IVelo.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 
-contract Velo is IVelo, ERC20Votes {
+contract Velo is IVelo, ERC20Permit {
     address public minter;
     address private owner;
     address public sinkManager;

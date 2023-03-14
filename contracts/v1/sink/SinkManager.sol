@@ -29,17 +29,17 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     uint256 public ownedTokenId;
 
     /// @dev V1 Voting contract
-    IVoterV1 public voter;
+    IVoterV1 public immutable voter;
     /// @dev V1 Velo contract
-    IVelo public velo;
+    IVelo public immutable velo;
     /// @dev V2 Velo contract
-    IVelo public veloV2;
+    IVelo public immutable veloV2;
     /// @dev V1 Voting Escrow contract
-    IVotingEscrowV1 public ve;
+    IVotingEscrowV1 public immutable ve;
     /// @dev V2 Voting Escrow contract
-    IVotingEscrow public veV2;
+    IVotingEscrow public immutable veV2;
     /// @dev V1 Rewards Distributor contract
-    IRewardsDistributorV1 public rewardsDistributor;
+    IRewardsDistributorV1 public immutable rewardsDistributor;
     /// @dev V1 black hole gauge
     IGaugeV1 public gauge;
     /// @dev epoch start => velo captured
@@ -70,14 +70,15 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
 
     /// @inheritdoc ISinkManager
     function convertVELO(uint256 amount) external {
-        require(ownedTokenId != 0, "SinkManager: tokenId not set");
+        uint256 _ownedTokenId = ownedTokenId;
+        require(_ownedTokenId != 0, "SinkManager: tokenId not set");
         address sender = _msgSender();
 
         // Deposit old VELO
         velo.transferFrom(sender, address(this), amount);
 
         // Add VELO to owned ve
-        ve.increase_amount(ownedTokenId, amount);
+        ve.increase_amount(_ownedTokenId, amount);
 
         // return new VELO
         veloV2.mint(sender, amount);
@@ -88,7 +89,8 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
 
     /// @inheritdoc ISinkManager
     function convertVe(uint256 tokenId) external nonReentrant returns (uint256 tokenIdV2) {
-        require(ownedTokenId != 0, "SinkManager: tokenId not set");
+        uint256 _ownedTokenId = ownedTokenId;
+        require(_ownedTokenId != 0, "SinkManager: tokenId not set");
 
         // Ensure the ve was not converted
         require(conversions[tokenId] == 0, "SinkManager: nft already converted");
@@ -116,10 +118,10 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
         tokenIdV2 = veV2.createLockFor(lockAmount, lockDuration, sender);
 
         // Merge into the sinkManager ve
-        ve.merge(tokenId, ownedTokenId);
+        ve.merge(tokenId, _ownedTokenId);
 
         // poke vote to update voting balance to gauge
-        voter.poke(ownedTokenId);
+        voter.poke(_ownedTokenId);
 
         // event emission and storage of conversion
         conversions[tokenId] = tokenIdV2;
@@ -133,6 +135,7 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     /// @inheritdoc ISinkManager
     function claimRebaseAndGaugeRewards() external {
         require(address(gauge) != address(0), "SinkManager: gauge not set");
+        uint256 _ownedTokenId = ownedTokenId;
 
         // Claim gauge rewards and deposit into owned veNFT
         uint256 amountResidual = velo.balanceOf(address(this));
@@ -142,24 +145,24 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
         uint256 amountAfterReward = velo.balanceOf(address(this));
         uint256 amountRewarded = amountAfterReward - amountResidual;
         if (amountAfterReward > 0) {
-            ve.increase_amount(ownedTokenId, amountAfterReward);
+            ve.increase_amount(_ownedTokenId, amountAfterReward);
         }
 
         // Claim rebases
-        uint256 amountRebased = rewardsDistributor.claimable(ownedTokenId);
+        uint256 amountRebased = rewardsDistributor.claimable(_ownedTokenId);
         if (amountRebased > 0) {
-            rewardsDistributor.claim(ownedTokenId);
+            rewardsDistributor.claim(_ownedTokenId);
         }
 
         // increase locktime to max if possible
         uint256 unlockTime = ((block.timestamp + MAXTIME) / WEEK) * WEEK;
-        (, uint256 end) = ve.locked(ownedTokenId);
+        (, uint256 end) = ve.locked(_ownedTokenId);
         if (unlockTime > end) {
-            ve.increase_unlock_time(ownedTokenId, MAXTIME);
+            ve.increase_unlock_time(_ownedTokenId, MAXTIME);
         }
 
         // poke vote to update voting balance to gauge
-        voter.poke(ownedTokenId);
+        voter.poke(_ownedTokenId);
 
         emit ClaimRebaseAndGaugeRewards(_msgSender(), amountResidual, amountRewarded, amountRebased, block.timestamp);
     }
@@ -177,7 +180,8 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     /// @notice Deposit all of SinkDrain token to gauge to earn 100% of rewards
     /// And vote for the gauge to allocate rewards
     function setupSinkDrain(address _gauge) external onlyOwner {
-        require(ownedTokenId != 0, "SinkManager: tokenId not set");
+        uint256 _ownedTokenId = ownedTokenId;
+        require(_ownedTokenId != 0, "SinkManager: tokenId not set");
         require(address(gauge) == address(0), "SinkManager: gauge already set");
 
         // Set gauge for future claims
@@ -196,7 +200,7 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
         uint256[] memory weights = new uint256[](1);
         poolVote[0] = gauge.stake();
         weights[0] = 1;
-        voter.vote(ownedTokenId, poolVote, weights);
+        voter.vote(_ownedTokenId, poolVote, weights);
     }
 
     /// @inheritdoc ISinkManager

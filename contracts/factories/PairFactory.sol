@@ -56,6 +56,7 @@ contract PairFactory is IPairFactory {
     function setVoter(address _voter) external {
         require(msg.sender == voter);
         voter = _voter;
+        emit SetVoter(_voter);
     }
 
     /// @inheritdoc IPairFactory
@@ -87,16 +88,19 @@ contract PairFactory is IPairFactory {
     function setPauser(address _pauser) external {
         require(msg.sender == pauser, "PairFactory: not pauser");
         pauser = _pauser;
+        emit SetPauser(_pauser);
     }
 
     function setPauseState(bool _state) external {
         require(msg.sender == pauser, "PairFactory: not pauser");
         isPaused = _state;
+        emit SetPauseState(_state);
     }
 
     function setFeeManager(address _feeManager) external {
         require(msg.sender == feeManager, "PairFactory: not fee manager");
         feeManager = _feeManager;
+        emit SetFeeManager(_feeManager);
     }
 
     /// @inheritdoc IPairFactory

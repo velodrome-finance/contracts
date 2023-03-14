@@ -64,7 +64,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         address _factoryRegistry,
         address _team
     ) {
-        voter = msg.sender;
+        voter = _msgSender();
         team = _team;
         token = _token;
         artProxy = _artProxy;
@@ -113,8 +113,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
         uint256 _unlockTime = ((block.timestamp + MAXTIME) / WEEK) * WEEK;
 
-        ++tokenId;
-        _mTokenId = tokenId;
+        _mTokenId = ++tokenId;
         _mint(_to, _mTokenId);
         _depositFor(_mTokenId, 0, _unlockTime, _locked[_mTokenId], DepositType.CREATE_LOCK_TYPE);
 
@@ -207,7 +206,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function setAllowedManager(address _allowedManager) external {
-        require(msg.sender == IVoter(voter).governor(), "VotingEscrow: not governor");
+        require(_msgSender() == IVoter(voter).governor(), "VotingEscrow: not governor");
         require(_allowedManager != allowedManager, "VotingEscrow: same address");
         require(_allowedManager != address(0), "VotingEscrow: zero address");
         allowedManager = _allowedManager;
@@ -216,7 +215,10 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function setManagedState(uint256 _mTokenId, bool _state) external {
-        require(msg.sender == IVoter(voter).emergencyCouncil(), "VotingEscrow: not emergency council");
+        require(
+            _msgSender() == IVoter(voter).emergencyCouncil() || _msgSender() == IVoter(voter).governor(),
+            "VotingEscrow: not emergency council"
+        );
         require(escrowType[_mTokenId] == EscrowType.MANAGED, "VotingEscrow: can only modify managed nft state");
         require(deactivated[_mTokenId] != _state, "VotingEscrow: same state");
         deactivated[_mTokenId] = _state;
@@ -232,12 +234,12 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     uint8 public constant decimals = 18;
 
     function setTeam(address _team) external {
-        require(msg.sender == team);
+        require(_msgSender() == team);
         team = _team;
     }
 
     function setArtProxy(address _proxy) external {
-        require(msg.sender == team);
+        require(_msgSender() == team);
         artProxy = _proxy;
     }
 
@@ -545,7 +547,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     }
 
     function _burn(uint256 _tokenId) internal {
-        require(_isApprovedOrOwner(msg.sender, _tokenId), "VotingEscrow: caller is not owner nor approved");
+        address sender = _msgSender();
+        require(_isApprovedOrOwner(sender, _tokenId), "VotingEscrow: caller is not owner nor approved");
 
         address owner = ownerOf(_tokenId);
 
@@ -554,7 +557,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         // checkpoint for gov
         _moveTokenDelegates(delegates(owner), address(0), _tokenId);
         // Remove token
-        _removeTokenFrom(msg.sender, _tokenId);
+        _removeTokenFrom(sender, _tokenId);
         emit Transfer(owner, address(0), _tokenId);
     }
 
@@ -826,8 +829,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         require(unlockTime > block.timestamp, "VotingEscrow: lock duration not in future");
         require(unlockTime <= block.timestamp + MAXTIME, "VotingEscrow: lock duration greater than 4 years");
 
-        ++tokenId;
-        uint256 _tokenId = tokenId;
+        uint256 _tokenId = ++tokenId;
         _mint(_to, _tokenId);
 
         _depositFor(_tokenId, _value, unlockTime, _locked[_tokenId], DepositType.CREATE_LOCK_TYPE);
@@ -1182,8 +1184,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         _locked[_from] = newLocked;
 
         // Create new veNFT
-        ++tokenId;
-        _tokenId = tokenId;
+        _tokenId = ++tokenId;
         _mint(sender, _tokenId);
 
         // Checkpoint adding balance to new veNFT
@@ -1249,7 +1250,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         }
         uint256[] storage _tokenIds = _checkpoints[account][nCheckpoints - 1].tokenIds;
         uint256 votes = 0;
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
+        uint256 _length = _tokenIds.length;
+        for (uint256 i = 0; i < _length; i++) {
             uint256 tId = _tokenIds[i];
             votes = votes + _balanceOfNFT(tId, block.timestamp);
         }
@@ -1300,7 +1302,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         // Sum votes
         uint256[] storage _tokenIds = _checkpoints[account][_checkIndex].tokenIds;
         uint256 votes = 0;
-        for (uint256 i = 0; i < _tokenIds.length; i++) {
+        uint256 _length = _tokenIds.length;
+        for (uint256 i = 0; i < _length; i++) {
             uint256 tId = _tokenIds[i];
             votes = votes + _balanceOfNFT(tId, timestamp);
         }
@@ -1330,7 +1333,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                 uint32 nextSrcRepNum = _findWhatCheckpointToWrite(srcRep);
                 uint256[] storage srcRepNew = _checkpoints[srcRep][nextSrcRepNum].tokenIds;
                 // All the same except _tokenId
-                for (uint256 i = 0; i < srcRepOld.length; i++) {
+                uint256 _length = srcRepOld.length;
+                for (uint256 i = 0; i < _length; i++) {
                     uint256 tId = srcRepOld[i];
                     if (tId != _tokenId) {
                         srcRepNew.push(tId);
@@ -1349,7 +1353,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                 uint256[] storage dstRepNew = _checkpoints[dstRep][nextDstRepNum].tokenIds;
                 // All the same plus _tokenId
                 require(dstRepOld.length + 1 <= MAX_DELEGATES, "VotingEscrow: dstRep would have too many tokenIds");
-                for (uint256 i = 0; i < dstRepOld.length; i++) {
+                uint256 _length = dstRepOld.length;
+                for (uint256 i = 0; i < _length; i++) {
                     uint256 tId = dstRepOld[i];
                     dstRepNew.push(tId);
                 }
@@ -1386,7 +1391,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                 uint32 nextSrcRepNum = _findWhatCheckpointToWrite(srcRep);
                 uint256[] storage srcRepNew = _checkpoints[srcRep][nextSrcRepNum].tokenIds;
                 // All the same except what owner owns
-                for (uint256 i = 0; i < srcRepOld.length; i++) {
+                uint256 _length = srcRepOld.length;
+                for (uint256 i = 0; i < _length; i++) {
                     uint256 tId = srcRepOld[i];
                     if (idToOwner[tId] != owner) {
                         srcRepNew.push(tId);
@@ -1409,7 +1415,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                     "VotingEscrow: dstRep would have too many tokenIds"
                 );
                 // All the same
-                for (uint256 i = 0; i < dstRepOld.length; i++) {
+                uint256 _length = dstRepOld.length;
+                for (uint256 i = 0; i < _length; i++) {
                     uint256 tId = dstRepOld[i];
                     dstRepNew.push(tId);
                 }

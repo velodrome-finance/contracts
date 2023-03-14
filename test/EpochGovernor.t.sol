@@ -32,7 +32,7 @@ contract EpochGovernorTest is BaseTest {
         vm.stopPrank();
         vm.roll(block.number + 1);
 
-        stdstore.target(address(minter)).sig("tail()").checked_write(true);
+        stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
     }
 
     function testSupportInterfacesExcludesCancel() public {

@@ -10,9 +10,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @dev Used in voter v2
 /// @author Carter Carlson (@pegahcarter)
 contract SinkConverter is ERC20, ReentrancyGuard {
-    ISinkManager public sinkManager;
-    IVelo public velo;
-    IVelo public veloV2;
+    ISinkManager public immutable sinkManager;
+    IVelo public immutable velo;
+    IVelo public immutable veloV2;
 
     /// @dev public variables found in Pair.sol
     address public immutable token0;

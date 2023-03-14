@@ -2,6 +2,12 @@
 pragma solidity 0.8.13;
 
 interface IManagedRewardsFactory {
+    event ManagedRewardCreated(
+        address indexed voter,
+        address indexed lockedManagedReward,
+        address indexed freeManagedReward
+    );
+
     /// @notice creates a LockedManagedReward and a FreeManagedReward contract for a managed veNFT
     /// @param voter Address of Voter.sol
     /// @return lockedManagedReward Address of LockedManagedReward contract created

@@ -60,10 +60,6 @@ interface IVoter {
     /// @param _amount Amount of rewards to distribute.
     function notifyRewardAmount(uint256 _amount) external;
 
-    /// @dev Distribute emissions to gauge of single pool.
-    /// @param _gauge Gauge to distribute emissions to.
-    function distribute(address _gauge) external;
-
     /// @dev Utility to distribute to gauges of pools in range _start to _finish.
     /// @param _start   Starting index of gauges to distribute to.
     /// @param _finish  Ending index of gauges to distribute to.
@@ -99,6 +95,8 @@ interface IVoter {
 
     /// @notice Called by users to deposit into a managed NFT.
     ///         Can only vote or deposit into a managed NFT once per epoch.
+    ///         Note that NFTs deposited into a managed NFT will be re-locked
+    ///         to the maximum lock time on withdrawal.
     /// @dev Throws if not approved or owner.
     ///      Throws if managed NFT is inactive.
     ///      Throws if depositing within privileged window (one hour prior to epoch flip).
@@ -107,6 +105,7 @@ interface IVoter {
     /// @notice Called by users to withdraw from a managed NFT.
     ///         Cannot do it in the same epoch that you deposited into a managed NFT.
     ///         Can vote or deposit into a managed NFT again after withdrawing.
+    ///         Note that the NFT withdrawn is re-locked to the maximum lock time.
     function withdrawManaged(uint256 _tokenId) external;
 
     /// @notice Claim emissions from gauges.

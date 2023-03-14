@@ -286,8 +286,6 @@ abstract contract GovernorSimple is Context, ERC165, EIP712, IGovernor, IERC721R
         bytes32 epochStart = bytes32(VelodromeTimeLibrary.epochStart(block.timestamp) + (1 weeks));
         uint256 proposalId = hashProposal(targets, values, calldatas, epochStart);
 
-        require(targets.length == values.length, "GovernorSimple: invalid proposal length");
-        require(targets.length == calldatas.length, "GovernorSimple: invalid proposal length");
         require(targets.length > 0, "GovernorSimple: empty proposal");
         require(_proposals[proposalId].proposer == address(0), "GovernorSimple: proposal already exists");
 
@@ -361,7 +359,8 @@ abstract contract GovernorSimple is Context, ERC165, EIP712, IGovernor, IERC721R
         bytes32 /*descriptionHash*/
     ) internal virtual {
         string memory errorMessage = "Governor: call reverted without message";
-        for (uint256 i = 0; i < targets.length; ++i) {
+        uint256 _length = targets.length;
+        for (uint256 i = 0; i < _length; ++i) {
             (bool success, bytes memory returndata) = targets[i].call{value: values[i]}(calldatas[i]);
             Address.verifyCallResult(success, returndata, errorMessage);
         }
@@ -378,7 +377,8 @@ abstract contract GovernorSimple is Context, ERC165, EIP712, IGovernor, IERC721R
         bytes32 /*descriptionHash*/
     ) internal virtual {
         if (_executor() != address(this)) {
-            for (uint256 i = 0; i < targets.length; ++i) {
+            uint256 _length = targets.length;
+            for (uint256 i = 0; i < _length; ++i) {
                 if (targets[i] == address(this)) {
                     _governanceCall.pushBack(keccak256(calldatas[i]));
                 }

@@ -13,9 +13,9 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
     address private _managedRewardsFactory;
 
     // Velodrome protocol will always have a usable pairFactory, votingRewardsFactory, and gaugeFactory
-    address public fallbackPairFactory;
-    address public fallbackVotingRewardsFactory;
-    address public fallbackGaugeFactory;
+    address public immutable fallbackPairFactory;
+    address public immutable fallbackVotingRewardsFactory;
+    address public immutable fallbackGaugeFactory;
 
     constructor(
         address _fallbackPairFactory,
@@ -27,7 +27,6 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         fallbackVotingRewardsFactory = _fallbackVotingRewardsFactory;
         fallbackGaugeFactory = _fallbackGaugeFactory;
 
-        approve(_fallbackPairFactory, _fallbackVotingRewardsFactory, _fallbackGaugeFactory);
         setManagedRewardsFactory(_newManagedRewardsFactory);
     }
 
@@ -49,12 +48,6 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         address gaugeFactory
     ) external onlyOwner {
         require(_approved[pairFactory][votingRewardsFactory][gaugeFactory], "FactoryRegistry: not approved");
-        require(
-            !((pairFactory == fallbackPairFactory) &&
-                (votingRewardsFactory == fallbackVotingRewardsFactory) &&
-                (gaugeFactory == fallbackGaugeFactory)),
-            "FactoryRegistry: Cannot delete the fallback route"
-        );
         delete _approved[pairFactory][votingRewardsFactory][gaugeFactory];
         emit Unapprove(pairFactory, votingRewardsFactory, gaugeFactory);
     }
@@ -65,6 +58,11 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         address votingRewardsFactory,
         address gaugeFactory
     ) external view returns (bool) {
+        if (
+            (pairFactory == fallbackPairFactory) &&
+            (votingRewardsFactory == fallbackVotingRewardsFactory) &&
+            (gaugeFactory == fallbackGaugeFactory)
+        ) return true;
         return _approved[pairFactory][votingRewardsFactory][gaugeFactory];
     }
 

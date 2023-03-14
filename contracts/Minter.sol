@@ -20,7 +20,7 @@ contract Minter is IMinter {
     /// @notice Duration of epoch in seconds
     uint256 public constant WEEK = 1 weeks;
     /// @notice Decay rate of emissions as percentage of `MAX_BPS`
-    uint256 public constant EMISSION = 9_900;
+    uint256 public constant WEEKLY_DECAY = 9_900;
     /// @notice Maximum tail emission rate in basis points.
     uint256 public constant MAXIMUM_TAIL_RATE = 100;
     /// @notice Minimum tail emission rate in basis points.
@@ -39,8 +39,6 @@ contract Minter is IMinter {
     uint256 public active_period;
     /// @dev active_period => proposal existing, used to enforce one proposal per epoch
     mapping(uint256 => bool) public proposals;
-    /// @notice Indicates whether using tail emission schedule or not
-    bool public tail;
 
     constructor(
         address _voter, // the voting & distribution system
@@ -66,12 +64,11 @@ contract Minter is IMinter {
         address _epochGovernor = voter.epochGovernor();
         require(msg.sender == _epochGovernor, "Minter: not epoch governor");
         IEpochGovernor.ProposalState _state = IEpochGovernor(_epochGovernor).result();
-        require(tail, "Minter: not in tail emissions yet");
+        require(weekly < TAIL_START, "Minter: not in tail emissions yet");
         uint256 _period = active_period;
         require(!proposals[_period], "Minter: tail rate already nudged this epoch");
         uint256 _newRate = tailEmissionRate;
         uint256 _oldRate = _newRate;
-        uint256 _nudge = NUDGE;
 
         if (_state != IEpochGovernor.ProposalState.Expired) {
             if (_state == IEpochGovernor.ProposalState.Succeeded) {
@@ -94,15 +91,14 @@ contract Minter is IMinter {
             uint256 _weekly = weekly;
             uint256 _emission;
             uint256 _totalSupply = velo.totalSupply();
-            bool _tail = tail;
+            bool _tail = _weekly < TAIL_START;
 
             if (_tail) {
                 _emission = (_totalSupply * tailEmissionRate) / MAX_BPS;
             } else {
                 _emission = _weekly;
-                _weekly = (_weekly * EMISSION) / MAX_BPS;
+                _weekly = (_weekly * WEEKLY_DECAY) / MAX_BPS;
                 weekly = _weekly;
-                if (_weekly < TAIL_START) tail = true;
             }
 
             uint256 _growth = calculate_growth(_emission);
@@ -119,7 +115,7 @@ contract Minter is IMinter {
             velo.approve(address(voter), _emission);
             voter.notifyRewardAmount(_emission);
 
-            emit Mint(msg.sender, _emission, _totalSupply, _tail);
+            emit Mint(msg.sender, _emission, velo.totalSupply(), _tail);
         }
     }
 }

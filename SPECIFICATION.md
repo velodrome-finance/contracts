@@ -54,7 +54,10 @@ Pair helper contract that stores pool trading fees to keep them separate from th
 
 ### Router
 
-Standard UniswapV2-like Router interface. Supports multi-pool swaps, lp deposits and withdrawals. All functions support both V1 / V2 pools EXCEPT `addLiquidity` and `removeLiquidity`. These support V2 pools only.
+Standard UniswapV2-like Router interface. Supports multi-pool swaps, lp deposits 
+and withdrawals. All functions support both V1 / V2 pools EXCEPT `addLiquidity` and
+ `removeLiquidity`. These support V2 pools only. Zapping support is provided for standard
+ ERC20 tokens only (i.e. there is no support for fee-on-transfer tokens etc).
 
 In addition, the router also supports:
 - Swapping and lp depositing/withdrawing of fee-on-transfer tokens.
