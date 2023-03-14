@@ -252,10 +252,15 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
 
     function supply() external view returns (uint256);
 
+    function anyoneCanSplit() external view returns (bool);
+
     function userPointEpoch(uint256 _tokenId) external view returns (uint256 _epoch);
 
     /// @notice time -> signed slope change
     function slopeChanges(uint256 _timestamp) external view returns (int128);
+
+    /// @notice tokenId -> can split
+    function canSplit(uint256 tokenId) external view returns (bool);
 
     /// @notice Global point history at a given index
     function pointHistory(uint256 _loc) external view returns (Point memory);
@@ -332,6 +337,21 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @dev Only possible if the lock has expired
     function withdraw(uint256 _tokenId) external;
 
+    /// @notice Merges `_from` into `_to`.
+    /// @param _from VeNFT to merge from.
+    /// @param _to VeNFT to merge into.
+    function merge(uint256 _from, uint256 _to) external;
+
+    /// @notice Splits veNFT into two new veNFTS - one with oldLocked.amount - `_amount`, and the second with `_amount`
+    /// @dev    This burns the tokenId of the target veNFT
+    /// @dev    Callable by approved or owner
+    /// @dev    Returns the two new split veNFTs to owner
+    /// @param _from VeNFT to split.
+    /// @param _amount Amount to split from veNFT.
+    /// @return _tokenId1 Return tokenId of veNFT with oldLocked.amount - `_amount`.
+    /// @return _tokenId2 Return tokenId of veNFT with `_amount`.
+    function split(uint256 _from, uint256 _amount) external returns (uint256 _tokenId1, uint256 _tokenId2);
+
     /*///////////////////////////////////////////////////////////////
                            GAUGE VOTING STORAGE
     //////////////////////////////////////////////////////////////*/
@@ -387,17 +407,6 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @notice Set `voted` for _tokenId to false
     /// @dev only callable by voter
     function abstain(uint256 _tokenId) external;
-
-    /// @notice Merges `_from` into `_to`.
-    /// @param _from VeNFT to merge from.
-    /// @param _to VeNFT to merge into.
-    function merge(uint256 _from, uint256 _to) external;
-
-    /// @notice Splits `_amount` into a separate veNFT.
-    /// @param _from VeNFT to split.
-    /// @param _amount Amount to split from veNFT.
-    /// @return _tokenId Return tokenId of newly split veNFT.
-    function split(uint256 _from, uint256 _amount) external returns (uint256 _tokenId);
 
     /*///////////////////////////////////////////////////////////////
                             DAO VOTING STORAGE

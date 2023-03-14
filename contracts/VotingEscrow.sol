@@ -323,7 +323,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     //////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IVotingEscrow
-    function approve(address _approved, uint256 _tokenId) public {
+    function approve(address _approved, uint256 _tokenId) external {
         address sender = _msgSender();
         address owner = idToOwner[_tokenId];
         // Throws if `_tokenId` is not a valid NFT
@@ -553,11 +553,11 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         address owner = ownerOf(_tokenId);
 
         // Clear approval
-        approve(address(0), _tokenId);
+        delete idToApprovals[_tokenId];
         // checkpoint for gov
         _moveTokenDelegates(delegates(owner), address(0), _tokenId);
         // Remove token
-        _removeTokenFrom(sender, _tokenId);
+        _removeTokenFrom(owner, _tokenId);
         emit Transfer(owner, address(0), _tokenId);
     }
 
@@ -572,12 +572,14 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     uint256 public epoch;
     uint256 public supply;
+    bool public anyoneCanSplit;
 
     mapping(uint256 => LockedBalance) internal _locked;
     mapping(uint256 => Point[1000000000]) internal _userPointHistory;
     mapping(uint256 => uint256) public userPointEpoch;
     /// @inheritdoc IVotingEscrow
     mapping(uint256 => int128) public slopeChanges;
+    mapping(uint256 => bool) public canSplit;
 
     /// @inheritdoc IVotingEscrow
     function pointHistory(uint256 _loc) external view returns (Point memory) {
@@ -927,6 +929,88 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         emit Supply(supplyBefore, supplyBefore - value);
     }
 
+    /// @inheritdoc IVotingEscrow
+    function merge(uint256 _from, uint256 _to) external nonReentrant {
+        address sender = _msgSender();
+        require(!voted[_from], "VotingEscrow: voted");
+        require(escrowType[_from] == EscrowType.NORMAL, "VotingEscrow: can only merge normal from nft");
+        require(escrowType[_to] == EscrowType.NORMAL, "VotingEscrow: can only merge normal to nft");
+        require(_from != _to, "VotingEscrow: same nft");
+        require(_isApprovedOrOwner(sender, _from), "VotingEscrow: invalid permissions (from)");
+        require(_isApprovedOrOwner(sender, _to), "VotingEscrow: invalid permissions (to)");
+        LockedBalance memory oldLockedTo = _locked[_to];
+        require(oldLockedTo.end > block.timestamp, "VotingEscrow: to nft lock expired");
+
+        LockedBalance memory oldLockedFrom = _locked[_from];
+        uint256 end = oldLockedFrom.end >= oldLockedTo.end ? oldLockedFrom.end : oldLockedTo.end;
+
+        _locked[_from] = LockedBalance(0, 0);
+        _checkpoint(_from, oldLockedFrom, LockedBalance(0, 0));
+        _burn(_from);
+
+        LockedBalance memory newLockedTo;
+        newLockedTo.amount = oldLockedTo.amount + oldLockedFrom.amount;
+        newLockedTo.end = end;
+        _checkpoint(_to, oldLockedTo, newLockedTo);
+        _locked[_to] = newLockedTo;
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function split(uint256 _from, uint256 _amount)
+        external
+        nonReentrant
+        returns (uint256 _tokenId1, uint256 _tokenId2)
+    {
+        address sender = _msgSender();
+        require(canSplit[_from] || anyoneCanSplit, "VotingEscrow: split not public yet");
+        require(escrowType[_from] == EscrowType.NORMAL, "VotingEscrow: split requires normal nft");
+        require(!voted[_from], "VotingEscrow: voted");
+        require(_isApprovedOrOwner(sender, _from), "VotingEscrow: from: invalid permissions");
+        LockedBalance memory oldLocked = _locked[_from];
+        require(oldLocked.end > block.timestamp, "VotingEscrow: nft lock expired");
+        int128 _splitAmount = int128(int256(_amount));
+        require(_splitAmount > 0, "VotingEscrow: zero amount");
+        require(oldLocked.amount > _splitAmount, "VotingEscrow: amount too big");
+
+        LockedBalance memory newLocked = oldLocked;
+        address owner = idToOwner[_from];
+
+        // Burn old veNFT
+        _burn(_from);
+
+        // Create new veNFT using old balance - amount
+        newLocked.amount -= _splitAmount;
+        _tokenId1 = _createSplitNFT(owner, oldLocked, newLocked);
+
+        // Create new veNFT using amount
+        newLocked.amount = _splitAmount;
+        _tokenId2 = _createSplitNFT(owner, oldLocked, newLocked);
+    }
+
+    function _createSplitNFT(
+        address _to,
+        LockedBalance memory _oldLocked,
+        LockedBalance memory _newLocked
+    ) private returns (uint256 _tokenId) {
+        _tokenId = ++tokenId;
+        _mint(_to, _tokenId);
+        _checkpoint(_tokenId, _oldLocked, _newLocked);
+        _locked[_tokenId] = _newLocked;
+    }
+
+    /// @notice Toggle split for public access.
+    function enableSplitForAll() external {
+        require(_msgSender() == team, "VotingEscrow: not team");
+        anyoneCanSplit = true;
+    }
+
+    /// @notice Allow a specific veNFT to be split.
+    /// @param _tokenId .
+    function allowSplit(uint256 _tokenId) external {
+        require(_msgSender() == team, "VotingEscrow: not team");
+        canSplit[_tokenId] = true;
+    }
+
     /*///////////////////////////////////////////////////////////////
                            GAUGE VOTING STORAGE
     //////////////////////////////////////////////////////////////*/
@@ -1116,8 +1200,6 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     mapping(uint256 => bool) public voted;
-    mapping(uint256 => bool) public canSplit;
-    bool public anyoneCanSplit;
 
     /// @inheritdoc IVotingEscrow
     function setVoterAndDistributor(address _voter, address _distributor) external {
@@ -1136,74 +1218,6 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     function abstain(uint256 _tokenId) external {
         require(_msgSender() == voter);
         voted[_tokenId] = false;
-    }
-
-    /// @inheritdoc IVotingEscrow
-    function merge(uint256 _from, uint256 _to) external nonReentrant {
-        address sender = _msgSender();
-        require(!voted[_from], "VotingEscrow: voted");
-        require(escrowType[_from] == EscrowType.NORMAL, "VotingEscrow: can only merge normal from nft");
-        require(escrowType[_to] == EscrowType.NORMAL, "VotingEscrow: can only merge normal to nft");
-        require(_from != _to, "VotingEscrow: same nft");
-        require(_isApprovedOrOwner(sender, _from), "VotingEscrow: invalid permissions (from)");
-        require(_isApprovedOrOwner(sender, _to), "VotingEscrow: invalid permissions (to)");
-        LockedBalance memory oldLockedTo = _locked[_to];
-        require(oldLockedTo.end > block.timestamp, "VotingEscrow: to nft lock expired");
-
-        LockedBalance memory oldLockedFrom = _locked[_from];
-        uint256 end = oldLockedFrom.end >= oldLockedTo.end ? oldLockedFrom.end : oldLockedTo.end;
-
-        _locked[_from] = LockedBalance(0, 0);
-        _checkpoint(_from, oldLockedFrom, LockedBalance(0, 0));
-        _burn(_from);
-
-        LockedBalance memory newLockedTo;
-        newLockedTo.amount = oldLockedTo.amount + oldLockedFrom.amount;
-        newLockedTo.end = end;
-        _checkpoint(_to, oldLockedTo, newLockedTo);
-        _locked[_to] = newLockedTo;
-    }
-
-    /// @inheritdoc IVotingEscrow
-    function split(uint256 _from, uint256 _amount) external nonReentrant returns (uint256 _tokenId) {
-        address sender = _msgSender();
-        require(canSplit[_from] || anyoneCanSplit, "VotingEscrow: split not public yet");
-        require(escrowType[_from] == EscrowType.NORMAL, "VotingEscrow: split requires normal nft");
-        require(!voted[_from], "VotingEscrow: voted");
-        require(_isApprovedOrOwner(sender, _from), "VotingEscrow: from: invalid permissions");
-        LockedBalance memory oldLocked = _locked[_from];
-        require(oldLocked.end > block.timestamp, "VotingEscrow: nft lock expired");
-        int128 _splitAmount = int128(int256(_amount));
-        require(_splitAmount > 0, "VotingEscrow: zero amount");
-        require(oldLocked.amount > _splitAmount, "VotingEscrow: amount too big");
-
-        // Remove balance from old veNFT
-        LockedBalance memory newLocked = _locked[_from];
-        newLocked.amount -= _splitAmount;
-        _checkpoint(_from, oldLocked, newLocked);
-        _locked[_from] = newLocked;
-
-        // Create new veNFT
-        _tokenId = ++tokenId;
-        _mint(sender, _tokenId);
-
-        // Checkpoint adding balance to new veNFT
-        newLocked.amount = _splitAmount;
-        _checkpoint(_tokenId, oldLocked, newLocked);
-        _locked[_tokenId] = newLocked;
-    }
-
-    /// @notice Toggle split for public access.
-    function enableSplitForAll() external {
-        require(_msgSender() == team, "VotingEscrow: not team");
-        anyoneCanSplit = true;
-    }
-
-    /// @notice Allow a specific veNFT to be split.
-    /// @param _tokenId .
-    function allowSplit(uint256 _tokenId) external {
-        require(_msgSender() == team, "VotingEscrow: not team");
-        canSplit[_tokenId] = true;
     }
 
     /*///////////////////////////////////////////////////////////////

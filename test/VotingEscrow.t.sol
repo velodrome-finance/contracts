@@ -101,6 +101,16 @@ contract VotingEscrowTest is BaseTest {
         escrow.createLock(1e21, MAXTIME + 1 weeks);
     }
 
+    function testBurnFromApproved() public {
+        VELO.approve(address(escrow), 1e25);
+        uint256 tokenId = escrow.createLock(1e21, MAXTIME);
+        skipAndRoll(MAXTIME + 1);
+        escrow.approve(address(owner2), tokenId);
+        vm.prank(address(owner2));
+        // should not revert
+        escrow.withdraw(tokenId);
+    }
+
     function testWithdraw() public {
         VELO.approve(address(escrow), 1e25);
         uint256 lockDuration = 7 * 24 * 3600; // 1 week
@@ -485,43 +495,84 @@ contract VotingEscrowTest is BaseTest {
         escrow.split(1, TOKEN_1 / 4);
     }
 
+    function testCannotSplitThenTransferOriginal() public {
+        skip(1 weeks / 2);
+
+        escrow.allowSplit(1);
+        VELO.approve(address(escrow), type(uint256).max);
+        escrow.createLock(TOKEN_1, MAXTIME);
+
+        escrow.split(1, TOKEN_1 / 4);
+        vm.expectRevert(); // TODO: change to error message check when merged
+        escrow.transferFrom(address(owner), address(owner2), 1);
+    }
+
+    function testSplitOwnershipFromOwner() public {
+        skip(1 weeks / 2);
+
+        escrow.allowSplit(1);
+        VELO.approve(address(escrow), type(uint256).max);
+        escrow.createLock(TOKEN_1, MAXTIME);
+
+        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
+        assertEq(escrow.ownerOf(splitTokenId1), address(owner));
+        assertEq(escrow.ownerOf(splitTokenId2), address(owner));
+        assertEq(escrow.ownerOf(1), address(0));
+    }
+
+    function testSplitOwnershipFromApproved() public {
+        skip(1 weeks / 2);
+
+        escrow.allowSplit(1);
+        VELO.approve(address(escrow), type(uint256).max);
+        escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.approve(address(owner2), 1);
+
+        vm.prank(address(owner2));
+        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
+        assertEq(escrow.ownerOf(splitTokenId1), address(owner));
+        assertEq(escrow.ownerOf(splitTokenId2), address(owner));
+        assertEq(escrow.ownerOf(1), address(0));
+    }
+
     function testSplitWhenAllowSplit() public {
         skip(1 weeks / 2);
 
         escrow.allowSplit(1);
 
         VELO.approve(address(escrow), type(uint256).max);
-        escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.createLock(TOKEN_1, MAXTIME); // 1
 
         // generate new nfts with same amounts / locktime
-        escrow.createLock((TOKEN_1 * 3) / 4, MAXTIME);
-        escrow.createLock(TOKEN_1 / 4, MAXTIME);
+        escrow.createLock((TOKEN_1 * 3) / 4, MAXTIME); // 2
+        escrow.createLock(TOKEN_1 / 4, MAXTIME); // 3
         uint256 expectedLockTime = escrow.lockedEnd(1);
         uint256 veloSupply = escrow.supply();
 
-        uint256 splitTokenId = escrow.split(1, TOKEN_1 / 4);
-        assertEq(splitTokenId, 4);
+        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
+        assertEq(splitTokenId1, 4);
+        assertEq(splitTokenId2, 5);
         assertEq(escrow.supply(), veloSupply);
 
         // check new veNFTs have correct amount and locktime
-        IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(1);
+        IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(splitTokenId1);
         assertEq(uint256(uint128(lockedOld.amount)), (TOKEN_1 * 3) / 4);
         assertEq(lockedOld.end, expectedLockTime);
-        assertEq(escrow.ownerOf(1), address(owner));
+        assertEq(escrow.ownerOf(splitTokenId1), address(owner));
 
-        IVotingEscrow.LockedBalance memory lockedNew = escrow.locked(splitTokenId);
+        IVotingEscrow.LockedBalance memory lockedNew = escrow.locked(splitTokenId2);
         assertEq(uint256(uint128(lockedNew.amount)), TOKEN_1 / 4);
         assertEq(lockedNew.end, expectedLockTime);
-        assertEq(escrow.ownerOf(splitTokenId), address(owner));
+        assertEq(escrow.ownerOf(splitTokenId2), address(owner));
 
         // check modified veNFTs are equivalent to brand new veNFTs created with same amount and locktime
-        assertEq(escrow.balanceOfNFT(1), escrow.balanceOfNFT(2));
-        assertEq(escrow.balanceOfNFT(splitTokenId), escrow.balanceOfNFT(3));
+        assertEq(escrow.balanceOfNFT(splitTokenId1), escrow.balanceOfNFT(2));
+        assertEq(escrow.balanceOfNFT(splitTokenId2), escrow.balanceOfNFT(3));
 
-        // compare point history of initial veNFT (1) and 2
+        // compare point history of first split veNFT and 2
         uint256 lastEpochStored;
-        lastEpochStored = escrow.userPointEpoch(1);
-        IVotingEscrow.Point memory origPoint = escrow.userPointHistory(1, lastEpochStored);
+        lastEpochStored = escrow.userPointEpoch(splitTokenId1);
+        IVotingEscrow.Point memory origPoint = escrow.userPointHistory(splitTokenId1, lastEpochStored);
         lastEpochStored = escrow.userPointEpoch(2);
         IVotingEscrow.Point memory cmpPoint = escrow.userPointHistory(2, lastEpochStored);
         assertEq(origPoint.bias, cmpPoint.bias);
@@ -529,9 +580,9 @@ contract VotingEscrowTest is BaseTest {
         assertEq(origPoint.ts, cmpPoint.ts);
         assertEq(origPoint.blk, cmpPoint.blk);
 
-        // compare point history of split veNFT (4) and 3
-        lastEpochStored = escrow.userPointEpoch(splitTokenId);
-        IVotingEscrow.Point memory splitPoint = escrow.userPointHistory(splitTokenId, lastEpochStored);
+        // compare point history of second split veNFT and 3
+        lastEpochStored = escrow.userPointEpoch(splitTokenId2);
+        IVotingEscrow.Point memory splitPoint = escrow.userPointHistory(splitTokenId2, lastEpochStored);
         lastEpochStored = escrow.userPointEpoch(3);
         cmpPoint = escrow.userPointHistory(3, lastEpochStored);
         assertEq(splitPoint.bias, cmpPoint.bias);
@@ -546,37 +597,38 @@ contract VotingEscrowTest is BaseTest {
         escrow.enableSplitForAll();
 
         VELO.approve(address(escrow), type(uint256).max);
-        escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.createLock(TOKEN_1, MAXTIME); // 1
 
         // generate new nfts with same amounts / locktime
-        escrow.createLock((TOKEN_1 * 3) / 4, MAXTIME);
-        escrow.createLock(TOKEN_1 / 4, MAXTIME);
+        escrow.createLock((TOKEN_1 * 3) / 4, MAXTIME); // 2
+        escrow.createLock(TOKEN_1 / 4, MAXTIME); // 3
         uint256 expectedLockTime = escrow.lockedEnd(1);
         uint256 veloSupply = escrow.supply();
 
-        uint256 splitTokenId = escrow.split(1, TOKEN_1 / 4);
-        assertEq(splitTokenId, 4);
+        (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
+        assertEq(splitTokenId1, 4);
+        assertEq(splitTokenId2, 5);
         assertEq(escrow.supply(), veloSupply);
 
         // check new veNFTs have correct amount and locktime
-        IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(1);
+        IVotingEscrow.LockedBalance memory lockedOld = escrow.locked(splitTokenId1);
         assertEq(uint256(uint128(lockedOld.amount)), (TOKEN_1 * 3) / 4);
         assertEq(lockedOld.end, expectedLockTime);
-        assertEq(escrow.ownerOf(1), address(owner));
+        assertEq(escrow.ownerOf(splitTokenId1), address(owner));
 
-        IVotingEscrow.LockedBalance memory lockedNew = escrow.locked(splitTokenId);
+        IVotingEscrow.LockedBalance memory lockedNew = escrow.locked(splitTokenId2);
         assertEq(uint256(uint128(lockedNew.amount)), TOKEN_1 / 4);
         assertEq(lockedNew.end, expectedLockTime);
-        assertEq(escrow.ownerOf(splitTokenId), address(owner));
+        assertEq(escrow.ownerOf(splitTokenId2), address(owner));
 
         // check modified veNFTs are equivalent to brand new veNFTs created with same amount and locktime
-        assertEq(escrow.balanceOfNFT(1), escrow.balanceOfNFT(2));
-        assertEq(escrow.balanceOfNFT(splitTokenId), escrow.balanceOfNFT(3));
+        assertEq(escrow.balanceOfNFT(splitTokenId1), escrow.balanceOfNFT(2));
+        assertEq(escrow.balanceOfNFT(splitTokenId2), escrow.balanceOfNFT(3));
 
-        // compare point history of initial veNFT (1) and 2
+        // compare point history of first split veNFT and 2
         uint256 lastEpochStored;
         lastEpochStored = escrow.userPointEpoch(1);
-        IVotingEscrow.Point memory origPoint = escrow.userPointHistory(1, lastEpochStored);
+        IVotingEscrow.Point memory origPoint = escrow.userPointHistory(splitTokenId1, lastEpochStored);
         lastEpochStored = escrow.userPointEpoch(2);
         IVotingEscrow.Point memory cmpPoint = escrow.userPointHistory(2, lastEpochStored);
         assertEq(origPoint.bias, cmpPoint.bias);
@@ -584,9 +636,9 @@ contract VotingEscrowTest is BaseTest {
         assertEq(origPoint.ts, cmpPoint.ts);
         assertEq(origPoint.blk, cmpPoint.blk);
 
-        // compare point history of split veNFT (4) and 3
-        lastEpochStored = escrow.userPointEpoch(splitTokenId);
-        IVotingEscrow.Point memory splitPoint = escrow.userPointHistory(splitTokenId, lastEpochStored);
+        // compare point history of second split veNFT and 3
+        lastEpochStored = escrow.userPointEpoch(splitTokenId2);
+        IVotingEscrow.Point memory splitPoint = escrow.userPointHistory(splitTokenId2, lastEpochStored);
         lastEpochStored = escrow.userPointEpoch(3);
         cmpPoint = escrow.userPointHistory(3, lastEpochStored);
         assertEq(splitPoint.bias, cmpPoint.bias);
