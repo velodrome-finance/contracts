@@ -441,7 +441,9 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
     }
 
     function _f(uint256 x0, uint256 y) internal pure returns (uint256) {
-        return (x0 * ((((y * y) / 1e18) * y) / 1e18)) / 1e18 + (((((x0 * x0) / 1e18) * x0) / 1e18) * y) / 1e18;
+        uint256 _a = (x0 * y) / 1e18;
+        uint256 _b = ((x0 * x0) / 1e18 + (y * y) / 1e18);
+        return (_a * _b) / 1e18;
     }
 
     function _d(uint256 x0, uint256 y) internal pure returns (uint256) {
@@ -452,28 +454,46 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         uint256 x0,
         uint256 xy,
         uint256 y
-    ) internal pure returns (uint256) {
+    ) internal view returns (uint256) {
         for (uint256 i = 0; i < 255; i++) {
-            uint256 y_prev = y;
             uint256 k = _f(x0, y);
             if (k < xy) {
+                // there are two cases where dy == 0
+                // case 1: The y is converged and we find the correct answer
+                // case 2: _d(x0, y) is too large compare to (xy - k) and the rounding error
+                //         screwed us.
+                //         In this case, we need to increase y by 1
                 uint256 dy = ((xy - k) * 1e18) / _d(x0, y);
+                if (dy == 0) {
+                    if (k == xy) {
+                        // We found the correct answer. Return y
+                        return y;
+                    }
+                    if (_k(x0, y + 1) > xy) {
+                        // If _k(x0, y + 1) > xy, then we are close to the correct answer.
+                        // There's no closer answer than y + 1
+                        return y + 1;
+                    }
+                    dy = 1;
+                }
                 y = y + dy;
             } else {
                 uint256 dy = ((k - xy) * 1e18) / _d(x0, y);
+                if (dy == 0) {
+                    if (k == xy || _f(x0, y - 1) < xy) {
+                        // Likewise, if k == xy, we found the correct answer.
+                        // If _f(x0, y - 1) < xy, then we are close to the correct answer.
+                        // There's no closer answer than "y"
+                        // It's worth mentioning that we need to find y where f(x0, y) >= xy
+                        // As a result, we can't return y - 1 even it's closer to the correct answer
+                        return y;
+                    }
+                    dy = 1;
+                }
                 y = y - dy;
             }
-            if (y > y_prev) {
-                if (y - y_prev <= 1) {
-                    return y;
-                }
-            } else {
-                if (y_prev - y <= 1) {
-                    return y;
-                }
-            }
         }
-        return y;
+        revert("!y");
     }
 
     function getAmountOut(uint256 amountIn, address tokenIn) external view returns (uint256) {
