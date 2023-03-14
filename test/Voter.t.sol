@@ -276,6 +276,32 @@ contract VoterTest is BaseTest {
         voter.vote(1, pools, weights);
     }
 
+    function testCannotSetMaxVotingNumIfNotGovernor() public {
+        vm.prank(address(owner2));
+        vm.expectRevert("Voter: not governor");
+        voter.setMaxVotingNum(42);
+    }
+
+    function testCannotSetMaxVotingNumToSameNum() public {
+        uint256 maxVotingNum = voter.maxVotingNum();
+        vm.prank(address(governor));
+        vm.expectRevert("Voter: same value");
+        voter.setMaxVotingNum(maxVotingNum);
+    }
+
+    function testCannotSetMaxVotingNumBelow10() public {
+        vm.startPrank(address(governor));
+        vm.expectRevert("Voter: too low");
+        voter.setMaxVotingNum(9);
+    }
+
+    function testSetMaxVotingNum() public {
+        assertEq(voter.maxVotingNum(), 30);
+        vm.prank(address(governor));
+        voter.setMaxVotingNum(10);
+        assertEq(voter.maxVotingNum(), 10);
+    }
+
     function testCannotSetGovernorIfNotGovernor() public {
         vm.prank(address(owner2));
         vm.expectRevert("Voter: not governor");
@@ -605,6 +631,110 @@ contract VoterTest is BaseTest {
         vm.prank(address(owner3));
         vm.expectRevert("Voter: not owner or approved");
         voter.withdrawManaged(tokenId);
+    }
+
+    function testDepositManagedPokeWithoutExistingVote() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        escrow.createManagedLockFor(address(owner));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        skipToNextEpoch(1 hours + 1);
+
+        voter.depositManaged(tokenId, mTokenId);
+
+        assertFalse(escrow.voted(mTokenId));
+        assertEq(voter.totalWeight(), 0);
+        assertEq(voter.usedWeights(mTokenId), 0);
+    }
+
+    function testDepositManagedPokeWithExistingVote() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+
+        escrow.createManagedLockFor(address(owner));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1, MAXTIME);
+
+        skipToNextEpoch(1 hours + 1);
+
+        voter.depositManaged(tokenId, mTokenId);
+
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+        vm.prank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+
+        uint256 usedWeightsBefore = voter.usedWeights(mTokenId);
+        uint256 totalWeightBefore = voter.totalWeight();
+
+        voter.depositManaged(tokenId2, mTokenId);
+
+        assertGt(voter.usedWeights(mTokenId), usedWeightsBefore);
+        assertGt(voter.totalWeight(), totalWeightBefore);
+    }
+
+    function testWithdrawManagedToReset() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        escrow.createManagedLockFor(address(owner));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        skipToNextEpoch(1 hours + 1);
+
+        voter.depositManaged(tokenId, mTokenId);
+
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+        vm.prank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+
+        skipToNextEpoch(1 hours + 1);
+
+        voter.withdrawManaged(tokenId);
+        assertFalse(escrow.voted(mTokenId));
+        assertEq(voter.totalWeight(), 0);
+        assertEq(voter.usedWeights(mTokenId), 0);
+
+        vm.expectRevert();
+        voter.poolVote(mTokenId, 0);
+    }
+
+    function testWithdrawManagedToPoke() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        escrow.createManagedLockFor(address(owner));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1, MAXTIME);
+
+        skipToNextEpoch(1 hours + 1);
+
+        voter.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId2, mTokenId);
+
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+        vm.prank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+        assertEq(escrow.balanceOfNFT(mTokenId), voter.totalWeight());
+        assertEq(voter.usedWeights(mTokenId), voter.totalWeight());
+
+        skipToNextEpoch(1 hours + 1);
+
+        voter.withdrawManaged(tokenId);
+        assertTrue(escrow.voted(mTokenId));
+        // ensure voting weight of managed veNFT is now equal to the the regular tokenId
+        assertEq(voter.totalWeight(), escrow.balanceOfNFT(tokenId));
+        assertEq(voter.usedWeights(mTokenId), escrow.balanceOfNFT(tokenId));
+
+        address poolVote = voter.poolVote(mTokenId, 0);
+        assertEq(poolVote, address(pair));
     }
 
     function _seedVoterWithVotingSupply() internal {

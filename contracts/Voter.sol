@@ -38,6 +38,9 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @dev Total Voting Weights
     uint256 public totalWeight;
+    /// @dev Most number of pools one voter can vote for at once
+    uint256 public maxVotingNum;
+    uint256 internal constant MIN_MAXVOTINGNUM = 10;
 
     /// @dev All pools viable for incentives
     address[] public pools;
@@ -83,6 +86,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         governor = _sender;
         epochGovernor = _sender;
         emergencyCouncil = _sender;
+        maxVotingNum = 30;
     }
 
     modifier onlyNewEpoch(uint256 _tokenId) {
@@ -138,11 +142,17 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         emergencyCouncil = _council;
     }
 
+    function setMaxVotingNum(uint256 _maxVotingNum) external {
+        require(_msgSender() == governor, "Voter: not governor");
+        require(_maxVotingNum >= MIN_MAXVOTINGNUM, "Voter: too low");
+        require(_maxVotingNum != maxVotingNum, "Voter: same value");
+        maxVotingNum = _maxVotingNum;
+    }
+
     /// @inheritdoc IVoter
     function reset(uint256 _tokenId) external onlyNewEpoch(_tokenId) nonReentrant {
         require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId));
         _reset(_tokenId);
-        IVotingEscrow(ve).abstain(_tokenId);
     }
 
     function _reset(uint256 _tokenId) internal {
@@ -164,6 +174,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
                 emit Abstained(_tokenId, _votes);
             }
         }
+        IVotingEscrow(ve).abstain(_tokenId);
         totalWeight -= _totalWeight;
         usedWeights[_tokenId] = 0;
         delete poolVote[_tokenId];
@@ -171,6 +182,10 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function poke(uint256 _tokenId) external nonReentrant {
+        _poke(_tokenId);
+    }
+
+    function _poke(uint256 _tokenId) internal {
         address[] memory _poolVote = poolVote[_tokenId];
         uint256 _poolCnt = _poolVote.length;
         uint256[] memory _weights = new uint256[](_poolCnt);
@@ -233,6 +248,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         address _sender = _msgSender();
         require(IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId));
         require(_poolVote.length == _weights.length);
+        require(_poolVote.length <= maxVotingNum);
         require(!IVotingEscrow(ve).deactivated(_tokenId), "Voter: inactive managed nft");
         uint256 _timestamp = block.timestamp;
         require(_timestamp > VelodromeTimeLibrary.epochVoteStart(_timestamp), "Voter: distribute window");
@@ -252,12 +268,22 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         require(_timestamp <= VelodromeTimeLibrary.epochVoteEnd(_timestamp), "Voter: cannot deposit in window");
         lastVoted[_tokenId] = _timestamp;
         IVotingEscrow(ve).depositManaged(_tokenId, _mTokenId);
+        _poke(_mTokenId);
     }
 
     /// @inheritdoc IVoter
     function withdrawManaged(uint256 _tokenId) external nonReentrant onlyNewEpoch(_tokenId) {
         require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId), "Voter: not owner or approved");
+        uint256 _mTokenId = IVotingEscrow(ve).idToManaged(_tokenId);
         IVotingEscrow(ve).withdrawManaged(_tokenId);
+        // If the NORMAL veNFT was the last tokenId locked into _mTokenId, reset vote as there is
+        // no longer voting power available to the _mTokenId.  Otherwise, updating voting power to accurately
+        // reflect the withdrawn voting power.
+        if (IVotingEscrow(ve).balanceOfNFT(_mTokenId) == 0) {
+            _reset(_mTokenId);
+        } else {
+            _poke(_mTokenId);
+        }
     }
 
     /// @inheritdoc IVoter
