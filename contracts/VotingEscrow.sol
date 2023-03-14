@@ -962,39 +962,36 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         returns (uint256 _tokenId1, uint256 _tokenId2)
     {
         address sender = _msgSender();
+        address owner = idToOwner[_from];
         require(canSplit[_from] || anyoneCanSplit, "VotingEscrow: split not public yet");
         require(escrowType[_from] == EscrowType.NORMAL, "VotingEscrow: split requires normal nft");
         require(!voted[_from], "VotingEscrow: voted");
         require(_isApprovedOrOwner(sender, _from), "VotingEscrow: from: invalid permissions");
-        LockedBalance memory oldLocked = _locked[_from];
-        require(oldLocked.end > block.timestamp, "VotingEscrow: nft lock expired");
+        LockedBalance memory newLocked = _locked[_from];
+        require(newLocked.end > block.timestamp, "VotingEscrow: nft lock expired");
         int128 _splitAmount = int128(int256(_amount));
         require(_splitAmount > 0, "VotingEscrow: zero amount");
-        require(oldLocked.amount > _splitAmount, "VotingEscrow: amount too big");
+        require(newLocked.amount > _splitAmount, "VotingEscrow: amount too big");
 
-        LockedBalance memory newLocked = oldLocked;
-        address owner = idToOwner[_from];
+        // Zero out and burn old veNFT
+        _locked[_from] = LockedBalance(0, 0);
+        _checkpoint(_from, newLocked, LockedBalance(0, 0));
 
-        // Burn old veNFT
         _burn(_from);
 
         // Create new veNFT using old balance - amount
         newLocked.amount -= _splitAmount;
-        _tokenId1 = _createSplitNFT(owner, oldLocked, newLocked);
+        _tokenId1 = _createSplitNFT(owner, newLocked);
 
         // Create new veNFT using amount
         newLocked.amount = _splitAmount;
-        _tokenId2 = _createSplitNFT(owner, oldLocked, newLocked);
+        _tokenId2 = _createSplitNFT(owner, newLocked);
     }
 
-    function _createSplitNFT(
-        address _to,
-        LockedBalance memory _oldLocked,
-        LockedBalance memory _newLocked
-    ) private returns (uint256 _tokenId) {
+    function _createSplitNFT(address _to, LockedBalance memory _newLocked) private returns (uint256 _tokenId) {
         _tokenId = ++tokenId;
         _mint(_to, _tokenId);
-        _checkpoint(_tokenId, _oldLocked, _newLocked);
+        _checkpoint(_tokenId, LockedBalance(0, 0), _newLocked);
         _locked[_tokenId] = _newLocked;
     }
 

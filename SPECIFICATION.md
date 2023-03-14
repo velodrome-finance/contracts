@@ -86,7 +86,7 @@ All of these operations require ownership of the underlying NFT or tokens being 
 - Can create a NFT by escrowing VELO tokens and "locking" them for a time period.
 - Can do anything with the NFT as supported by the ERC-721 interface (requires normal or managed NFT).
 - Can merge one NFT into another (requires normal NFT).
-- Can split a single NFT into two NFTs (requires normal NFT). This function is initially permissioned by tokenId (requires team). 
+- Can split a single NFT into two new NFTs (requires normal NFT).  The NFT to be split is burned.  This function is initially permissioned by tokenId (requires team).
 - Can disable permissions for split (requires team).
 - Can withdraw escrowed VELO tokens once the NFT lock expires (requires normal NFT). 
 - Can add to an existing NFT position by escrowing additional VELO tokens (requires normal or managed NFT).

@@ -569,8 +569,19 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.balanceOfNFT(splitTokenId1), escrow.balanceOfNFT(2));
         assertEq(escrow.balanceOfNFT(splitTokenId2), escrow.balanceOfNFT(3));
 
+        // Check point history of veNFT that was split from to ensure zero-ed out balance
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(1);
+        assertEq(locked.amount, 0);
+        assertEq(locked.end, 0);
+        uint256 lastEpochStored = escrow.userPointEpoch(1);
+        IVotingEscrow.Point memory point = escrow.userPointHistory(1, lastEpochStored);
+        assertEq(point.bias, 0);
+        assertEq(point.slope, 0);
+        assertEq(point.ts, block.timestamp);
+        assertEq(point.blk, block.number);
+        assertEq(escrow.balanceOfNFT(1), 0);
+
         // compare point history of first split veNFT and 2
-        uint256 lastEpochStored;
         lastEpochStored = escrow.userPointEpoch(splitTokenId1);
         IVotingEscrow.Point memory origPoint = escrow.userPointHistory(splitTokenId1, lastEpochStored);
         lastEpochStored = escrow.userPointEpoch(2);
@@ -625,9 +636,20 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.balanceOfNFT(splitTokenId1), escrow.balanceOfNFT(2));
         assertEq(escrow.balanceOfNFT(splitTokenId2), escrow.balanceOfNFT(3));
 
+        // Check point history of veNFT that was split from to ensure zero-ed out balance
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(1);
+        assertEq(locked.amount, 0);
+        assertEq(locked.end, 0);
+        uint256 lastEpochStored = escrow.userPointEpoch(1);
+        IVotingEscrow.Point memory point = escrow.userPointHistory(1, lastEpochStored);
+        assertEq(point.bias, 0);
+        assertEq(point.slope, 0);
+        assertEq(point.ts, block.timestamp);
+        assertEq(point.blk, block.number);
+        assertEq(escrow.balanceOfNFT(1), 0);
+
         // compare point history of first split veNFT and 2
-        uint256 lastEpochStored;
-        lastEpochStored = escrow.userPointEpoch(1);
+        lastEpochStored = escrow.userPointEpoch(splitTokenId1);
         IVotingEscrow.Point memory origPoint = escrow.userPointHistory(splitTokenId1, lastEpochStored);
         lastEpochStored = escrow.userPointEpoch(2);
         IVotingEscrow.Point memory cmpPoint = escrow.userPointHistory(2, lastEpochStored);
