@@ -164,8 +164,9 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function withdrawManaged(uint256 _tokenId) external nonReentrant {
-        uint256 _mTokenId = idToManaged[_tokenId];
         require(_msgSender() == voter, "VotingEscrow: not voter");
+        uint256 _mTokenId = idToManaged[_tokenId];
+        require(_mTokenId != 0, "VotingEscrow: null _mTokenId");
         require(escrowType[_tokenId] == EscrowType.LOCKED, "VotingEscrow: nft not locked");
 
         // update accrued rewards

@@ -200,7 +200,7 @@ contract ManagedNftTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: nft not locked");
+        vm.expectRevert("VotingEscrow: null _mTokenId");
         voter.withdrawManaged(tokenId);
     }
 
