@@ -580,7 +580,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     mapping(uint256 => uint256) public userPointEpoch;
     /// @inheritdoc IVotingEscrow
     mapping(uint256 => int128) public slopeChanges;
-    mapping(uint256 => bool) public canSplit;
+    mapping(address => bool) public canSplit;
 
     /// @inheritdoc IVotingEscrow
     function pointHistory(uint256 _loc) external view returns (Point memory) {
@@ -964,7 +964,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     {
         address sender = _msgSender();
         address owner = idToOwner[_from];
-        require(canSplit[_from] || anyoneCanSplit, "VotingEscrow: split not public yet");
+        require(canSplit[owner] || anyoneCanSplit, "VotingEscrow: split not public yet");
         require(escrowType[_from] == EscrowType.NORMAL, "VotingEscrow: split requires normal nft");
         require(!voted[_from], "VotingEscrow: voted");
         require(_isApprovedOrOwner(sender, _from), "VotingEscrow: from: invalid permissions");
@@ -977,7 +977,6 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         // Zero out and burn old veNFT
         _locked[_from] = LockedBalance(0, 0);
         _checkpoint(_from, newLocked, LockedBalance(0, 0));
-
         _burn(_from);
 
         // Create new veNFT using old balance - amount
@@ -991,22 +990,21 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     function _createSplitNFT(address _to, LockedBalance memory _newLocked) private returns (uint256 _tokenId) {
         _tokenId = ++tokenId;
-        _mint(_to, _tokenId);
-        _checkpoint(_tokenId, LockedBalance(0, 0), _newLocked);
         _locked[_tokenId] = _newLocked;
+        _checkpoint(_tokenId, LockedBalance(0, 0), _newLocked);
+        _mint(_to, _tokenId);
     }
 
-    /// @notice Toggle split for public access.
-    function enableSplitForAll() external {
+    /// @inheritdoc IVotingEscrow
+    function toggleSplitForAll(bool _bool) external {
         require(_msgSender() == team, "VotingEscrow: not team");
-        anyoneCanSplit = true;
+        anyoneCanSplit = _bool;
     }
 
-    /// @notice Allow a specific veNFT to be split.
-    /// @param _tokenId .
-    function allowSplit(uint256 _tokenId) external {
+    /// @inheritdoc IVotingEscrow
+    function toggleSplit(address _account, bool _bool) external {
         require(_msgSender() == team, "VotingEscrow: not team");
-        canSplit[_tokenId] = true;
+        canSplit[_account] = _bool;
     }
 
     /*///////////////////////////////////////////////////////////////

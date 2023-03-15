@@ -387,36 +387,46 @@ contract VotingEscrowTest is BaseTest {
         assertEq(post - pre, TOKEN_1);
     }
 
-    function testCannotEnableSplitForAllIfNotTeam() public {
+    function testCannotToggleSplitForAllIfNotTeam() public {
         vm.prank(address(owner2));
         vm.expectRevert("VotingEscrow: not team");
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
     }
 
-    function testEnableSplitForAll() public {
+    function testToggleSplitForAll() public {
         assertFalse(escrow.anyoneCanSplit());
 
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
+        assertTrue(escrow.anyoneCanSplit());
 
+        escrow.toggleSplitForAll(false);
+        assertFalse(escrow.anyoneCanSplit());
+
+        escrow.toggleSplitForAll(true);
         assertTrue(escrow.anyoneCanSplit());
     }
 
-    function testCannotAllowSplitIfNotTeam() public {
+    function testCannotToggleSplitIfNotTeam() public {
         vm.prank(address(owner2));
         vm.expectRevert("VotingEscrow: not team");
-        escrow.allowSplit(1);
+        escrow.toggleSplit(address(owner), true);
     }
 
-    function testAllowSplit() public {
-        assertFalse(escrow.canSplit(1));
+    function testToggleSplit() public {
+        assertFalse(escrow.canSplit(address(owner)));
 
-        escrow.allowSplit(1);
+        escrow.toggleSplit(address(owner), true);
+        assertTrue(escrow.canSplit(address(owner)));
 
-        assertTrue(escrow.canSplit(1));
+        escrow.toggleSplit(address(owner), false);
+        assertFalse(escrow.canSplit(address(owner)));
+
+        escrow.toggleSplit(address(owner), true);
+        assertTrue(escrow.canSplit(address(owner)));
     }
 
     function testCannotSplitWithManagedNFT() public {
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, 4 * 365 * 86400);
@@ -427,7 +437,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotSplitWithAmountZero() public {
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
         VELO.approve(address(escrow), type(uint256).max);
         uint256 ownerTokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -436,7 +446,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotSplitVeNFTWithNoApprovalOrOwnership() public {
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
         VELO.approve(address(escrow), type(uint256).max);
         uint256 ownerTokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -446,7 +456,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotSplitWithExpiredVeNFT() public {
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
         // create veNFT with one week locktime
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, 1 weeks);
@@ -460,7 +470,7 @@ contract VotingEscrowTest is BaseTest {
 
     function testCannotSplitWithAlreadyVotedVeNFT() public {
         skip(1 hours);
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -479,7 +489,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotSplitWithAmountTooBig() public {
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -495,10 +505,54 @@ contract VotingEscrowTest is BaseTest {
         escrow.split(1, TOKEN_1 / 4);
     }
 
+    function testSplitWhenToggleSplitOnReceivedNFT() public {
+        skip(1 weeks / 2);
+
+        escrow.toggleSplit(address(owner), true);
+
+        vm.startPrank(address(owner2));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.transferFrom(address(owner2), address(owner), tokenId);
+        vm.stopPrank();
+
+        skipAndRoll(1);
+        escrow.split(tokenId, TOKEN_1 / 4);
+    }
+
+    function testSplitWhenToggleSplitByApproved() public {
+        skip(1 weeks / 2);
+
+        escrow.toggleSplit(address(owner), true);
+
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.approve(address(owner2), tokenId);
+        skipAndRoll(1);
+
+        vm.prank(address(owner2));
+        escrow.split(tokenId, TOKEN_1 / 4);
+    }
+
+    function testSplitWhenToggleSplitDoesNotTransfer() public {
+        skip(1 weeks / 2);
+
+        escrow.toggleSplit(address(owner), true);
+
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.transferFrom(address(owner), address(owner2), tokenId);
+
+        skipAndRoll(1);
+        vm.expectRevert("VotingEscrow: split not public yet");
+        vm.prank(address(owner2));
+        escrow.split(tokenId, TOKEN_1 / 4);
+    }
+
     function testCannotSplitThenTransferOriginal() public {
         skip(1 weeks / 2);
 
-        escrow.allowSplit(1);
+        escrow.toggleSplit(address(owner), true);
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -510,7 +564,7 @@ contract VotingEscrowTest is BaseTest {
     function testSplitOwnershipFromOwner() public {
         skip(1 weeks / 2);
 
-        escrow.allowSplit(1);
+        escrow.toggleSplit(address(owner), true);
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -523,7 +577,7 @@ contract VotingEscrowTest is BaseTest {
     function testSplitOwnershipFromApproved() public {
         skip(1 weeks / 2);
 
-        escrow.allowSplit(1);
+        escrow.toggleSplit(address(owner), true);
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME);
         escrow.approve(address(owner2), 1);
@@ -535,10 +589,10 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.ownerOf(1), address(0));
     }
 
-    function testSplitWhenAllowSplit() public {
+    function testSplitWhenToggleSplit() public {
         skip(1 weeks / 2);
 
-        escrow.allowSplit(1);
+        escrow.toggleSplit(address(owner), true);
 
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME); // 1
@@ -605,7 +659,7 @@ contract VotingEscrowTest is BaseTest {
     function testSplitWhenSplitPublic() public {
         skip(1 weeks / 2);
 
-        escrow.enableSplitForAll();
+        escrow.toggleSplitForAll(true);
 
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME); // 1

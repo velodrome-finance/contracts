@@ -259,8 +259,8 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @notice time -> signed slope change
     function slopeChanges(uint256 _timestamp) external view returns (int128);
 
-    /// @notice tokenId -> can split
-    function canSplit(uint256 tokenId) external view returns (bool);
+    /// @notice account -> can split
+    function canSplit(address _account) external view returns (bool);
 
     /// @notice Global point history at a given index
     function pointHistory(uint256 _loc) external view returns (Point memory);
@@ -351,6 +351,15 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @return _tokenId1 Return tokenId of veNFT with oldLocked.amount - `_amount`.
     /// @return _tokenId2 Return tokenId of veNFT with `_amount`.
     function split(uint256 _from, uint256 _amount) external returns (uint256 _tokenId1, uint256 _tokenId2);
+
+    /// @notice Toggle split for public access.
+    /// @param _bool True to allow, false to disallow
+    function toggleSplitForAll(bool _bool) external;
+
+    /// @notice Toggle split for a specific veNFT.
+    /// @param _account Address to toggle split permissions
+    /// @param _bool True to allow, false to disallow
+    function toggleSplit(address _account, bool _bool) external;
 
     /*///////////////////////////////////////////////////////////////
                            GAUGE VOTING STORAGE
