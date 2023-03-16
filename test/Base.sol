@@ -93,8 +93,9 @@ abstract contract Base is Script, Test {
     function _coreSetup() public {
         deployFactories();
 
-        VeArtProxy artProxy = new VeArtProxy();
-        escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), team);
+        escrow = new VotingEscrow(address(VELO), address(factoryRegistry), team);
+        VeArtProxy artProxy = new VeArtProxy(address(escrow));
+        escrow.setArtProxy(address(artProxy));
 
         // Setup voter and distributor
         distributor = new RewardsDistributor(address(escrow));

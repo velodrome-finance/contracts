@@ -1,10 +1,5 @@
 pragma solidity 0.8.13;
 
 interface IVeArtProxy {
-    function _tokenURI(
-        uint256 _tokenId,
-        uint256 _balanceOf,
-        uint256 _locked_end,
-        uint256 _value
-    ) external pure returns (string memory output);
+    function tokenURI(uint256 _tokenId) external view returns (string memory output);
 }

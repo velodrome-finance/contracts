@@ -15,8 +15,9 @@ contract ImbalanceTest is BaseTest {
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = 1e25;
         mintToken(address(VELO), owners, amounts);
-        VeArtProxy artProxy = new VeArtProxy();
-        escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
+        escrow = new VotingEscrow(address(VELO), address(factoryRegistry), address(owner));
+        VeArtProxy artProxy = new VeArtProxy(address(escrow));
+        escrow.setArtProxy(address(artProxy));
     }
 
     function createLock() public {
@@ -44,8 +45,6 @@ contract ImbalanceTest is BaseTest {
     function confirmTokensForFraxUsdc() public {
         votingEscrowMerge();
         deployFactories();
-        VeArtProxy artProxy = new VeArtProxy();
-        escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
         voter = new Voter(address(escrow), address(factoryRegistry));
         router = new Router(address(factory), address(voter), address(WETH));
         deployPairWithOwner(address(owner));

@@ -55,19 +55,16 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     uint256 public tokenId;
 
     /// @param _token `VELO` token address
-    /// @param _artProxy Art Proxy address
     /// @param _factoryRegistry Factory Registry address
     /// @param _team Team multisig
     constructor(
         address _token,
-        address _artProxy,
         address _factoryRegistry,
         address _team
     ) {
         voter = _msgSender();
         team = _team;
         token = _token;
-        artProxy = _artProxy;
         factoryRegistry = _factoryRegistry;
 
         _pointHistory[0].blk = block.number;
@@ -248,13 +245,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     function tokenURI(uint256 _tokenId) external view returns (string memory) {
         require(idToOwner[_tokenId] != address(0), "VotingEscrow: query for nonexistent token");
         LockedBalance memory oldLocked = _locked[_tokenId];
-        return
-            IVeArtProxy(artProxy)._tokenURI(
-                _tokenId,
-                _balanceOfNFT(_tokenId, block.timestamp),
-                oldLocked.end,
-                uint256(int256(oldLocked.amount))
-            );
+        return IVeArtProxy(artProxy).tokenURI(_tokenId);
     }
 
     /*//////////////////////////////////////////////////////////////

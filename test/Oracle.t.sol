@@ -21,8 +21,9 @@ contract OracleTest is BaseTest {
     function confirmTokensForFraxUsdc() public {
         deployBaseCoins();
         deployFactories();
-        VeArtProxy artProxy = new VeArtProxy();
-        escrow = new VotingEscrow(address(VELO), address(artProxy), address(factoryRegistry), address(owner));
+        escrow = new VotingEscrow(address(VELO), address(factoryRegistry), address(owner));
+        VeArtProxy artProxy = new VeArtProxy(address(escrow));
+        escrow.setArtProxy(address(artProxy));
         voter = new Voter(address(escrow), address(factoryRegistry));
         router = new Router(address(factory), address(voter), address(WETH));
         deployPairWithOwner(address(owner));
