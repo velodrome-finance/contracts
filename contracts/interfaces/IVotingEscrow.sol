@@ -439,12 +439,6 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @inheritdoc IVotes
     function getVotes(address account) external view returns (uint256);
 
-    /// @notice Get the token ids delegated to an `account` at a certain block number
-    /// @param account .
-    /// @param blockNumber .
-    /// @return _tokenIds Array of tokenIds held by `account`
-    function getTokenIdsAt(address account, uint256 blockNumber) external view returns (uint256[] memory _tokenIds);
-
     /// @notice Binary tree serach to get the checkpoint index for an account at a specific block number
     /// @param account .
     /// @param blockNumber .

@@ -38,12 +38,19 @@ contract WashTradeTest is BaseTest {
 
         VELO.approve(address(escrow), TOKEN_1);
         escrow.createLock(TOKEN_1, MAXTIME);
-        vm.roll(block.number + 1);
+        skipAndRoll(1);
+        assertEq(escrow.numCheckpoints(address(owner)), 1);
         assertGt(escrow.balanceOfNFT(2), 995063075414519385);
         assertEq(VELO.balanceOf(address(escrow)), 2 * TOKEN_1);
         escrow.merge(2, 1);
         assertGt(escrow.balanceOfNFT(1), 1990039602248405587);
         assertEq(escrow.balanceOfNFT(2), 0);
+
+        assertEq(escrow.numCheckpoints(address(owner)), 2);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(address(owner), 0);
+        IVotingEscrow.Checkpoint memory checkpoint2 = escrow.checkpoints(address(owner), 1);
+        assertEq(checkpoint2.fromTimestamp, block.timestamp);
+        assertEq(checkpoint.fromTimestamp, block.timestamp - 1);
     }
 
     function confirmTokensForFraxUsdc() public {

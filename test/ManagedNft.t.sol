@@ -46,6 +46,9 @@ contract ManagedNftTest is BaseTest {
         IVotingEscrow.LockedBalance memory locked = escrow.locked(1);
         assertEq(uint256(uint128(locked.amount)), 0);
         assertEq(locked.end, expectedTime);
+        assertEq(escrow.numCheckpoints(address(owner)), 1);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(address(owner), 0);
+        assertEq(checkpoint.fromTimestamp, block.timestamp);
 
         // check locked / free rewards addresses have been set
         assertNeq(escrow.managedToLocked(1), address(0));

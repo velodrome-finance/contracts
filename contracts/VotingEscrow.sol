@@ -1260,12 +1260,6 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVotingEscrow
-    function getTokenIdsAt(address account, uint256 timestamp) external view returns (uint256[] memory _tokenIds) {
-        uint32 _checkIndex = getPastVotesIndex(account, timestamp);
-        _tokenIds = _checkpoints[account][_checkIndex].tokenIds;
-    }
-
-    /// @inheritdoc IVotingEscrow
     function getPastVotesIndex(address account, uint256 timestamp) public view returns (uint32) {
         uint32 nCheckpoints = numCheckpoints[account];
         if (nCheckpoints == 0) {
@@ -1326,13 +1320,14 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         uint256 _tokenId
     ) internal {
         if (srcRep != dstRep && _tokenId > 0) {
+            uint256 _timestamp = block.timestamp;
             if (srcRep != address(0)) {
                 uint32 srcRepNum = numCheckpoints[srcRep];
                 uint256[] storage srcRepOld = srcRepNum > 0
                     ? _checkpoints[srcRep][srcRepNum - 1].tokenIds
                     : _checkpoints[srcRep][0].tokenIds;
-                uint32 nextSrcRepNum = _findWhatCheckpointToWrite(srcRep);
-                uint256[] storage srcRepNew = _checkpoints[srcRep][nextSrcRepNum].tokenIds;
+
+                uint256[] storage srcRepNew = _checkpoints[srcRep][srcRepNum].tokenIds;
                 // All the same except _tokenId
                 uint256 _length = srcRepOld.length;
                 for (uint256 i = 0; i < _length; i++) {
@@ -1342,7 +1337,14 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                     }
                 }
 
-                numCheckpoints[srcRep] = srcRepNum + 1;
+                // If it's a new checkpoint - sync state.  Otherwise rewrite old checkpoint and delete newly made checkpoint
+                if (_isCheckpointInNewBlock(srcRep)) {
+                    numCheckpoints[srcRep] = srcRepNum + 1;
+                    _checkpoints[srcRep][srcRepNum].fromTimestamp = _timestamp;
+                } else {
+                    _checkpoints[srcRep][srcRepNum - 1].tokenIds = srcRepNew;
+                    delete _checkpoints[srcRep][srcRepNum];
+                }
             }
 
             if (dstRep != address(0)) {
@@ -1350,8 +1352,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                 uint256[] storage dstRepOld = dstRepNum > 0
                     ? _checkpoints[dstRep][dstRepNum - 1].tokenIds
                     : _checkpoints[dstRep][0].tokenIds;
-                uint32 nextDstRepNum = _findWhatCheckpointToWrite(dstRep);
-                uint256[] storage dstRepNew = _checkpoints[dstRep][nextDstRepNum].tokenIds;
+
+                uint256[] storage dstRepNew = _checkpoints[dstRep][dstRepNum].tokenIds;
                 // All the same plus _tokenId
                 require(dstRepOld.length + 1 <= MAX_DELEGATES, "VotingEscrow: dstRep would have too many tokenIds");
                 uint256 _length = dstRepOld.length;
@@ -1361,19 +1363,25 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                 }
                 dstRepNew.push(_tokenId);
 
-                numCheckpoints[dstRep] = dstRepNum + 1;
+                if (_isCheckpointInNewBlock(dstRep)) {
+                    numCheckpoints[dstRep] = dstRepNum + 1;
+                    _checkpoints[dstRep][dstRepNum].fromTimestamp = _timestamp;
+                } else {
+                    _checkpoints[dstRep][dstRepNum - 1].tokenIds = dstRepNew;
+                    delete _checkpoints[dstRep][dstRepNum];
+                }
             }
         }
     }
 
-    function _findWhatCheckpointToWrite(address account) internal view returns (uint32) {
+    function _isCheckpointInNewBlock(address account) internal view returns (bool) {
         uint256 _timestamp = block.timestamp;
         uint32 _nCheckPoints = numCheckpoints[account];
 
         if (_nCheckPoints > 0 && _checkpoints[account][_nCheckPoints - 1].fromTimestamp == _timestamp) {
-            return _nCheckPoints - 1;
+            return false;
         } else {
-            return _nCheckPoints;
+            return true;
         }
     }
 
@@ -1384,13 +1392,14 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     ) internal {
         // You can only redelegate what you own
         if (srcRep != dstRep) {
+            uint256 _timestamp = block.timestamp;
             if (srcRep != address(0)) {
                 uint32 srcRepNum = numCheckpoints[srcRep];
                 uint256[] storage srcRepOld = srcRepNum > 0
                     ? _checkpoints[srcRep][srcRepNum - 1].tokenIds
                     : _checkpoints[srcRep][0].tokenIds;
-                uint32 nextSrcRepNum = _findWhatCheckpointToWrite(srcRep);
-                uint256[] storage srcRepNew = _checkpoints[srcRep][nextSrcRepNum].tokenIds;
+
+                uint256[] storage srcRepNew = _checkpoints[srcRep][srcRepNum].tokenIds;
                 // All the same except what owner owns
                 uint256 _length = srcRepOld.length;
                 for (uint256 i = 0; i < _length; i++) {
@@ -1400,7 +1409,13 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                     }
                 }
 
-                numCheckpoints[srcRep] = srcRepNum + 1;
+                if (_isCheckpointInNewBlock(srcRep)) {
+                    numCheckpoints[srcRep] = srcRepNum + 1;
+                    _checkpoints[srcRep][srcRepNum].fromTimestamp = _timestamp;
+                } else {
+                    _checkpoints[srcRep][srcRepNum - 1].tokenIds = srcRepNew;
+                    delete _checkpoints[srcRep][srcRepNum];
+                }
             }
 
             if (dstRep != address(0)) {
@@ -1408,8 +1423,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                 uint256[] storage dstRepOld = dstRepNum > 0
                     ? _checkpoints[dstRep][dstRepNum - 1].tokenIds
                     : _checkpoints[dstRep][0].tokenIds;
-                uint32 nextDstRepNum = _findWhatCheckpointToWrite(dstRep);
-                uint256[] storage dstRepNew = _checkpoints[dstRep][nextDstRepNum].tokenIds;
+
+                uint256[] storage dstRepNew = _checkpoints[dstRep][dstRepNum].tokenIds;
                 uint256 ownerTokenCount = ownerToNFTokenCount[owner];
                 require(
                     dstRepOld.length + ownerTokenCount <= MAX_DELEGATES,
@@ -1427,7 +1442,13 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
                     dstRepNew.push(tId);
                 }
 
-                numCheckpoints[dstRep] = dstRepNum + 1;
+                if (_isCheckpointInNewBlock(dstRep)) {
+                    numCheckpoints[dstRep] = dstRepNum + 1;
+                    _checkpoints[dstRep][dstRepNum].fromTimestamp = _timestamp;
+                } else {
+                    _checkpoints[dstRep][dstRepNum - 1].tokenIds = dstRepNew;
+                    delete _checkpoints[dstRep][dstRepNum];
+                }
             }
         }
     }

@@ -87,12 +87,9 @@ contract VotingEscrowTest is BaseTest {
         );
         assertEq(escrow.numCheckpoints(address(owner)), 1);
         IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(address(owner), 0);
-        assertEq(checkpoint.fromTimestamp, 0);
+        assertEq(checkpoint.fromTimestamp, block.timestamp);
         assertEq(checkpoint.tokenIds.length, 1);
         assertEq(checkpoint.tokenIds[0], 1);
-        uint256[] memory tokenIds = escrow.getTokenIdsAt(address(owner), 1);
-        assertEq(tokenIds.length, 1);
-        assertEq(tokenIds[0], 1);
     }
 
     function testCreateLockOutsideAllowedZones() public {
@@ -115,6 +112,8 @@ contract VotingEscrowTest is BaseTest {
         VELO.approve(address(escrow), 1e25);
         uint256 lockDuration = 7 * 24 * 3600; // 1 week
         escrow.createLock(1e25, lockDuration);
+        assertEq(escrow.numCheckpoints(address(owner)), 1);
+        uint256 timestampLocked = block.timestamp;
 
         // Try withdraw early
         uint256 tokenId = 1;
@@ -129,6 +128,11 @@ contract VotingEscrowTest is BaseTest {
         // Check that the NFT is burnt
         assertEq(escrow.balanceOfNFT(tokenId), 0);
         assertEq(escrow.ownerOf(tokenId), address(0));
+        assertEq(escrow.numCheckpoints(address(owner)), 2);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(address(owner), 0);
+        IVotingEscrow.Checkpoint memory checkpoint2 = escrow.checkpoints(address(owner), 1);
+        assertEq(checkpoint.fromTimestamp, timestampLocked);
+        assertEq(checkpoint2.fromTimestamp, block.timestamp);
     }
 
     function testCheckTokenURICalls() public {
@@ -654,6 +658,9 @@ contract VotingEscrowTest is BaseTest {
         assertEq(splitPoint.slope, cmpPoint.slope);
         assertEq(splitPoint.ts, cmpPoint.ts);
         assertEq(splitPoint.blk, cmpPoint.blk);
+
+        // Ensure all was done within 1 checkpoint as it has been within the same block
+        assertEq(escrow.numCheckpoints(address(owner)), 1);
     }
 
     function testSplitWhenSplitPublic() public {
@@ -734,24 +741,47 @@ contract VotingEscrowTest is BaseTest {
         escrow.createLock(TOKEN_1, MAXTIME);
         vm.stopPrank();
 
-        skipAndRoll(1); // 604802
+        skipAndRoll(1);
+        // ensure initial checkpoint state
+        assertEq(escrow.numCheckpoints(address(owner)), 1);
+        assertEq(escrow.numCheckpoints(address(owner2)), 1);
+        IVotingEscrow.Checkpoint memory checkpoint = escrow.checkpoints(address(owner), 0);
+        assertEq(checkpoint.tokenIds.length, 1);
+        assertEq(checkpoint.tokenIds[0], 1);
+        assertEq(checkpoint.fromTimestamp, 604801);
+        IVotingEscrow.Checkpoint memory checkpoint2 = escrow.checkpoints(address(owner2), 0);
+        assertEq(checkpoint2.tokenIds.length, 2);
+        assertEq(checkpoint2.tokenIds[0], 2);
+        assertEq(checkpoint2.tokenIds[1], 3);
+        assertEq(checkpoint2.fromTimestamp, 604801);
 
-        uint256[] memory tokenIds = escrow.getTokenIdsAt(address(owner), 604801);
-        assertEq(tokenIds.length, 1);
-        assertEq(tokenIds[0], 1);
+        // ensure voting power
+        uint256 totalSupply = escrow.totalSupply();
+        assertEq(escrow.getVotes(address(owner)) + escrow.getVotes(address(owner2)), totalSupply);
+        assertGt(escrow.getVotes(address(owner2)), 0);
 
         vm.prank(address(owner2));
         escrow.delegate(address(owner));
 
-        tokenIds = escrow.getTokenIdsAt(address(owner), 604802);
-        assertEq(tokenIds.length, 3);
-        assertEq(tokenIds[0], 1);
-        assertEq(tokenIds[1], 2);
-        assertEq(tokenIds[2], 3);
-        assertEq(escrow.delegates(address(owner2)), address(owner));
-        assertEq(escrow.getVotes(address(owner)), 2991780773997936030);
+        // ensure post-checkpoint state
+        assertEq(escrow.numCheckpoints(address(owner)), 2);
+        assertEq(escrow.numCheckpoints(address(owner2)), 2);
+        checkpoint = escrow.checkpoints(address(owner), 1);
+        assertEq(checkpoint.tokenIds.length, 3);
+        assertEq(checkpoint.tokenIds[0], 1);
+        assertEq(checkpoint.tokenIds[1], 2);
+        assertEq(checkpoint.tokenIds[2], 3);
+        assertEq(checkpoint.fromTimestamp, 604802);
+        checkpoint2 = escrow.checkpoints(address(owner2), 1);
+        assertEq(checkpoint2.tokenIds.length, 0);
+        assertEq(checkpoint2.fromTimestamp, 604802);
+
+        // ensure voting power
+        assertEq(escrow.totalSupply(), totalSupply);
+        assertEq(escrow.getVotes(address(owner)), totalSupply);
         assertEq(escrow.getVotes(address(owner2)), 0);
-        assertEq(escrow.getPastTotalSupply(604802), 2991780773997936030);
+
+        assertEq(escrow.delegates(address(owner2)), address(owner));
     }
 
     function testMergeAutoDelegatesVotingPower() public {
@@ -783,5 +813,209 @@ contract VotingEscrowTest is BaseTest {
         // assert vote balances
         uint256 post2 = escrow.getVotes(address(owner2));
         assertApproxEqRel(pre2 + pre3, post2, 1e12);
+    }
+
+    function testCheckpointSameBlockTransferTwo() public {
+        // timestamp: 604801
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1 / 2, MAXTIME);
+        skipAndRoll(1);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1 / 2, MAXTIME);
+        skipAndRoll(1);
+
+        assertEq(escrow.numCheckpoints(address(owner)), 2);
+        assertEq(escrow.numCheckpoints(address(owner2)), 0);
+
+        // Ensure checkpoint prior to double transfer
+        IVotingEscrow.Checkpoint memory checkpointSrc = escrow.checkpoints(address(owner), 1);
+        assertEq(checkpointSrc.tokenIds.length, 2);
+        assertEq(checkpointSrc.tokenIds[0], tokenId);
+        assertEq(checkpointSrc.tokenIds[1], tokenId2);
+        assertEq(checkpointSrc.fromTimestamp, 604802);
+
+        // transfer both NFTs to owner2 in same block
+
+        // transfer first
+        escrow.transferFrom(address(owner), address(owner2), tokenId);
+
+        // ensure state
+        assertEq(escrow.numCheckpoints(address(owner)), 3);
+        assertEq(escrow.numCheckpoints(address(owner2)), 1);
+        // owner checkpoint on transfer
+        checkpointSrc = escrow.checkpoints(address(owner), 2);
+        assertEq(checkpointSrc.tokenIds.length, 1);
+        assertEq(checkpointSrc.tokenIds[0], tokenId2);
+        assertEq(checkpointSrc.fromTimestamp, 604803);
+        // owner checkpoint before transfer
+        checkpointSrc = escrow.checkpoints(address(owner), 1);
+        assertEq(checkpointSrc.tokenIds.length, 2);
+        assertEq(checkpointSrc.tokenIds[0], tokenId);
+        assertEq(checkpointSrc.tokenIds[1], tokenId2);
+        assertEq(checkpointSrc.fromTimestamp, 604802);
+        // recipient checkpoint
+        IVotingEscrow.Checkpoint memory checkpointDst = escrow.checkpoints(address(owner2), 0);
+        assertEq(checkpointDst.tokenIds.length, 1);
+        assertEq(checkpointDst.tokenIds[0], tokenId);
+        assertEq(checkpointDst.fromTimestamp, 604803);
+
+        // transfer second
+        escrow.transferFrom(address(owner), address(owner2), tokenId2);
+
+        // Ensure only 1 checkpoint has been added to each owner
+        assertEq(escrow.numCheckpoints(address(owner)), 3);
+        assertEq(escrow.numCheckpoints(address(owner2)), 1);
+
+        // Ensure both tokenIds have properly transferred from owner to owner2
+        checkpointSrc = escrow.checkpoints(address(owner), 2);
+        assertEq(checkpointSrc.tokenIds.length, 0);
+        assertEq(checkpointSrc.fromTimestamp, 604803);
+        checkpointDst = escrow.checkpoints(address(owner2), 0);
+        assertEq(checkpointDst.tokenIds.length, 2);
+        assertEq(checkpointDst.tokenIds[0], tokenId);
+        assertEq(checkpointDst.tokenIds[1], tokenId2);
+        assertEq(checkpointDst.fromTimestamp, 604803);
+
+        // Ensure checkpoint prior to double transfer hasn't changed
+        checkpointSrc = escrow.checkpoints(address(owner), 1);
+        assertEq(checkpointSrc.tokenIds.length, 2);
+        assertEq(checkpointSrc.tokenIds[0], tokenId);
+        assertEq(checkpointSrc.tokenIds[1], tokenId2);
+        assertEq(checkpointSrc.fromTimestamp, 604802);
+    }
+
+    function testCheckpointSameBlockTransferTwoWithPreviousBalance() public {
+        // Same test as above but with src/dst already owning a veNFT
+        // timestamp: 604801
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenIdSrc = escrow.createLock(TOKEN_1 / 4, MAXTIME);
+        uint256 tokenIdDst = escrow.createLockFor(TOKEN_1 / 4, MAXTIME, address(owner2));
+        skipAndRoll(1);
+        uint256 tokenId = escrow.createLock(TOKEN_1 / 4, MAXTIME);
+        skipAndRoll(1);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1 / 4, MAXTIME);
+        skipAndRoll(1);
+
+        // Validate starting # of checkpoints
+        assertEq(escrow.numCheckpoints(address(owner)), 3);
+        assertEq(escrow.numCheckpoints(address(owner2)), 1);
+
+        // Ensure checkpoint prior to double transfer
+        IVotingEscrow.Checkpoint memory checkpointSrc = escrow.checkpoints(address(owner), 2);
+        assertEq(checkpointSrc.tokenIds.length, 3);
+        assertEq(checkpointSrc.tokenIds[0], tokenIdSrc);
+        assertEq(checkpointSrc.tokenIds[1], tokenId);
+        assertEq(checkpointSrc.tokenIds[2], tokenId2);
+        assertEq(checkpointSrc.fromTimestamp, 604803);
+        IVotingEscrow.Checkpoint memory checkpointDst = escrow.checkpoints(address(owner2), 0);
+        assertEq(checkpointDst.tokenIds.length, 1);
+        assertEq(checkpointDst.tokenIds[0], tokenIdDst);
+        assertEq(checkpointDst.fromTimestamp, 604801);
+
+        // transfer both NFTs to owner2 in same block
+
+        // transfer first
+        escrow.transferFrom(address(owner), address(owner2), tokenId);
+
+        // ensure state
+        assertEq(escrow.numCheckpoints(address(owner)), 4);
+        assertEq(escrow.numCheckpoints(address(owner2)), 2);
+        // owner checkpoint on transfer
+        checkpointSrc = escrow.checkpoints(address(owner), 3);
+        assertEq(checkpointSrc.tokenIds.length, 2);
+        assertEq(checkpointSrc.tokenIds[0], tokenIdSrc);
+        assertEq(checkpointSrc.tokenIds[1], tokenId2);
+        assertEq(checkpointSrc.fromTimestamp, 604804);
+        // owner checkpoint before transfer
+        checkpointSrc = escrow.checkpoints(address(owner), 2);
+        assertEq(checkpointSrc.tokenIds.length, 3);
+        assertEq(checkpointSrc.tokenIds[0], tokenIdSrc);
+        assertEq(checkpointSrc.tokenIds[1], tokenId);
+        assertEq(checkpointSrc.tokenIds[2], tokenId2);
+        assertEq(checkpointSrc.fromTimestamp, 604803);
+        // recipient checkpoint on transfer
+        checkpointDst = escrow.checkpoints(address(owner2), 1);
+        assertEq(checkpointDst.tokenIds.length, 2);
+        assertEq(checkpointDst.tokenIds[0], tokenIdDst);
+        assertEq(checkpointDst.tokenIds[1], tokenId);
+        assertEq(checkpointDst.fromTimestamp, 604804);
+        // recipient checkpoint before transfer
+        checkpointDst = escrow.checkpoints(address(owner2), 0);
+        assertEq(checkpointDst.tokenIds.length, 1);
+        assertEq(checkpointDst.tokenIds[0], tokenIdDst);
+        assertEq(checkpointDst.fromTimestamp, 604801);
+
+        // transfer second
+        escrow.transferFrom(address(owner), address(owner2), tokenId2);
+
+        // Ensure only 1 checkpoint has been added to each owner
+        assertEq(escrow.numCheckpoints(address(owner)), 4);
+        assertEq(escrow.numCheckpoints(address(owner2)), 2);
+
+        // Ensure both tokenIds have properly transferred from owner to owner2
+        checkpointSrc = escrow.checkpoints(address(owner), 3);
+        assertEq(checkpointSrc.tokenIds.length, 1);
+        assertEq(checkpointSrc.tokenIds[0], tokenIdSrc);
+        assertEq(checkpointSrc.fromTimestamp, 604804);
+        checkpointDst = escrow.checkpoints(address(owner2), 1);
+        assertEq(checkpointDst.tokenIds.length, 3);
+        assertEq(checkpointDst.tokenIds[0], tokenIdDst);
+        assertEq(checkpointDst.tokenIds[1], tokenId);
+        assertEq(checkpointDst.tokenIds[2], tokenId2);
+        assertEq(checkpointDst.fromTimestamp, 604804);
+
+        // Ensure checkpoint prior to double transfer hasn't changed
+        checkpointSrc = escrow.checkpoints(address(owner), 2);
+        assertEq(checkpointSrc.tokenIds.length, 3);
+        assertEq(checkpointSrc.tokenIds[0], tokenIdSrc);
+        assertEq(checkpointSrc.tokenIds[1], tokenId);
+        assertEq(checkpointSrc.tokenIds[2], tokenId2);
+        assertEq(checkpointSrc.fromTimestamp, 604803);
+        checkpointDst = escrow.checkpoints(address(owner2), 0);
+        assertEq(checkpointDst.tokenIds.length, 1);
+        assertEq(checkpointDst.tokenIds[0], tokenIdDst);
+        assertEq(checkpointDst.fromTimestamp, 604801);
+    }
+
+    function testCheckpointSameBlockTransferAndDelegateBack() public {
+        // timestamp: 604801
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        skipAndRoll(1);
+
+        // validate starting # of checkpoints
+        assertEq(escrow.numCheckpoints(address(owner)), 1);
+        assertEq(escrow.numCheckpoints(address(owner2)), 0);
+
+        IVotingEscrow.Checkpoint memory checkpointSrc = escrow.checkpoints(address(owner), 0);
+        assertEq(checkpointSrc.tokenIds.length, 1);
+        assertEq(checkpointSrc.tokenIds[0], tokenId);
+
+        // ensure voting power
+        uint256 totalSupply = escrow.totalSupply();
+        assertEq(escrow.getVotes(address(owner)), totalSupply);
+        assertEq(escrow.getVotes(address(owner2)), 0);
+
+        // transfer NFT to owner2 and and owner2 delegate back in same block
+        escrow.transferFrom(address(owner), address(owner2), tokenId);
+        vm.prank(address(owner2));
+        escrow.delegate(address(owner));
+
+        // Ensure only 1 checkpoint has been added to each owner
+        assertEq(escrow.numCheckpoints(address(owner)), 2);
+        assertEq(escrow.numCheckpoints(address(owner2)), 1);
+
+        // Ensure tokenId has properly transferred back to owner from owner2 delegation
+        checkpointSrc = escrow.checkpoints(address(owner), 1);
+        assertEq(checkpointSrc.tokenIds.length, 1);
+        assertEq(checkpointSrc.tokenIds[0], tokenId);
+        assertEq(checkpointSrc.fromTimestamp, 604802);
+        IVotingEscrow.Checkpoint memory checkpointDst = escrow.checkpoints(address(owner2), 0);
+        assertEq(checkpointDst.tokenIds.length, 0);
+        assertEq(checkpointDst.fromTimestamp, 604802);
+
+        // ensure voting power
+        assertEq(escrow.totalSupply(), totalSupply);
+        assertEq(escrow.getVotes(address(owner)), totalSupply);
+        assertEq(escrow.getVotes(address(owner2)), 0);
     }
 }
