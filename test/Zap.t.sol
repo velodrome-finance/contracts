@@ -161,7 +161,7 @@ contract ZapTest is BaseTest {
         IRouter.Zap memory zapInPair = IRouter.Zap(address(WETH), address(USDC), false, address(vFactory), 0, 0, 0, 0);
 
         // tokenIn != WETH
-        vm.expectRevert("Router: invalid tokenIn address for eth deposit");
+        vm.expectRevert(IRouter.InvalidTokenInForETHDeposit.selector);
         _router.zapIn{value: TOKEN_1}(
             address(0),
             TOKEN_1 / 2,
@@ -174,7 +174,7 @@ contract ZapTest is BaseTest {
         );
 
         // msg.value != zapAmount
-        vm.expectRevert("Router: incorrect amountIn for eth deposit");
+        vm.expectRevert(IRouter.InvalidAmountInForETHDeposit.selector);
         _router.zapIn{value: TOKEN_1}(
             ETHER,
             TOKEN_1 / 2,

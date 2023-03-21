@@ -1,6 +1,13 @@
 pragma solidity 0.8.13;
 
 interface IGauge {
+    error NotAlive();
+    error NotAuthorized();
+    error NotVoter();
+    error RewardRateTooHigh();
+    error ZeroAmount();
+    error ZeroRewardRate();
+
     event Deposit(address indexed from, address indexed to, uint256 amount);
     event Withdraw(address indexed from, uint256 amount);
     event NotifyReward(address indexed from, uint256 amount);

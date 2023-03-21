@@ -13,7 +13,7 @@ contract BribeVotingReward is VotingReward {
         address sender = _msgSender();
 
         if (!isReward[token]) {
-            require(IVoter(voter).isWhitelistedToken(token), "BribeVotingReward: token not whitelisted");
+            if (!IVoter(voter).isWhitelistedToken(token)) revert NotWhitelisted();
             isReward[token] = true;
             rewards.push(token);
         }

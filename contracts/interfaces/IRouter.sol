@@ -8,6 +8,24 @@ interface IRouter {
         address factory;
     }
 
+    error ETHTransferFailed();
+    error Expired();
+    error InsufficientAmount();
+    error InsufficientAmountA();
+    error InsufficientAmountB();
+    error InsufficientAmountADesired();
+    error InsufficientAmountBDesired();
+    error InsufficientAmountAOptimal();
+    error InsufficientLiquidity();
+    error InsufficientOutputAmount();
+    error InvalidAmountInForETHDeposit();
+    error InvalidTokenInForETHDeposit();
+    error InvalidPath();
+    error InvalidRouteA();
+    error InvalidRouteB();
+    error OnlyWETH();
+    error PairDoesNotExist();
+
     /// @dev Struct containing information necessary to zap in and out of pools
     /// @param tokenA .
     /// @param tokenB .

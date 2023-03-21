@@ -212,7 +212,7 @@ contract BribeVotingRewardTest is BaseTest {
         rewards[0] = address(LR);
 
         vm.prank(address(owner2));
-        vm.expectRevert("VotingReward: unpermissioned");
+        vm.expectRevert(IReward.NotAuthorized.selector);
         bribeVotingReward.getReward(1, rewards);
     }
 
@@ -1597,7 +1597,7 @@ contract BribeVotingRewardTest is BaseTest {
     }
 
     function testCannotNotifyRewardWithZeroAmount() public {
-        vm.expectRevert("Reward: zero amount");
+        vm.expectRevert(IReward.ZeroAmount.selector);
         bribeVotingReward.notifyRewardAmount(address(LR), 0);
     }
 
@@ -1606,7 +1606,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         assertEq(voter.isWhitelistedToken(token), false);
 
-        vm.expectRevert("BribeVotingReward: token not whitelisted");
+        vm.expectRevert(IReward.NotWhitelisted.selector);
         bribeVotingReward.notifyRewardAmount(token, TOKEN_1);
     }
 

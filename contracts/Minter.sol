@@ -8,10 +8,12 @@ import {IVelo} from "./interfaces/IVelo.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {IEpochGovernor} from "./interfaces/IEpochGovernor.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title Minter
 /// @notice Controls minting of emissions and rebases for Velodrome
 contract Minter is IMinter {
+    using SafeERC20 for IVelo;
     IVelo public immutable velo;
     IVoter public immutable voter;
     IVotingEscrow public immutable ve;
@@ -62,11 +64,11 @@ contract Minter is IMinter {
     /// @inheritdoc IMinter
     function nudge() external {
         address _epochGovernor = voter.epochGovernor();
-        require(msg.sender == _epochGovernor, "Minter: not epoch governor");
+        if (msg.sender != _epochGovernor) revert NotEpochGovernor();
         IEpochGovernor.ProposalState _state = IEpochGovernor(_epochGovernor).result();
-        require(weekly < TAIL_START, "Minter: not in tail emissions yet");
+        if (weekly >= TAIL_START) revert TailEmissionsInactive();
         uint256 _period = active_period;
-        require(!proposals[_period], "Minter: tail rate already nudged this epoch");
+        if (proposals[_period]) revert AlreadyNudged();
         uint256 _newRate = tailEmissionRate;
         uint256 _oldRate = _newRate;
 
@@ -108,11 +110,11 @@ contract Minter is IMinter {
                 velo.mint(address(this), _required - _balanceOf);
             }
 
-            require(velo.transfer(address(rewardsDistributor), _growth));
+            velo.safeTransfer(address(rewardsDistributor), _growth);
             rewardsDistributor.checkpointToken(); // checkpoint token balance that was just minted in rewards distributor
             rewardsDistributor.checkpointTotalSupply(); // checkpoint supply
 
-            velo.approve(address(voter), _emission);
+            velo.safeApprove(address(voter), _emission);
             voter.notifyRewardAmount(_emission);
 
             emit Mint(msg.sender, _emission, velo.totalSupply(), _tail);

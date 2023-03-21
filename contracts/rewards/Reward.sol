@@ -194,7 +194,7 @@ abstract contract Reward is IReward, Context, ReentrancyGuard {
     /// @inheritdoc IReward
     function _deposit(uint256 amount, uint256 tokenId) external {
         address sender = _msgSender();
-        require(sender == authorized);
+        if (sender != authorized) revert NotAuthorized();
 
         totalSupply += amount;
         balanceOf[tokenId] += amount;
@@ -208,7 +208,7 @@ abstract contract Reward is IReward, Context, ReentrancyGuard {
     /// @inheritdoc IReward
     function _withdraw(uint256 amount, uint256 tokenId) external {
         address sender = _msgSender();
-        require(sender == authorized);
+        if (sender != authorized) revert NotAuthorized();
 
         totalSupply -= amount;
         balanceOf[tokenId] -= amount;
@@ -247,7 +247,7 @@ abstract contract Reward is IReward, Context, ReentrancyGuard {
         address token,
         uint256 amount
     ) internal {
-        require(amount != 0, "Reward: zero amount");
+        if (amount == 0) revert ZeroAmount();
         IERC20(token).safeTransferFrom(sender, address(this), amount);
 
         uint256 epochStart = VelodromeTimeLibrary.epochStart(block.timestamp);

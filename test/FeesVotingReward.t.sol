@@ -25,6 +25,12 @@ contract FeesVotingRewardTest is BaseTest {
         USDC.transfer(address(gauge2), USDC_1 * 100);
     }
 
+    function testCannotNotifyRewardAmountIfNotGauge() public {
+        FRAX.approve(address(feesVotingReward), TOKEN_1);
+        vm.expectRevert(IReward.NotGauge.selector);
+        feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+    }
+
     function testGetRewardWithZeroTotalSupply() public {
         skip(1 weeks / 2);
 
@@ -1400,7 +1406,7 @@ contract FeesVotingRewardTest is BaseTest {
         rewards[0] = address(FRAX);
 
         vm.prank(address(owner2));
-        vm.expectRevert("VotingReward: unpermissioned");
+        vm.expectRevert(IReward.NotAuthorized.selector);
         feesVotingReward.getReward(1, rewards);
     }
 
@@ -1711,13 +1717,13 @@ contract FeesVotingRewardTest is BaseTest {
     }
 
     function testCannotNotifyRewardWithZeroAmount() public {
-        vm.expectRevert("Reward: zero amount");
+        vm.expectRevert(IReward.ZeroAmount.selector);
         vm.prank(address(gauge));
         feesVotingReward.notifyRewardAmount(address(FRAX), 0);
     }
 
     function testCannotNotifyRewardWithInvalidRewardToken() public {
-        vm.expectRevert("FeesVotingReward: invalid reward");
+        vm.expectRevert(IReward.InvalidReward.selector);
         vm.prank(address(gauge));
         feesVotingReward.notifyRewardAmount(address(WETH), TOKEN_1);
     }

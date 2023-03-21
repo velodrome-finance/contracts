@@ -29,7 +29,13 @@ contract LockedManagedRewardTest is BaseTest {
 
     function testCannotNotifyRewardIfNotVotingEscrow() public {
         vm.prank(address(owner2));
-        vm.expectRevert("LockedManagedReward: only voting escrow");
+        vm.expectRevert(IReward.NotVotingEscrow.selector);
+        lockedManagedReward.notifyRewardAmount(address(VELO), 0);
+    }
+
+    function testCannotNotifyRewardWithZeroAmount() public {
+        vm.prank(address(escrow));
+        vm.expectRevert(IReward.ZeroAmount.selector);
         lockedManagedReward.notifyRewardAmount(address(VELO), 0);
     }
 
@@ -38,7 +44,7 @@ contract LockedManagedRewardTest is BaseTest {
         assertEq(voter.isWhitelistedToken(token), false);
 
         vm.prank(address(escrow));
-        vm.expectRevert("LockedManagedReward: not escrow token");
+        vm.expectRevert(IReward.NotEscrowToken.selector);
         lockedManagedReward.notifyRewardAmount(token, TOKEN_1);
     }
 
@@ -88,7 +94,7 @@ contract LockedManagedRewardTest is BaseTest {
         rewards[1] = address(WETH);
 
         vm.prank(address(escrow));
-        vm.expectRevert("LockedManagedReward: can only claim single token");
+        vm.expectRevert(IReward.NotSingleToken.selector);
         lockedManagedReward.getReward(1, rewards);
     }
 
@@ -100,7 +106,7 @@ contract LockedManagedRewardTest is BaseTest {
         rewards[0] = token;
 
         vm.prank(address(escrow));
-        vm.expectRevert("LockedManagedReward: can only claim escrow token");
+        vm.expectRevert(IReward.NotEscrowToken.selector);
         lockedManagedReward.getReward(1, rewards);
     }
 
@@ -116,7 +122,7 @@ contract LockedManagedRewardTest is BaseTest {
         rewards[0] = address(VELO);
 
         vm.prank(address(owner2));
-        vm.expectRevert("LockedManagedReward: not voting escrow");
+        vm.expectRevert(IReward.NotVotingEscrow.selector);
         lockedManagedReward.getReward(1, rewards);
     }
 

@@ -89,7 +89,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         address _token1,
         bool _stable
     ) external {
-        require(factory == address(0), "Pair: factory set");
+        if (factory != address(0)) revert FactoryAlreadySet();
         factory = _msgSender();
         _voter = IPairFactory(factory).voter();
         (token0, token1, stable) = (_token0, _token1, _stable);
@@ -111,12 +111,12 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
     }
 
     function setName(string calldata __name) external {
-        require(msg.sender == IVoter(_voter).emergencyCouncil(), "Pair: not emergency council");
+        if (msg.sender != IVoter(_voter).emergencyCouncil()) revert NotEmergencyCouncil();
         _name = __name;
     }
 
     function setSymbol(string calldata __symbol) external {
-        require(msg.sender == IVoter(_voter).emergencyCouncil(), "Pair: not emergency council");
+        if (msg.sender != IVoter(_voter).emergencyCouncil()) revert NotEmergencyCouncil();
         _symbol = __symbol;
     }
 
@@ -347,16 +347,13 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
             liquidity = Math.sqrt(_amount0 * _amount1) - MINIMUM_LIQUIDITY;
             _mint(address(1), MINIMUM_LIQUIDITY); // permanently lock the first MINIMUM_LIQUIDITY tokens - cannot be address(0)
             if (stable) {
-                require(
-                    (_amount0 * 1e18) / decimals0 == (_amount1 * 1e18) / decimals1,
-                    "Pair: stable deposits must be equal"
-                );
-                require(_k(_amount0, _amount1) > MINIMUM_K, "Pair: stable deposits must be above minimum k");
+                if ((_amount0 * 1e18) / decimals0 != (_amount1 * 1e18) / decimals1) revert DepositsNotEqual();
+                if (_k(_amount0, _amount1) <= MINIMUM_K) revert BelowMinimumK();
             }
         } else {
             liquidity = Math.min((_amount0 * _totalSupply) / _reserve0, (_amount1 * _totalSupply) / _reserve1);
         }
-        require(liquidity > 0, "Pair: insufficient liquidity minted");
+        if (liquidity == 0) revert InsufficientLiquidityMinted();
         _mint(to, liquidity);
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
@@ -375,7 +372,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         uint256 _totalSupply = totalSupply(); // gas savings, must be defined here since totalSupply can update in _mintFee
         amount0 = (_liquidity * _balance0) / _totalSupply; // using balances ensures pro-rata distribution
         amount1 = (_liquidity * _balance1) / _totalSupply; // using balances ensures pro-rata distribution
-        require(amount0 > 0 && amount1 > 0, "Pair: insufficient liquidity burned");
+        if (amount0 == 0 || amount1 == 0) revert InsufficientLiquidityBurned();
         _burn(address(this), _liquidity);
         IERC20(_token0).safeTransfer(to, amount0);
         IERC20(_token1).safeTransfer(to, amount1);
@@ -393,17 +390,17 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         address to,
         bytes calldata data
     ) external nonReentrant {
-        require(!IPairFactory(factory).isPaused(), "Pair: paused");
-        require(amount0Out > 0 || amount1Out > 0, "Pair: insufficient output amount");
+        if (IPairFactory(factory).isPaused()) revert IsPaused();
+        if (amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
-        require(amount0Out < _reserve0 && amount1Out < _reserve1, "Pair: insufficient liquidity");
+        if (amount0Out >= _reserve0 || amount1Out >= _reserve1) revert InsufficientLiquidity();
 
         uint256 _balance0;
         uint256 _balance1;
         {
             // scope for _token{0,1}, avoids stack too deep errors
             (address _token0, address _token1) = (token0, token1);
-            require(to != _token0 && to != _token1, "Pair: invalid to");
+            if (to == _token0 || to == _token1) revert InvalidTo();
             if (amount0Out > 0) IERC20(_token0).safeTransfer(to, amount0Out); // optimistically transfer tokens
             if (amount1Out > 0) IERC20(_token1).safeTransfer(to, amount1Out); // optimistically transfer tokens
             if (data.length > 0) IPairCallee(to).hook(_msgSender(), amount0Out, amount1Out, data); // callback, used for flash loans
@@ -412,7 +409,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         }
         uint256 amount0In = _balance0 > _reserve0 - amount0Out ? _balance0 - (_reserve0 - amount0Out) : 0;
         uint256 amount1In = _balance1 > _reserve1 - amount1Out ? _balance1 - (_reserve1 - amount1Out) : 0;
-        require(amount0In > 0 || amount1In > 0, "Pair: insufficient input amount");
+        if (amount0In == 0 && amount1In == 0) revert InsufficientInputAmount();
         {
             // scope for reserve{0,1}Adjusted, avoids stack too deep errors
             (address _token0, address _token1) = (token0, token1);
@@ -421,7 +418,7 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
             _balance0 = IERC20(_token0).balanceOf(address(this)); // since we removed tokens, we need to reconfirm balances, can also simply use previous balance - amountIn/ 10000, but doing balanceOf again as safety check
             _balance1 = IERC20(_token1).balanceOf(address(this));
             // The curve, either x3y+y3x for stable pools, or x*y for volatile pools
-            require(_k(_balance0, _balance1) >= _k(_reserve0, _reserve1), "Pair: K");
+            if (_k(_balance0, _balance1) < _k(_reserve0, _reserve1)) revert K();
         }
 
         _update(_balance0, _balance1, _reserve0, _reserve1);

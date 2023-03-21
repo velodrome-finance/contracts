@@ -106,7 +106,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     /// @inheritdoc IVotingEscrow
     function createManagedLockFor(address _to) external nonReentrant returns (uint256 _mTokenId) {
         address sender = _msgSender();
-        require(sender == allowedManager || sender == IVoter(voter).governor(), "VotingEscrow: not allowed");
+        if (sender != allowedManager && sender != IVoter(voter).governor()) revert NotGovernorOrManager();
 
         uint256 _unlockTime = ((block.timestamp + MAXTIME) / WEEK) * WEEK;
 
@@ -127,11 +127,11 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function depositManaged(uint256 _tokenId, uint256 _mTokenId) external nonReentrant {
-        require(_msgSender() == voter, "VotingEscrow: not voter");
-        require(escrowType[_mTokenId] == EscrowType.MANAGED, "VotingEscrow: can only deposit into managed nft");
-        require(escrowType[_tokenId] == EscrowType.NORMAL, "VotingEscrow: can only deposit normal nft");
-        require(ownershipChange[_tokenId] != block.number, "VotingEscrow: flash nft protection");
-        require(_balanceOfNFT(_tokenId, block.timestamp) > 0, "VotingEscrow: no balance to deposit");
+        if (_msgSender() != voter) revert NotVoter();
+        if (escrowType[_mTokenId] != EscrowType.MANAGED) revert NotManagedNFT();
+        if (escrowType[_tokenId] != EscrowType.NORMAL) revert NotNormalNFT();
+        if (ownershipChange[_tokenId] == block.number) revert OwnershipChange();
+        if (_balanceOfNFT(_tokenId, block.timestamp) == 0) revert ZeroBalance();
 
         // adjust user nft
         int128 _amount = _locked[_tokenId].amount;
@@ -161,10 +161,10 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function withdrawManaged(uint256 _tokenId) external nonReentrant {
-        require(_msgSender() == voter, "VotingEscrow: not voter");
         uint256 _mTokenId = idToManaged[_tokenId];
-        require(_mTokenId != 0, "VotingEscrow: null _mTokenId");
-        require(escrowType[_tokenId] == EscrowType.LOCKED, "VotingEscrow: nft not locked");
+        if (_msgSender() != voter) revert NotVoter();
+        if (_mTokenId == 0) revert InvalidManagedNFTId();
+        if (escrowType[_tokenId] != EscrowType.LOCKED) revert NotLockedNFT();
 
         // update accrued rewards
         address _lockedManagedReward = managedToLocked[_mTokenId];
@@ -204,21 +204,19 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function setAllowedManager(address _allowedManager) external {
-        require(_msgSender() == IVoter(voter).governor(), "VotingEscrow: not governor");
-        require(_allowedManager != allowedManager, "VotingEscrow: same address");
-        require(_allowedManager != address(0), "VotingEscrow: zero address");
+        if (_msgSender() != IVoter(voter).governor()) revert NotGovernor();
+        if (_allowedManager == allowedManager) revert SameAddress();
+        if (_allowedManager == address(0)) revert ZeroAddress();
         allowedManager = _allowedManager;
         emit SetAllowedManager(_allowedManager);
     }
 
     /// @inheritdoc IVotingEscrow
     function setManagedState(uint256 _mTokenId, bool _state) external {
-        require(
-            _msgSender() == IVoter(voter).emergencyCouncil() || _msgSender() == IVoter(voter).governor(),
-            "VotingEscrow: not emergency council"
-        );
-        require(escrowType[_mTokenId] == EscrowType.MANAGED, "VotingEscrow: can only modify managed nft state");
-        require(deactivated[_mTokenId] != _state, "VotingEscrow: same state");
+        if (_msgSender() != IVoter(voter).emergencyCouncil() && _msgSender() != IVoter(voter).governor())
+            revert NotEmergencyCouncilOrGovernor();
+        if (escrowType[_mTokenId] != EscrowType.MANAGED) revert NotManagedNFT();
+        if (deactivated[_mTokenId] == _state) revert SameState();
         deactivated[_mTokenId] = _state;
     }
 
@@ -232,18 +230,18 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     uint8 public constant decimals = 18;
 
     function setTeam(address _team) external {
-        require(_msgSender() == team);
+        if (_msgSender() != team) revert NotTeam();
         team = _team;
     }
 
     function setArtProxy(address _proxy) external {
-        require(_msgSender() == team);
+        if (_msgSender() != team) revert NotTeam();
         artProxy = _proxy;
     }
 
     /// @inheritdoc IVotingEscrow
     function tokenURI(uint256 _tokenId) external view returns (string memory) {
-        require(idToOwner[_tokenId] != address(0), "VotingEscrow: query for nonexistent token");
+        if (idToOwner[_tokenId] == address(0)) revert NonExistentToken();
         LockedBalance memory oldLocked = _locked[_tokenId];
         return IVeArtProxy(artProxy).tokenURI(_tokenId);
     }
@@ -319,13 +317,13 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         address sender = _msgSender();
         address owner = idToOwner[_tokenId];
         // Throws if `_tokenId` is not a valid NFT
-        require(owner != address(0));
+        if (owner == address(0)) revert ZeroAddress();
         // Throws if `_approved` is the current owner
-        require(_approved != owner);
+        if (owner == _approved) revert SameAddress();
         // Check requirements
         bool senderIsOwner = (idToOwner[_tokenId] == sender);
         bool senderIsApprovedForAll = (ownerToOperators[owner])[sender];
-        require(senderIsOwner || senderIsApprovedForAll);
+        if (!senderIsOwner && !senderIsApprovedForAll) revert NotApprovedOrOwner();
         // Set the approval
         idToApprovals[_tokenId] = _approved;
         emit Approval(owner, _approved, _tokenId);
@@ -335,7 +333,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     function setApprovalForAll(address _operator, bool _approved) external {
         address sender = _msgSender();
         // Throws if `_operator` is the `msg.sender`
-        assert(_operator != sender);
+        if (_operator == sender) revert SameAddress();
         ownerToOperators[sender][_operator] = _approved;
         emit ApprovalForAll(sender, _operator, _approved);
     }
@@ -344,7 +342,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     function _clearApproval(address _owner, uint256 _tokenId) internal {
         // Throws if `_owner` is not the current owner
-        assert(idToOwner[_tokenId] == _owner);
+        if (idToOwner[_tokenId] != _owner) revert NotOwner();
         if (idToApprovals[_tokenId] != address(0)) {
             // Reset approvals
             idToApprovals[_tokenId] = address(0);
@@ -357,9 +355,9 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         uint256 _tokenId,
         address _sender
     ) internal {
-        require(escrowType[_tokenId] != EscrowType.LOCKED, "VotingEscrow: nft locked");
+        if (escrowType[_tokenId] == EscrowType.LOCKED) revert NotManagedOrNormalNFT();
         // Check requirements
-        require(_isApprovedOrOwner(_sender, _tokenId));
+        if (!_isApprovedOrOwner(_sender, _tokenId)) revert NotApprovedOrOwner();
         // Clear approval. Throws if `_from` is not the current owner
         _clearApproval(_from, _tokenId);
         // Remove NFT. Throws if `_tokenId` is not a valid NFT
@@ -540,8 +538,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     function _burn(uint256 _tokenId) internal {
         address sender = _msgSender();
-        require(_isApprovedOrOwner(sender, _tokenId), "VotingEscrow: caller is not owner nor approved");
-
+        if (!_isApprovedOrOwner(sender, _tokenId)) revert NotApprovedOrOwner();
         address owner = ownerOf(_tokenId);
 
         // Clear approval
@@ -803,8 +800,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function depositFor(uint256 _tokenId, uint256 _value) external nonReentrant {
-        if (escrowType[_tokenId] == EscrowType.MANAGED)
-            require(_msgSender() == distributor, "VotingEscrow: not distributor");
+        if (escrowType[_tokenId] == EscrowType.MANAGED && _msgSender() != distributor) revert NotDistributor();
         _increaseAmountFor(_tokenId, _value, DepositType.DEPOSIT_FOR_TYPE);
     }
 
@@ -819,9 +815,9 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     ) internal returns (uint256) {
         uint256 unlockTime = ((block.timestamp + _lockDuration) / WEEK) * WEEK; // Locktime is rounded down to weeks
 
-        require(_value > 0, "VotingEscrow: zero amount");
-        require(unlockTime > block.timestamp, "VotingEscrow: lock duration not in future");
-        require(unlockTime <= block.timestamp + MAXTIME, "VotingEscrow: lock duration greater than 4 years");
+        if (_value == 0) revert ZeroAmount();
+        if (unlockTime <= block.timestamp) revert LockDurationNotInFuture();
+        if (unlockTime > block.timestamp + MAXTIME) revert LockDurationTooLong();
 
         uint256 _tokenId = ++tokenId;
         _mint(_to, _tokenId);
@@ -850,13 +846,13 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         DepositType _depositType
     ) internal {
         EscrowType _escrowType = escrowType[_tokenId];
-        require(_escrowType != EscrowType.LOCKED, "VotingEscrow: nft locked");
+        if (_escrowType == EscrowType.LOCKED) revert NotManagedOrNormalNFT();
 
         LockedBalance memory oldLocked = _locked[_tokenId];
 
-        require(_value > 0); // dev: need non-zero value
-        require(oldLocked.amount > 0, "VotingEscrow: no existing lock found");
-        require(oldLocked.end > block.timestamp, "VotingEscrow: cannot add to expired lock. Withdraw");
+        if (_value == 0) revert ZeroAmount();
+        if (oldLocked.amount <= 0) revert NoLockFound();
+        if (oldLocked.end <= block.timestamp) revert LockExpired();
 
         _depositFor(_tokenId, _value, 0, oldLocked, _depositType);
 
@@ -872,22 +868,22 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function increaseAmount(uint256 _tokenId, uint256 _value) external nonReentrant {
-        assert(_isApprovedOrOwner(_msgSender(), _tokenId));
+        if (!_isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
         _increaseAmountFor(_tokenId, _value, DepositType.INCREASE_LOCK_AMOUNT);
     }
 
     /// @inheritdoc IVotingEscrow
     function increaseUnlockTime(uint256 _tokenId, uint256 _lockDuration) external nonReentrant {
-        assert(_isApprovedOrOwner(_msgSender(), _tokenId));
-        require(escrowType[_tokenId] != EscrowType.LOCKED, "VotingEscrow: nft locked");
+        if (!_isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
+        if (escrowType[_tokenId] == EscrowType.LOCKED) revert NotManagedOrNormalNFT();
 
         LockedBalance memory oldLocked = _locked[_tokenId];
         uint256 unlockTime = ((block.timestamp + _lockDuration) / WEEK) * WEEK; // Locktime is rounded down to weeks
 
-        require(oldLocked.end > block.timestamp, "VotingEscrow: lock expired");
-        require(oldLocked.amount > 0, "VotingEscrow: nothing is locked");
-        require(unlockTime > oldLocked.end, "VotingEscrow: can only increase lock duration");
-        require(unlockTime <= block.timestamp + MAXTIME, "VotingEscrow: voting lock can be 4 years max");
+        if (oldLocked.end <= block.timestamp) revert LockExpired();
+        if (oldLocked.amount <= 0) revert NoLockFound();
+        if (unlockTime <= oldLocked.end) revert LockDurationNotInFuture();
+        if (unlockTime > block.timestamp + MAXTIME) revert LockDurationTooLong();
 
         _depositFor(_tokenId, 0, unlockTime, oldLocked, DepositType.INCREASE_UNLOCK_TIME);
     }
@@ -895,12 +891,12 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     /// @inheritdoc IVotingEscrow
     function withdraw(uint256 _tokenId) external nonReentrant {
         address sender = _msgSender();
-        assert(_isApprovedOrOwner(sender, _tokenId));
-        require(!voted[_tokenId], "VotingEscrow: voted");
-        require(escrowType[_tokenId] == EscrowType.NORMAL, "VotingEscrow: can only withdraw from normal nft");
+        if (!_isApprovedOrOwner(sender, _tokenId)) revert NotApprovedOrOwner();
+        if (voted[_tokenId]) revert AlreadyVoted();
+        if (escrowType[_tokenId] != EscrowType.NORMAL) revert NotNormalNFT();
 
         LockedBalance memory oldLocked = _locked[_tokenId];
-        require(block.timestamp >= oldLocked.end, "VotingEscrow: lock not expired");
+        if (block.timestamp < oldLocked.end) revert LockNotExpired();
         uint256 value = uint256(int256(oldLocked.amount));
 
         _locked[_tokenId] = LockedBalance(0, 0);
@@ -924,14 +920,14 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     /// @inheritdoc IVotingEscrow
     function merge(uint256 _from, uint256 _to) external nonReentrant {
         address sender = _msgSender();
-        require(!voted[_from], "VotingEscrow: voted");
-        require(escrowType[_from] == EscrowType.NORMAL, "VotingEscrow: can only merge normal from nft");
-        require(escrowType[_to] == EscrowType.NORMAL, "VotingEscrow: can only merge normal to nft");
-        require(_from != _to, "VotingEscrow: same nft");
-        require(_isApprovedOrOwner(sender, _from), "VotingEscrow: invalid permissions (from)");
-        require(_isApprovedOrOwner(sender, _to), "VotingEscrow: invalid permissions (to)");
+        if (voted[_from]) revert AlreadyVoted();
+        if (escrowType[_from] != EscrowType.NORMAL) revert NotNormalNFT();
+        if (escrowType[_to] != EscrowType.NORMAL) revert NotNormalNFT();
+        if (_from == _to) revert SameNFT();
+        if (!_isApprovedOrOwner(sender, _from)) revert NotApprovedOrOwner();
+        if (!_isApprovedOrOwner(sender, _to)) revert NotApprovedOrOwner();
         LockedBalance memory oldLockedTo = _locked[_to];
-        require(oldLockedTo.end > block.timestamp, "VotingEscrow: to nft lock expired");
+        if (oldLockedTo.end <= block.timestamp) revert LockExpired();
 
         LockedBalance memory oldLockedFrom = _locked[_from];
         uint256 end = oldLockedFrom.end >= oldLockedTo.end ? oldLockedFrom.end : oldLockedTo.end;
@@ -955,15 +951,15 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     {
         address sender = _msgSender();
         address owner = idToOwner[_from];
-        require(canSplit[owner] || anyoneCanSplit, "VotingEscrow: split not public yet");
-        require(escrowType[_from] == EscrowType.NORMAL, "VotingEscrow: split requires normal nft");
-        require(!voted[_from], "VotingEscrow: voted");
-        require(_isApprovedOrOwner(sender, _from), "VotingEscrow: from: invalid permissions");
+        if (!canSplit[owner] && !anyoneCanSplit) revert SplitNotAllowed();
+        if (escrowType[_from] != EscrowType.NORMAL) revert NotNormalNFT();
+        if (voted[_from]) revert AlreadyVoted();
+        if (!_isApprovedOrOwner(sender, _from)) revert NotApprovedOrOwner();
         LockedBalance memory newLocked = _locked[_from];
-        require(newLocked.end > block.timestamp, "VotingEscrow: nft lock expired");
+        if (newLocked.end <= block.timestamp) revert LockExpired();
         int128 _splitAmount = int128(int256(_amount));
-        require(_splitAmount > 0, "VotingEscrow: zero amount");
-        require(newLocked.amount > _splitAmount, "VotingEscrow: amount too big");
+        if (_splitAmount == 0) revert ZeroAmount();
+        if (newLocked.amount <= _splitAmount) revert AmountTooBig();
 
         // Zero out and burn old veNFT
         _locked[_from] = LockedBalance(0, 0);
@@ -988,13 +984,13 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function toggleSplitForAll(bool _bool) external {
-        require(_msgSender() == team, "VotingEscrow: not team");
+        if (_msgSender() != team) revert NotTeam();
         anyoneCanSplit = _bool;
     }
 
     /// @inheritdoc IVotingEscrow
     function toggleSplit(address _account, bool _bool) external {
-        require(_msgSender() == team, "VotingEscrow: not team");
+        if (_msgSender() != team) revert NotTeam();
         canSplit[_account] = _bool;
     }
 
@@ -1190,20 +1186,20 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
     /// @inheritdoc IVotingEscrow
     function setVoterAndDistributor(address _voter, address _distributor) external {
-        require(_msgSender() == voter);
+        if (_msgSender() != voter) revert NotVoter();
         voter = _voter;
         distributor = _distributor;
     }
 
     /// @inheritdoc IVotingEscrow
     function voting(uint256 _tokenId) external {
-        require(_msgSender() == voter);
+        if (_msgSender() != voter) revert NotVoter();
         voted[_tokenId] = true;
     }
 
     /// @inheritdoc IVotingEscrow
     function abstain(uint256 _tokenId) external {
-        require(_msgSender() == voter);
+        if (_msgSender() != voter) revert NotVoter();
         voted[_tokenId] = false;
     }
 
@@ -1355,7 +1351,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
                 uint256[] storage dstRepNew = _checkpoints[dstRep][dstRepNum].tokenIds;
                 // All the same plus _tokenId
-                require(dstRepOld.length + 1 <= MAX_DELEGATES, "VotingEscrow: dstRep would have too many tokenIds");
+                if (dstRepOld.length + 1 > MAX_DELEGATES) revert TooManyTokenIDs();
                 uint256 _length = dstRepOld.length;
                 for (uint256 i = 0; i < _length; i++) {
                     uint256 tId = dstRepOld[i];
@@ -1426,10 +1422,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
                 uint256[] storage dstRepNew = _checkpoints[dstRep][dstRepNum].tokenIds;
                 uint256 ownerTokenCount = ownerToNFTokenCount[owner];
-                require(
-                    dstRepOld.length + ownerTokenCount <= MAX_DELEGATES,
-                    "VotingEscrow: dstRep would have too many tokenIds"
-                );
+                if (dstRepOld.length + ownerTokenCount > MAX_DELEGATES) revert TooManyTokenIDs();
                 // All the same
                 uint256 _length = dstRepOld.length;
                 for (uint256 i = 0; i < _length; i++) {
@@ -1485,9 +1478,9 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
         bytes32 structHash = keccak256(abi.encode(DELEGATION_TYPEHASH, delegatee, nonce, expiry));
         bytes32 digest = keccak256(abi.encodePacked("\x19\x01", domainSeparator, structHash));
         address signatory = ecrecover(digest, v, r, s);
-        require(signatory != address(0), "VotingEscrow: invalid signature");
-        require(nonce == nonces[signatory]++, "VotingEscrow: invalid nonce");
-        require(block.timestamp <= expiry, "VotingEscrow: signature expired");
+        if (signatory == address(0)) revert InvalidSignature();
+        if (nonce != nonces[signatory]++) revert InvalidNonce();
+        if (block.timestamp > expiry) revert SignatureExpired();
         return _delegate(signatory, delegatee);
     }
 

@@ -39,6 +39,40 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
         MANAGED
     }
 
+    error AlreadyVoted();
+    error AmountTooBig();
+    error InvalidNonce();
+    error InvalidSignature();
+    error InvalidManagedNFTId();
+    error LockDurationNotInFuture();
+    error LockDurationTooLong();
+    error LockExpired();
+    error LockNotExpired();
+    error NoLockFound();
+    error NonExistentToken();
+    error NotApprovedOrOwner();
+    error NotDistributor();
+    error NotEmergencyCouncilOrGovernor();
+    error NotGovernor();
+    error NotGovernorOrManager();
+    error NotManagedNFT();
+    error NotManagedOrNormalNFT();
+    error NotLockedNFT();
+    error NotNormalNFT();
+    error NotOwner();
+    error NotTeam();
+    error NotVoter();
+    error OwnershipChange();
+    error SameAddress();
+    error SameNFT();
+    error SameState();
+    error SplitNotAllowed();
+    error SignatureExpired();
+    error TooManyTokenIDs();
+    error ZeroAddress();
+    error ZeroAmount();
+    error ZeroBalance();
+
     event Deposit(
         address indexed provider,
         uint256 tokenId,

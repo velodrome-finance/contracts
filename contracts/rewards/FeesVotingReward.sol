@@ -11,8 +11,8 @@ contract FeesVotingReward is VotingReward {
     /// @inheritdoc VotingReward
     function notifyRewardAmount(address token, uint256 amount) external override nonReentrant {
         address sender = _msgSender();
-        require(IVoter(voter).gaugeToFees(sender) == address(this));
-        require(isReward[token], "FeesVotingReward: invalid reward");
+        if (IVoter(voter).gaugeToFees(sender) != address(this)) revert NotGauge();
+        if (!isReward[token]) revert InvalidReward();
 
         _notifyRewardAmount(sender, token, amount);
     }

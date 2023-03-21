@@ -66,7 +66,7 @@ contract RouterTest is BaseTest {
     }
 
     function testCannotSendETHToRouter() public {
-        vm.expectRevert("Router: only accepts ETH from WETH contract");
+        vm.expectRevert(IRouter.OnlyWETH.selector);
         payable(address(router)).transfer(TOKEN_1);
     }
 

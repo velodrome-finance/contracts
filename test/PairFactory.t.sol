@@ -5,7 +5,7 @@ import "./BaseTest.sol";
 contract PairFactoryTest is BaseTest {
     function testCannotSetNextManagerIfNotFeeManager() public {
         vm.prank(address(owner2));
-        vm.expectRevert("PairFactory: not fee manager");
+        vm.expectRevert(IPairFactory.NotFeeManager.selector);
         factory.setFeeManager(address(owner));
     }
 
@@ -16,7 +16,7 @@ contract PairFactoryTest is BaseTest {
 
     function testNonPauserCannotSetNextPauser() public {
         vm.prank(address(owner2));
-        vm.expectRevert("PairFactory: not pauser");
+        vm.expectRevert(IPairFactory.NotPauser.selector);
         factory.setPauser(address(owner2));
     }
 
@@ -27,7 +27,7 @@ contract PairFactoryTest is BaseTest {
 
     function testNonPauserCannotPause() public {
         vm.prank(address(owner2));
-        vm.expectRevert("PairFactory: not pauser");
+        vm.expectRevert(IPairFactory.NotPauser.selector);
         factory.setPauseState(true);
     }
 
@@ -39,30 +39,31 @@ contract PairFactoryTest is BaseTest {
 
     function testCannotChangeFeesIfNotFeeManager() public {
         vm.prank(address(owner2));
-        vm.expectRevert("PairFactory: not fee manager");
+        vm.expectRevert(IPairFactory.NotFeeManager.selector);
         factory.setFee(true, 2);
 
         vm.prank(address(owner2));
-        vm.expectRevert("PairFactory: not fee manager");
+        vm.expectRevert(IPairFactory.NotFeeManager.selector);
         factory.setCustomFee(address(pair), 5);
     }
 
     function testCannotSetFeeAboveMax() public {
-        vm.expectRevert(abi.encodePacked("PairFactory: fee too high"));
+        vm.expectRevert(IPairFactory.FeeTooHigh.selector);
         factory.setFee(true, 101); // 101 bps = 1.01%
 
-        vm.expectRevert(abi.encodePacked("PairFactory: fee too high"));
+        vm.expectRevert(IPairFactory.FeeTooHigh.selector);
         factory.setCustomFee(address(pair), 101); // 101 bps = 1.01%
     }
 
     function testCannotSetZeroFee() public {
-        vm.expectRevert(abi.encodePacked("PairFactory: fee must be non-zero"));
+        vm.expectRevert(IPairFactory.ZeroFee.selector);
         factory.setFee(true, 0);
     }
 
     function testFeeManagerCanSetMaxValues() public {
         // Can set to 420 to indicate 0% fee
         factory.setCustomFee(address(pair), 420);
+        assertEq(factory.getFee(address(pair), true), 0);
         // Can set to 1%
         factory.setCustomFee(address(pair), 100);
         assertEq(factory.getFee(address(pair), true), 100);
@@ -76,6 +77,9 @@ contract PairFactoryTest is BaseTest {
         assertEq(factory.getFee(address(pair2), false), 1);
         factory.setFee(false, 100);
         assertEq(factory.getFee(address(pair2), false), 100);
+
+        factory.setCustomFee(address(pair), 420);
+        assertEq(factory.getFee(address(pair), true), 0);
     }
 
     function testSetCustomFee() external {
@@ -103,7 +107,7 @@ contract PairFactoryTest is BaseTest {
     }
 
     function testCannotSetCustomFeeForNonExistentPair() external {
-        vm.expectRevert("PairFactory: not a pair");
+        vm.expectRevert(IPairFactory.InvalidPair.selector);
         factory.setCustomFee(address(1), 5);
     }
 }

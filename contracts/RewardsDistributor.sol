@@ -41,7 +41,7 @@ contract RewardsDistributor is IRewardsDistributor {
         token = _token;
         ve = _ve;
         depositor = msg.sender;
-        require(IERC20(_token).approve(_ve, type(uint256).max));
+        IERC20(_token).safeApprove(_ve, type(uint256).max);
     }
 
     function _checkpointToken() internal {
@@ -321,7 +321,7 @@ contract RewardsDistributor is IRewardsDistributor {
 
     // Once off event on contract initialize
     function setDepositor(address _depositor) external {
-        require(msg.sender == depositor);
+        if (msg.sender != depositor) revert NotDepositor();
         depositor = _depositor;
     }
 

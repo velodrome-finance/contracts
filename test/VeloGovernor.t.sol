@@ -19,13 +19,13 @@ contract VeloGovernorTest is BaseTest {
     }
 
     function testCannotSetVetoerWithZeroAddress() public {
-        vm.expectRevert("VeloGovernor: zero address");
+        vm.expectRevert(VeloGovernor.ZeroAddress.selector);
         governor.setVetoer(address(0));
     }
 
     function testCannotSetVetoerIfNotVetoer() public {
         vm.prank(address(owner2));
-        vm.expectRevert("VeloGovernor: not vetoer");
+        vm.expectRevert(VeloGovernor.NotVetoer.selector);
         governor.setVetoer(address(owner2));
     }
 
@@ -37,7 +37,7 @@ contract VeloGovernorTest is BaseTest {
 
     function testCannotRenounceVetoerIfNotVetoer() public {
         vm.prank(address(owner2));
-        vm.expectRevert("VeloGovernor: not vetoer");
+        vm.expectRevert(VeloGovernor.NotVetoer.selector);
         governor.renounceVetoer();
     }
 
@@ -51,7 +51,7 @@ contract VeloGovernorTest is BaseTest {
         governor.setVetoer(address(owner2));
 
         vm.prank(address(owner3));
-        vm.expectRevert("VeloGovernor: not pending vetoer");
+        vm.expectRevert(VeloGovernor.NotPendingVetoer.selector);
         governor.acceptVetoer();
     }
 
@@ -76,7 +76,7 @@ contract VeloGovernorTest is BaseTest {
         uint256 pid = governor.propose(targets, values, calldatas, description);
 
         vm.prank(address(owner2));
-        vm.expectRevert("VeloGovernor: not vetoer");
+        vm.expectRevert(VeloGovernor.NotVetoer.selector);
         governor.veto(pid);
     }
 
@@ -116,7 +116,7 @@ contract VeloGovernorTest is BaseTest {
 
     function testCannotSetTeamIfNotTeam() public {
         vm.prank(address(owner2));
-        vm.expectRevert("VeloGovernor: not team");
+        vm.expectRevert(VeloGovernor.NotTeam.selector);
         governor.setTeam(address(owner2));
     }
 
@@ -127,13 +127,13 @@ contract VeloGovernorTest is BaseTest {
     }
 
     function testCannotSetProposalNumeratorAboveMaximum() public {
-        vm.expectRevert("VeloGovernor: numerator too high");
+        vm.expectRevert(VeloGovernor.ProposalNumeratorTooHigh.selector);
         governor.setProposalNumerator(501);
     }
 
     function testCannotSetProposalNumeratorIfNotTeam() public {
         vm.prank(address(owner2));
-        vm.expectRevert("VeloGovernor: not team");
+        vm.expectRevert(VeloGovernor.NotTeam.selector);
         governor.setProposalNumerator(1);
     }
 

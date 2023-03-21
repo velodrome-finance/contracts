@@ -21,7 +21,7 @@ contract VotingEscrowTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
         assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.LOCKED));
 
-        vm.expectRevert("VotingEscrow: nft locked");
+        vm.expectRevert(IVotingEscrow.NotManagedOrNormalNFT.selector);
         escrow.depositFor(tokenId, TOKEN_1);
     }
 
@@ -31,7 +31,7 @@ contract VotingEscrowTest is BaseTest {
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: not distributor");
+        vm.expectRevert(IVotingEscrow.NotDistributor.selector);
         escrow.depositFor(mTokenId, TOKEN_1);
     }
 
@@ -94,7 +94,7 @@ contract VotingEscrowTest is BaseTest {
 
     function testCreateLockOutsideAllowedZones() public {
         VELO.approve(address(escrow), 1e25);
-        vm.expectRevert("VotingEscrow: lock duration greater than 4 years");
+        vm.expectRevert(IVotingEscrow.LockDurationTooLong.selector);
         escrow.createLock(1e21, MAXTIME + 1 weeks);
     }
 
@@ -117,7 +117,7 @@ contract VotingEscrowTest is BaseTest {
 
         // Try withdraw early
         uint256 tokenId = 1;
-        vm.expectRevert(abi.encodePacked("VotingEscrow: lock not expired"));
+        vm.expectRevert(IVotingEscrow.LockNotExpired.selector);
         escrow.withdraw(tokenId);
         // Now try withdraw after the time has expired
         skip(lockDuration);
@@ -137,7 +137,7 @@ contract VotingEscrowTest is BaseTest {
 
     function testCheckTokenURICalls() public {
         // tokenURI should not work for non-existent token ids
-        vm.expectRevert(abi.encodePacked("VotingEscrow: query for nonexistent token"));
+        vm.expectRevert(IVotingEscrow.NonExistentToken.selector);
         escrow.tokenURI(999);
         VELO.approve(address(escrow), 1e25);
         uint256 lockDuration = 7 * 24 * 3600; // 1 week
@@ -154,7 +154,7 @@ contract VotingEscrowTest is BaseTest {
         escrow.withdraw(tokenId);
 
         // tokenURI should not work for this anymore as the NFT is burnt
-        vm.expectRevert(abi.encodePacked("VotingEscrow: query for nonexistent token"));
+        vm.expectRevert(IVotingEscrow.NonExistentToken.selector);
         escrow.tokenURI(tokenId);
     }
 
@@ -178,7 +178,7 @@ contract VotingEscrowTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: same nft");
+        vm.expectRevert(IVotingEscrow.SameNFT.selector);
         escrow.merge(tokenId, tokenId);
     }
 
@@ -191,7 +191,7 @@ contract VotingEscrowTest is BaseTest {
         uint256 owner2TokenId = escrow.createLock(TOKEN_1, MAXTIME);
         vm.stopPrank();
 
-        vm.expectRevert("VotingEscrow: invalid permissions (from)");
+        vm.expectRevert(IVotingEscrow.NotApprovedOrOwner.selector);
         escrow.merge(owner2TokenId, ownerTokenId);
     }
 
@@ -204,7 +204,7 @@ contract VotingEscrowTest is BaseTest {
         uint256 owner2TokenId = escrow.createLock(TOKEN_1, MAXTIME);
         vm.stopPrank();
 
-        vm.expectRevert("VotingEscrow: invalid permissions (to)");
+        vm.expectRevert(IVotingEscrow.NotApprovedOrOwner.selector);
         escrow.merge(ownerTokenId, owner2TokenId);
     }
 
@@ -225,7 +225,7 @@ contract VotingEscrowTest is BaseTest {
 
         skip(1);
 
-        vm.expectRevert("VotingEscrow: voted");
+        vm.expectRevert(IVotingEscrow.AlreadyVoted.selector);
         escrow.merge(tokenId, tokenId2);
     }
 
@@ -332,7 +332,7 @@ contract VotingEscrowTest is BaseTest {
         // let second veNFT expire
         skip(4 weeks);
 
-        vm.expectRevert("VotingEscrow: to nft lock expired");
+        vm.expectRevert(IVotingEscrow.LockExpired.selector);
         escrow.merge(tokenId, tokenId2);
     }
 
@@ -393,7 +393,7 @@ contract VotingEscrowTest is BaseTest {
 
     function testCannotToggleSplitForAllIfNotTeam() public {
         vm.prank(address(owner2));
-        vm.expectRevert("VotingEscrow: not team");
+        vm.expectRevert(IVotingEscrow.NotTeam.selector);
         escrow.toggleSplitForAll(true);
     }
 
@@ -412,7 +412,7 @@ contract VotingEscrowTest is BaseTest {
 
     function testCannotToggleSplitIfNotTeam() public {
         vm.prank(address(owner2));
-        vm.expectRevert("VotingEscrow: not team");
+        vm.expectRevert(IVotingEscrow.NotTeam.selector);
         escrow.toggleSplit(address(owner), true);
     }
 
@@ -436,16 +436,16 @@ contract VotingEscrowTest is BaseTest {
         uint256 tokenId = escrow.createLock(TOKEN_1, 4 * 365 * 86400);
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: split requires normal nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         escrow.split(mTokenId, TOKEN_1 / 2);
     }
 
-    function testCannotSplitWithAmountZero() public {
+    function testCannotSplitWithZeroAmount() public {
         escrow.toggleSplitForAll(true);
         VELO.approve(address(escrow), type(uint256).max);
         uint256 ownerTokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: zero amount");
+        vm.expectRevert(IVotingEscrow.ZeroAmount.selector);
         escrow.split(ownerTokenId, 0);
     }
 
@@ -454,7 +454,7 @@ contract VotingEscrowTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         uint256 ownerTokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: from: invalid permissions");
+        vm.expectRevert(IVotingEscrow.NotApprovedOrOwner.selector);
         vm.prank(address(owner2));
         escrow.split(ownerTokenId, TOKEN_1 / 2);
     }
@@ -468,7 +468,7 @@ contract VotingEscrowTest is BaseTest {
         // let second veNFT expire
         skip(1 weeks + 1);
 
-        vm.expectRevert("VotingEscrow: nft lock expired");
+        vm.expectRevert(IVotingEscrow.LockExpired.selector);
         escrow.split(tokenId, TOKEN_1 / 2);
     }
 
@@ -488,7 +488,7 @@ contract VotingEscrowTest is BaseTest {
 
         skip(1);
 
-        vm.expectRevert("VotingEscrow: voted");
+        vm.expectRevert(IVotingEscrow.AlreadyVoted.selector);
         escrow.split(tokenId, TOKEN_1 / 2);
     }
 
@@ -497,7 +497,7 @@ contract VotingEscrowTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: amount too big");
+        vm.expectRevert(IVotingEscrow.AmountTooBig.selector);
         escrow.split(tokenId, TOKEN_1);
     }
 
@@ -505,7 +505,7 @@ contract VotingEscrowTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: split not public yet");
+        vm.expectRevert(IVotingEscrow.SplitNotAllowed.selector);
         escrow.split(1, TOKEN_1 / 4);
     }
 
@@ -548,21 +548,9 @@ contract VotingEscrowTest is BaseTest {
         escrow.transferFrom(address(owner), address(owner2), tokenId);
 
         skipAndRoll(1);
-        vm.expectRevert("VotingEscrow: split not public yet");
+        vm.expectRevert(IVotingEscrow.SplitNotAllowed.selector);
         vm.prank(address(owner2));
         escrow.split(tokenId, TOKEN_1 / 4);
-    }
-
-    function testCannotSplitThenTransferOriginal() public {
-        skip(1 weeks / 2);
-
-        escrow.toggleSplit(address(owner), true);
-        VELO.approve(address(escrow), type(uint256).max);
-        escrow.createLock(TOKEN_1, MAXTIME);
-
-        escrow.split(1, TOKEN_1 / 4);
-        vm.expectRevert(); // TODO: change to error message check when merged
-        escrow.transferFrom(address(owner), address(owner2), 1);
     }
 
     function testSplitOwnershipFromOwner() public {

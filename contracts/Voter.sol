@@ -91,10 +91,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     modifier onlyNewEpoch(uint256 _tokenId) {
         // ensure new epoch since last vote
-        require(
-            VelodromeTimeLibrary.epochStart(block.timestamp) > lastVoted[_tokenId],
-            "Voter: already voted or deposited this epoch"
-        );
+        if (VelodromeTimeLibrary.epochStart(block.timestamp) <= lastVoted[_tokenId]) revert AlreadyVotedOrDeposited();
         _;
     }
 
@@ -116,7 +113,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @dev requires initialization with at least rewardToken
     function initialize(address[] calldata _tokens, address _minter) external {
-        require(_msgSender() == minter);
+        if (_msgSender() != minter) revert NotMinter();
         uint256 _length = _tokens.length;
         for (uint256 i = 0; i < _length; i++) {
             _whitelistToken(_tokens[i], true);
@@ -126,32 +123,32 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function setGovernor(address _governor) public {
-        require(_msgSender() == governor, "Voter: not governor");
+        if (_msgSender() != governor) revert NotGovernor();
         governor = _governor;
     }
 
     /// @inheritdoc IVoter
     function setEpochGovernor(address _epochGovernor) public {
-        require(_msgSender() == governor, "Voter: not governor");
+        if (_msgSender() != governor) revert NotGovernor();
         epochGovernor = _epochGovernor;
     }
 
     /// @inheritdoc IVoter
     function setEmergencyCouncil(address _council) public {
-        require(_msgSender() == emergencyCouncil, "Voter: not emergency council");
+        if (_msgSender() != emergencyCouncil) revert NotEmergencyCouncil();
         emergencyCouncil = _council;
     }
 
     function setMaxVotingNum(uint256 _maxVotingNum) external {
-        require(_msgSender() == governor, "Voter: not governor");
-        require(_maxVotingNum >= MIN_MAXVOTINGNUM, "Voter: too low");
-        require(_maxVotingNum != maxVotingNum, "Voter: same value");
+        if (_msgSender() != governor) revert NotGovernor();
+        if (_maxVotingNum < MIN_MAXVOTINGNUM) revert MaximumVotingNumberTooLow();
+        if (_maxVotingNum == maxVotingNum) revert SameValue();
         maxVotingNum = _maxVotingNum;
     }
 
     /// @inheritdoc IVoter
     function reset(uint256 _tokenId) external onlyNewEpoch(_tokenId) nonReentrant {
-        require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId));
+        if (!IVotingEscrow(ve).isApprovedOrOwner(msg.sender, _tokenId)) revert NotApprovedOrOwner();
         _reset(_tokenId);
     }
 
@@ -219,8 +216,8 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
             if (isGauge[_gauge]) {
                 uint256 _poolWeight = (_weights[i] * _weight) / _totalVoteWeight;
-                require(votes[_tokenId][_pool] == 0);
-                require(_poolWeight != 0);
+                if (votes[_tokenId][_pool] != 0) revert NonZeroVotes();
+                if (_poolWeight == 0) revert ZeroBalance();
                 _updateFor(_gauge);
 
                 poolVote[_tokenId].push(_pool);
@@ -246,15 +243,14 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         uint256[] calldata _weights
     ) external onlyNewEpoch(_tokenId) nonReentrant {
         address _sender = _msgSender();
-        require(IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId));
-        require(_poolVote.length == _weights.length);
-        require(_poolVote.length <= maxVotingNum);
-        require(!IVotingEscrow(ve).deactivated(_tokenId), "Voter: inactive managed nft");
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId)) revert NotApprovedOrOwner();
+        if (_poolVote.length != _weights.length) revert UnequalLengths();
+        if (_poolVote.length > maxVotingNum) revert TooManyPools();
+        if (IVotingEscrow(ve).deactivated(_tokenId)) revert InactiveManagedNFT();
         uint256 _timestamp = block.timestamp;
-        require(_timestamp > VelodromeTimeLibrary.epochVoteStart(_timestamp), "Voter: distribute window");
-        if (_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) {
-            require(isWhitelistedNFT[_tokenId], "Voter: nft not whitelisted");
-        }
+        if (_timestamp <= VelodromeTimeLibrary.epochVoteStart(_timestamp)) revert DistributeWindow();
+        if ((_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) && !isWhitelistedNFT[_tokenId])
+            revert NotWhitelistedNFT();
         lastVoted[_tokenId] = _timestamp;
         _vote(_tokenId, _poolVote, _weights);
     }
@@ -262,10 +258,10 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     /// @inheritdoc IVoter
     function depositManaged(uint256 _tokenId, uint256 _mTokenId) external nonReentrant onlyNewEpoch(_tokenId) {
         address _sender = _msgSender();
-        require(IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId), "Voter: not owner or approved");
-        require(!IVotingEscrow(ve).deactivated(_mTokenId), "Voter: inactive managed nft");
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId)) revert NotApprovedOrOwner();
+        if (IVotingEscrow(ve).deactivated(_mTokenId)) revert InactiveManagedNFT();
         uint256 _timestamp = block.timestamp;
-        require(_timestamp <= VelodromeTimeLibrary.epochVoteEnd(_timestamp), "Voter: cannot deposit in window");
+        if (_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) revert SpecialVotingWindow();
         lastVoted[_tokenId] = _timestamp;
         IVotingEscrow(ve).depositManaged(_tokenId, _mTokenId);
         _poke(_mTokenId);
@@ -273,7 +269,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function withdrawManaged(uint256 _tokenId) external nonReentrant onlyNewEpoch(_tokenId) {
-        require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId), "Voter: not owner or approved");
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
         uint256 _mTokenId = IVotingEscrow(ve).idToManaged(_tokenId);
         IVotingEscrow(ve).withdrawManaged(_tokenId);
         // If the NORMAL veNFT was the last tokenId locked into _mTokenId, reset vote as there is
@@ -288,7 +284,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function whitelistToken(address _token, bool _bool) external {
-        require(_msgSender() == governor, "Voter: not governor");
+        if (_msgSender() != governor) revert NotGovernor();
         _whitelistToken(_token, _bool);
     }
 
@@ -300,7 +296,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     /// @inheritdoc IVoter
     function whitelistNFT(uint256 _tokenId, bool _bool) external {
         address _sender = _msgSender();
-        require(_sender == governor, "Voter: not governor");
+        if (_sender != governor) revert NotGovernor();
         isWhitelistedNFT[_tokenId] = _bool;
         emit WhitelistNFT(_sender, _tokenId, _bool);
     }
@@ -313,7 +309,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         address _pool
     ) external nonReentrant returns (address) {
         address sender = _msgSender();
-        require(gauges[_pool] == address(0x0), "Voter: gauge already exists");
+        if (gauges[_pool] != address(0)) revert GaugeExists();
         address[] memory rewards = new address[](2);
         bool isPair = IPairFactory(_pairFactory).isPair(_pool);
         address tokenA;
@@ -326,14 +322,12 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         }
 
         if (sender != governor) {
-            require(isPair, "Voter: not a pool");
-            require(isWhitelistedToken[tokenA] && isWhitelistedToken[tokenB], "Voter: not whitelisted");
+            if (!isPair) revert NotAPool();
+            if (!isWhitelistedToken[tokenA] || !isWhitelistedToken[tokenB]) revert NotWhitelistedToken();
         }
 
-        require(
-            IFactoryRegistry(factoryRegistry).isApproved(_pairFactory, _votingRewardsFactory, _gaugeFactory),
-            "Voter: factory path not approved"
-        );
+        if (!IFactoryRegistry(factoryRegistry).isApproved(_pairFactory, _votingRewardsFactory, _gaugeFactory))
+            revert FactoryPathNotApproved();
         (address _feeVotingReward, address _bribeVotingReward) = IVotingRewardsFactory(_votingRewardsFactory)
             .createRewards(rewards);
 
@@ -355,8 +349,8 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function killGauge(address _gauge) external {
-        require(_msgSender() == emergencyCouncil, "Voter: not emergency council");
-        require(isAlive[_gauge], "Voter: gauge already dead");
+        if (_msgSender() != emergencyCouncil) revert NotEmergencyCouncil();
+        if (!isAlive[_gauge]) revert GaugeAlreadyKilled();
         isAlive[_gauge] = false;
         claimable[_gauge] = 0;
         emit GaugeKilled(_gauge);
@@ -364,8 +358,8 @@ contract Voter is IVoter, Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function reviveGauge(address _gauge) external {
-        require(_msgSender() == emergencyCouncil, "Voter: not emergency council");
-        require(!isAlive[_gauge], "Voter: gauge already alive");
+        if (_msgSender() != emergencyCouncil) revert NotEmergencyCouncil();
+        if (isAlive[_gauge]) revert GaugeAlreadyRevived();
         isAlive[_gauge] = true;
         emit GaugeRevived(_gauge);
     }
@@ -377,7 +371,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     /// @inheritdoc IVoter
     function notifyRewardAmount(uint256 _amount) external {
         address sender = _msgSender();
-        require(sender == minter, "Voter: only minter can deposit reward");
+        if (sender != minter) revert NotMinter();
         IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount); // transfer the distribution in
         uint256 _ratio = (_amount * 1e18) / totalWeight; // 1e18 adjustment is removed during claim
         if (_ratio > 0) {
@@ -439,7 +433,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         address[][] memory _tokens,
         uint256 _tokenId
     ) external {
-        require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId));
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
         uint256 _length = _bribes.length;
         for (uint256 i = 0; i < _length; i++) {
             IReward(_bribes[i]).getReward(_tokenId, _tokens[i]);
@@ -452,7 +446,7 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         address[][] memory _tokens,
         uint256 _tokenId
     ) external {
-        require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId));
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
         uint256 _length = _fees.length;
         for (uint256 i = 0; i < _length; i++) {
             IReward(_fees[i]).getReward(_tokenId, _tokens[i]);

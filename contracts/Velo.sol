@@ -17,18 +17,18 @@ contract Velo is IVelo, ERC20Permit {
 
     // No checks as its meant to be once off to set minting rights to BaseV1 Minter
     function setMinter(address _minter) external {
-        require(msg.sender == minter, "Velo: not minter");
+        if (msg.sender != minter) revert NotMinter();
         minter = _minter;
     }
 
     function setSinkManager(address _sinkManager) external {
-        require(msg.sender == owner, "Velo: not owner");
-        require(sinkManager == address(0), "Velo: sink manager already set");
+        if (msg.sender != owner) revert NotOwner();
+        if (sinkManager != address(0)) revert SinkManagerAlreadySet();
         sinkManager = _sinkManager;
     }
 
     function mint(address account, uint256 amount) external returns (bool) {
-        require(msg.sender == minter || msg.sender == sinkManager, "Velo: not minter or sink manager");
+        if (msg.sender != minter && msg.sender != sinkManager) revert NotMinterOrSinkManager();
         _mint(account, amount);
         return true;
     }

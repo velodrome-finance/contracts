@@ -4,7 +4,7 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
 import "./Base.sol";
-import {Pair} from "contracts/Pair.sol";
+import {IPair, Pair} from "contracts/Pair.sol";
 import {TestOwner} from "utils/TestOwner.sol";
 import {MockERC20} from "utils/MockERC20.sol";
 import {MockWETH} from "utils/MockWETH.sol";

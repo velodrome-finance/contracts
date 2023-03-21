@@ -13,9 +13,9 @@ contract LockedManagedReward is ManagedReward {
     /// @dev Called by VotingEscrow to retrieve locked rewards
     function getReward(uint256 tokenId, address[] memory tokens) external override nonReentrant {
         address sender = _msgSender();
-        require(sender == ve, "LockedManagedReward: not voting escrow");
-        require(tokens.length == 1, "LockedManagedReward: can only claim single token");
-        require(tokens[0] == IVotingEscrow(ve).token(), "LockedManagedReward: can only claim escrow token");
+        if (sender != ve) revert NotVotingEscrow();
+        if (tokens.length != 1) revert NotSingleToken();
+        if (tokens[0] != IVotingEscrow(ve).token()) revert NotEscrowToken();
 
         _getReward(sender, tokenId, tokens);
     }
@@ -24,8 +24,8 @@ contract LockedManagedReward is ManagedReward {
     /// @dev Called by VotingEscrow to add rebases / compounded rewards for disbursement
     function notifyRewardAmount(address token, uint256 amount) external override nonReentrant {
         address sender = _msgSender();
-        require(sender == ve, "LockedManagedReward: only voting escrow");
-        require(token == IVotingEscrow(ve).token(), "LockedManagedReward: not escrow token");
+        if (sender != ve) revert NotVotingEscrow();
+        if (token != IVotingEscrow(ve).token()) revert NotEscrowToken();
 
         _notifyRewardAmount(sender, token, amount);
     }

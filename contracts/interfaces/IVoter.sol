@@ -1,6 +1,28 @@
 pragma solidity 0.8.13;
 
 interface IVoter {
+    error AlreadyVotedOrDeposited();
+    error DistributeWindow();
+    error FactoryPathNotApproved();
+    error GaugeAlreadyKilled();
+    error GaugeAlreadyRevived();
+    error GaugeExists();
+    error InactiveManagedNFT();
+    error MaximumVotingNumberTooLow();
+    error NonZeroVotes();
+    error NotAPool();
+    error NotApprovedOrOwner();
+    error NotGovernor();
+    error NotEmergencyCouncil();
+    error NotMinter();
+    error NotWhitelistedNFT();
+    error NotWhitelistedToken();
+    error SameValue();
+    error SpecialVotingWindow();
+    error TooManyPools();
+    error UnequalLengths();
+    error ZeroBalance();
+
     event GaugeCreated(
         address indexed gauge,
         address creator,

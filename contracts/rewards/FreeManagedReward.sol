@@ -12,7 +12,7 @@ contract FreeManagedReward is ManagedReward {
 
     /// @inheritdoc ManagedReward
     function getReward(uint256 tokenId, address[] memory tokens) external override nonReentrant {
-        require(IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), tokenId), "FreeManagedReward: unpermissioned");
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), tokenId)) revert NotAuthorized();
 
         address owner = IVotingEscrow(ve).ownerOf(tokenId);
 
@@ -23,7 +23,7 @@ contract FreeManagedReward is ManagedReward {
     function notifyRewardAmount(address token, uint256 amount) external override nonReentrant {
         address sender = _msgSender();
         if (!isReward[token]) {
-            require(IVoter(voter).isWhitelistedToken(token), "FreeManagedReward: token not whitelisted");
+            if (!IVoter(voter).isWhitelistedToken(token)) revert NotWhitelisted();
             isReward[token] = true;
             rewards.push(token);
         }

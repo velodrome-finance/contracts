@@ -1,6 +1,19 @@
 pragma solidity 0.8.13;
 
 interface IPair {
+    error DepositsNotEqual();
+    error BelowMinimumK();
+    error FactoryAlreadySet();
+    error InsufficientLiquidity();
+    error InsufficientLiquidityMinted();
+    error InsufficientLiquidityBurned();
+    error InsufficientOutputAmount();
+    error InsufficientInputAmount();
+    error IsPaused();
+    error InvalidTo();
+    error K();
+    error NotEmergencyCouncil();
+
     function metadata()
         external
         view

@@ -2,6 +2,11 @@
 pragma solidity 0.8.13;
 
 interface IFactoryRegistry {
+    error PathAlreadyApproved();
+    error PathNotApproved();
+    error SameAddress();
+    error ZeroAddress();
+
     event Approve(address pairFactory, address votingRewardsFactory, address gaugeFactory);
     event Unapprove(address pairFactory, address votingRewardsFactory, address gaugeFactory);
     event SetManagedRewardsFactory(address _newRewardsFactory);

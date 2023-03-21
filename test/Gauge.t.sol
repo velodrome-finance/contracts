@@ -24,14 +24,14 @@ contract GaugeTest is BaseTest {
     event Withdraw(address indexed from, uint256 amount);
 
     function testCannotDepositWithRecipientZeroAmount() public {
-        vm.expectRevert("Gauge: zero amount");
+        vm.expectRevert(IGauge.ZeroAmount.selector);
         gauge.deposit(0, address(owner2));
     }
 
     function testCannotDepositWithRecipientWithKilledGauge() public {
         voter.killGauge(address(gauge));
 
-        vm.expectRevert("Gauge: not alive");
+        vm.expectRevert(IGauge.NotAlive.selector);
         gauge.deposit(PAIR_1, address(owner2));
     }
 
@@ -72,14 +72,14 @@ contract GaugeTest is BaseTest {
     }
 
     function testCannotDepositZeroAmount() public {
-        vm.expectRevert("Gauge: zero amount");
+        vm.expectRevert(IGauge.ZeroAmount.selector);
         gauge.deposit(0);
     }
 
     function testCannotDepositWithKilledGauge() public {
         voter.killGauge(address(gauge));
 
-        vm.expectRevert("Gauge: not alive");
+        vm.expectRevert(IGauge.NotAlive.selector);
         gauge.deposit(PAIR_1);
     }
 
@@ -516,12 +516,12 @@ contract GaugeTest is BaseTest {
 
     function testCannotNotifyRewardAmountWithZeroAmount() public {
         vm.prank(address(voter));
-        vm.expectRevert("Gauge: zero amount");
+        vm.expectRevert(IGauge.ZeroAmount.selector);
         gauge.notifyRewardAmount(0);
     }
 
     function testCannotNotifyRewardAmountIfNotVoter() public {
-        vm.expectRevert("Gauge: only voter can notify reward");
+        vm.expectRevert(IGauge.NotVoter.selector);
         gauge.notifyRewardAmount(TOKEN_1);
     }
 
@@ -533,7 +533,7 @@ contract GaugeTest is BaseTest {
         uint256 reward = TOKEN_1;
         _addRewardToGauge(address(voter), address(gauge), reward);
 
-        vm.expectRevert("Gauge: unpermissioned");
+        vm.expectRevert(IGauge.NotAuthorized.selector);
         vm.prank(address(owner2));
         gauge.getReward(address(owner));
 

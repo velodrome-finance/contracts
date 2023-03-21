@@ -71,7 +71,7 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     /// @inheritdoc ISinkManager
     function convertVELO(uint256 amount) external {
         uint256 _ownedTokenId = ownedTokenId;
-        require(_ownedTokenId != 0, "SinkManager: tokenId not set");
+        if (_ownedTokenId == 0) revert TokenIdNotSet();
         address sender = _msgSender();
 
         // Deposit old VELO
@@ -90,13 +90,13 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     /// @inheritdoc ISinkManager
     function convertVe(uint256 tokenId) external nonReentrant returns (uint256 tokenIdV2) {
         uint256 _ownedTokenId = ownedTokenId;
-        require(_ownedTokenId != 0, "SinkManager: tokenId not set");
+        if (_ownedTokenId == 0) revert TokenIdNotSet();
 
         // Ensure the ve was not converted
-        require(conversions[tokenId] == 0, "SinkManager: nft already converted");
+        if (conversions[tokenId] != 0) revert NFTAlreadyConverted();
 
         // Ensure the ve has not expired
-        require(ve.locked__end(tokenId) > block.timestamp, "SinkManager: nft expired");
+        if (ve.locked__end(tokenId) <= block.timestamp) revert NFTExpired();
 
         address sender = _msgSender();
 
@@ -134,7 +134,7 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     // --------------------------------------------------------------------
     /// @inheritdoc ISinkManager
     function claimRebaseAndGaugeRewards() external {
-        require(address(gauge) != address(0), "SinkManager: gauge not set");
+        if (address(gauge) == address(0)) revert GaugeNotSet();
         uint256 _ownedTokenId = ownedTokenId;
 
         // Claim gauge rewards and deposit into owned veNFT
@@ -172,8 +172,8 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     // --------------------------------------------------------------------
     /// @notice Initial setup of the ownedTokenId, the v1 veNFT which votes for the SinkDrain
     function setOwnedTokenId(uint256 tokenId) external onlyOwner {
-        require(ownedTokenId == 0, "SinkManager: tokenId already set");
-        require(ve.ownerOf(tokenId) == address(this), "SinkManager: not owner");
+        if (ownedTokenId != 0) revert TokenIdAlreadySet();
+        if (ve.ownerOf(tokenId) != address(this)) revert ContractNotOwnerOfToken();
         ownedTokenId = tokenId;
     }
 
@@ -181,8 +181,8 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     /// And vote for the gauge to allocate rewards
     function setupSinkDrain(address _gauge) external onlyOwner {
         uint256 _ownedTokenId = ownedTokenId;
-        require(_ownedTokenId != 0, "SinkManager: tokenId not set");
-        require(address(gauge) == address(0), "SinkManager: gauge already set");
+        if (_ownedTokenId == 0) revert TokenIdNotSet();
+        if (address(gauge) != address(0)) revert GaugeAlreadySet();
 
         // Set gauge for future claims
         gauge = IGaugeV1(_gauge);

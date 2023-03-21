@@ -1,6 +1,15 @@
 pragma solidity 0.8.13;
 
 interface IReward {
+    error InvalidReward();
+    error NotAuthorized();
+    error NotGauge();
+    error NotEscrowToken();
+    error NotSingleToken();
+    error NotVotingEscrow();
+    error NotWhitelisted();
+    error ZeroAmount();
+
     event Deposit(address indexed from, uint256 tokenId, uint256 amount);
     event Withdraw(address indexed from, uint256 tokenId, uint256 amount);
     event NotifyReward(address indexed from, address indexed reward, uint256 epoch, uint256 amount);

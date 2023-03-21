@@ -66,7 +66,7 @@ contract ManagedNftTest is BaseTest {
         uint256 totalSupply = escrow.totalSupply();
 
         skip(1 weeks);
-        vm.expectRevert("VotingEscrow: not voter");
+        vm.expectRevert(IVotingEscrow.NotVoter.selector);
         escrow.depositManaged(tokenId, mTokenId);
     }
 
@@ -127,7 +127,7 @@ contract ManagedNftTest is BaseTest {
         escrow.createLock(TOKEN_1, MAXTIME);
         escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: can only deposit into managed nft");
+        vm.expectRevert(IVotingEscrow.NotManagedNFT.selector);
         voter.depositManaged(1, 2);
     }
 
@@ -135,7 +135,7 @@ contract ManagedNftTest is BaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         uint256 mTokenId2 = escrow.createManagedLockFor(address(owner));
 
-        vm.expectRevert("VotingEscrow: can only deposit normal nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         voter.depositManaged(mTokenId2, mTokenId);
     }
 
@@ -149,7 +149,7 @@ contract ManagedNftTest is BaseTest {
 
         skipToNextEpoch(1);
 
-        vm.expectRevert("VotingEscrow: can only deposit normal nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         voter.depositManaged(tokenId, mTokenId);
     }
 
@@ -170,7 +170,7 @@ contract ManagedNftTest is BaseTest {
 
         skip(1 hours);
 
-        vm.expectRevert("Voter: already voted or deposited this epoch");
+        vm.expectRevert(IVoter.AlreadyVotedOrDeposited.selector);
         voter.depositManaged(1, 2);
     }
 
@@ -181,7 +181,7 @@ contract ManagedNftTest is BaseTest {
 
         skip(2 weeks);
 
-        vm.expectRevert("VotingEscrow: no balance to deposit");
+        vm.expectRevert(IVotingEscrow.ZeroBalance.selector);
         voter.depositManaged(tokenId, mTokenId);
     }
 
@@ -194,7 +194,7 @@ contract ManagedNftTest is BaseTest {
         escrow.transferFrom(address(owner), address(owner2), tokenId);
 
         vm.prank(address(owner2));
-        vm.expectRevert("VotingEscrow: flash nft protection");
+        vm.expectRevert(IVotingEscrow.OwnershipChange.selector);
         voter.depositManaged(tokenId, mTokenId);
     }
 
@@ -203,7 +203,7 @@ contract ManagedNftTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: null _mTokenId");
+        vm.expectRevert(IVotingEscrow.InvalidManagedNFTId.selector);
         voter.withdrawManaged(tokenId);
     }
 
@@ -217,7 +217,7 @@ contract ManagedNftTest is BaseTest {
 
         skipToNextEpoch(1);
 
-        vm.expectRevert("VotingEscrow: not voter");
+        vm.expectRevert(IVotingEscrow.NotVoter.selector);
         escrow.withdrawManaged(tokenId);
     }
 
@@ -410,7 +410,7 @@ contract ManagedNftTest is BaseTest {
 
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: nft locked");
+        vm.expectRevert(IVotingEscrow.NotManagedOrNormalNFT.selector);
         escrow.increaseAmount(tokenId, TOKEN_1);
     }
 
@@ -422,7 +422,7 @@ contract ManagedNftTest is BaseTest {
 
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: nft locked");
+        vm.expectRevert(IVotingEscrow.NotManagedOrNormalNFT.selector);
         escrow.increaseUnlockTime(tokenId, MAXTIME);
     }
 
@@ -436,7 +436,7 @@ contract ManagedNftTest is BaseTest {
 
         skip(8 weeks);
 
-        vm.expectRevert("VotingEscrow: can only withdraw from normal nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         escrow.withdraw(tokenId);
     }
 
@@ -448,7 +448,7 @@ contract ManagedNftTest is BaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: can only merge normal from nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         escrow.merge(tokenId, tokenId2);
     }
 
@@ -460,7 +460,7 @@ contract ManagedNftTest is BaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: can only merge normal to nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         escrow.merge(tokenId2, tokenId);
     }
 
@@ -471,7 +471,7 @@ contract ManagedNftTest is BaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: nft locked");
+        vm.expectRevert(IVotingEscrow.NotManagedOrNormalNFT.selector);
         escrow.transferFrom(address(this), address(owner2), tokenId);
     }
 
@@ -483,7 +483,7 @@ contract ManagedNftTest is BaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: can only merge normal from nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         escrow.merge(mTokenId, tokenId2);
     }
 
@@ -495,7 +495,7 @@ contract ManagedNftTest is BaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         voter.depositManaged(tokenId, mTokenId);
 
-        vm.expectRevert("VotingEscrow: can only merge normal to nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         escrow.merge(tokenId2, mTokenId);
     }
 
@@ -522,7 +522,7 @@ contract ManagedNftTest is BaseTest {
 
         skip(400 weeks);
 
-        vm.expectRevert("VotingEscrow: can only withdraw from normal nft");
+        vm.expectRevert(IVotingEscrow.NotNormalNFT.selector);
         escrow.withdraw(mTokenId);
     }
 
@@ -537,7 +537,7 @@ contract ManagedNftTest is BaseTest {
         mTokenId = escrow.createManagedLockFor(address(owner3));
         assertEq(mTokenId, 1);
         // owner2 cannot create managed veNFT
-        vm.expectRevert("VotingEscrow: not allowed");
+        vm.expectRevert(IVotingEscrow.NotGovernorOrManager.selector);
         vm.prank(address(owner2));
         escrow.createManagedLockFor(address(owner3));
 
@@ -553,7 +553,7 @@ contract ManagedNftTest is BaseTest {
         mTokenId = escrow.createManagedLockFor(address(owner3));
         assertEq(mTokenId, 3);
         // only governor / owner2 have access
-        vm.expectRevert("VotingEscrow: not allowed");
+        vm.expectRevert(IVotingEscrow.NotGovernorOrManager.selector);
         vm.prank(address(owner3));
         escrow.createManagedLockFor(address(owner3));
     }
@@ -565,13 +565,13 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.allowedManager(), address(owner2));
 
         vm.prank(address(governor));
-        vm.expectRevert("VotingEscrow: same address");
+        vm.expectRevert(IVotingEscrow.SameAddress.selector);
         escrow.setAllowedManager(address(owner2));
     }
 
     function testCannotSetAllowedManagerWithZeroAddress() public {
         vm.prank(address(governor));
-        vm.expectRevert("VotingEscrow: zero address");
+        vm.expectRevert(IVotingEscrow.ZeroAddress.selector);
         escrow.setAllowedManager(address(0));
     }
 
@@ -583,7 +583,7 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.allowedManager(), address(owner2));
 
         // new address does not have permissions to modify the allowedManager
-        vm.expectRevert("VotingEscrow: not governor");
+        vm.expectRevert(IVotingEscrow.NotGovernor.selector);
         vm.prank(address(owner2));
         escrow.setAllowedManager(address(owner3));
 
@@ -596,7 +596,7 @@ contract ManagedNftTest is BaseTest {
     function testCannotSetManagedStateWithSameState() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
 
-        vm.expectRevert("VotingEscrow: same state");
+        vm.expectRevert(IVotingEscrow.SameState.selector);
         escrow.setManagedState(mTokenId, false);
     }
 
@@ -604,14 +604,14 @@ contract ManagedNftTest is BaseTest {
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
-        vm.expectRevert("VotingEscrow: can only modify managed nft state");
+        vm.expectRevert(IVotingEscrow.NotManagedNFT.selector);
         escrow.setManagedState(tokenId, false);
     }
 
     function testCannotSetManagedStateIfNotEmergencyCouncilOrGovernor() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
 
-        vm.expectRevert("VotingEscrow: not emergency council");
+        vm.expectRevert(IVotingEscrow.NotEmergencyCouncilOrGovernor.selector);
         vm.prank(address(owner2));
         escrow.setManagedState(mTokenId, false);
     }

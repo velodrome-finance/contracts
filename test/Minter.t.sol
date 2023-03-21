@@ -57,12 +57,18 @@ contract MinterTest is BaseTest {
         assertLt(minter.weekly(), 5_000_000 * 1e18);
     }
 
+    function testCannotNudgeIfNotInTailEmissionsYet() public {
+        vm.prank(address(epochGovernor));
+        vm.expectRevert(IMinter.TailEmissionsInactive.selector);
+        minter.nudge();
+    }
+
     function testCannotNudgeIfNotEpochGovernor() public {
         /// put in tail emission schedule
         stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
 
         vm.prank(address(owner2));
-        vm.expectRevert("Minter: not epoch governor");
+        vm.expectRevert(IMinter.NotEpochGovernor.selector);
         minter.nudge();
     }
 
@@ -76,7 +82,7 @@ contract MinterTest is BaseTest {
         assertTrue(minter.proposals(604800));
         skip(1);
 
-        vm.expectRevert("Minter: tail rate already nudged this epoch");
+        vm.expectRevert(IMinter.AlreadyNudged.selector);
         vm.prank(address(epochGovernor));
         minter.nudge();
     }

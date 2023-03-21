@@ -17,6 +17,12 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     uint256 public constant PROPOSAL_DENOMINATOR = 10_000;
     uint256 public proposalNumerator = 2; // start at 0.02%
 
+    error NotTeam();
+    error NotPendingVetoer();
+    error NotVetoer();
+    error ProposalNumeratorTooHigh();
+    error ZeroAddress();
+
     constructor(IVotes _ve)
         VetoGovernor("Velodrome Governor")
         VetoGovernorVotes(_ve)
@@ -35,13 +41,13 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     }
 
     function setTeam(address newTeam) external {
-        require(msg.sender == team, "VeloGovernor: not team");
+        if (msg.sender != team) revert NotTeam();
         team = newTeam;
     }
 
     function setProposalNumerator(uint256 numerator) external {
-        require(msg.sender == team, "VeloGovernor: not team");
-        require(numerator <= MAX_PROPOSAL_NUMERATOR, "VeloGovernor: numerator too high");
+        if (msg.sender != team) revert NotTeam();
+        if (numerator > MAX_PROPOSAL_NUMERATOR) revert ProposalNumeratorTooHigh();
         proposalNumerator = numerator;
     }
 
@@ -53,25 +59,25 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     ///      This can be done by transferring ownership of vetoer to a contract that is "bricked"
     ///      i.e. a non-zero address contract that is immutable with no ability to call this function.
     function setVetoer(address _vetoer) external {
-        require(_vetoer != address(0), "VeloGovernor: zero address");
-        require(msg.sender == vetoer, "VeloGovernor: not vetoer");
+        if (_vetoer == address(0)) revert ZeroAddress();
+        if (msg.sender != vetoer) revert NotVetoer();
         pendingVetoer = _vetoer;
     }
 
     function acceptVetoer() external {
-        require(msg.sender == pendingVetoer, "VeloGovernor: not pending vetoer");
+        if (msg.sender != pendingVetoer) revert NotPendingVetoer();
         vetoer = pendingVetoer;
         delete pendingVetoer;
     }
 
     /// @notice Support for vetoer to protect against 51% attacks
     function veto(uint256 _proposalId) external {
-        require(msg.sender == vetoer, "VeloGovernor: not vetoer");
+        if (msg.sender != vetoer) revert NotVetoer();
         _veto(_proposalId);
     }
 
     function renounceVetoer() external {
-        require(msg.sender == vetoer, "VeloGovernor: not vetoer");
+        if (msg.sender != vetoer) revert NotVetoer();
         delete vetoer;
     }
 }

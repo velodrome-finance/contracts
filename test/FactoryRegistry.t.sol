@@ -8,6 +8,7 @@ contract FactoryRegistryTest is BaseTest {
     GaugeFactory gaugeFactory2;
     VotingRewardsFactory votingRewardsFactory2;
     FactoryRegistry factoryRegistry2;
+    ManagedRewardsFactory managedRewardsFactory2;
     Router router2;
     Pair newPair;
     Pair newPair2;
@@ -31,6 +32,7 @@ contract FactoryRegistryTest is BaseTest {
             address(gaugeFactory),
             address(managedRewardsFactory)
         );
+        managedRewardsFactory2 = new ManagedRewardsFactory();
 
         // we need to create a new pair with the old factory to create the gauge
         // as existing pairs already have gauges
@@ -46,29 +48,62 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(create2Address, address(newPair2));
     }
 
+    function testSetManagedRewardsFactoryIfNotOwner() public {
+        vm.expectRevert("Ownable: caller is not the owner");
+        vm.prank(address(owner2));
+        factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory2));
+    }
+
+    function testSetManagedRewardsFactoryWithZeroAddress() public {
+        vm.expectRevert(IFactoryRegistry.ZeroAddress.selector);
+        factoryRegistry.setManagedRewardsFactory(address(0));
+    }
+
+    function testSetManagedRewardsFactoryWithSameAddress() public {
+        vm.expectRevert(IFactoryRegistry.SameAddress.selector);
+        factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory));
+    }
+
+    function testSetManagedRewardsFactory() public {
+        assertEq(factoryRegistry.managedRewardsFactory(), address(managedRewardsFactory));
+        factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory2));
+        assertEq(factoryRegistry.managedRewardsFactory(), address(managedRewardsFactory2));
+    }
+
+    function testCannotApproveAlreadyApprovedPath() external {
+        factoryRegistry.approve(address(factory2), address(votingRewardsFactory), address(gaugeFactory));
+        assertEq(
+            factoryRegistry.isApproved(address(factory2), address(votingRewardsFactory), address(gaugeFactory)),
+            true
+        );
+
+        vm.expectRevert(IFactoryRegistry.PathAlreadyApproved.selector);
+        factoryRegistry.approve(address(factory2), address(votingRewardsFactory), address(gaugeFactory));
+    }
+
     function testCannotUnapproveNonExistentPath() external {
-        vm.expectRevert("FactoryRegistry: not approved");
+        vm.expectRevert(IFactoryRegistry.PathNotApproved.selector);
         factoryRegistry.unapprove(address(factory2), address(votingRewardsFactory), address(gaugeFactory));
     }
 
     function testCannotCreateGaugeWithUnauthorizedFactory() external {
         // expect revert if creating a gauge with an unpproved factory
         vm.startPrank(address(governor));
-        vm.expectRevert("Voter: factory path not approved");
+        vm.expectRevert(IVoter.FactoryPathNotApproved.selector);
         voter.createGauge(
             address(factory2), // bad factory
             address(votingRewardsFactory),
             address(gaugeFactory),
             address(newPair)
         );
-        vm.expectRevert("Voter: factory path not approved");
+        vm.expectRevert(IVoter.FactoryPathNotApproved.selector);
         voter.createGauge(
             address(factory),
             address(votingRewardsFactory2), // bad factory
             address(gaugeFactory),
             address(newPair)
         );
-        vm.expectRevert("Voter: factory path not approved");
+        vm.expectRevert(IVoter.FactoryPathNotApproved.selector);
         voter.createGauge(
             address(factory),
             address(votingRewardsFactory),

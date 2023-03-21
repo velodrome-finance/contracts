@@ -11,6 +11,8 @@ contract PairFees {
     address internal immutable token0; // token0 of pair, saved localy and statically for gas optimization
     address internal immutable token1; // Token1 of pair, saved localy and statically for gas optimization
 
+    error NotPair();
+
     constructor(address _token0, address _token1) {
         pair = msg.sender;
         token0 = _token0;
@@ -23,7 +25,7 @@ contract PairFees {
         uint256 _amount0,
         uint256 _amount1
     ) external {
-        require(msg.sender == pair);
+        if (msg.sender != pair) revert NotPair();
         if (_amount0 > 0) IERC20(token0).safeTransfer(_recipient, _amount0);
         if (_amount1 > 0) IERC20(token1).safeTransfer(_recipient, _amount1);
     }

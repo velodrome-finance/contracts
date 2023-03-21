@@ -1,8 +1,11 @@
 pragma solidity 0.8.13;
 
 interface IMinter {
-    event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool _tail);
+    error AlreadyNudged();
+    error NotEpochGovernor();
+    error TailEmissionsInactive();
 
+    event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool _tail);
     event Nudge(uint256 _period, uint256 _oldRate, uint256 _newRate);
 
     /// @notice Allows epoch governor to modify the tail emission rate by at most 1 basis point

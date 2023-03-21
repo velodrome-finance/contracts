@@ -28,7 +28,7 @@ contract FreeManagedRewardTest is BaseTest {
     }
 
     function testCannotNotifyRewardWithZeroAmount() public {
-        vm.expectRevert("Reward: zero amount");
+        vm.expectRevert(IReward.ZeroAmount.selector);
         freeManagedReward.notifyRewardAmount(address(LR), 0);
     }
 
@@ -37,7 +37,7 @@ contract FreeManagedRewardTest is BaseTest {
 
         assertEq(voter.isWhitelistedToken(token), false);
 
-        vm.expectRevert("FreeManagedReward: token not whitelisted");
+        vm.expectRevert(IReward.NotWhitelisted.selector);
         freeManagedReward.notifyRewardAmount(token, TOKEN_1);
     }
 
@@ -86,7 +86,7 @@ contract FreeManagedRewardTest is BaseTest {
         rewards[0] = address(LR);
 
         vm.prank(address(owner2));
-        vm.expectRevert("FreeManagedReward: unpermissioned");
+        vm.expectRevert(IReward.NotAuthorized.selector);
         freeManagedReward.getReward(1, rewards);
     }
 

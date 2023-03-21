@@ -54,7 +54,7 @@ contract PairFactory is IPairFactory {
 
     /// @inheritdoc IPairFactory
     function setVoter(address _voter) external {
-        require(msg.sender == voter);
+        if (msg.sender != voter) revert NotVoter();
         voter = _voter;
         emit SetVoter(_voter);
     }
@@ -65,7 +65,7 @@ contract PairFactory is IPairFactory {
         address _velo,
         address _veloV2
     ) external {
-        require(msg.sender == sinkConverter);
+        if (msg.sender != sinkConverter) revert NotSinkConverter();
         sinkConverter = _sinkConverter;
         velo = _velo;
         veloV2 = _veloV2;
@@ -86,28 +86,28 @@ contract PairFactory is IPairFactory {
     }
 
     function setPauser(address _pauser) external {
-        require(msg.sender == pauser, "PairFactory: not pauser");
+        if (msg.sender != pauser) revert NotPauser();
         pauser = _pauser;
         emit SetPauser(_pauser);
     }
 
     function setPauseState(bool _state) external {
-        require(msg.sender == pauser, "PairFactory: not pauser");
+        if (msg.sender != pauser) revert NotPauser();
         isPaused = _state;
         emit SetPauseState(_state);
     }
 
     function setFeeManager(address _feeManager) external {
-        require(msg.sender == feeManager, "PairFactory: not fee manager");
+        if (msg.sender != feeManager) revert NotFeeManager();
         feeManager = _feeManager;
         emit SetFeeManager(_feeManager);
     }
 
     /// @inheritdoc IPairFactory
     function setFee(bool _stable, uint256 _fee) external {
-        require(msg.sender == feeManager, "PairFactory: not fee manager");
-        require(_fee <= MAX_FEE, "PairFactory: fee too high");
-        require(_fee != 0, "PairFactory: fee must be non-zero");
+        if (msg.sender != feeManager) revert NotFeeManager();
+        if (_fee > MAX_FEE) revert FeeTooHigh();
+        if (_fee == 0) revert ZeroFee();
         if (_stable) {
             stableFee = _fee;
         } else {
@@ -117,9 +117,9 @@ contract PairFactory is IPairFactory {
 
     /// @inheritdoc IPairFactory
     function setCustomFee(address pair, uint256 fee) external {
-        require(msg.sender == feeManager, "PairFactory: not fee manager");
-        require(fee <= MAX_FEE || fee == ZERO_FEE_INDICATOR, "PairFactory: fee too high");
-        require(isPair[pair], "PairFactory: not a pair");
+        if (msg.sender != feeManager) revert NotFeeManager();
+        if (fee > MAX_FEE && fee != ZERO_FEE_INDICATOR) revert FeeTooHigh();
+        if (!isPair[pair]) revert InvalidPair();
 
         customFee[pair] = fee;
         emit SetCustomFee(pair, fee);
@@ -136,10 +136,10 @@ contract PairFactory is IPairFactory {
         address tokenB,
         bool stable
     ) external returns (address pair) {
-        require(tokenA != tokenB, "PairFactory: identical addresses");
+        if (tokenA == tokenB) revert SameAddress();
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), "PairFactory: zero address");
-        require(getPair[token0][token1][stable] == address(0), "PairFactory: pair already exists");
+        if (token0 == address(0)) revert ZeroAddress();
+        if (getPair[token0][token1][stable] != address(0)) revert PairAlreadyExists();
         bytes32 salt = keccak256(abi.encodePacked(token0, token1, stable)); // salt includes stable as well, 3 parameters
         pair = Clones.cloneDeterministic(implementation, salt);
         IPair(pair).initialize(token0, token1, stable);

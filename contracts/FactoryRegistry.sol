@@ -36,7 +36,7 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         address votingRewardsFactory,
         address gaugeFactory
     ) public onlyOwner {
-        require(!_approved[pairFactory][votingRewardsFactory][gaugeFactory], "FactoryRegistry: already approved");
+        if (_approved[pairFactory][votingRewardsFactory][gaugeFactory]) revert PathAlreadyApproved();
         _approved[pairFactory][votingRewardsFactory][gaugeFactory] = true;
         emit Approve(pairFactory, votingRewardsFactory, gaugeFactory);
     }
@@ -47,7 +47,7 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         address votingRewardsFactory,
         address gaugeFactory
     ) external onlyOwner {
-        require(_approved[pairFactory][votingRewardsFactory][gaugeFactory], "FactoryRegistry: not approved");
+        if (!_approved[pairFactory][votingRewardsFactory][gaugeFactory]) revert PathNotApproved();
         delete _approved[pairFactory][votingRewardsFactory][gaugeFactory];
         emit Unapprove(pairFactory, votingRewardsFactory, gaugeFactory);
     }
@@ -73,8 +73,8 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
 
     /// @inheritdoc IFactoryRegistry
     function setManagedRewardsFactory(address _newManagedRewardsFactory) public onlyOwner {
-        require(_newManagedRewardsFactory != _managedRewardsFactory, "FactoryRegistry: same address");
-        require(_newManagedRewardsFactory != address(0), "FactoryRegistry: zero address");
+        if (_newManagedRewardsFactory == _managedRewardsFactory) revert SameAddress();
+        if (_newManagedRewardsFactory == address(0)) revert ZeroAddress();
         _managedRewardsFactory = _newManagedRewardsFactory;
         emit SetManagedRewardsFactory(_newManagedRewardsFactory);
     }

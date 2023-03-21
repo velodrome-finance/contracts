@@ -8,6 +8,17 @@ interface IPairFactory {
     event PairCreated(address indexed token0, address indexed token1, bool stable, address pair, uint256);
     event SetCustomFee(address pair, uint256 fee);
 
+    error FeeTooHigh();
+    error InvalidPair();
+    error NotFeeManager();
+    error NotPauser();
+    error NotSinkConverter();
+    error NotVoter();
+    error PairAlreadyExists();
+    error SameAddress();
+    error ZeroFee();
+    error ZeroAddress();
+
     /// @notice returns the number of pairs created from this factory
     function allPairsLength() external view returns (uint256);
 

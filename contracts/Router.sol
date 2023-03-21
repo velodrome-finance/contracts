@@ -32,7 +32,7 @@ contract Router is IRouter, Context {
     address public constant v1Factory = 0x25CbdDb98b35ab1FF77413456B31EC81A6B6B746;
 
     modifier ensure(uint256 deadline) {
-        require(deadline >= block.timestamp, "Router: expired");
+        if (deadline < block.timestamp) revert Expired();
         _;
     }
 
@@ -47,7 +47,7 @@ contract Router is IRouter, Context {
     }
 
     receive() external payable {
-        require(msg.sender == address(weth), "Router: only accepts ETH from WETH contract");
+        if (msg.sender != address(weth)) revert OnlyWETH();
     }
 
     function sortTokens(address tokenA, address tokenB) public pure returns (address token0, address token1) {
@@ -105,8 +105,8 @@ contract Router is IRouter, Context {
         uint256 reserveA,
         uint256 reserveB
     ) internal pure returns (uint256 amountB) {
-        require(amountA > 0, "Router: insufficient amount");
-        require(reserveA > 0 && reserveB > 0, "Router: insufficient liquidity");
+        if (amountA == 0) revert InsufficientAmount();
+        if (reserveA == 0 || reserveB == 0) revert InsufficientLiquidity();
         amountB = (amountA * reserveB) / reserveA;
     }
 
@@ -124,7 +124,7 @@ contract Router is IRouter, Context {
 
     // performs chained getAmountOut calculations on any number of pairs
     function getAmountsOut(uint256 amountIn, Route[] memory routes) public view returns (uint256[] memory amounts) {
-        require(routes.length >= 1, "Router: INVALID_PATH");
+        if (routes.length < 1) revert InvalidPath();
         amounts = new uint256[](routes.length + 1);
         amounts[0] = amountIn;
         uint256 _length = routes.length;
@@ -206,8 +206,8 @@ contract Router is IRouter, Context {
         uint256 amountAMin,
         uint256 amountBMin
     ) internal returns (uint256 amountA, uint256 amountB) {
-        require(amountADesired >= amountAMin);
-        require(amountBDesired >= amountBMin);
+        if (amountADesired < amountAMin) revert InsufficientAmountADesired();
+        if (amountBDesired < amountBMin) revert InsufficientAmountBDesired();
         // create the pair if it doesn't exist yet
         address _pair = IPairFactory(defaultFactory).getPair(tokenA, tokenB, stable);
         if (_pair == address(0)) {
@@ -219,12 +219,12 @@ contract Router is IRouter, Context {
         } else {
             uint256 amountBOptimal = quoteLiquidity(amountADesired, reserveA, reserveB);
             if (amountBOptimal <= amountBDesired) {
-                require(amountBOptimal >= amountBMin, "Router: insufficient B amount");
+                if (amountBOptimal < amountBMin) revert InsufficientAmountB();
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint256 amountAOptimal = quoteLiquidity(amountBDesired, reserveB, reserveA);
                 assert(amountAOptimal <= amountADesired);
-                require(amountAOptimal >= amountAMin, "Router: insufficient A amount");
+                if (amountAOptimal < amountAMin) revert InsufficientAmountA();
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -312,12 +312,12 @@ contract Router is IRouter, Context {
         uint256 deadline
     ) public ensure(deadline) returns (uint256 amountA, uint256 amountB) {
         address pair = pairFor(tokenA, tokenB, stable, defaultFactory);
-        require(IERC20(pair).transferFrom(_msgSender(), pair, liquidity)); // send liquidity to pair
+        IERC20(pair).safeTransferFrom(_msgSender(), pair, liquidity);
         (uint256 amount0, uint256 amount1) = IPair(pair).burn(to);
         (address token0, ) = sortTokens(tokenA, tokenB);
         (amountA, amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
-        require(amountA >= amountAMin, "Router: insufficient A amount");
-        require(amountB >= amountBMin, "Router: insufficient B amount");
+        if (amountA < amountAMin) revert InsufficientAmountA();
+        if (amountB < amountBMin) revert InsufficientAmountB();
     }
 
     function removeLiquidityETH(
@@ -430,7 +430,7 @@ contract Router is IRouter, Context {
         uint256 deadline
     ) external ensure(deadline) returns (uint256[] memory amounts) {
         amounts = getAmountsOut(amountIn, routes);
-        require(amounts[amounts.length - 1] >= amountOutMin, "Router: insufficient output amount");
+        if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
         _safeTransferFrom(
             routes[0].from,
             _msgSender(),
@@ -446,9 +446,9 @@ contract Router is IRouter, Context {
         address to,
         uint256 deadline
     ) external payable ensure(deadline) returns (uint256[] memory amounts) {
-        require(routes[0].from == address(weth), "Router: INVALID_PATH");
+        if (routes[0].from != address(weth)) revert InvalidPath();
         amounts = getAmountsOut(msg.value, routes);
-        require(amounts[amounts.length - 1] >= amountOutMin, "Router: insufficient output amount");
+        if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
         weth.deposit{value: amounts[0]}();
         assert(weth.transfer(pairFor(routes[0].from, routes[0].to, routes[0].stable, routes[0].factory), amounts[0]));
         _swap(amounts, routes, to);
@@ -461,9 +461,9 @@ contract Router is IRouter, Context {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256[] memory amounts) {
-        require(routes[routes.length - 1].to == address(weth), "Router: invalid path");
+        if (routes[routes.length - 1].to != address(weth)) revert InvalidPath();
         amounts = getAmountsOut(amountIn, routes);
-        require(amounts[amounts.length - 1] >= amountOutMin, "Router: insufficient output amount");
+        if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
         _safeTransferFrom(
             routes[0].from,
             _msgSender(),
@@ -538,10 +538,7 @@ contract Router is IRouter, Context {
         uint256 _length = routes.length - 1;
         uint256 balanceBefore = IERC20(routes[_length].to).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(routes, to);
-        require(
-            IERC20(routes[_length].to).balanceOf(to) - balanceBefore >= amountOutMin,
-            "Router: insufficient output amount"
-        );
+        if (IERC20(routes[_length].to).balanceOf(to) - balanceBefore < amountOutMin) revert InsufficientOutputAmount();
     }
 
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
@@ -550,17 +547,14 @@ contract Router is IRouter, Context {
         address to,
         uint256 deadline
     ) external payable ensure(deadline) {
-        require(routes[0].from == address(weth), "Router: invalid path");
+        if (routes[0].from != address(weth)) revert InvalidPath();
         uint256 amountIn = msg.value;
         weth.deposit{value: amountIn}();
         assert(weth.transfer(pairFor(routes[0].from, routes[0].to, routes[0].stable, routes[0].factory), amountIn));
         uint256 _length = routes.length - 1;
         uint256 balanceBefore = IERC20(routes[_length].to).balanceOf(to);
         _swapSupportingFeeOnTransferTokens(routes, to);
-        require(
-            IERC20(routes[_length].to).balanceOf(to) - balanceBefore >= amountOutMin,
-            "Router: insufficient output amount"
-        );
+        if (IERC20(routes[_length].to).balanceOf(to) - balanceBefore < amountOutMin) revert InsufficientOutputAmount();
     }
 
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
@@ -570,7 +564,7 @@ contract Router is IRouter, Context {
         address to,
         uint256 deadline
     ) external ensure(deadline) {
-        require(routes[routes.length - 1].to == address(weth), "Router: invalid path");
+        if (routes[routes.length - 1].to != address(weth)) revert InvalidPath();
         _safeTransferFrom(
             routes[0].from,
             _msgSender(),
@@ -579,7 +573,7 @@ contract Router is IRouter, Context {
         );
         _swapSupportingFeeOnTransferTokens(routes, address(this));
         uint256 amountOut = weth.balanceOf(address(this));
-        require(amountOut >= amountOutMin, "Router: insufficient output amount");
+        if (amountOut < amountOutMin) revert InsufficientOutputAmount();
         weth.withdraw(amountOut);
         _safeTransferETH(to, amountOut);
     }
@@ -599,11 +593,11 @@ contract Router is IRouter, Context {
         address _tokenIn = tokenIn;
         uint256 value = msg.value;
         if (tokenIn == ETHER) {
-            require(amountIn == value, "Router: incorrect amountIn for eth deposit");
+            if (amountIn != value) revert InvalidAmountInForETHDeposit();
             _tokenIn = address(weth);
             weth.deposit{value: value}();
         } else {
-            require(value == 0, "Router: invalid tokenIn address for eth deposit");
+            if (value != 0) revert InvalidTokenInForETHDeposit();
             _safeTransferFrom(_tokenIn, _msgSender(), address(this), amountIn);
         }
 
@@ -643,15 +637,15 @@ contract Router is IRouter, Context {
 
         {
             (uint256 reserve0, uint256 reserve1, ) = IPair(pair).getReserves();
-            require(reserve0 > MINIMUM_LIQUIDITY && reserve1 > MINIMUM_LIQUIDITY, "Router: pair does not exist");
+            if (reserve0 <= MINIMUM_LIQUIDITY || reserve1 <= MINIMUM_LIQUIDITY) revert PairDoesNotExist();
         }
 
         if (tokenIn != tokenA) {
-            require(routesA[routesA.length - 1].to == tokenA, "Router: invalid routeA");
+            if (routesA[routesA.length - 1].to != tokenA) revert InvalidRouteA();
             _internalSwap(tokenIn, amountInA, zapInPair.amountOutMinA, routesA);
         }
         if (tokenIn != tokenB) {
-            require(routesB[routesB.length - 1].to == tokenB, "Router: invalid routeB");
+            if (routesB[routesB.length - 1].to != tokenB) revert InvalidRouteB();
             _internalSwap(tokenIn, amountInB, zapInPair.amountOutMinB, routesB);
         }
     }
@@ -688,20 +682,20 @@ contract Router is IRouter, Context {
         uint256 amountAMin,
         uint256 amountBMin
     ) internal view returns (uint256 amountA, uint256 amountB) {
-        require(amountADesired >= amountAMin);
-        require(amountBDesired >= amountBMin);
+        if (amountADesired < amountAMin) revert InsufficientAmountADesired();
+        if (amountBDesired < amountBMin) revert InsufficientAmountBDesired();
         (uint256 reserveA, uint256 reserveB) = getReserves(tokenA, tokenB, stable, _factory);
         if (reserveA == 0 && reserveB == 0) {
             (amountA, amountB) = (amountADesired, amountBDesired);
         } else {
             uint256 amountBOptimal = quoteLiquidity(amountADesired, reserveA, reserveB);
             if (amountBOptimal <= amountBDesired) {
-                require(amountBOptimal >= amountBMin, "Router: insufficient B amount");
+                if (amountBOptimal < amountBMin) revert InsufficientAmountB();
                 (amountA, amountB) = (amountADesired, amountBOptimal);
             } else {
                 uint256 amountAOptimal = quoteLiquidity(amountBDesired, reserveB, reserveA);
                 assert(amountAOptimal <= amountADesired);
-                require(amountAOptimal >= amountAMin, "Router: insufficient A amount");
+                if (amountAOptimal < amountAMin) revert InsufficientAmountA();
                 (amountA, amountB) = (amountAOptimal, amountBDesired);
             }
         }
@@ -715,7 +709,7 @@ contract Router is IRouter, Context {
         Route[] memory routes
     ) internal {
         uint256[] memory amounts = getAmountsOut(amountIn, routes);
-        require(amounts[amounts.length - 1] >= amountOutMin, "Router: insufficient output amount for zap");
+        if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
         address pair = pairFor(routes[0].from, routes[0].to, routes[0].stable, routes[0].factory);
         _safeTransfer(tokenIn, pair, amountIn);
         _swap(amounts, routes, address(this));
@@ -737,12 +731,12 @@ contract Router is IRouter, Context {
         uint256 balance;
         if (tokenA != _tokenOut) {
             balance = IERC20(tokenA).balanceOf(address(this));
-            require(routesA[routesA.length - 1].to == _tokenOut, "Router: invalid routeA");
+            if (routesA[routesA.length - 1].to != _tokenOut) revert InvalidRouteA();
             _internalSwap(tokenA, balance, zapOutPair.amountOutMinA, routesA);
         }
         if (tokenB != _tokenOut) {
             balance = IERC20(tokenB).balanceOf(address(this));
-            require(routesB[routesB.length - 1].to == _tokenOut, "Router: invalid routeB");
+            if (routesB[routesB.length - 1].to != _tokenOut) revert InvalidRouteB();
             _internalSwap(tokenB, balance, zapOutPair.amountOutMinB, routesB);
         }
 
@@ -754,12 +748,12 @@ contract Router is IRouter, Context {
         address tokenA = zapOutPair.tokenA;
         address tokenB = zapOutPair.tokenB;
         address pair = pairFor(tokenA, tokenB, zapOutPair.stable, zapOutPair.factory);
-        require(IERC20(pair).transferFrom(msg.sender, pair, liquidity));
+        IERC20(pair).safeTransferFrom(msg.sender, pair, liquidity);
         (address token0, ) = sortTokens(tokenA, tokenB);
         (uint256 amount0, uint256 amount1) = IPair(pair).burn(address(this));
         (uint256 amountA, uint256 amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
-        require(amountA >= zapOutPair.amountAMin, "Router: insufficient A amount");
-        require(amountB >= zapOutPair.amountBMin, "Router: insufficient B amount");
+        if (amountA < zapOutPair.amountAMin) revert InsufficientAmountA();
+        if (amountB < zapOutPair.amountBMin) revert InsufficientAmountB();
     }
 
     /// @inheritdoc IRouter
@@ -872,7 +866,7 @@ contract Router is IRouter, Context {
 
     function _safeTransferETH(address to, uint256 value) internal {
         (bool success, ) = to.call{value: value}(new bytes(0));
-        require(success, "Router: ETH transfer failed");
+        if (!success) revert ETHTransferFailed();
     }
 
     function _safeTransfer(

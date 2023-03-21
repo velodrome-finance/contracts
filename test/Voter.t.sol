@@ -30,7 +30,7 @@ contract VoterTest is BaseTest {
 
         // try voting again and fail
         pools[0] = address(pair2);
-        vm.expectRevert("Voter: already voted or deposited this epoch");
+        vm.expectRevert(IVoter.AlreadyVotedOrDeposited.selector);
         voter.vote(1, pools, weights);
     }
 
@@ -50,7 +50,7 @@ contract VoterTest is BaseTest {
         skip(1 weeks / 2);
 
         // try resetting and fail
-        vm.expectRevert("Voter: already voted or deposited this epoch");
+        vm.expectRevert(IVoter.AlreadyVotedOrDeposited.selector);
         voter.reset(1);
     }
 
@@ -213,7 +213,7 @@ contract VoterTest is BaseTest {
         uint256[] memory weights = new uint256[](1);
         weights[0] = 1;
 
-        vm.expectRevert("Voter: inactive managed nft");
+        vm.expectRevert(IVoter.InactiveManagedNFT.selector);
         voter.vote(mTokenId, pools, weights);
     }
 
@@ -228,15 +228,15 @@ contract VoterTest is BaseTest {
         weights[0] = 5000;
 
         skipToNextEpoch(0);
-        vm.expectRevert("Voter: distribute window");
+        vm.expectRevert(IVoter.DistributeWindow.selector);
         voter.vote(1, pools, weights);
 
         skip(30 minutes);
-        vm.expectRevert("Voter: distribute window");
+        vm.expectRevert(IVoter.DistributeWindow.selector);
         voter.vote(1, pools, weights);
 
         skip(30 minutes);
-        vm.expectRevert("Voter: distribute window");
+        vm.expectRevert(IVoter.DistributeWindow.selector);
         voter.vote(1, pools, weights);
 
         skip(1);
@@ -261,11 +261,11 @@ contract VoterTest is BaseTest {
 
         vm.revertTo(sid);
         skip(1);
-        vm.expectRevert("Voter: nft not whitelisted");
+        vm.expectRevert(IVoter.NotWhitelistedNFT.selector);
         voter.vote(1, pools, weights);
 
         skip(1 hours - 2); /// one second prior to epoch flip
-        vm.expectRevert("Voter: nft not whitelisted");
+        vm.expectRevert(IVoter.NotWhitelistedNFT.selector);
         voter.vote(1, pools, weights);
 
         vm.prank(address(governor));
@@ -278,20 +278,20 @@ contract VoterTest is BaseTest {
 
     function testCannotSetMaxVotingNumIfNotGovernor() public {
         vm.prank(address(owner2));
-        vm.expectRevert("Voter: not governor");
+        vm.expectRevert(IVoter.NotGovernor.selector);
         voter.setMaxVotingNum(42);
     }
 
     function testCannotSetMaxVotingNumToSameNum() public {
         uint256 maxVotingNum = voter.maxVotingNum();
         vm.prank(address(governor));
-        vm.expectRevert("Voter: same value");
+        vm.expectRevert(IVoter.SameValue.selector);
         voter.setMaxVotingNum(maxVotingNum);
     }
 
     function testCannotSetMaxVotingNumBelow10() public {
         vm.startPrank(address(governor));
-        vm.expectRevert("Voter: too low");
+        vm.expectRevert(IVoter.MaximumVotingNumberTooLow.selector);
         voter.setMaxVotingNum(9);
     }
 
@@ -304,7 +304,7 @@ contract VoterTest is BaseTest {
 
     function testCannotSetGovernorIfNotGovernor() public {
         vm.prank(address(owner2));
-        vm.expectRevert("Voter: not governor");
+        vm.expectRevert(IVoter.NotGovernor.selector);
         voter.setGovernor(address(owner2));
     }
 
@@ -317,7 +317,7 @@ contract VoterTest is BaseTest {
 
     function testCannotSetEpochGovernorIfNotGovernor() public {
         vm.prank(address(owner2));
-        vm.expectRevert("Voter: not governor");
+        vm.expectRevert(IVoter.NotGovernor.selector);
         voter.setGovernor(address(owner2));
     }
 
@@ -330,7 +330,7 @@ contract VoterTest is BaseTest {
 
     function testCannotSetEmergencyCouncilIfNotEmergencyCouncil() public {
         vm.prank(address(owner2));
-        vm.expectRevert("Voter: not emergency council");
+        vm.expectRevert(IVoter.NotEmergencyCouncil.selector);
         voter.setEmergencyCouncil(address(owner2));
     }
 
@@ -342,7 +342,7 @@ contract VoterTest is BaseTest {
 
     function testCannotWhitelistIfNotGovernor() public {
         vm.prank(address(owner2));
-        vm.expectRevert("Voter: not governor");
+        vm.expectRevert(IVoter.NotGovernor.selector);
         voter.whitelistToken(address(WETH), true);
     }
 
@@ -379,7 +379,7 @@ contract VoterTest is BaseTest {
 
     function testCannotwhitelistNFTIfNotGovernor() public {
         vm.prank(address(owner2));
-        vm.expectRevert("Voter: not governor");
+        vm.expectRevert(IVoter.NotGovernor.selector);
         voter.whitelistNFT(1, true);
     }
 
@@ -419,7 +419,7 @@ contract VoterTest is BaseTest {
         voter.killGauge(address(gauge));
         assertFalse(voter.isAlive(address(gauge)));
 
-        vm.expectRevert("Voter: gauge already dead");
+        vm.expectRevert(IVoter.GaugeAlreadyKilled.selector);
         voter.killGauge(address(gauge));
     }
 
@@ -434,17 +434,17 @@ contract VoterTest is BaseTest {
     function testCannotReviveGaugeIfAlreadyAlive() public {
         assertTrue(voter.isAlive(address(gauge)));
 
-        vm.expectRevert("Voter: gauge already alive");
+        vm.expectRevert(IVoter.GaugeAlreadyRevived.selector);
         voter.reviveGauge(address(gauge));
     }
 
     function testCannotKillNonExistentGauge() public {
-        vm.expectRevert("Voter: gauge already dead");
+        vm.expectRevert(IVoter.GaugeAlreadyKilled.selector);
         voter.killGauge(address(0xDEAD));
     }
 
     function testCannotKillGaugeIfNotEmergencyCouncil() public {
-        vm.expectRevert("Voter: not emergency council");
+        vm.expectRevert(IVoter.NotEmergencyCouncil.selector);
         vm.prank(address(owner2));
         voter.killGauge(address(gauge));
     }
@@ -531,7 +531,7 @@ contract VoterTest is BaseTest {
     }
 
     function testCannotNotifyRewardAmountIfNotMinter() public {
-        vm.expectRevert("Voter: only minter can deposit reward");
+        vm.expectRevert(IVoter.NotMinter.selector);
         voter.notifyRewardAmount(TOKEN_1);
     }
 
@@ -564,7 +564,7 @@ contract VoterTest is BaseTest {
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
         vm.prank(address(owner2));
-        vm.expectRevert("Voter: not owner or approved");
+        vm.expectRevert(IVoter.NotApprovedOrOwner.selector);
         voter.depositManaged(tokenId, mTokenId);
     }
 
@@ -576,7 +576,7 @@ contract VoterTest is BaseTest {
         skipAndRoll(1);
         escrow.setManagedState(mTokenId, true);
 
-        vm.expectRevert("Voter: inactive managed nft");
+        vm.expectRevert(IVoter.InactiveManagedNFT.selector);
         voter.depositManaged(tokenId, mTokenId);
     }
 
@@ -593,11 +593,11 @@ contract VoterTest is BaseTest {
 
         vm.revertTo(sid);
         skip(1);
-        vm.expectRevert("Voter: cannot deposit in window");
+        vm.expectRevert(IVoter.SpecialVotingWindow.selector);
         voter.depositManaged(tokenId, mTokenId);
 
         skip(1 hours - 2); /// one second prior to epoch flip
-        vm.expectRevert("Voter: cannot deposit in window");
+        vm.expectRevert(IVoter.SpecialVotingWindow.selector);
         voter.depositManaged(tokenId, mTokenId);
 
         skip(1); /// new epoch
@@ -614,7 +614,7 @@ contract VoterTest is BaseTest {
 
         skip(1 weeks / 2);
 
-        vm.expectRevert("Voter: already voted or deposited this epoch");
+        vm.expectRevert(IVoter.AlreadyVotedOrDeposited.selector);
         voter.withdrawManaged(tokenId);
     }
 
@@ -629,7 +629,7 @@ contract VoterTest is BaseTest {
         skipToNextEpoch(1);
 
         vm.prank(address(owner3));
-        vm.expectRevert("Voter: not owner or approved");
+        vm.expectRevert(IVoter.NotApprovedOrOwner.selector);
         voter.withdrawManaged(tokenId);
     }
 

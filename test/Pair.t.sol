@@ -51,7 +51,7 @@ contract PairTest is BaseTest {
 
         VELO.approve(address(escrow), 5e17);
         escrow.increaseAmount(1, 5e17);
-        vm.expectRevert(abi.encodePacked("VotingEscrow: can only increase lock duration"));
+        vm.expectRevert(IVotingEscrow.LockDurationNotInFuture.selector);
         escrow.increaseUnlockTime(1, MAXTIME);
         assertGt(escrow.balanceOfNFT(1), 995063075414519385);
         assertEq(VELO.balanceOf(address(escrow)), TOKEN_1);
@@ -72,11 +72,11 @@ contract PairTest is BaseTest {
         votingEscrowViews();
 
         vm.startPrank(address(owner2));
-        vm.expectRevert();
+        vm.expectRevert(IVotingEscrow.NotApprovedOrOwner.selector);
         escrow.transferFrom(address(owner), address(owner2), 1);
-        vm.expectRevert();
+        vm.expectRevert(IVotingEscrow.NotApprovedOrOwner.selector);
         escrow.approve(address(owner2), 1);
-        vm.expectRevert("VotingEscrow: invalid permissions (from)");
+        vm.expectRevert(IVotingEscrow.NotApprovedOrOwner.selector);
         escrow.merge(1, 2);
         vm.stopPrank();
     }
@@ -796,7 +796,7 @@ contract PairTest is BaseTest {
         deployPairCoins();
 
         vm.prank(address(owner2));
-        vm.expectRevert("Pair: not emergency council");
+        vm.expectRevert(IPair.NotEmergencyCouncil.selector);
         pair.setName("Some new name");
     }
 
@@ -812,7 +812,7 @@ contract PairTest is BaseTest {
         deployPairCoins();
 
         vm.prank(address(owner2));
-        vm.expectRevert("Pair: not emergency council");
+        vm.expectRevert(IPair.NotEmergencyCouncil.selector);
         pair.setSymbol("Some new symbol");
     }
 }

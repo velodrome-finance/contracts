@@ -99,7 +99,7 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
     /// @inheritdoc IGauge
     function getReward(address _account) external nonReentrant {
         address sender = _msgSender();
-        require(sender == _account || sender == voter, "Gauge: unpermissioned");
+        if (sender != _account && sender != voter) revert NotAuthorized();
 
         _updateRewards(_account);
 
@@ -130,8 +130,8 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
     }
 
     function _depositFor(uint256 _amount, address _recipient) internal nonReentrant {
-        require(_amount > 0, "Gauge: zero amount");
-        require(IVoter(voter).isAlive(address(this)), "Gauge: not alive");
+        if (_amount == 0) revert ZeroAmount();
+        if (!IVoter(voter).isAlive(address(this))) revert NotAlive();
 
         address sender = _msgSender();
         _updateRewards(_recipient);
@@ -172,8 +172,8 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
     /// @inheritdoc IGauge
     function notifyRewardAmount(uint256 _amount) external nonReentrant {
         address sender = _msgSender();
-        require(sender == voter, "Gauge: only voter can notify reward");
-        require(_amount > 0, "Gauge: zero amount");
+        if (sender != voter) revert NotVoter();
+        if (_amount == 0) revert ZeroAmount();
         _claimFees();
         rewardPerTokenStored = rewardPerToken();
         uint256 timestamp = block.timestamp;
@@ -189,14 +189,14 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
             rewardRate = (_amount + _leftover) / timeUntilNext;
         }
         rewardRateByEpoch[VelodromeTimeLibrary.epochStart(timestamp)] = rewardRate;
-        require(rewardRate > 0, "Gauge: zero rewardRate");
+        if (rewardRate == 0) revert ZeroRewardRate();
 
         // Ensure the provided reward amount is not more than the balance in the contract.
         // This keeps the reward rate in the right range, preventing overflows due to
         // very high values of rewardRate in the earned and rewardsPerToken functions;
         // Reward + leftover must be less than 2^256 / 10^18 to avoid overflow.
         uint256 balance = IERC20(rewardToken).balanceOf(address(this));
-        require(rewardRate <= balance / timeUntilNext, "Gauge: provided reward too high");
+        if (rewardRate > balance / timeUntilNext) revert RewardRateTooHigh();
 
         lastUpdateTime = timestamp;
         periodFinish = timestamp + timeUntilNext;

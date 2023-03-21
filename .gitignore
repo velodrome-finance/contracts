@@ -12,3 +12,6 @@ node_modules/
 package-lock.json
 
 artifacts/
+
+# coverage
+lcov.info

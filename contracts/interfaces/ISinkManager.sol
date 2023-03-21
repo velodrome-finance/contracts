@@ -21,6 +21,14 @@ interface ISinkManager {
         uint256 timestamp
     );
 
+    error ContractNotOwnerOfToken();
+    error GaugeAlreadySet();
+    error GaugeNotSet();
+    error NFTAlreadyConverted();
+    error NFTExpired();
+    error TokenIdNotSet();
+    error TokenIdAlreadySet();
+
     function ownedTokenId() external view returns (uint256);
 
     function velo() external view returns (IVelo);

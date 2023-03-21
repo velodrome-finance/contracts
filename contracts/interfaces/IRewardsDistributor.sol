@@ -4,6 +4,8 @@ interface IRewardsDistributor {
     event CheckpointToken(uint256 time, uint256 tokens);
     event Claimed(uint256 tokenId, uint256 amount, uint256 claimEpoch, uint256 maxEpoch);
 
+    error NotDepositor();
+
     function checkpointToken() external;
 
     function checkpointTotalSupply() external;

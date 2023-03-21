@@ -50,13 +50,13 @@ contract SinkManagerTest is BaseTest {
         );
 
         // Fail if attempting to convert vEscrow
-        vm.expectRevert("SinkManager: tokenId not set");
+        vm.expectRevert(ISinkManager.TokenIdNotSet.selector);
         newSinkManager.convertVe(tokenId1);
 
         // Fail if attempting to convert velo
         uint256 amount = TOKEN_1 / 4;
         vVELO.approve(address(sinkManager), amount);
-        vm.expectRevert("SinkManager: tokenId not set");
+        vm.expectRevert(ISinkManager.TokenIdNotSet.selector);
         newSinkManager.convertVELO(amount);
     }
 
@@ -65,7 +65,7 @@ contract SinkManagerTest is BaseTest {
         vm.warp(block.timestamp + 4 * 365 * 86400 + 1);
         vm.startPrank(address(owner2));
         vEscrow.approve(address(sinkManager), tokenId2);
-        vm.expectRevert("SinkManager: nft expired");
+        vm.expectRevert(ISinkManager.NFTExpired.selector);
         sinkManager.convertVe(tokenId2);
     }
 
@@ -73,7 +73,7 @@ contract SinkManagerTest is BaseTest {
         vm.startPrank(address(owner2));
         vEscrow.approve(address(sinkManager), tokenId2);
         sinkManager.convertVe(tokenId2);
-        vm.expectRevert("SinkManager: nft already converted");
+        vm.expectRevert(ISinkManager.NFTAlreadyConverted.selector);
         sinkManager.convertVe(tokenId2);
         vm.stopPrank();
     }
@@ -333,12 +333,12 @@ contract SinkManagerTest is BaseTest {
     // --------------------------------------------------------------------
 
     function testCannotSetOwnedTokenIdV1Twice() external {
-        vm.expectRevert("SinkManager: tokenId already set");
+        vm.expectRevert(ISinkManager.TokenIdAlreadySet.selector);
         sinkManager.setOwnedTokenId(69);
     }
 
     function testCannotSetupSinkDrainTwice() external {
-        vm.expectRevert("SinkManager: gauge already set");
+        vm.expectRevert(ISinkManager.GaugeAlreadySet.selector);
         sinkManager.setupSinkDrain(address(gaugeSinkDrain));
     }
 
@@ -353,7 +353,7 @@ contract SinkManagerTest is BaseTest {
             address(vDistributor)
         );
 
-        vm.expectRevert("SinkManager: tokenId not set");
+        vm.expectRevert(ISinkManager.TokenIdNotSet.selector);
         newSinkManager.setupSinkDrain(address(gaugeSinkDrain));
     }
 
