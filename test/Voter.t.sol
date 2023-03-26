@@ -415,6 +415,78 @@ contract VoterTest is BaseTest {
         assertFalse(voter.isAlive(address(gauge)));
     }
 
+    function testKillGaugeWithRewards() public {
+        /// epoch 0
+        minter.update_period();
+
+        // add deposit
+        pair.approve(address(gauge), PAIR_1);
+        gauge.deposit(PAIR_1);
+
+        // Create nft to vote for gauge
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        skipToNextEpoch(2 hours); // past epochVoteStart
+
+        // vote for gauge
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 1;
+        voter.vote(tokenId, pools, weights);
+        uint256 weight = voter.weights(address(pair));
+        assertGt(weight, 0);
+        uint256 votes = voter.votes(tokenId, address(pair));
+        assertGt(votes, 0);
+        uint256 totalWeight = voter.totalWeight();
+        assertGt(totalWeight, 0);
+
+        skipToNextEpoch(2 hours); // past epochVoteStart
+
+        // distribute rebase and sync gauge
+        uint256 rebase = minter.update_period();
+        assertGt(rebase, 0);
+        voter.updateFor(address(gauge));
+
+        uint256 reward = VELO.balanceOf(address(voter));
+        assertGt(reward, 0);
+        uint256 claimableBefore = voter.claimable(address(gauge));
+        assertApproxEqRel(claimableBefore, reward, 1e6);
+
+        assertEq(VELO.balanceOf(address(minter)), 0);
+
+        voter.killGauge(address(gauge));
+        assertEq(voter.claimable(address(gauge)), 0);
+        // Minimal remains from rounding
+        assertLt(VELO.balanceOf(address(voter)), 1e2); // check for dust
+        assertEq(VELO.balanceOf(address(minter)), claimableBefore);
+
+        // zero-out rewards from minter so in a new rebase, new VELO is minted
+        vm.prank(address(minter));
+        VELO.transfer(address(1), 14999999999999999999999999);
+        assertEq(VELO.balanceOf(address(minter)), 0);
+
+        // next epoch - votes/weights stay on gauge and no rewards get trapped in voter
+        skipToNextEpoch(2 hours);
+
+        // distribute rebase and sync gauge
+        rebase = minter.update_period();
+        assertGt(rebase, 0);
+        assertEq(voter.claimable(address(gauge)), 0);
+        voter.updateFor(address(gauge));
+
+        // votes/weights stay the same
+        assertEq(voter.weights(address(pair)), weight);
+        assertEq(voter.votes(tokenId, address(pair)), votes);
+        assertEq(voter.totalWeight(), totalWeight);
+        assertEq(voter.claimable(address(gauge)), 0);
+
+        // Rewards are not trapped in voter (minus rounding from before)
+        assertLt(VELO.balanceOf(address(voter)), 1e2); // check for dust
+        assertGt(VELO.balanceOf(address(minter)), 0);
+    }
+
     function testCannotKillGaugeIfAlreadyKilled() public {
         voter.killGauge(address(gauge));
         assertFalse(voter.isAlive(address(gauge)));

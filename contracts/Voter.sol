@@ -351,8 +351,13 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     function killGauge(address _gauge) external {
         if (_msgSender() != emergencyCouncil) revert NotEmergencyCouncil();
         if (!isAlive[_gauge]) revert GaugeAlreadyKilled();
+        // Return claimable back to minter
+        uint256 _claimable = claimable[_gauge];
+        if (_claimable > 0) {
+            IERC20(rewardToken).safeTransfer(minter, _claimable);
+            delete claimable[_gauge];
+        }
         isAlive[_gauge] = false;
-        claimable[_gauge] = 0;
         emit GaugeKilled(_gauge);
     }
 
@@ -412,6 +417,8 @@ contract Voter is IVoter, Context, ReentrancyGuard {
                 uint256 _share = (uint256(_supplied) * _delta) / 1e18; // add accrued difference for each supplied token
                 if (isAlive[_gauge]) {
                     claimable[_gauge] += _share;
+                } else {
+                    IERC20(rewardToken).safeTransfer(minter, _share); // send rewards back to Minter so they're not stuck in Voter
                 }
             }
         } else {
