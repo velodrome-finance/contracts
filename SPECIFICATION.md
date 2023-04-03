@@ -132,8 +132,12 @@ In addition, `Voter` also provides support for depositing and withdrawing from
 managed NFTs. Voting and depositing into a managed NFT are mutually exclusive 
 (i.e. you may only do one per epoch). In the same way you cannot reset your NFT 
 in the same epoch that you vote, you also cannot withdraw your NFT in the same 
-epoch that you deposited. For more information about managed NFTs, see the 
-`VotingEscrow` section. 
+epoch that you deposited.
+
+Voting power of a managed NFT syncs every time a normal NFT is deposited or withdrawn into it.  In the 
+event the managed NFT has its' last remaining normal NFT withdrawn, the vote of the managed NFT will be reset.  If
+the managed NFT had already voted in the epoch, the vote will reset and the managed NFT will have the ability to re-vote if
+a normal veNFT is locked into the managed veNFT.
 
 `Voter` is in charge of creating and mantaining gauge liveness states. Gauges that 
 are killed will not receive emissions. Once per epoch, the corresponding gauge for 

@@ -186,10 +186,11 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function poke(uint256 _tokenId) external nonReentrant {
-        _poke(_tokenId);
+        uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
+        _poke(_tokenId, _weight);
     }
 
-    function _poke(uint256 _tokenId) internal {
+    function _poke(uint256 _tokenId, uint256 _weight) internal {
         address[] memory _poolVote = poolVote[_tokenId];
         uint256 _poolCnt = _poolVote.length;
         uint256[] memory _weights = new uint256[](_poolCnt);
@@ -197,18 +198,17 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         for (uint256 i = 0; i < _poolCnt; i++) {
             _weights[i] = votes[_tokenId][_poolVote[i]];
         }
-
-        _vote(_tokenId, _poolVote, _weights);
+        _vote(_tokenId, _weight, _poolVote, _weights);
     }
 
     function _vote(
         uint256 _tokenId,
+        uint256 _weight,
         address[] memory _poolVote,
         uint256[] memory _weights
     ) internal {
         _reset(_tokenId);
         uint256 _poolCnt = _poolVote.length;
-        uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
         uint256 _totalVoteWeight = 0;
         uint256 _totalWeight = 0;
         uint256 _usedWeight = 0;
@@ -259,7 +259,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         if ((_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) && !isWhitelistedNFT[_tokenId])
             revert NotWhitelistedNFT();
         lastVoted[_tokenId] = _timestamp;
-        _vote(_tokenId, _poolVote, _weights);
+        uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
+        _vote(_tokenId, _weight, _poolVote, _weights);
     }
 
     /// @inheritdoc IVoter
@@ -271,7 +272,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         if (_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) revert SpecialVotingWindow();
         lastVoted[_tokenId] = _timestamp;
         IVotingEscrow(ve).depositManaged(_tokenId, _mTokenId);
-        _poke(_mTokenId);
+        uint256 _weight = IVotingEscrow(ve).balanceOfNFTAt(_mTokenId, block.timestamp);
+        _poke(_mTokenId, _weight);
     }
 
     /// @inheritdoc IVoter
@@ -282,10 +284,13 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         // If the NORMAL veNFT was the last tokenId locked into _mTokenId, reset vote as there is
         // no longer voting power available to the _mTokenId.  Otherwise, updating voting power to accurately
         // reflect the withdrawn voting power.
-        if (IVotingEscrow(ve).balanceOfNFT(_mTokenId) == 0) {
+        uint256 _weight = IVotingEscrow(ve).balanceOfNFTAt(_mTokenId, block.timestamp);
+        if (_weight == 0) {
             _reset(_mTokenId);
+            // clear out lastVoted to allow re-voting in the current epoch
+            delete lastVoted[_mTokenId];
         } else {
-            _poke(_mTokenId);
+            _poke(_mTokenId, _weight);
         }
     }
 

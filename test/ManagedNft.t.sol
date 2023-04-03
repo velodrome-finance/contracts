@@ -221,6 +221,122 @@ contract ManagedNftTest is BaseTest {
         escrow.withdrawManaged(tokenId);
     }
 
+    function testWithdrawManagedWithFlashProtection() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+
+        // deposit two normal veNFTS
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1, MAXTIME);
+        voter.depositManaged(tokenId, mTokenId);
+        voter.depositManaged(tokenId2, mTokenId);
+
+        skipToNextEpoch(2 hours);
+
+        // vote
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+        vm.startPrank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+        assertEq(voter.totalWeight(), 1984817351487722400); // TOKEN_1 * 2 with time decay
+
+        skipAndRoll(1);
+
+        // Same block transfer/withdrawManaged
+        uint256 preTotalWeight = voter.totalWeight();
+        escrow.transferFrom(address(owner2), address(owner3), mTokenId);
+        vm.stopPrank();
+        voter.withdrawManaged(tokenId2);
+
+        // properly synced with voting balance
+        assertEq(voter.totalWeight(), 997203188301196005); // TOKEN_1 with time decay
+    }
+
+    function testDepositManagedWithFlashProtection() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1, MAXTIME);
+        voter.depositManaged(tokenId, mTokenId);
+
+        skipToNextEpoch(2 hours);
+
+        // vote
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+        vm.startPrank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+
+        // Same block transfer/depositManaged
+        assertEq(voter.totalWeight(), 992408675681268000); // TOKEN_1 with time decay
+        escrow.transferFrom(address(owner2), address(owner3), mTokenId);
+        vm.stopPrank();
+        voter.depositManaged(tokenId2, mTokenId);
+
+        // properly synced with voting balance
+        assertEq(voter.totalWeight(), 1994406392583079200); // TOKEN_1 * 2 with time decay
+    }
+
+    function testWithdrawManagedResetsLastVotedOnce() public {
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1, MAXTIME);
+        voter.depositManaged(tokenId, mTokenId);
+
+        skipToNextEpoch(2 hours);
+
+        // vote
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+        vm.prank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+
+        // The only locked veNFT withdraws - resetting the voting power and lastVoted
+        assertEq(voter.totalWeight(), 992408675681268000); // TOKEN_1 with time decay
+        assertEq(voter.lastVoted(mTokenId), block.timestamp);
+        voter.withdrawManaged(tokenId);
+        assertEq(voter.totalWeight(), 0);
+        assertEq(voter.lastVoted(mTokenId), 0);
+
+        // The same veNFT can deposit back and managed veNFT can re-vote
+        voter.depositManaged(tokenId, mTokenId);
+        vm.prank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+        assertEq(voter.totalWeight(), 997203196228644000); // TOKEN_1 with time decay
+        assertEq(voter.lastVoted(mTokenId), block.timestamp);
+        // veNFT cannot withdraw until next epoch
+        vm.expectRevert(IVoter.AlreadyVotedOrDeposited.selector);
+        voter.withdrawManaged(tokenId);
+
+        skipToNextEpoch(2 hours);
+        vm.prank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+
+        // The only locked veNFT withdraws - resetting the voting power and lastVoted
+        assertEq(voter.totalWeight(), 992408675681268000); // TOKEN_1 with time decay
+        assertEq(voter.lastVoted(mTokenId), block.timestamp);
+        voter.withdrawManaged(tokenId);
+        assertEq(voter.totalWeight(), 0);
+        assertEq(voter.lastVoted(mTokenId), 0);
+
+        // A new veNFT can deposit back and managed veNFT can re-vote
+        voter.depositManaged(tokenId2, mTokenId);
+        vm.prank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+        assertEq(voter.totalWeight(), 997203196228644000); // TOKEN_1 with time decay
+        assertEq(voter.lastVoted(mTokenId), block.timestamp);
+        // veNFT cannot withdraw until next epoch
+        vm.expectRevert(IVoter.AlreadyVotedOrDeposited.selector);
+        voter.withdrawManaged(tokenId2);
+    }
+
     function testWithdrawManagedWithZeroReward() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
         VELO.approve(address(escrow), type(uint256).max);
