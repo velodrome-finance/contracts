@@ -7,3 +7,7 @@
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
 	url = https://github.com/OpenZeppelin/openzeppelin-contracts
+[submodule "lib/gsn"]
+	path = lib/gsn
+	url = https://github.com/opengsn/gsn
+	branch = v2.2.5

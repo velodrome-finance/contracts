@@ -8,7 +8,7 @@ import {IVoter} from "../interfaces/IVoter.sol";
 /// @notice Stores rewards that are free to be distributed
 /// @dev Rewards are distributed based on weight contribution to managed nft
 contract FreeManagedReward is ManagedReward {
-    constructor(address _voter) ManagedReward(_voter) {}
+    constructor(address _forwarder, address _voter) ManagedReward(_forwarder, _voter) {}
 
     /// @inheritdoc ManagedReward
     function getReward(uint256 tokenId, address[] memory tokens) external override nonReentrant {

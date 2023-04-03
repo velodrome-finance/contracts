@@ -14,12 +14,12 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 /// @notice Router allows routes through any pairs created by any factory adhering to univ2 interface.
 /// @dev Zapping and swapping support both v1 and v2. Adding liquidity supports v2 only.
-contract Router is IRouter, Context {
+contract Router is IRouter, ERC2771Context {
     using SafeERC20 for IERC20;
 
     /// @dev v2 default pair factory
@@ -37,10 +37,11 @@ contract Router is IRouter, Context {
     }
 
     constructor(
+        address _forwarder,
         address _factory,
         address _voter,
         address _weth
-    ) {
+    ) ERC2771Context(_forwarder) {
         defaultFactory = _factory;
         voter = _voter;
         weth = IWETH(_weth);

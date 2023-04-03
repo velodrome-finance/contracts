@@ -9,12 +9,12 @@ import {IVoter} from "./interfaces/IVoter.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {VelodromeTimeLibrary} from "./libraries/VelodromeTimeLibrary.sol";
 
 /// @title Gauge contract for distribution of emissions by address
-contract Gauge is IGauge, Context, ReentrancyGuard {
+contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
     address public immutable stakingToken; // the LP token that needs to be staked for rewards
     address public immutable rewardToken;
@@ -41,12 +41,13 @@ contract Gauge is IGauge, Context, ReentrancyGuard {
     uint256 public fees1;
 
     constructor(
+        address _forwarder,
         address _stakingToken,
         address _feesVotingReward,
         address _rewardToken,
         address _voter,
         bool _forPair
-    ) {
+    ) ERC2771Context(_forwarder) {
         stakingToken = _stakingToken;
         feesVotingReward = _feesVotingReward;
         rewardToken = _rewardToken;

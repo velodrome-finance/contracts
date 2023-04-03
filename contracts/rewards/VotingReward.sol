@@ -7,7 +7,11 @@ import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 /// @title Base voting reward contract for distribution of rewards by token id
 ///        on a weekly basis
 abstract contract VotingReward is Reward {
-    constructor(address _voter, address[] memory _rewards) Reward(_voter) {
+    constructor(
+        address _forwarder,
+        address _voter,
+        address[] memory _rewards
+    ) Reward(_forwarder, _voter) {
         uint256 _length = _rewards.length;
         for (uint256 i; i < _length; i++) {
             if (_rewards[i] != address(0)) {

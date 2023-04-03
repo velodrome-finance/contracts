@@ -6,12 +6,12 @@ import {IReward} from "../interfaces/IReward.sol";
 import {IVoter} from "../interfaces/IVoter.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 
 /// @title Base reward contract for distribution of rewards
-abstract contract Reward is IReward, Context, ReentrancyGuard {
+abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     uint256 public constant DURATION = 7 days;
@@ -50,7 +50,7 @@ abstract contract Reward is IReward, Context, ReentrancyGuard {
     /// @notice The number of checkpoints
     uint256 public supplyNumCheckpoints;
 
-    constructor(address _voter) {
+    constructor(address _forwarder, address _voter) ERC2771Context(_forwarder) {
         voter = _voter;
         ve = IVoter(_voter).ve();
     }

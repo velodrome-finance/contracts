@@ -10,6 +10,7 @@ import {IVotingEscrowV1} from "../../interfaces/v1/IVotingEscrowV1.sol";
 import {IRewardsDistributorV1} from "../../interfaces/v1/IRewardsDistributorV1.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -18,7 +19,7 @@ import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 /// @title Velodrome Sink Manager
 /// @notice Absorb v1 Velo and converting v1 veNFTs and VELO into v2
 /// @author Carter Carlson (@pegahcarter)
-contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, ReentrancyGuard {
+contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, ReentrancyGuard {
     uint256 internal constant MAXTIME = 4 * 365 days;
     uint256 internal constant WEEK = 1 weeks;
 
@@ -46,13 +47,14 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     mapping(uint256 => uint256) internal _captured;
 
     constructor(
+        address _forwarder,
         address _voter,
         address _velo,
         address _veloV2,
         address _ve,
         address _veV2,
         address _rewardsDistributor
-    ) {
+    ) ERC2771Context(_forwarder) {
         voter = IVoterV1(_voter);
         velo = IVelo(_velo);
         veloV2 = IVelo(_veloV2);
@@ -206,5 +208,13 @@ contract SinkManager is ISinkManager, Context, Ownable, ERC721Holder, Reentrancy
     /// @inheritdoc ISinkManager
     function captured(uint256 _timestamp) external view returns (uint256 _amount) {
         _amount = _captured[VelodromeTimeLibrary.epochStart(_timestamp)];
+    }
+
+    function _msgData() internal view override(ERC2771Context, Context) returns (bytes calldata) {
+        return super._msgData();
+    }
+
+    function _msgSender() internal view override(ERC2771Context, Context) returns (address) {
+        return ERC2771Context._msgSender();
     }
 }

@@ -10,7 +10,7 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {Timers} from "@openzeppelin/contracts/utils/Timers.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IGovernor} from "./IGovernor.sol";
@@ -30,7 +30,7 @@ import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
  *
  * propose(...) creates a proposal for the following epoch. This proposal can only be executed during that epoch.
  */
-abstract contract GovernorSimple is Context, ERC165, EIP712, IGovernor, IERC721Receiver, IERC1155Receiver {
+abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, IERC721Receiver, IERC1155Receiver {
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
     using SafeCast for uint256;
 
@@ -89,9 +89,13 @@ abstract contract GovernorSimple is Context, ERC165, EIP712, IGovernor, IERC721R
     }
 
     /**
-     * @dev Sets the value for {name} and {version}
+     * @dev Sets the value for {name} and {version}, and sets up meta-tx
      */
-    constructor(string memory name_, address minter_) EIP712(name_, version()) {
+    constructor(
+        address forwarder_,
+        string memory name_,
+        address minter_
+    ) ERC2771Context(forwarder_) EIP712(name_, version()) {
         _name = name_;
         minter = minter_;
     }

@@ -6,11 +6,12 @@ import {FeesVotingReward} from "../rewards/FeesVotingReward.sol";
 import {BribeVotingReward} from "../rewards/BribeVotingReward.sol";
 
 contract VotingRewardsFactory is IVotingRewardsFactory {
-    function createRewards(address[] calldata rewards)
+    /// @inheritdoc IVotingRewardsFactory
+    function createRewards(address _forwarder, address[] memory _rewards)
         external
         returns (address feesVotingReward, address bribeVotingReward)
     {
-        feesVotingReward = address(new FeesVotingReward(msg.sender, rewards));
-        bribeVotingReward = address(new BribeVotingReward(msg.sender, rewards));
+        feesVotingReward = address(new FeesVotingReward(_forwarder, msg.sender, _rewards));
+        bribeVotingReward = address(new BribeVotingReward(_forwarder, msg.sender, _rewards));
     }
 }

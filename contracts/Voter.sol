@@ -14,12 +14,14 @@ import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {IFactoryRegistry} from "./interfaces/IFactoryRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {VelodromeTimeLibrary} from "./libraries/VelodromeTimeLibrary.sol";
 
-contract Voter is IVoter, Context, ReentrancyGuard {
+contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    /// @notice Store trusted forwarder address to pass into factories
+    address public immutable forwarder;
     /// @notice The ve token that governs these contracts
     address public immutable ve;
     /// @notice Factory registry for valid pair / gauge / rewards factories
@@ -77,7 +79,12 @@ contract Voter is IVoter, Context, ReentrancyGuard {
     /// @dev Gauge => Amount claimable
     mapping(address => uint256) public claimable;
 
-    constructor(address _ve, address _factoryRegistry) {
+    constructor(
+        address _forwarder,
+        address _ve,
+        address _factoryRegistry
+    ) ERC2771Context(_forwarder) {
+        forwarder = _forwarder;
         ve = _ve;
         factoryRegistry = _factoryRegistry;
         rewardToken = IVotingEscrow(_ve).token();
@@ -329,9 +336,15 @@ contract Voter is IVoter, Context, ReentrancyGuard {
         if (!IFactoryRegistry(factoryRegistry).isApproved(_pairFactory, _votingRewardsFactory, _gaugeFactory))
             revert FactoryPathNotApproved();
         (address _feeVotingReward, address _bribeVotingReward) = IVotingRewardsFactory(_votingRewardsFactory)
-            .createRewards(rewards);
+            .createRewards(forwarder, rewards);
 
-        address _gauge = IGaugeFactory(_gaugeFactory).createGauge(_pool, _feeVotingReward, rewardToken, isPair);
+        address _gauge = IGaugeFactory(_gaugeFactory).createGauge(
+            forwarder,
+            _pool,
+            _feeVotingReward,
+            rewardToken,
+            isPair
+        );
 
         gaugeToFees[_gauge] = _feeVotingReward;
         gaugeToBribe[_gauge] = _bribeVotingReward;

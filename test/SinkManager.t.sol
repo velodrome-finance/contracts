@@ -41,6 +41,7 @@ contract SinkManagerTest is BaseTest {
     function testCannotConvertIfOwnedTokenIdNotSet() external {
         // Create new sinkManager
         SinkManager newSinkManager = new SinkManager(
+            address(forwarder),
             address(voter),
             address(vVELO),
             address(vVELO),
@@ -345,6 +346,7 @@ contract SinkManagerTest is BaseTest {
     function testCannotSetupSinkDrainIfOwnedTokenIdNotSet() external {
         // Create new sinkManager
         SinkManager newSinkManager = new SinkManager(
+            address(forwarder),
             address(voter),
             address(vVELO),
             address(VELO),
@@ -360,6 +362,7 @@ contract SinkManagerTest is BaseTest {
     function testSetupSinkDrain() external {
         // NOTE: everything to gaugeSinkDrain is recycled from BaseTest._forkSetup()
         sinkManager = new SinkManager(
+            address(forwarder),
             address(vVoter),
             address(vVELO),
             address(VELO),

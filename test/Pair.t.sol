@@ -22,12 +22,13 @@ contract PairTest is BaseTest {
         mintToken(address(LR), owners, amounts);
         deployFactories();
 
-        escrow = new VotingEscrow(address(VELO), address(factoryRegistry), address(owner));
+        escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry), address(owner));
         VeArtProxy artProxy = new VeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
+
         distributor = new RewardsDistributor(address(escrow));
-        voter = new Voter(address(escrow), address(factoryRegistry));
-        router = new Router(address(factory), address(voter), address(WETH));
+        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        router = new Router(address(forwarder), address(factory), address(voter), address(WETH));
 
         escrow.setVoterAndDistributor(address(voter), address(distributor));
         factory.setVoter(address(voter));

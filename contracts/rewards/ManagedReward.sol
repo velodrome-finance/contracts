@@ -7,7 +7,7 @@ import {IVoter} from "../interfaces/IVoter.sol";
 
 /// @title Base managed veNFT reward contract for distribution of rewards by token id
 abstract contract ManagedReward is Reward {
-    constructor(address _voter) Reward(_voter) {
+    constructor(address _forwarder, address _voter) Reward(_forwarder, _voter) {
         address _ve = IVoter(_voter).ve();
         address _token = IVotingEscrow(_ve).token();
         rewards.push(_token);

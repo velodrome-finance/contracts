@@ -6,11 +6,12 @@ import {Gauge} from "../Gauge.sol";
 
 contract GaugeFactory is IGaugeFactory {
     function createGauge(
+        address _forwarder,
         address _pool,
         address _feesVotingReward,
         address _rewardToken,
         bool isPair
     ) external returns (address gauge) {
-        gauge = address(new Gauge(_pool, _feesVotingReward, _rewardToken, msg.sender, isPair));
+        gauge = address(new Gauge(_forwarder, _pool, _feesVotingReward, _rewardToken, msg.sender, isPair));
     }
 }

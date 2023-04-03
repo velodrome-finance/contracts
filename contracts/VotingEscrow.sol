@@ -12,7 +12,7 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IReward} from "./interfaces/IReward.sol";
 import {IFactoryRegistry} from "./interfaces/IFactoryRegistry.sol";
 import {IManagedRewardsFactory} from "./interfaces/IManagedRewardsFactory.sol";
-import {Context} from "@openzeppelin/contracts/utils/Context.sol";
+import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title Voting Escrow V2
@@ -22,12 +22,13 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @author Modified from Curve (https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy)
 /// @author Modified from Nouns DAO (https://github.com/withtally/my-nft-dao-project/blob/main/contracts/ERC721Checkpointable.sol)
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
-contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
+contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
     /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
+    address public immutable forwarder;
     address public immutable factoryRegistry;
     address public immutable token;
     address public distributor;
@@ -58,11 +59,13 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
     /// @param _factoryRegistry Factory Registry address
     /// @param _team Team multisig
     constructor(
+        address _forwarder,
         address _token,
         address _factoryRegistry,
         address _team
-    ) {
+    ) ERC2771Context(_forwarder) {
         voter = _msgSender();
+        forwarder = _forwarder;
         team = _team;
         token = _token;
         factoryRegistry = _factoryRegistry;
@@ -118,7 +121,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, Context, ReentrancyGuard {
 
         (address _lockedManagedReward, address _freeManagedReward) = IManagedRewardsFactory(
             IFactoryRegistry(factoryRegistry).managedRewardsFactory()
-        ).createRewards(voter);
+        ).createRewards(forwarder, voter);
         managedToLocked[_mTokenId] = _lockedManagedReward;
         managedToFree[_mTokenId] = _freeManagedReward;
 

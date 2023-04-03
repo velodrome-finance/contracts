@@ -31,6 +31,7 @@ import {IVotingEscrowV1} from "contracts/interfaces/v1/IVotingEscrowV1.sol";
 import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Forwarder} from "@opengsn/contracts/src/forwarder/Forwarder.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";
@@ -52,6 +53,7 @@ abstract contract Base is Script, Test {
     address[] tokens;
 
     /// @dev Core v2 Deployment
+    Forwarder forwarder;
     Pair implementation;
     Router router;
     VotingEscrow escrow;
@@ -93,19 +95,21 @@ abstract contract Base is Script, Test {
     function _coreSetup() public {
         deployFactories();
 
-        escrow = new VotingEscrow(address(VELO), address(factoryRegistry), team);
+        forwarder = new Forwarder();
+
+        escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry), team);
         VeArtProxy artProxy = new VeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
 
         // Setup voter and distributor
         distributor = new RewardsDistributor(address(escrow));
-        voter = new Voter(address(escrow), address(factoryRegistry));
+        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
 
         escrow.setVoterAndDistributor(address(voter), address(distributor));
         escrow.setAllowedManager(allowedManager);
 
         // Setup router
-        router = new Router(address(factory), address(voter), address(WETH));
+        router = new Router(address(forwarder), address(factory), address(voter), address(WETH));
 
         // Setup minter
         minter = new Minter(address(voter), address(escrow), address(distributor));
@@ -117,7 +121,7 @@ abstract contract Base is Script, Test {
 
         // Setup governors
         governor = new VeloGovernor(escrow);
-        epochGovernor = new EpochGovernor(escrow, address(minter));
+        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));
         voter.setEpochGovernor(address(epochGovernor));
         voter.setGovernor(address(governor));
     }
@@ -126,6 +130,7 @@ abstract contract Base is Script, Test {
         // layer on additional contracts required by v2 deployment
         /// @dev manager.setOwnedTokenId()/setSinkDrain() ar(e) set in either forkSetupAfter()
         sinkManager = new SinkManager(
+            address(forwarder),
             address(vVoter),
             address(vVELO),
             address(VELO),
