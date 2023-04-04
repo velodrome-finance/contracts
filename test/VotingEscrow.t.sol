@@ -14,6 +14,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotDepositForWithLockedNFT() public {
+        skipAndRoll(1 hours);
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
@@ -26,6 +27,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotDepositForWithManagedNFTIfNotDistributor() public {
+        skipAndRoll(1 hours);
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
@@ -36,6 +38,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testDepositForWithManagedNFT() public {
+        skipAndRoll(1 hours);
         uint256 reward = TOKEN_1;
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
         LockedManagedReward lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
@@ -430,6 +433,7 @@ contract VotingEscrowTest is BaseTest {
     }
 
     function testCannotSplitWithManagedNFT() public {
+        skipAndRoll(1 hours);
         escrow.toggleSplitForAll(true);
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
         VELO.approve(address(escrow), type(uint256).max);

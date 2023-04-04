@@ -99,6 +99,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     modifier onlyNewEpoch(uint256 _tokenId) {
         // ensure new epoch since last vote
         if (VelodromeTimeLibrary.epochStart(block.timestamp) <= lastVoted[_tokenId]) revert AlreadyVotedOrDeposited();
+        if (block.timestamp <= VelodromeTimeLibrary.epochVoteStart(block.timestamp)) revert DistributeWindow();
         _;
     }
 
@@ -186,6 +187,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function poke(uint256 _tokenId) external nonReentrant {
+        if (block.timestamp <= VelodromeTimeLibrary.epochVoteStart(block.timestamp)) revert DistributeWindow();
         uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
         _poke(_tokenId, _weight);
     }
@@ -255,7 +257,6 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         if (_poolVote.length > maxVotingNum) revert TooManyPools();
         if (IVotingEscrow(ve).deactivated(_tokenId)) revert InactiveManagedNFT();
         uint256 _timestamp = block.timestamp;
-        if (_timestamp <= VelodromeTimeLibrary.epochVoteStart(_timestamp)) revert DistributeWindow();
         if ((_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) && !isWhitelistedNFT[_tokenId])
             revert NotWhitelistedNFT();
         lastVoted[_tokenId] = _timestamp;

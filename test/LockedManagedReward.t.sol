@@ -133,31 +133,12 @@ contract LockedManagedRewardTest is BaseTest {
         voter.depositManaged(1, mTokenId);
         _addLockedReward(TOKEN_1);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         voter.withdrawManaged(1);
         uint256 post = escrow.lockedAmount(1);
 
         assertEq(post - pre, TOKEN_1);
-    }
-
-    function testGetRewardWithDepositOnEpochFlip() public {
-        skip(1 weeks / 2);
-
-        uint256 pre = escrow.lockedAmount(1);
-        voter.depositManaged(1, mTokenId);
-        _addLockedReward(TOKEN_1);
-
-        skipToNextEpoch(0);
-
-        vm.prank(address(owner2));
-        voter.depositManaged(2, mTokenId); // deposit on flip has no impact
-
-        voter.withdrawManaged(1);
-        uint256 post = escrow.lockedAmount(1);
-
-        assertEq(post - pre, TOKEN_1);
-        assertEq(lockedManagedReward.earned(address(VELO), 2), 0);
     }
 
     function _addLockedReward(uint256 _amount) internal {

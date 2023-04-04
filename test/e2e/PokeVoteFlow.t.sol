@@ -73,7 +73,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
         usdcBribe = USDC_1 * 2;
         _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
         _createBribeWithAmount(bribeVotingReward2, address(USDC), usdcBribe);
-        skip(1);
+        skip(1 hours);
 
         // owner gets poked many times
         for (uint256 i = 0; i < 5; i++) {
@@ -118,7 +118,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
         usdcBribe = USDC_1 * 3;
         _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
         _createBribeWithAmount(bribeVotingReward2, address(USDC), usdcBribe);
-        skip(1);
+        skip(1 hours);
 
         // owner gets poked many times
         for (uint256 i = 0; i < 5; i++) {
@@ -178,7 +178,6 @@ contract PokeVoteFlow is ExtendedBaseTest {
         // deposit into pair to provide supply
         vm.prank(address(owner3));
         voter.vote(3, singlePool, singleWeight);
-
         voter.vote(1, pools, weights);
         skip(1 days);
 

@@ -145,8 +145,13 @@ a pool will receive emissions from `Voter` proportionate to the amount of votes 
 receive. Voter also contains several utility functions that make claiming rewards or 
 distributing emissions easier. 
 
+In the first hour of every epoch, the ability to `vote`, `poke`, `reset`, `depositManaged`
+or `withdrawManaged` is disabled to allow distributions to take place. Voting is also disabled
+in the last hour of every epoch. However, certain privileged NFTs will be able to vote
+in this one hour window.
+
 Standard Operations:
-- Can vote with an NFT once per epoch if you did not deposit into a managed NFT that epoch. For regular users, the epoch voting window ends an hour prior to epoch flip. Certain privileged NFTs can continue to vote in this one hour window.
+- Can vote with an NFT once per epoch if you did not deposit into a managed NFT that epoch. 
 - Can deposit into a managed NFT once per epoch if you did not vote that epoch (requires normal NFT). Depositing into a managed NFT is disabled in the last hour prior to epoch flip.
 - Can reset an NFT at any time after the epoch that you voted. Your ability to vote or deposit into a managed NFT in the week that you reset is preserved.
 - Can withdraw from a managed NFT at any time after the epoch that you deposited into a managed NFT (requires locked NFT). Your ability to vote or deposit into a managed NFT is preserved. 

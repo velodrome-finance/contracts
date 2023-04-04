@@ -269,6 +269,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         assertApproxEqRel(post - pre, (currentBribe * 662) / 1000, 1e15);
         assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 662) / 1000, 1e15);
 
+        skip(1 hours);
         // stop voting with owner2
         vm.prank(address(owner2));
         voter.reset(2);

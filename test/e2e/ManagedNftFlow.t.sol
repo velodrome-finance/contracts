@@ -45,6 +45,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
 
+        skip(1 hours);
         voter.depositManaged(tokenId, mTokenId);
 
         // check deposit successful
@@ -166,6 +167,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         // create usdc bribe for next epoch
         _createBribeWithAmount(bribeVotingReward, address(USDC), USDC_1);
 
+        skip(1 hours);
         voter.poke(mTokenId);
 
         skipToNextEpoch(1);
@@ -207,6 +209,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         /// withdraw from managed nft early
         /// not entitled to rewards distributed this week (both free / locked)
+        skip(1 hours);
         pre = VELO.balanceOf(address(escrow));
         vm.prank(address(owner2));
         voter.withdrawManaged(tokenId2);
@@ -230,6 +233,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(freeManagedReward.earned(address(VELO), tokenId2), ((TOKEN_1 * 2) * 3) / 4 / 2);
         assertEq(freeManagedReward.earned(address(USDC), tokenId2), 0);
 
+        skip(1 hours);
         voter.poke(mTokenId);
 
         // owner 2 claims rewards
@@ -318,14 +322,14 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // test normal nft behavior post withdrawal
         // ~= approx TOKEN_1 * 3 / 4, some drift due to voting power decay
-        assertEq(bribeVotingReward.earned(address(VELO), tokenId), 749095272549042521);
+        assertEq(bribeVotingReward.earned(address(VELO), tokenId), 749100651391707808);
 
         pre = VELO.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward.getReward(tokenId, rewards);
         post = VELO.balanceOf(address(owner));
 
-        assertEq(post - pre, 749095272549042521);
+        assertEq(post - pre, 749100651391707808);
     }
 
     function testTransferManagedNftFlow() public {
@@ -344,6 +348,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
 
+        skip(1 hours);
         voter.depositManaged(tokenId, mTokenId);
 
         // check deposit successful
@@ -408,6 +413,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         freeManagedReward.notifyRewardAmount(address(VELO), TOKEN_1);
         vm.stopPrank();
 
+        skip(1 hours);
         vm.startPrank(address(owner4));
         voter.reset(mTokenId);
         escrow.transferFrom(address(owner4), address(owner3), mTokenId);
@@ -427,6 +433,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         // create velo bribe for next epoch
         _createBribeWithAmount(bribeVotingReward, address(VELO), TOKEN_1 * 2);
 
+        skip(1 hours);
         // user withdraws from nft
         pre = VELO.balanceOf(address(escrow));
         voter.withdrawManaged(tokenId);
@@ -480,6 +487,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(freeManagedReward.earned(address(VELO), tokenId), TOKEN_1 / 2);
         assertEq(freeManagedReward.earned(address(VELO), tokenId2), (TOKEN_1 * 5) / 2);
 
+        skip(1 hours);
         pre = VELO.balanceOf(address(escrow));
         vm.prank(address(owner2));
         voter.withdrawManaged(tokenId2);
@@ -503,6 +511,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner4));
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
 
+        skip(1 hours);
         voter.depositManaged(tokenId, mTokenId);
 
         assertEq(escrow.idToManaged(tokenId), mTokenId);
@@ -585,6 +594,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         skipToNextEpoch(1);
         assertEq(lockedManagedReward.earned(address(VELO), tokenId), managedRebaseTotal);
 
+        skip(1 hours);
         uint256 pre = VELO.balanceOf(address(escrow));
         voter.withdrawManaged(tokenId);
         uint256 post = VELO.balanceOf(address(escrow));

@@ -539,6 +539,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         earned = bribeVotingReward.earned(address(LR), 1);
         assertEq(earned, TOKEN_1);
+        skip(1 hours);
 
         voter.poke(1);
         skip(1);
@@ -738,6 +739,7 @@ contract BribeVotingRewardTest is BaseTest {
         LR.approve(address(bribeVotingReward), reward3);
         bribeVotingReward.notifyRewardAmount(address(LR), reward3);
         assertEq(LR.balanceOf(address(bribeVotingReward)), reward + reward2 + reward3);
+        skip(1 hours);
 
         // poked into voting for same pool
         voter.poke(1);
@@ -814,7 +816,7 @@ contract BribeVotingRewardTest is BaseTest {
         // create a bribe for pair2 in epoch 1
         LR.approve(address(bribeVotingReward2), TOKEN_1 * 2);
         bribeVotingReward2.notifyRewardAmount(address(LR), TOKEN_1 * 2);
-        skip(1);
+        skip(1 hours);
 
         // poke causes id 1 to "vote" for pair
         voter.poke(1);
@@ -1031,7 +1033,7 @@ contract BribeVotingRewardTest is BaseTest {
         // create a bribe for pair in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
-        skip(1);
+        skip(1 hours);
 
         // poke causes id 1 to "vote" for pair
         voter.poke(1);
@@ -1411,7 +1413,7 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(sBalance, 0);
     }
 
-    function testDepositAndWithdrawFWithinSameEpochOverwritesCheckpoints() public {
+    function testDepositAndWithdrawWithinSameEpochOverwritesCheckpoints() public {
         skip(1 weeks / 2);
 
         // test vote and poke overwrites checkpoints
@@ -1456,7 +1458,7 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(sBalance, expectedBal);
 
         // check poke and reset/withdraw overwrites checkpoints
-        skipToNextEpoch(0); // expect checkpoint to be created on boundary of epoch
+        skipToNextEpoch(1 hours + 1);
 
         // poke to create a checkpoint in new epoch
         voter.poke(1);

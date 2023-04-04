@@ -568,6 +568,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1);
+        skip(1 hours);
 
         voter.poke(1);
         skip(1);
@@ -779,6 +780,7 @@ contract FeesVotingRewardTest is BaseTest {
         feesVotingReward.notifyRewardAmount(address(FRAX), reward3);
         vm.stopPrank();
         assertEq(FRAX.balanceOf(address(feesVotingReward)), reward + reward2 + reward3);
+        skip(1 hours);
 
         // poked into voting for same pool
         voter.poke(1);
@@ -861,7 +863,7 @@ contract FeesVotingRewardTest is BaseTest {
         FRAX.approve(address(feesVotingReward2), TOKEN_1 * 2);
         feesVotingReward2.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
         vm.stopPrank();
-        skip(1);
+        skip(1 hours);
 
         // poke causes id 1 to "vote" for pair
         voter.poke(1);
@@ -1095,7 +1097,7 @@ contract FeesVotingRewardTest is BaseTest {
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
-        skip(1);
+        skip(1 hours);
 
         // poke causes id 1 to "vote" for pair
         voter.poke(1);
@@ -1526,7 +1528,7 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(sBalance, 0);
     }
 
-    function testDepositAndWithdrawFWithinSameEpochOverwritesCheckpoints() public {
+    function testDepositAndWithdrawWithinSameEpochOverwritesCheckpoints() public {
         skip(1 weeks / 2);
 
         // test vote and poke overwrites checkpoints
@@ -1571,7 +1573,7 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(sBalance, expectedBal);
 
         // check poke and reset/withdraw overwrites checkpoints
-        skipToNextEpoch(0); // expect checkpoint to be created on boundary of epoch
+        skipToNextEpoch(1 hours + 1);
 
         // poke to create a checkpoint in new epoch
         voter.poke(1);

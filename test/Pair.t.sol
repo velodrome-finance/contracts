@@ -370,7 +370,7 @@ contract PairTest is BaseTest {
     function voterReset() public {
         exitAndGetRewardGaugeStake();
 
-        skip(1 weeks);
+        skip(1 weeks + 1 hours + 1);
         voter.reset(1);
     }
 
@@ -746,7 +746,7 @@ contract PairTest is BaseTest {
         voter.updateFor(gauges);
         voter.distribute(0, voter.length());
         voter.claimRewards(gauges);
-        assertEq(gauge.rewardRate(), 94981974648214908710);
+        assertEq(gauge.rewardRate(), 99617156796313863667);
         console2.log(gauge.rewardPerTokenStored());
     }
 

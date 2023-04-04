@@ -181,6 +181,7 @@ contract WashTradeTest is BaseTest {
 
         distributor = new RewardsDistributor(address(escrow));
         escrow.setVoterAndDistributor(address(voter), address(distributor));
+        skip(1 hours);
         voter.reset(1);
     }
 

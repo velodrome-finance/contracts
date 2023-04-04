@@ -34,6 +34,34 @@ contract VoterTest is BaseTest {
         voter.vote(1, pools, weights);
     }
 
+    function testCannotResetUntilAfterDistributeWindow() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        escrow.createLock(TOKEN_1, MAXTIME);
+
+        // vote
+        skipToNextEpoch(1 hours + 1);
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 5000;
+        voter.vote(1, pools, weights);
+
+        skipToNextEpoch(0);
+        vm.expectRevert(IVoter.DistributeWindow.selector);
+        voter.reset(1);
+
+        skip(30 minutes);
+        vm.expectRevert(IVoter.DistributeWindow.selector);
+        voter.reset(1);
+
+        skip(30 minutes);
+        vm.expectRevert(IVoter.DistributeWindow.selector);
+        voter.reset(1);
+
+        skip(1);
+        voter.reset(1);
+    }
+
     function testCannotResetInSameEpoch() public {
         VELO.approve(address(escrow), TOKEN_1);
         escrow.createLock(TOKEN_1, MAXTIME);
@@ -54,6 +82,115 @@ contract VoterTest is BaseTest {
         voter.reset(1);
     }
 
+    function testCannotPokeUntilAfterDistributeWindow() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        escrow.createLock(TOKEN_1, MAXTIME);
+
+        // vote
+        skipToNextEpoch(1 hours + 1);
+        address[] memory pools = new address[](1);
+        pools[0] = address(pair);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 5000;
+        voter.vote(1, pools, weights);
+
+        skipToNextEpoch(0);
+        vm.expectRevert(IVoter.DistributeWindow.selector);
+        voter.poke(1);
+
+        skip(30 minutes);
+        vm.expectRevert(IVoter.DistributeWindow.selector);
+        voter.poke(1);
+
+        skip(30 minutes);
+        vm.expectRevert(IVoter.DistributeWindow.selector);
+        voter.poke(1);
+
+        skip(1);
+        voter.poke(1);
+    }
+
+    function testPoke() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        escrow.createLock(TOKEN_1, MAXTIME);
+        skipAndRoll(1 hours);
+
+        voter.poke(1);
+
+        assertFalse(escrow.voted(1));
+        assertEq(voter.lastVoted(1), 0);
+        assertEq(voter.totalWeight(), 0);
+        assertEq(voter.usedWeights(1), 0);
+    }
+
+    function testPokeAfterVote() public {
+        skip(1 hours + 1);
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        // vote
+        address[] memory pools = new address[](2);
+        pools[0] = address(pair);
+        pools[1] = address(pair2);
+        uint256[] memory weights = new uint256[](2);
+        weights[0] = 1;
+        weights[1] = 2;
+
+        /// balance: 997231719186530010
+        vm.expectEmit(true, false, false, true, address(voter));
+        emit Voted(address(owner), 1, 332410573062176670);
+        vm.expectEmit(true, false, false, true, address(voter));
+        emit Voted(address(owner), 1, 664821146124353340);
+        voter.vote(tokenId, pools, weights);
+
+        assertTrue(escrow.voted(tokenId));
+        assertEq(voter.lastVoted(tokenId), 608402);
+        assertEq(voter.totalWeight(), 997231719186530010);
+        assertEq(voter.usedWeights(tokenId), 997231719186530010);
+        assertEq(voter.weights(address(pair)), 332410573062176670);
+        assertEq(voter.weights(address(pair2)), 664821146124353340);
+        assertEq(voter.votes(tokenId, address(pair)), 332410573062176670);
+        assertEq(voter.votes(tokenId, address(pair2)), 664821146124353340);
+        assertEq(voter.poolVote(tokenId, 0), address(pair));
+        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+
+        vm.expectEmit(true, false, false, true, address(voter));
+        emit Voted(address(owner), 1, 332410573062176670);
+        vm.expectEmit(true, false, false, true, address(voter));
+        emit Voted(address(owner), 1, 664821146124353340);
+        voter.poke(1);
+
+        assertTrue(escrow.voted(tokenId));
+        assertEq(voter.lastVoted(tokenId), 608402);
+        assertEq(voter.totalWeight(), 997231719186530010);
+        assertEq(voter.usedWeights(tokenId), 997231719186530010);
+        assertEq(voter.weights(address(pair)), 332410573062176670);
+        assertEq(voter.weights(address(pair2)), 664821146124353340);
+        assertEq(voter.votes(tokenId, address(pair)), 332410573062176670);
+        assertEq(voter.votes(tokenId, address(pair2)), 664821146124353340);
+        assertEq(voter.poolVote(tokenId, 0), address(pair));
+        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+
+        // balance: 996546787679762010
+        skipAndRoll(1 days);
+        vm.expectEmit(true, false, false, true, address(voter));
+        emit Voted(address(owner), 1, 332182262559920670);
+        vm.expectEmit(true, false, false, true, address(voter));
+        emit Voted(address(owner), 1, 664364525119841340);
+        voter.poke(1);
+
+        assertTrue(escrow.voted(tokenId));
+        assertEq(voter.lastVoted(tokenId), 608402);
+        assertEq(voter.totalWeight(), 996546787679762010);
+        assertEq(voter.usedWeights(tokenId), 996546787679762010);
+        assertEq(voter.weights(address(pair)), 332182262559920670);
+        assertEq(voter.weights(address(pair2)), 664364525119841340);
+        assertEq(voter.votes(tokenId, address(pair)), 332182262559920670);
+        assertEq(voter.votes(tokenId, address(pair2)), 664364525119841340);
+        assertEq(voter.poolVote(tokenId, 0), address(pair));
+        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+    }
+
     function testVoteAfterResetInSameEpoch() public {
         skip(1 weeks / 2);
 
@@ -70,7 +207,7 @@ contract VoterTest is BaseTest {
         weights[0] = 1;
         voter.vote(1, pools, weights);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         assertEq(bribeVotingReward.earned(address(LR), 1), TOKEN_1);
 
@@ -142,6 +279,7 @@ contract VoterTest is BaseTest {
     function testReset() public {
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        skipAndRoll(1 hours + 1);
 
         voter.reset(tokenId);
 
@@ -153,7 +291,7 @@ contract VoterTest is BaseTest {
     }
 
     function testResetAfterVote() public {
-        skip(1 hours + 1);
+        skipAndRoll(1 hours + 1);
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -184,7 +322,7 @@ contract VoterTest is BaseTest {
         assertEq(voter.poolVote(tokenId, 1), address(pair2));
 
         uint256 lastVoted = voter.lastVoted(tokenId);
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         voter.reset(tokenId);
 
@@ -213,11 +351,13 @@ contract VoterTest is BaseTest {
         uint256[] memory weights = new uint256[](1);
         weights[0] = 1;
 
+        skipAndRoll(1 hours);
+
         vm.expectRevert(IVoter.InactiveManagedNFT.selector);
         voter.vote(mTokenId, pools, weights);
     }
 
-    function testCannotVoteAnHourAfterEpochFlips() public {
+    function testCannotVoteUntilAnHourAfterEpochFlips() public {
         VELO.approve(address(escrow), TOKEN_1);
         escrow.createLock(TOKEN_1, MAXTIME);
 
@@ -634,6 +774,7 @@ contract VoterTest is BaseTest {
         escrow.createManagedLockFor(address(owner));
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        skipToNextEpoch(1 hours + 1);
 
         vm.prank(address(owner2));
         vm.expectRevert(IVoter.NotApprovedOrOwner.selector);
@@ -645,7 +786,7 @@ contract VoterTest is BaseTest {
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
 
-        skipAndRoll(1);
+        skipToNextEpoch(1 hours + 1);
         escrow.setManagedState(mTokenId, true);
 
         vm.expectRevert(IVoter.InactiveManagedNFT.selector);
@@ -664,7 +805,7 @@ contract VoterTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
 
         vm.revertTo(sid);
-        skip(1);
+        skipAndRoll(1);
         vm.expectRevert(IVoter.SpecialVotingWindow.selector);
         voter.depositManaged(tokenId, mTokenId);
 
@@ -672,7 +813,8 @@ contract VoterTest is BaseTest {
         vm.expectRevert(IVoter.SpecialVotingWindow.selector);
         voter.depositManaged(tokenId, mTokenId);
 
-        skip(1); /// new epoch
+        skipAndRoll(1); /// new epoch
+        vm.expectRevert(IVoter.DistributeWindow.selector);
         voter.depositManaged(tokenId, mTokenId);
     }
 
@@ -681,10 +823,11 @@ contract VoterTest is BaseTest {
         escrow.createManagedLockFor(address(owner));
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        skipAndRoll(1 hours + 1);
 
         voter.depositManaged(tokenId, mTokenId);
 
-        skip(1 weeks / 2);
+        skipAndRoll(1 weeks / 2);
 
         vm.expectRevert(IVoter.AlreadyVotedOrDeposited.selector);
         voter.withdrawManaged(tokenId);
@@ -695,10 +838,11 @@ contract VoterTest is BaseTest {
         escrow.createManagedLockFor(address(owner));
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        skipAndRoll(1 hours + 1);
 
         voter.depositManaged(tokenId, mTokenId);
 
-        skipToNextEpoch(1);
+        skipToNextEpoch(1 hours + 1);
 
         vm.prank(address(owner3));
         vm.expectRevert(IVoter.NotApprovedOrOwner.selector);
