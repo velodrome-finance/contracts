@@ -219,7 +219,7 @@ Free rewards are rewards that have been distributed to users depositing into a m
 Velodrome V2 is designed to eventually replace the V1 token. To achieve that,
 V2 Minter was designed to respect the schedule of V1 and provide a solution to
 automatically convert the V1 emissions into V2 tokens. This is done by the Sink
-Manager, Drainer and Converter.
+Manager, Facilitator, Drainer, and Converter.
 
 For existing LPs/stake the V2 gauges will be provided for V1 pools, allowing
 those users to switch to V2 by simply re-staking their LPs. Any new liquidity
@@ -241,6 +241,10 @@ Users can:
 - Convert v1 NFTs to an equivalent v2 NFT (lock time will not be exactly the same, but rounded to the nearest week).
 
 v1 VELO that is converted will be added to the sink manager's veNFT, while v1 NFTs will be merged into the sink manager's ve NFT. Any v1 VELO captured via the `SinkConverter` will also be added to the sink manager's veNFT. Rebases and emissions will be compounded weekly to ensure emissions are captured.
+
+### Sink Manager Facilitator
+
+A lightweight contract created for every v1 NFT to v2 NFT conversion to facilitate the merge of the v1 NFT into the v1 NFT managed by the Sink Manager.
 
 ### Sink Drain
 

@@ -25,6 +25,7 @@ interface ISinkManager {
     error GaugeAlreadySet();
     error GaugeNotSet();
     error NFTAlreadyConverted();
+    error NFTNotApproved();
     error NFTExpired();
     error TokenIdNotSet();
     error TokenIdAlreadySet();

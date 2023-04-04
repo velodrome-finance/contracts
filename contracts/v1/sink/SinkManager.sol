@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.13;
 
+import {SinkManagerFacilitator} from "./SinkManagerFacilitator.sol";
 import {ISinkManager} from "../../interfaces/ISinkManager.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IVelo} from "../../interfaces/IVelo.sol";
@@ -14,6 +15,7 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 
 /// @title Velodrome Sink Manager
@@ -25,9 +27,14 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
 
     /// @dev tokenId => tokenIdV2
     mapping(uint256 => uint256) public conversions;
+    /// @dev tokenId => facilitator address
+    mapping(uint256 => address) public facilitators;
 
     /// @dev token id of veNFT owned by this contract to capture v1 VELO emissions
     uint256 public ownedTokenId;
+
+    // @dev Address of deployed facilitator contract to clone
+    address public facilitatorImplementation;
 
     /// @dev V1 Voting contract
     IVoterV1 public immutable voter;
@@ -48,6 +55,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
 
     constructor(
         address _forwarder,
+        address _facilitatorImplementation,
         address _voter,
         address _velo,
         address _veloV2,
@@ -55,6 +63,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         address _veV2,
         address _rewardsDistributor
     ) ERC2771Context(_forwarder) {
+        facilitatorImplementation = _facilitatorImplementation;
         voter = IVoterV1(_voter);
         velo = IVelo(_velo);
         veloV2 = IVelo(_veloV2);
@@ -79,7 +88,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         // Deposit old VELO
         velo.transferFrom(sender, address(this), amount);
 
-        // Add VELO to owned ve
+        // Add VELO to owned escrow
         ve.increase_amount(_ownedTokenId, amount);
 
         // return new VELO
@@ -94,20 +103,26 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         uint256 _ownedTokenId = ownedTokenId;
         if (_ownedTokenId == 0) revert TokenIdNotSet();
 
-        // Ensure the ve was not converted
+        // Ensure the veNFT was not converted
         if (conversions[tokenId] != 0) revert NFTAlreadyConverted();
 
-        // Ensure the ve has not expired
+        // Ensure this contract has been approved to transfer the veNFT
+        if (!ve.isApprovedOrOwner(address(this), tokenId)) revert NFTNotApproved();
+
+        // Ensure the veNFT has not expired
         if (ve.locked__end(tokenId) <= block.timestamp) revert NFTExpired();
 
         address sender = _msgSender();
 
-        // Transfer v1 ve to this contract - note this would fail if ve has not reset through Voter
-        ve.safeTransferFrom(sender, address(this), tokenId);
+        // Create contract to facilitate the merge
+        SinkManagerFacilitator facilitator = SinkManagerFacilitator(Clones.clone(facilitatorImplementation));
 
-        /* Create new ve with same lock parameters */
+        // Transfer the veNFT to the facilitator
+        ve.safeTransferFrom(sender, address(facilitator), tokenId);
 
-        // Fetch lock information of v1 ve
+        /* Create new veNFT with same lock parameters */
+
+        // Fetch lock information of v1 veNFT
         (int128 _lockAmount, uint256 lockEnd) = ve.locked(tokenId); // amount of v1 VELO locked, unlock timestamp
         uint256 lockAmount = uint256(int256(_lockAmount));
         // determine lockDuration based on current epoch start - see unlockTime in ve._createLock()
@@ -116,17 +131,20 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         // mint v2 VELO to deposit into lock
         veloV2.mint(address(this), lockAmount);
 
-        // Create v2 ve
+        // Create v2 veNFT
         tokenIdV2 = veV2.createLockFor(lockAmount, lockDuration, sender);
 
-        // Merge into the sinkManager ve
-        ve.merge(tokenId, _ownedTokenId);
+        // Merge into the sinkManager veNFT
+        ve.approve(address(facilitator), ownedTokenId);
+        facilitator.merge(ve, tokenId, ownedTokenId);
+        ve.approve(address(0), ownedTokenId);
 
         // poke vote to update voting balance to gauge
         voter.poke(_ownedTokenId);
 
         // event emission and storage of conversion
         conversions[tokenId] = tokenIdV2;
+        facilitators[tokenId] = address(facilitator);
         _captured[VelodromeTimeLibrary.epochStart(block.timestamp)] += lockAmount;
         emit ConvertVe(sender, lockAmount, lockEnd, tokenId, tokenIdV2, block.timestamp);
     }

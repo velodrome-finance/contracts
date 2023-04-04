@@ -8,6 +8,10 @@ interface IVotingEscrowV1 {
         uint256 blk; // block
     }
 
+    function getApproved(uint256 _tokenId) external view returns (address);
+
+    function isApprovedOrOwner(address _spender, uint256 _tokenId) external returns (bool);
+
     function locked__end(uint256 _tokenId) external view returns (uint256 _locked);
 
     function locked(uint256 _tokenId) external view returns (int128 _amount, uint256 _end);

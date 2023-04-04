@@ -42,6 +42,7 @@ contract SinkManagerTest is BaseTest {
         // Create new sinkManager
         SinkManager newSinkManager = new SinkManager(
             address(forwarder),
+            facilitatorImplementation,
             address(voter),
             address(vVELO),
             address(vVELO),
@@ -59,6 +60,12 @@ contract SinkManagerTest is BaseTest {
         vVELO.approve(address(sinkManager), amount);
         vm.expectRevert(ISinkManager.TokenIdNotSet.selector);
         newSinkManager.convertVELO(amount);
+    }
+
+    function testCannotConvertVeNotApproved() external {
+        vm.startPrank(address(owner2));
+        vm.expectRevert(ISinkManager.NFTNotApproved.selector);
+        sinkManager.convertVe(tokenId2);
     }
 
     function testCannotConvertVeExpired() external {
@@ -152,7 +159,30 @@ contract SinkManagerTest is BaseTest {
 
         // Ensure conversion of vEscrow is stored
         assertEq(sinkManager.conversions(tokenId2), tokenIdV2);
+        assertTrue(sinkManager.facilitators(tokenId2) != address(0));
         assertEq(sinkManager.captured(block.timestamp), TOKEN_1);
+    }
+
+    function testConvertVeUsesNewFacilitators() external {
+        vEscrow.approve(address(sinkManager), tokenId1);
+        sinkManager.convertVe(tokenId1);
+
+        vm.startPrank(address(owner2));
+        vEscrow.approve(address(sinkManager), tokenId2);
+        sinkManager.convertVe(tokenId2);
+        vm.stopPrank();
+
+        assertTrue(sinkManager.facilitators(tokenId1) != address(0));
+        assertTrue(sinkManager.facilitators(tokenId2) != address(0));
+        assertTrue(sinkManager.facilitators(tokenId1) != sinkManager.facilitators(tokenId2));
+    }
+
+    function testConvertVeRemovesFacilitatorApproval() external {
+        assertEq(vEscrow.getApproved(ownedTokenId), address(0));
+        vEscrow.approve(address(sinkManager), tokenId1);
+        sinkManager.convertVe(tokenId1);
+
+        assertEq(vEscrow.getApproved(ownedTokenId), address(0));
     }
 
     function testConvertVeExtendLockOfOwnedTokenId() external {
@@ -347,6 +377,7 @@ contract SinkManagerTest is BaseTest {
         // Create new sinkManager
         SinkManager newSinkManager = new SinkManager(
             address(forwarder),
+            facilitatorImplementation,
             address(voter),
             address(vVELO),
             address(VELO),
@@ -363,6 +394,7 @@ contract SinkManagerTest is BaseTest {
         // NOTE: everything to gaugeSinkDrain is recycled from BaseTest._forkSetup()
         sinkManager = new SinkManager(
             address(forwarder),
+            facilitatorImplementation,
             address(vVoter),
             address(vVELO),
             address(VELO),

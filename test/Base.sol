@@ -22,6 +22,7 @@ import {VeArtProxy} from "contracts/VeArtProxy.sol";
 import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
 import {VeloGovernor} from "contracts/VeloGovernor.sol";
 import {EpochGovernor} from "contracts/EpochGovernor.sol";
+import {SinkManagerFacilitator} from "contracts/v1/sink/SinkManagerFacilitator.sol";
 import {ISinkManager, SinkManager} from "contracts/v1/sink/SinkManager.sol";
 import {SinkDrain} from "contracts/v1/sink/SinkDrain.sol";
 import {SinkConverter} from "contracts/v1/sink/SinkConverter.sol";
@@ -37,7 +38,6 @@ import "forge-std/Script.sol";
 import "forge-std/Test.sol";
 
 /// @notice Base contract used for tests and deployment scripts
-/// TODO: where should this file be placed?
 abstract contract Base is Script, Test {
     enum Deployment {
         DEFAULT,
@@ -80,6 +80,7 @@ abstract contract Base is Script, Test {
     Minter vMinter;
 
     /// @dev additional contracts required by v2
+    address facilitatorImplementation;
     SinkManager sinkManager;
     IGaugeV1 gaugeSinkDrain;
     SinkDrain sinkDrain;
@@ -129,8 +130,10 @@ abstract contract Base is Script, Test {
     function _sinkSetup() public {
         // layer on additional contracts required by v2 deployment
         /// @dev manager.setOwnedTokenId()/setSinkDrain() ar(e) set in either forkSetupAfter()
+        facilitatorImplementation = address(new SinkManagerFacilitator());
         sinkManager = new SinkManager(
             address(forwarder),
+            facilitatorImplementation,
             address(vVoter),
             address(vVELO),
             address(VELO),
