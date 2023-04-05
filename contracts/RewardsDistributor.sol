@@ -83,6 +83,7 @@ contract RewardsDistributor is IRewardsDistributor {
         _checkpointToken();
     }
 
+    /// @dev Fetches last global checkpoint prior to timestamp
     function _findTimestampEpoch(uint256 _timestamp) internal view returns (uint256) {
         address _ve = ve;
         uint256 _min = 0;
@@ -90,7 +91,7 @@ contract RewardsDistributor is IRewardsDistributor {
         for (uint256 i = 0; i < 128; i++) {
             if (_min >= _max) break;
             uint256 _mid = (_min + _max + 2) / 2;
-            IVotingEscrow.Point memory pt = IVotingEscrow(_ve).pointHistory(_mid);
+            IVotingEscrow.GlobalPoint memory pt = IVotingEscrow(_ve).pointHistory(_mid);
             if (pt.ts <= _timestamp) {
                 _min = _mid;
             } else {
@@ -110,7 +111,7 @@ contract RewardsDistributor is IRewardsDistributor {
         for (uint256 i = 0; i < 128; i++) {
             if (_min >= _max) break;
             uint256 _mid = (_min + _max + 2) / 2;
-            IVotingEscrow.Point memory pt = IVotingEscrow(ve).userPointHistory(_tokenId, _mid);
+            IVotingEscrow.UserPoint memory pt = IVotingEscrow(ve).userPointHistory(_tokenId, _mid);
             if (pt.ts <= _timestamp) {
                 _min = _mid;
             } else {
@@ -124,8 +125,12 @@ contract RewardsDistributor is IRewardsDistributor {
         address _ve = ve;
         uint256 maxUserEpoch = IVotingEscrow(_ve).userPointEpoch(_tokenId);
         uint256 epoch = _findTimestampUserEpoch(_tokenId, _timestamp, maxUserEpoch);
-        IVotingEscrow.Point memory pt = IVotingEscrow(_ve).userPointHistory(_tokenId, epoch);
-        return uint256(int256(max(pt.bias - pt.slope * int128(int256(_timestamp - pt.ts)), 0)));
+        IVotingEscrow.UserPoint memory pt = IVotingEscrow(_ve).userPointHistory(_tokenId, epoch);
+        if (pt.permanent != 0) {
+            return pt.permanent;
+        } else {
+            return uint256(int256(max(pt.bias - pt.slope * int128(int256(_timestamp - pt.ts)), 0)));
+        }
     }
 
     function _checkpointTotalSupply() internal {
@@ -138,13 +143,15 @@ contract RewardsDistributor is IRewardsDistributor {
             if (t > roundedTimestamp) {
                 break;
             } else {
+                // fetch last global checkpoint prior to time t
                 uint256 epoch = _findTimestampEpoch(t);
-                IVotingEscrow.Point memory pt = IVotingEscrow(_ve).pointHistory(epoch);
+                IVotingEscrow.GlobalPoint memory pt = IVotingEscrow(_ve).pointHistory(epoch);
                 int128 dt = 0;
                 if (t > pt.ts) {
                     dt = int128(int256(t - pt.ts));
                 }
-                veSupply[t] = uint256(int256(max(pt.bias - pt.slope * dt, 0)));
+                // walk forward voting power to time t
+                veSupply[t] = uint256(int256(max(pt.bias - pt.slope * dt, 0))) + pt.permanentLockBalance;
             }
             t += WEEK;
         }
@@ -174,13 +181,13 @@ contract RewardsDistributor is IRewardsDistributor {
 
         if (userEpoch == 0) userEpoch = 1;
 
-        IVotingEscrow.Point memory userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
+        IVotingEscrow.UserPoint memory userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
 
         if (weekCursor == 0) weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
         if (weekCursor >= lastTokenTime) return 0;
         if (weekCursor < _startTime) weekCursor = _startTime;
 
-        IVotingEscrow.Point memory oldUserPoint;
+        IVotingEscrow.UserPoint memory oldUserPoint;
 
         for (uint256 i = 0; i < 50; i++) {
             if (weekCursor >= _lastTokenTime) break;
@@ -189,13 +196,18 @@ contract RewardsDistributor is IRewardsDistributor {
                 userEpoch += 1;
                 oldUserPoint = userPoint;
                 if (userEpoch > maxUserEpoch) {
-                    userPoint = IVotingEscrow.Point(0, 0, 0, 0);
+                    userPoint = IVotingEscrow.UserPoint(0, 0, 0, 0, 0);
                 } else {
                     userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
                 }
             } else {
                 int128 dt = int128(int256(weekCursor - oldUserPoint.ts));
-                uint256 balance = uint256(int256(max(oldUserPoint.bias - dt * oldUserPoint.slope, 0)));
+                uint256 balance;
+                if (oldUserPoint.permanent != 0) {
+                    balance = oldUserPoint.permanent;
+                } else {
+                    balance = uint256(int256(max(oldUserPoint.bias - dt * oldUserPoint.slope, 0)));
+                }
                 if (balance == 0 && userEpoch > maxUserEpoch) break;
                 if (balance != 0) {
                     toDistribute += (balance * tokensPerWeek[weekCursor]) / veSupply[weekCursor];
@@ -232,13 +244,13 @@ contract RewardsDistributor is IRewardsDistributor {
 
         if (userEpoch == 0) userEpoch = 1;
 
-        IVotingEscrow.Point memory userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
+        IVotingEscrow.UserPoint memory userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
 
         if (weekCursor == 0) weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
         if (weekCursor >= lastTokenTime) return 0;
         if (weekCursor < _startTime) weekCursor = _startTime;
 
-        IVotingEscrow.Point memory oldUserPoint;
+        IVotingEscrow.UserPoint memory oldUserPoint;
 
         for (uint256 i = 0; i < 50; i++) {
             if (weekCursor >= _lastTokenTime) break;
@@ -247,13 +259,18 @@ contract RewardsDistributor is IRewardsDistributor {
                 userEpoch += 1;
                 oldUserPoint = userPoint;
                 if (userEpoch > maxUserEpoch) {
-                    userPoint = IVotingEscrow.Point(0, 0, 0, 0);
+                    userPoint = IVotingEscrow.UserPoint(0, 0, 0, 0, 0);
                 } else {
                     userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
                 }
             } else {
                 int128 dt = int128(int256(weekCursor - oldUserPoint.ts));
-                uint256 balance = uint256(int256(max(oldUserPoint.bias - dt * oldUserPoint.slope, 0)));
+                uint256 balance;
+                if (oldUserPoint.permanent != 0) {
+                    balance = oldUserPoint.permanent;
+                } else {
+                    balance = uint256(int256(max(oldUserPoint.bias - dt * oldUserPoint.slope, 0)));
+                }
                 if (balance == 0 && userEpoch > maxUserEpoch) break;
                 if (balance != 0) {
                     toDistribute += (balance * tokensPerWeek[weekCursor]) / veSupply[weekCursor];
@@ -278,7 +295,7 @@ contract RewardsDistributor is IRewardsDistributor {
         uint256 amount = _claim(_tokenId, _lastTokenTime);
         if (amount != 0) {
             IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve).locked(_tokenId);
-            if (_timestamp > _locked.end) {
+            if (_timestamp > _locked.end && !_locked.isPermanent) {
                 address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
                 IERC20(token).safeTransfer(_owner, amount);
             } else {
@@ -303,7 +320,7 @@ contract RewardsDistributor is IRewardsDistributor {
             uint256 amount = _claim(_tokenId, _lastTokenTime);
             if (amount != 0) {
                 IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve).locked(_tokenId);
-                if (_timestamp > _locked.end) {
+                if (_timestamp > _locked.end && !_locked.isPermanent) {
                     address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
                     IERC20(token).safeTransfer(_owner, amount);
                 } else {

@@ -1,25 +1,37 @@
 pragma solidity 0.8.13;
 
 import {IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IVotes} from "../governance/IVotes.sol";
 
 interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     struct LockedBalance {
         int128 amount;
         uint256 end;
+        bool isPermanent;
     }
 
-    struct Point {
+    struct UserPoint {
         int128 bias;
         int128 slope; // # -dweight / dt
         uint256 ts;
         uint256 blk; // block
+        uint256 permanent;
     }
 
-    /// @notice A checkpoint for marking delegated tokenIds from a given timestamp
+    struct GlobalPoint {
+        int128 bias;
+        int128 slope; // # -dweight / dt
+        uint256 ts;
+        uint256 blk; // block
+        uint256 permanentLockBalance;
+    }
+
+    /// @notice A checkpoint for recorded delegated voting weights at a certain timestamp
     struct Checkpoint {
         uint256 fromTimestamp;
-        uint256[] tokenIds;
+        address owner;
+        uint256 delegatedBalance;
+        uint256 delegatee;
     }
 
     enum DepositType {
@@ -59,10 +71,12 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     error NotManagedOrNormalNFT();
     error NotLockedNFT();
     error NotNormalNFT();
+    error NotPermanentLock();
     error NotOwner();
     error NotTeam();
     error NotVoter();
     error OwnershipChange();
+    error PermanentLock();
     error SameAddress();
     error SameNFT();
     error SameState();
@@ -82,6 +96,8 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
         uint256 ts
     );
     event Withdraw(address indexed provider, uint256 tokenId, uint256 value, uint256 ts);
+    event LockPermanent(address indexed _owner, uint256 indexed _tokenId, uint256 amount, uint256 _ts);
+    event UnlockPermanent(address indexed _owner, uint256 indexed _tokenId, uint256 amount, uint256 _ts);
     event Supply(uint256 prevSupply, uint256 supply);
     event CreateManaged(
         address indexed _to,
@@ -90,7 +106,6 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
         address _lockedManagedReward,
         address _freeManagedReward
     );
-
     event DepositManaged(
         address indexed _owner,
         uint256 indexed _tokenId,
@@ -152,7 +167,7 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
                             MANAGED NFT LOGIC
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Create managed NFT for use within ecosystem.
+    /// @notice Create managed NFT (a permanent lock) for use within ecosystem.
     /// @dev Throws if address already owns a managed NFT.
     /// @return _mTokenId managed token id.
     function createManagedLockFor(address _to) external returns (uint256 _mTokenId);
@@ -160,9 +175,9 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @notice Delegates balance to managed nft
     ///         Note that NFTs deposited into a managed NFT will be re-locked
     ///         to the maximum lock time on withdrawal.
+    ///         Permanent locks that are deposited will automatically unlock.
     /// @dev Managed nft will remain max-locked as long as there is at least one
     ///      deposit or withdrawal per week.
-    ///      Throws if NFT was transferred in same block (flash NFT protection).
     ///      Throws if deposit nft is managed.
     ///      Throws if recipient nft is not managed.
     ///      Throws if deposit nft is already locked.
@@ -297,36 +312,15 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     function canSplit(address _account) external view returns (bool);
 
     /// @notice Global point history at a given index
-    function pointHistory(uint256 _loc) external view returns (Point memory);
+    function pointHistory(uint256 _loc) external view returns (GlobalPoint memory);
 
     /// @notice Get the LockedBalance (amount, end) of a _tokenId
     /// @param _tokenId .
     /// @return LockedBalance of _tokenId
     function locked(uint256 _tokenId) external view returns (LockedBalance memory);
 
-    /// @notice Get timestamp when `_tokenId`'s lock finishes
-    /// @param _tokenId .
-    /// @return Epoch time of the lock end
-    function lockedEnd(uint256 _tokenId) external view returns (uint256);
-
-    /// @notice Get amount locked in `_tokenId`
-    /// @param _tokenId User NFT
-    /// @return _amount Amount of token locked
-    function lockedAmount(uint256 _tokenId) external view returns (uint256);
-
-    /// @notice User -> Point[userEpoch]
-    function userPointHistory(uint256 _tokenId, uint256 _loc) external view returns (Point memory);
-
-    /// @notice Get the most recently recorded rate of voting power decrease for `_tokenId`
-    /// @param _tokenId .
-    /// @return Value of the slope
-    function getLastUserSlope(uint256 _tokenId) external view returns (int128);
-
-    /// @notice Get the timestamp for checkpoint `_idx` for `_tokenId`
-    /// @param _tokenId token of the NFT
-    /// @param _idx User epoch number
-    /// @return Epoch time of the checkpoint
-    function userPointHistoryTs(uint256 _tokenId, uint256 _idx) external view returns (uint256);
+    /// @notice User -> UserPoint[userEpoch]
+    function userPointHistory(uint256 _tokenId, uint256 _loc) external view returns (UserPoint memory);
 
     /*//////////////////////////////////////////////////////////////
                               ESCROW LOGIC
@@ -364,22 +358,26 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     function increaseAmount(uint256 _tokenId, uint256 _value) external;
 
     /// @notice Extend the unlock time for `_tokenId`
+    ///         Cannot extend lock time of permanent locks
     /// @param _lockDuration New number of seconds until tokens unlock
     function increaseUnlockTime(uint256 _tokenId, uint256 _lockDuration) external;
 
     /// @notice Withdraw all tokens for `_tokenId`
-    /// @dev Only possible if the lock has expired
+    /// @dev Only possible if the lock is both expired and not permanent
     function withdraw(uint256 _tokenId) external;
 
     /// @notice Merges `_from` into `_to`.
+    /// @dev Cannot merge `_from` locks that are permanent or have already voted this epoch.
+    ///      Cannot merge `_to` locks that have already expired.
     /// @param _from VeNFT to merge from.
     /// @param _to VeNFT to merge into.
     function merge(uint256 _from, uint256 _to) external;
 
     /// @notice Splits veNFT into two new veNFTS - one with oldLocked.amount - `_amount`, and the second with `_amount`
     /// @dev    This burns the tokenId of the target veNFT
-    /// @dev    Callable by approved or owner
-    /// @dev    Returns the two new split veNFTs to owner
+    ///         Callable by approved or owner
+    ///         Returns the two new split veNFTs to owner
+    ///         If `from` is permanent, will automatically dedelegate.
     /// @param _from VeNFT to split.
     /// @param _amount Amount to split from veNFT.
     /// @return _tokenId1 Return tokenId of veNFT with oldLocked.amount - `_amount`.
@@ -395,11 +393,38 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @param _bool True to allow, false to disallow
     function toggleSplit(address _account, bool _bool) external;
 
+    /// @notice Permanently lock a veNFT. Voting power will be equal to
+    ///         `LockedBalance.amount` with no decay. Required to delegate.
+    /// @dev Only callable by unlocked normal veNFTs.
+    /// @param _tokenId tokenId to lock.
+    function lockPermanent(uint256 _tokenId) external;
+
+    /// @notice Unlock a permanently locked veNFT. Voting power will decay.
+    ///         Will automatically dedelegate if delegated.
+    /// @dev Only callable by permanently locked veNFTs.
+    ///      Cannot unlock if already voted this epoch.
+    /// @param _tokenId tokenId to unlock.
+    function unlockPermanent(uint256 _tokenId) external;
+
     /*///////////////////////////////////////////////////////////////
                            GAUGE VOTING STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Get the voting power for _tokenId at the current block
+    /// @notice Binary search to get the user point index for a token id at or prior to a given timestamp
+    /// @dev If a user point does not exist prior to the timestamp, this will return 0.
+    /// @param _tokenId .
+    /// @param _timestamp .
+    /// @return User point index
+    function getPastUserPointIndex(uint256 _tokenId, uint256 _timestamp) external view returns (uint256);
+
+    /// @notice Binary search to get the global point index at or prior to a given timestamp
+    /// @dev If a checkpoint does not exist prior to the timestamp, this will return 0.
+    /// @param _timestamp .
+    /// @return Global point index
+    function getPastGlobalPointIndex(uint256 _timestamp) external view returns (uint256);
+
+    /// @notice Get the voting power for _tokenId at the current timestamp
+    /// @dev Returns 0 if called in the same block as a transfer.
     /// @param _tokenId .
     /// @return Voting power
     function balanceOfNFT(uint256 _tokenId) external view returns (uint256);
@@ -409,17 +434,6 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @param _t Timestamp to query voting power
     /// @return Voting power
     function balanceOfNFTAt(uint256 _tokenId, uint256 _t) external view returns (uint256);
-
-    /// @notice Get the voting power for _tokenId at a given block
-    /// @param _tokenId .
-    /// @param _block Block number to query voting power
-    /// @return Voting power
-    function balanceOfAtNFT(uint256 _tokenId, uint256 _block) external view returns (uint256);
-
-    /// @notice Calculate total voting power at some point in the past
-    /// @param _block Block to calculate the total voting power at
-    /// @return Total voting power at `_block`
-    function totalSupplyAt(uint256 _block) external view returns (uint256);
 
     /// @notice Calculate total voting power at current timestamp
     /// @return Total voting power
@@ -455,46 +469,52 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
                             DAO VOTING STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice The number of checkpoints for each account
-    function numCheckpoints(address account) external view returns (uint32);
+    /// @notice The number of checkpoints for each tokenId
+    function numCheckpoints(uint256 tokenId) external view returns (uint48);
 
     /// @notice A record of states for signing / validating signatures
     function nonces(address account) external view returns (uint256);
 
     /// @inheritdoc IVotes
-    function delegates(address delegator) external view returns (address);
+    function delegates(uint256 delegator) external view returns (uint256);
 
     /// @notice A record of delegated token checkpoints for each account, by index
-    /// @param account .
+    /// @param tokenId .
     /// @param index .
     /// @return Checkpoint
-    function checkpoints(address account, uint32 index) external view returns (Checkpoint memory);
+    function checkpoints(uint256 tokenId, uint48 index) external view returns (Checkpoint memory);
 
     /// @inheritdoc IVotes
-    function getVotes(address account) external view returns (uint256);
+    function getVotes(address account, uint256 tokenId) external view returns (uint256);
 
-    /// @notice Binary tree serach to get the checkpoint index for an account at a specific block number
+    /// @notice Binary search to get the voting checkpoint for an account at or prior to a given timestamp
+    /// @dev If a checkpoint does not exist prior to the timestamp, this will return 0.
     /// @param account .
-    /// @param blockNumber .
+    /// @param timestamp .
     /// @return Index of checkpoint
-    function getPastVotesIndex(address account, uint256 blockNumber) external view returns (uint32);
+    function getPastVotesIndex(uint256 account, uint256 timestamp) external view returns (uint48);
 
     /// @inheritdoc IVotes
-    function getPastVotes(address account, uint256 blockNumber) external view returns (uint256);
+    function getPastVotes(
+        address account,
+        uint256 tokenId,
+        uint256 timestamp
+    ) external view returns (uint256);
 
     /// @inheritdoc IVotes
-    function getPastTotalSupply(uint256 blockNumber) external view returns (uint256);
+    function getPastTotalSupply(uint256 timestamp) external view returns (uint256);
 
     /*///////////////////////////////////////////////////////////////
                              DAO VOTING LOGIC
     //////////////////////////////////////////////////////////////*/
 
     /// @inheritdoc IVotes
-    function delegate(address delegatee) external;
+    function delegate(uint256 delegator, uint256 delegatee) external;
 
     /// @inheritdoc IVotes
     function delegateBySig(
-        address delegatee,
+        uint256 delegator,
+        uint256 delegatee,
         uint256 nonce,
         uint256 expiry,
         uint8 v,

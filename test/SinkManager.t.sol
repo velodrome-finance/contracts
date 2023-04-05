@@ -143,7 +143,7 @@ contract SinkManagerTest is BaseTest {
         uint256 lastEpochStored = vEscrow.user_point_epoch(tokenId3);
         IVotingEscrowV1.Point memory pt1 = vEscrow.user_point_history(tokenId3, lastEpochStored);
         lastEpochStoredV2 = escrow.userPointEpoch(tokenIdV2);
-        IVotingEscrow.Point memory pt2 = escrow.userPointHistory(tokenIdV2, lastEpochStoredV2);
+        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(tokenIdV2, lastEpochStoredV2);
         assertGt(pt1.bias, pt2.bias);
         assertEq(pt1.slope, pt2.slope);
         assertEq(pt1.ts + 2, pt2.ts);

@@ -32,6 +32,7 @@ import {IVotingEscrowV1} from "contracts/interfaces/v1/IVotingEscrowV1.sol";
 import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {SigUtils} from "test/utils/SigUtils.sol";
 import {Forwarder} from "@opengsn/contracts/src/forwarder/Forwarder.sol";
 
 import "forge-std/Script.sol";

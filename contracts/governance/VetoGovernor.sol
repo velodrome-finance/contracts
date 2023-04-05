@@ -226,22 +226,23 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     function _voteSucceeded(uint256 proposalId) internal view virtual returns (bool);
 
     /**
-     * @dev Get the voting weight of `account` at a specific `timepoint`, for a vote as described by `params`.
+     * @dev Get the voting weight of `tokenId`, owned by `account` at a specific `timepoint`, for a vote as described by `params`.
      */
     function _getVotes(
         address account,
+        uint256 tokenId,
         uint256 timepoint,
         bytes memory params
     ) internal view virtual returns (uint256);
 
     /**
-     * @dev Register a vote for `proposalId` by `account` with a given `support`, voting `weight` and voting `params`.
+     * @dev Register a vote for `proposalId` by `tokenId` with a given `support`, voting `weight` and voting `params`.
      *
      * Note: Support is generic and can represent various things depending on the voting system used.
      */
     function _countVote(
         uint256 proposalId,
-        address account,
+        uint256 tokenId,
         uint8 support,
         uint256 weight,
         bytes memory params
@@ -261,6 +262,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      * @dev See {IVetoGovernor-propose}.
      */
     function propose(
+        uint256 tokenId,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
@@ -270,7 +272,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
         uint256 currentTimepoint = clock();
 
         require(
-            getVotes(proposer, currentTimepoint - 1) >= proposalThreshold(),
+            getVotes(proposer, tokenId, currentTimepoint - 1) >= proposalThreshold(),
             "Governor: proposer votes below proposal threshold"
         );
 
@@ -466,8 +468,12 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     /**
      * @dev See {IVetoGovernor-getVotes}.
      */
-    function getVotes(address account, uint256 timepoint) public view virtual override returns (uint256) {
-        return _getVotes(account, timepoint, _defaultParams());
+    function getVotes(
+        address account,
+        uint256 tokenId,
+        uint256 timepoint
+    ) public view virtual override returns (uint256) {
+        return _getVotes(account, tokenId, timepoint, _defaultParams());
     }
 
     /**
@@ -475,18 +481,23 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      */
     function getVotesWithParams(
         address account,
+        uint256 tokenId,
         uint256 timepoint,
         bytes memory params
     ) public view virtual override returns (uint256) {
-        return _getVotes(account, timepoint, params);
+        return _getVotes(account, tokenId, timepoint, params);
     }
 
     /**
      * @dev See {IVetoGovernor-castVote}.
      */
-    function castVote(uint256 proposalId, uint8 support) public virtual override returns (uint256) {
+    function castVote(
+        uint256 proposalId,
+        uint256 tokenId,
+        uint8 support
+    ) public virtual override returns (uint256) {
         address voter = _msgSender();
-        return _castVote(proposalId, voter, support, "");
+        return _castVote(proposalId, voter, tokenId, support, "");
     }
 
     /**
@@ -494,11 +505,12 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      */
     function castVoteWithReason(
         uint256 proposalId,
+        uint256 tokenId,
         uint8 support,
         string calldata reason
     ) public virtual override returns (uint256) {
         address voter = _msgSender();
-        return _castVote(proposalId, voter, support, reason);
+        return _castVote(proposalId, voter, tokenId, support, reason);
     }
 
     /**
@@ -506,12 +518,13 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      */
     function castVoteWithReasonAndParams(
         uint256 proposalId,
+        uint256 tokenId,
         uint8 support,
         string calldata reason,
         bytes memory params
     ) public virtual override returns (uint256) {
         address voter = _msgSender();
-        return _castVote(proposalId, voter, support, reason, params);
+        return _castVote(proposalId, voter, tokenId, support, reason, params);
     }
 
     /**
@@ -519,6 +532,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      */
     function castVoteBySig(
         uint256 proposalId,
+        uint256 tokenId,
         uint8 support,
         uint8 v,
         bytes32 r,
@@ -530,7 +544,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
             r,
             s
         );
-        return _castVote(proposalId, voter, support, "");
+        return _castVote(proposalId, voter, tokenId, support, "");
     }
 
     /**
@@ -538,6 +552,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      */
     function castVoteWithReasonAndParamsBySig(
         uint256 proposalId,
+        uint256 tokenId,
         uint8 support,
         string calldata reason,
         bytes memory params,
@@ -562,7 +577,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
             s
         );
 
-        return _castVote(proposalId, voter, support, reason, params);
+        return _castVote(proposalId, voter, tokenId, support, reason, params);
     }
 
     /**
@@ -574,10 +589,11 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     function _castVote(
         uint256 proposalId,
         address account,
+        uint256 tokenId,
         uint8 support,
         string memory reason
     ) internal virtual returns (uint256) {
-        return _castVote(proposalId, account, support, reason, _defaultParams());
+        return _castVote(proposalId, account, tokenId, support, reason, _defaultParams());
     }
 
     /**
@@ -589,6 +605,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     function _castVote(
         uint256 proposalId,
         address account,
+        uint256 tokenId,
         uint8 support,
         string memory reason,
         bytes memory params
@@ -596,13 +613,13 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
         ProposalCore storage proposal = _proposals[proposalId];
         require(state(proposalId) == ProposalState.Active, "Governor: vote not currently active");
 
-        uint256 weight = _getVotes(account, proposal.voteStart, params);
-        _countVote(proposalId, account, support, weight, params);
+        uint256 weight = _getVotes(account, tokenId, proposal.voteStart, params);
+        _countVote(proposalId, tokenId, support, weight, params);
 
         if (params.length == 0) {
-            emit VoteCast(account, proposalId, support, weight, reason);
+            emit VoteCast(account, tokenId, proposalId, support, weight, reason);
         } else {
-            emit VoteCastWithParams(account, proposalId, support, weight, reason, params);
+            emit VoteCastWithParams(account, tokenId, proposalId, support, weight, reason, params);
         }
 
         return weight;

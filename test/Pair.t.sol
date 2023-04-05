@@ -61,10 +61,6 @@ contract PairTest is BaseTest {
     function votingEscrowViews() public {
         increaseLock();
 
-        uint256 block_ = block.number;
-        assertEq(escrow.balanceOfAtNFT(1, block_), escrow.balanceOfNFT(1));
-        assertEq(escrow.totalSupplyAt(block_), escrow.totalSupply());
-
         assertGt(escrow.balanceOfNFT(1), 995063075414519385);
         assertEq(VELO.balanceOf(address(escrow)), TOKEN_1);
     }

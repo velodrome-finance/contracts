@@ -12,15 +12,15 @@ contract MinterTestFlow is ExtendedBaseTest {
         assertEq(VELO.balanceOf(address(voter)), 0);
 
         VELO.approve(address(escrow), TOKEN_100K);
-        uint256 tokenId = escrow.createLock(TOKEN_100K, MAXTIME);
+        escrow.createLock(TOKEN_100K, MAXTIME); // 1
 
         vm.startPrank(address(owner2));
         VELO.approve(address(escrow), TOKEN_100K);
-        uint256 tokenId2 = escrow.createLock(TOKEN_100K, MAXTIME);
+        escrow.createLock(TOKEN_100K, MAXTIME); // 2
         vm.stopPrank();
 
-        assertEq(distributor.claimable(tokenId), 0);
-        assertEq(distributor.claimable(tokenId), 0);
+        assertEq(distributor.claimable(1), 0);
+        assertEq(distributor.claimable(2), 0);
 
         skip(1 hours + 1);
 
@@ -31,9 +31,9 @@ contract MinterTestFlow is ExtendedBaseTest {
         uint256[] memory weights = new uint256[](2);
         weights[0] = 1;
         weights[1] = 1;
-        voter.vote(tokenId, pools, weights);
+        voter.vote(1, pools, weights);
         vm.prank(address(owner2));
-        voter.vote(tokenId2, pools, weights);
+        voter.vote(2, pools, weights);
         skipAndRoll(1);
 
         pair.approve(address(gauge), PAIR_1);
@@ -113,7 +113,8 @@ contract MinterTestFlow is ExtendedBaseTest {
 
         assertEq(minter.tailEmissionRate(), 30);
 
-        escrow.increaseUnlockTime(tokenId, MAXTIME);
+        // 1 now has larger lock balance than 2
+        escrow.increaseUnlockTime(1, MAXTIME);
 
         address[] memory targets = new address[](1);
         targets[0] = address(minter);
@@ -123,17 +124,17 @@ contract MinterTestFlow is ExtendedBaseTest {
         calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
         string memory description = Strings.toString(block.timestamp);
 
-        uint256 pid = epochGovernor.propose(targets, values, calldatas, description);
+        uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
 
         skipAndRoll(15 minutes); // epoch + 15 minutes + 1
         vm.expectRevert("GovernorSimple: vote not currently active");
-        epochGovernor.castVote(pid, 1);
+        epochGovernor.castVote(pid, 1, 1);
         skipAndRoll(1); // epoch + 15 minutes + 2
 
         /// expect 1 (for vote) to pass
-        epochGovernor.castVote(pid, 1);
+        epochGovernor.castVote(pid, 1, 1);
         vm.prank(address(owner2));
-        epochGovernor.castVote(pid, 0);
+        epochGovernor.castVote(pid, 2, 0);
 
         skipAndRoll(1 weeks); // epoch + 15 minutes + 2
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
@@ -145,18 +146,18 @@ contract MinterTestFlow is ExtendedBaseTest {
         voter.distribute(0, voter.length());
 
         description = Strings.toString(block.timestamp);
-        pid = epochGovernor.propose(targets, values, calldatas, description);
+        pid = epochGovernor.propose(1, targets, values, calldatas, description);
         skipAndRoll(15 minutes + 1); // epoch + 30 minutes + 3
 
         /// expect 2 (no change vote) to pass
-        epochGovernor.castVote(pid, 2);
+        epochGovernor.castVote(pid, 1, 2);
         vm.prank(address(owner2));
-        epochGovernor.castVote(pid, 1);
+        epochGovernor.castVote(pid, 2, 1);
 
         skipToNextEpoch(0);
         // create new proposal immediately on epoch flip (i.e. two concurrent proposals)
         string memory description2 = Strings.toString(block.timestamp);
-        uint256 pid2 = epochGovernor.propose(targets, values, calldatas, description2);
+        uint256 pid2 = epochGovernor.propose(1, targets, values, calldatas, description2);
 
         skipAndRoll(30 minutes + 3); // epoch + 30 minutes + 3
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
@@ -168,9 +169,9 @@ contract MinterTestFlow is ExtendedBaseTest {
         voter.distribute(0, voter.length());
 
         /// expect 0 (against vote) to pass
-        epochGovernor.castVote(pid2, 0);
+        epochGovernor.castVote(pid2, 1, 0);
         vm.prank(address(owner2));
-        epochGovernor.castVote(pid2, 2);
+        epochGovernor.castVote(pid2, 2, 2);
 
         skipAndRoll(1 weeks);
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description2)));

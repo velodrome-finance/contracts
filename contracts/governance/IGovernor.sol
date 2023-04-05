@@ -49,7 +49,14 @@ abstract contract IGovernor is IERC165, IERC6372 {
      *
      * Note: `support` values should be seen as buckets. Their interpretation depends on the voting module used.
      */
-    event VoteCast(address indexed voter, uint256 proposalId, uint8 support, uint256 weight, string reason);
+    event VoteCast(
+        address indexed voter,
+        uint256 indexed tokenId,
+        uint256 proposalId,
+        uint8 support,
+        uint256 weight,
+        string reason
+    );
 
     /**
      * @dev Emitted when a vote is cast with params.
@@ -59,6 +66,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
      */
     event VoteCastWithParams(
         address indexed voter,
+        uint256 indexed tokenId,
         uint256 proposalId,
         uint8 support,
         uint256 weight,
@@ -179,28 +187,33 @@ abstract contract IGovernor is IERC165, IERC6372 {
 
     /**
      * @notice module:reputation
-     * @dev Voting power of an `account` at a specific `timepoint`.
+     * @dev Voting power of an `tokenId` at a specific `timepoint`.
      *
      * Note: this can be implemented in a number of ways, for example by reading the delegated balance from one (or
      * multiple), {ERC20Votes} tokens.
      */
-    function getVotes(address account, uint256 timepoint) public view virtual returns (uint256);
+    function getVotes(
+        address account,
+        uint256 tokenId,
+        uint256 timepoint
+    ) public view virtual returns (uint256);
 
     /**
      * @notice module:reputation
-     * @dev Voting power of an `account` at a specific `timepoint` given additional encoded parameters.
+     * @dev Voting power of an `tokenId` at a specific `timepoint` given additional encoded parameters.
      */
     function getVotesWithParams(
         address account,
+        uint256 tokenId,
         uint256 timepoint,
         bytes memory params
     ) public view virtual returns (uint256);
 
     /**
      * @notice module:voting
-     * @dev Returns whether `account` has cast a vote on `proposalId`.
+     * @dev Returns whether `tokenId` has cast a vote on `proposalId`.
      */
-    function hasVoted(uint256 proposalId, address account) public view virtual returns (bool);
+    function hasVoted(uint256 proposalId, uint256 tokenId) public view virtual returns (bool);
 
     /**
      * @dev Create a new proposal. Vote start after a delay specified by {IGovernor-votingDelay} and lasts for a
@@ -209,6 +222,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
      * Emits a {ProposalCreated} event.
      */
     function propose(
+        uint256 tokenId,
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
@@ -235,7 +249,11 @@ abstract contract IGovernor is IERC165, IERC6372 {
      *
      * Emits a {VoteCast} event.
      */
-    function castVote(uint256 proposalId, uint8 support) public virtual returns (uint256 balance);
+    function castVote(
+        uint256 proposalId,
+        uint256 tokenId,
+        uint8 support
+    ) public virtual returns (uint256 balance);
 
     /**
      * @dev Cast a vote with a reason
@@ -244,6 +262,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
      */
     function castVoteWithReason(
         uint256 proposalId,
+        uint256 tokenId,
         uint8 support,
         string calldata reason
     ) public virtual returns (uint256 balance);
@@ -255,6 +274,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
      */
     function castVoteWithReasonAndParams(
         uint256 proposalId,
+        uint256 tokenId,
         uint8 support,
         string calldata reason,
         bytes memory params
@@ -267,6 +287,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
      */
     function castVoteBySig(
         uint256 proposalId,
+        uint256 tokenId,
         uint8 support,
         uint8 v,
         bytes32 r,
@@ -280,6 +301,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
      */
     function castVoteWithReasonAndParamsBySig(
         uint256 proposalId,
+        uint256 tokenId,
         uint8 support,
         string calldata reason,
         bytes memory params,

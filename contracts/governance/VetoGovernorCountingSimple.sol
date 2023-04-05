@@ -22,7 +22,7 @@ abstract contract VetoGovernorCountingSimple is VetoGovernor {
         uint256 againstVotes;
         uint256 forVotes;
         uint256 abstainVotes;
-        mapping(address => bool) hasVoted;
+        mapping(uint256 => bool) hasVoted;
     }
 
     mapping(uint256 => ProposalVote) private _proposalVotes;
@@ -38,8 +38,8 @@ abstract contract VetoGovernorCountingSimple is VetoGovernor {
     /**
      * @dev See {IGovernor-hasVoted}.
      */
-    function hasVoted(uint256 proposalId, address account) public view virtual override returns (bool) {
-        return _proposalVotes[proposalId].hasVoted[account];
+    function hasVoted(uint256 proposalId, uint256 tokenId) public view virtual override returns (bool) {
+        return _proposalVotes[proposalId].hasVoted[tokenId];
     }
 
     /**
@@ -82,15 +82,16 @@ abstract contract VetoGovernorCountingSimple is VetoGovernor {
      */
     function _countVote(
         uint256 proposalId,
-        address account,
+        uint256 tokenId,
         uint8 support,
         uint256 weight,
         bytes memory // params
     ) internal virtual override {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
 
-        require(!proposalVote.hasVoted[account], "GovernorVotingSimple: vote already cast");
-        proposalVote.hasVoted[account] = true;
+        require(!proposalVote.hasVoted[tokenId], "GovernorVotingSimple: vote already cast");
+        require(weight > 0, "GovernorVotingSimple: zero voting weight");
+        proposalVote.hasVoted[tokenId] = true;
 
         if (support == uint8(VoteType.Against)) {
             proposalVote.againstVotes += weight;

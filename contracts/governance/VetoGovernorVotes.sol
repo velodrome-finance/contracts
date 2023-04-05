@@ -4,18 +4,18 @@
 pragma solidity ^0.8.0;
 
 import {VetoGovernor} from "./VetoGovernor.sol";
-import {IERC5805} from "@openzeppelin/contracts/interfaces/IERC5805.sol";
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {IVotes} from "./IVotes.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 
 /**
  * @dev OpenZeppelin's GovernorVotes using VetoGovernor
  */
 abstract contract VetoGovernorVotes is VetoGovernor {
-    IERC5805 public immutable token;
+    IVotes public immutable token;
 
     constructor(IVotes tokenAddress) {
-        token = IERC5805(address(tokenAddress));
+        token = IVotes(address(tokenAddress));
     }
 
     /**
@@ -23,7 +23,7 @@ abstract contract VetoGovernorVotes is VetoGovernor {
      * does not implement EIP-6372.
      */
     function clock() public view virtual override returns (uint48) {
-        try token.clock() returns (uint48 timepoint) {
+        try IERC6372(address(token)).clock() returns (uint48 timepoint) {
             return timepoint;
         } catch {
             return SafeCast.toUint48(block.number);
@@ -35,7 +35,7 @@ abstract contract VetoGovernorVotes is VetoGovernor {
      */
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view virtual override returns (string memory) {
-        try token.CLOCK_MODE() returns (string memory clockmode) {
+        try IERC6372(address(token)).CLOCK_MODE() returns (string memory clockmode) {
             return clockmode;
         } catch {
             return "mode=blocknumber&from=default";
@@ -47,9 +47,10 @@ abstract contract VetoGovernorVotes is VetoGovernor {
      */
     function _getVotes(
         address account,
+        uint256 tokenId,
         uint256 timepoint,
         bytes memory /*params*/
     ) internal view virtual override returns (uint256) {
-        return token.getPastVotes(account, timepoint);
+        return token.getPastVotes(account, tokenId, timepoint);
     }
 }

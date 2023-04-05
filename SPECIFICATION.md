@@ -77,25 +77,45 @@ Standard ERC20 token. Minting permissions granted to both Minter and Sink Manage
 
 ### VotingEscrow
 
-The VotingEscrow contracts allow users to escrow their VELO tokens in an veVELO NFT. The (ERC-721 compliant) NFT has a balance which represents the voting weight of the escrowed tokens, which decays linearly over time. Tokens can be locked for a maximum of four years. veVELO NFT vote weights can be used to vote for pools, which in turn determines the proportion of weekly emissions that go to each pool. VotingEscrow's clock mode is timestamps (see EIP-6372).
+The VotingEscrow contracts allow users to escrow their VELO tokens in an veVELO NFT. 
+The (ERC-721 compliant) NFT has a balance which represents the voting weight of the
+escrowed tokens, which decays linearly over time. Tokens can be locked for a maximum
+of four years. veVELO NFT vote weights can be used to vote for pools, which in turn
+determines the proportion of weekly emissions that go to each pool. VotingEscrow's
+clock mode is timestamps (see EIP-6372).
 
-There are three states that veVELO NFTs can be in: `NORMAL`, `LOCKED`, `MANAGED`. `NORMAL` NFTs are the NFTs that users are familiar with. `Managed` NFTs are a new type of NFT (see below). When a user deposits a normal NFT into a managed NFT, it becomes a `LOCKED` NFT. `NORMAL` NFTs are not restricted in functionality whereas `LOCKED` NFTs have extremely restricted functionality and `MANAGED` NFTs have limited functionality. Managed NFT deposits and withdrawals are handled by `Voter`.
+There are three states that veVELO NFTs can be in: `NORMAL`, `LOCKED`, `MANAGED`.
+`NORMAL` NFTs are the NFTs that users are familiar with. `Managed` NFTs are a new
+type of NFT (see below). When a user deposits a normal NFT into a managed NFT, it
+becomes a `LOCKED` NFT. `NORMAL` NFTs are not restricted in functionality whereas
+`LOCKED` NFTs have extremely restricted functionality and `MANAGED` NFTs have
+limited functionality. Managed NFT deposits and withdrawals are handled by `Voter`.
+
+Normal NFTs can also be in a new state that is known as a permanent lock. While 
+permanently locked, normal NFTs will have voting power that will be equal to the
+amount of veVELO that was locked to create it. The NFT's voting power will also
+not decay. Permanent locks can be unlocked as long as you have not voted that epoch. 
+Managed NFTs are permanent locks by default.
 
 Standard Operations:
 All of these operations require ownership of the underlying NFT or tokens being escrowed. 
 - Can create a NFT by escrowing VELO tokens and "locking" them for a time period.
 - Can do anything with the NFT as supported by the ERC-721 interface (requires normal or managed NFT).
-- Can merge one NFT into another (requires normal NFT).
-- Can split a single NFT into two new NFTs (requires normal NFT).  The NFT to be split is burned.  
+- Can merge one NFT into another (requires normal NFT for `from`, but can be normal permanent for `to`).
+- Can split a single NFT into two new NFTs (requires normal or normal permanent NFT).  The NFT to be split is burned.  
     - By permissioning split to an address, any normal NFTs owned by the address are able to be split.
     - Split is initially permissioned by address and can be toggled on/off (requires team).
     - In addition, there are split toggle on/off permissions protocol-wide (requires team)
 - Can withdraw escrowed VELO tokens once the NFT lock expires (requires normal NFT). 
-- Can add to an existing NFT position by escrowing additional VELO tokens (requires normal or managed NFT).
-- Can increase the lock duration of an NFT (and thus increasing voting power, requires normal or managed NFT).
-- Can delegate votes for use in Velodrome governance to other addresses based on voting power (requires normal or managed NFT). The balances in this method do not reflect real coins, they are used only for voting.
+- Can add to an existing NFT position by escrowing additional VELO tokens (requires normal or normal permanent or managed NFT).
+- Can increase the lock duration of an NFT (and thus increasing voting power, requires normal NFT).
+- Can permanent lock a NFT to lock its voting power at the maximum and prevent decay (requires normal NFT).
+- Can unlock a permanently locked NFT to allow its voting power to decay (requires normal permanent NFT).
+- Can delegate votes to other `tokenId`s for use in Velodrome governance to other addresses based on voting power (requires normal permanent or managed NFT). Voting power retrieved from `getVotes` and `getPastVotes` does not reveal locked amount balances and are used only for voting. 
 
-In addition, Velodrome supports "managed NFTs" which aggregates NFT voting power whilst perpetually locking the underlying tokens. These NFTs function as a single NFT, with rewards accrued by the NFT going to the manager, who can then distribute (net of fees) to the depositors. 
+See `VOTINGESCROW.md` for a visual respresentation.
+
+In addition, Velodrome supports "managed NFTs" which aggregates NFT voting power whilst perpetually locking the underlying tokens. These NFTs function as a single NFT, with rewards accrued by the NFT going to the manager, who can then distribute (net of fees) to the depositors. These NFTs are permanently locked by default.
 - NFTs can exist in one of three states: normal, locked or managed. By default, they are in normal state.
 - Only governance or an allowed manager can create managed NFTs, special NFTs in the managed state.
 - Managed NFTs can be deactivated, a process which prevents the NFT from voting and from receiving deposits (requires emergency council).
@@ -269,7 +289,8 @@ A "fake" pair used to provide liquidity to routers for routes going from v1 VELO
 Lightly modified from OpenZeppelin's Governor contract. Enables governance by using 
 timestamp based voting power from VotingEscrow NFTs. Includes support for vetoing of 
 proposals as mitigation against 51% attacks. `proposalHash` has also been modified to 
-include the `proposer` to prevent griefing attacks from proposal frontrunning. 
+include the `proposer` to prevent griefing attacks from proposal frontrunning. Votes
+are cast and counted on a per `tokenId` basis.
 
 ### EpochGovernor
 
@@ -280,7 +301,8 @@ emissions in the `Minter` are turned on, every epoch a proposal can be created
 to either increase, hold or decrease the Minter's emission for the following 
 epoch. The winning decision is selected via simple majority (also known as [plurality](https://en.wikipedia.org/wiki/Plurality_(voting))). Also uses timestamp based voting power 
 from VotingEscrow NFTs. Note that the very first nudge proposal must be initiated in 
-the epoch prior to the tail emission schedule starting. 
+the epoch prior to the tail emission schedule starting. Votes are cast and counted
+on a per `tokenId` basis.
 
 Notable changes:
 - No quorum.

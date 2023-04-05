@@ -945,9 +945,9 @@ contract VoterTest is BaseTest {
 
         voter.withdrawManaged(tokenId);
         assertTrue(escrow.voted(mTokenId));
-        // ensure voting weight of managed veNFT is now equal to the the regular tokenId
-        assertEq(voter.totalWeight(), escrow.balanceOfNFT(tokenId));
-        assertEq(voter.usedWeights(mTokenId), escrow.balanceOfNFT(tokenId));
+        // ensure voting weight of managed nft is now equal to the current managed nft balance
+        assertEq(voter.totalWeight(), escrow.balanceOfNFT(mTokenId));
+        assertEq(voter.usedWeights(mTokenId), escrow.balanceOfNFT(mTokenId));
 
         address poolVote = voter.poolVote(mTokenId, 0);
         assertEq(poolVote, address(pair));

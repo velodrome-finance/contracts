@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.13;
 
-import {IVotes} from "@openzeppelin/contracts/governance/utils/IVotes.sol";
+import {IVotes} from "./governance/IVotes.sol";
 
 import {IVetoGovernor} from "./governance/IVetoGovernor.sol";
 import {VetoGovernor} from "./governance/VetoGovernor.sol";

@@ -129,14 +129,14 @@ contract LockedManagedRewardTest is BaseTest {
     function testGetReward() public {
         skip(1 weeks / 2);
 
-        uint256 pre = escrow.lockedAmount(1);
+        uint256 pre = convert(escrow.locked(1).amount);
         voter.depositManaged(1, mTokenId);
         _addLockedReward(TOKEN_1);
 
         skipToNextEpoch(1 hours + 1);
 
         voter.withdrawManaged(1);
-        uint256 post = escrow.lockedAmount(1);
+        uint256 post = convert(escrow.locked(1).amount);
 
         assertEq(post - pre, TOKEN_1);
     }

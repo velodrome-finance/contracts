@@ -63,13 +63,16 @@ contract ManagedNftFlow is ExtendedBaseTest {
         IVotingEscrow.LockedBalance memory locked;
         locked = escrow.locked(mTokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1 * 2);
-        assertEq(locked.end, 126403200);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
         locked = escrow.locked(tokenId);
         assertEq(uint256(uint128(locked.amount)), 0);
         assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, false);
         locked = escrow.locked(tokenId2);
         assertEq(uint256(uint128(locked.amount)), 0);
         assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, false);
 
         // net supply unchanged
         assertEq(escrow.supply(), supply);
@@ -85,8 +88,6 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // create velo bribe for next epoch
         _createBribeWithAmount(bribeVotingReward, address(VELO), TOKEN_1 * 2);
-
-        skip(1 hours + 1);
 
         /// total votes:
         /// managed nft: TOKEN_1 * 2
@@ -113,7 +114,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         // check managed nft token lock increased
         locked = escrow.locked(mTokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1 * 3);
-        assertEq(locked.end, 126403200);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
 
         // must be poked after ve balance change or votes in bribe won't update
         voter.poke(mTokenId);
@@ -128,16 +130,18 @@ contract ManagedNftFlow is ExtendedBaseTest {
         // simulate rebase + non-compounded velo rewards
 
         /// state of gauge votes:
-        /// mTokenId contribution: 3 / 4
-        /// tokenId3 contribution: 1 / 4
+        /// mTokenId contribution ~= 3 / 4
+        /// tokenId3 contribution ~= 1 / 4
+        /// mTokenId voting weight = TOKEN_1 * 3 (permanent lock)
+        /// tokenId3 voting weight = 997260257999312010 (balance at deposit time)
 
         // collect rewards from bribe
         uint256 pre = VELO.balanceOf(address(owner4));
         vm.prank(address(voter));
         bribeVotingReward.getReward(mTokenId, rewards);
         uint256 post = VELO.balanceOf(address(owner4));
-        // allow error band of 1e8 / 1e16 due to voting power rounding in bribe
-        assertApproxEqRel(post - pre, ((TOKEN_1 * 2) * 3) / 4, 1e8);
+        // ~= 3 / 4 go to managed nft. note that managed is perma locked but tokenId3 is not
+        assertApproxEqRel(post - pre, ((TOKEN_1 * 2) * 750_514) / 1_000_000, 1e13);
 
         // distribute reward to managed nft depositors
         vm.startPrank(address(owner4));
@@ -156,8 +160,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(escrow.supply(), supply);
         locked = escrow.locked(mTokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1 * 4);
-        // locktime remains unchanged as no deposit / withdraw took place
-        assertEq(locked.end, 126403200);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
 
         assertEq(lockedManagedReward.earned(address(VELO), tokenId), TOKEN_1 / 2);
         assertEq(freeManagedReward.earned(address(VELO), tokenId), 0);
@@ -224,6 +228,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         locked = escrow.locked(tokenId2);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1 * 2);
         assertEq(locked.end, 127612800);
+        assertEq(locked.isPermanent, false);
 
         assertEq(escrow.supply(), supply);
         assertEq(lockedManagedReward.earned(address(VELO), tokenId), TOKEN_1);
@@ -254,8 +259,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         // epoch 3:
 
         /// state of gauge votes:
-        /// mTokenId contribution: 3 / 4
-        /// tokenId3 contribution: 1 / 4
+        /// mTokenId contribution ~= 3 / 4
+        /// tokenId3 contribution ~= 1 / 4
 
         // owner receives all rewards, owner2 receives nothing
         assertEq(lockedManagedReward.earned(address(VELO), tokenId), TOKEN_1 * 2);
@@ -280,10 +285,12 @@ contract ManagedNftFlow is ExtendedBaseTest {
         locked = escrow.locked(tokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1 * 3);
         assertEq(locked.end, 128217600);
+        assertEq(locked.isPermanent, false);
 
         locked = escrow.locked(mTokenId);
         assertEq(uint256(uint128(locked.amount)), 0);
-        assertEq(locked.end, 128217600);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
 
         skip(1 hours);
 
@@ -322,14 +329,14 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // test normal nft behavior post withdrawal
         // ~= approx TOKEN_1 * 3 / 4, some drift due to voting power decay
-        assertEq(bribeVotingReward.earned(address(VELO), tokenId), 749100651391707808);
+        assertEq(bribeVotingReward.earned(address(VELO), tokenId), 749095271054930289);
 
         pre = VELO.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward.getReward(tokenId, rewards);
         post = VELO.balanceOf(address(owner));
 
-        assertEq(post - pre, 749100651391707808);
+        assertEq(post - pre, 749095271054930289);
     }
 
     function testTransferManagedNftFlow() public {
@@ -366,13 +373,16 @@ contract ManagedNftFlow is ExtendedBaseTest {
         IVotingEscrow.LockedBalance memory locked;
         locked = escrow.locked(mTokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1 * 2);
-        assertEq(locked.end, 126403200);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
         locked = escrow.locked(tokenId);
         assertEq(uint256(uint128(locked.amount)), 0);
         assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, false);
         locked = escrow.locked(tokenId2);
         assertEq(uint256(uint128(locked.amount)), 0);
         assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, false);
 
         // net supply unchanged
         assertEq(escrow.supply(), supply);
@@ -445,10 +455,12 @@ contract ManagedNftFlow is ExtendedBaseTest {
         locked = escrow.locked(tokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1);
         assertEq(locked.end, 127612800);
+        assertEq(locked.isPermanent, false);
 
         locked = escrow.locked(mTokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1);
-        assertEq(locked.end, 127612800);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
 
         skip(1 hours);
 
@@ -504,6 +516,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         vm.startPrank(address(owner2));
         VELO.approve(address(escrow), TOKEN_1M);
         tokenId2 = escrow.createLock(TOKEN_1M, MAX_TIME);
+        // lock permanent to make mTokenId and tokenId2 balances equal
+        escrow.lockPermanent(tokenId2);
         vm.stopPrank();
         uint256 supply = escrow.supply();
 
@@ -521,13 +535,16 @@ contract ManagedNftFlow is ExtendedBaseTest {
         IVotingEscrow.LockedBalance memory locked;
         locked = escrow.locked(mTokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1M);
-        assertEq(locked.end, 126403200);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
         locked = escrow.locked(tokenId);
         assertEq(uint256(uint128(locked.amount)), 0);
         assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, false);
         locked = escrow.locked(tokenId2);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1M);
-        assertEq(locked.end, 126403200);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
 
         assertEq(escrow.supply(), supply);
 
@@ -535,8 +552,6 @@ contract ManagedNftFlow is ExtendedBaseTest {
         pools[0] = address(pair);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
-
-        skip(1 hours + 1);
 
         vm.prank(address(owner4));
         voter.vote(mTokenId, pools, weights);
@@ -558,9 +573,38 @@ contract ManagedNftFlow is ExtendedBaseTest {
         minter.update_period();
 
         uint256 rebase = distributor.claim(mTokenId);
+        assertEq(rebase, 108145615642046646056);
+        // check locked, user points and global points update correctly on rebase claim
+        locked = escrow.locked(mTokenId);
+        assertEq(convert(locked.amount), TOKEN_1M + rebase);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
+
+        // check user point updates correctly when rebases are claimed
+        assertEq(escrow.userPointEpoch(mTokenId), 3);
+        IVotingEscrow.UserPoint memory userPoint = escrow.userPointHistory(mTokenId, 3);
+        assertEq(convert(userPoint.bias), 0);
+        assertEq(convert(userPoint.slope), 0);
+        assertEq(userPoint.ts, 1814401);
+        assertEq(userPoint.blk, 3);
+        assertEq(userPoint.permanent, 1000108145615642046646056); // TOKEN_1M + rebase
+        assertEq(escrow.balanceOfNFT(mTokenId), 1000108145615642046646056);
+
+        // check global point updates correctly when rebases are claimed
+        assertEq(escrow.epoch(), 7);
+        IVotingEscrow.GlobalPoint memory globalPoint = escrow.pointHistory(7);
+        // bias / slope not zero due to tokenIds created in _setUp()
+        assertEq(convert(globalPoint.bias), 2963013674496024015); // (TOKEN_1 * 3 / MAXTIME) * (126403200 - 1814401)
+        assertEq(convert(globalPoint.slope), 23782343985); // TOKEN_1 * 3 / MAXTIME
+        assertEq(globalPoint.ts, 1814401);
+        assertEq(globalPoint.blk, 3);
+        assertEq(globalPoint.permanentLockBalance, 2000108145615642046646056); // TOKEN_1M * 2 + rebase
+        assertEq(escrow.totalSupply(), 2000108145615642046646056 + 2963013674496024015); // TOKEN_1M * 2 + rebase + bias
+
         uint256 managedRebaseTotal = rebase;
         assertGt(rebase, 0);
         assertEq(distributor.claim(tokenId2), rebase);
+
         uint256 tokenAmount = TOKEN_1M + rebase;
         supply += rebase * 2;
 
@@ -577,6 +621,34 @@ contract ManagedNftFlow is ExtendedBaseTest {
         minter.update_period();
 
         rebase = distributor.claim(mTokenId);
+
+        // check locked, user points and global points update correctly on rebase claim
+        locked = escrow.locked(mTokenId);
+        assertEq(convert(locked.amount), tokenAmount + rebase);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
+
+        // check user point updates correctly when rebases are claimed
+        assertEq(escrow.userPointEpoch(mTokenId), 4);
+        userPoint = escrow.userPointHistory(mTokenId, 4);
+        assertEq(convert(userPoint.bias), 0);
+        assertEq(convert(userPoint.slope), 0);
+        assertEq(userPoint.ts, 2419201);
+        assertEq(userPoint.blk, 4);
+        assertEq(userPoint.permanent, tokenAmount + rebase);
+        assertEq(escrow.balanceOfNFT(mTokenId), tokenAmount + rebase);
+
+        // check global point updates correctly when rebases are claimed
+        assertEq(escrow.epoch(), 9);
+        globalPoint = escrow.pointHistory(9);
+        // bias / slope not zero due to tokenIds created in _setUp()
+        assertEq(convert(globalPoint.bias), 2948630112853896015); // (TOKEN_1 * 3 / MAXTIME) * (126403200 - 2419201)
+        assertEq(convert(globalPoint.slope), 23782343985); // TOKEN_1 * 3 / MAXTIME
+        assertEq(globalPoint.ts, 2419201);
+        assertEq(globalPoint.blk, 4);
+        assertEq(globalPoint.permanentLockBalance, tokenAmount * 2 + rebase);
+        assertEq(escrow.totalSupply(), tokenAmount * 2 + rebase + 2948630112853896015);
+
         managedRebaseTotal += rebase;
         assertGt(rebase, 0);
         assertEq(distributor.claim(tokenId2), rebase);
@@ -602,10 +674,12 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(post - pre, managedRebaseTotal);
         locked = escrow.locked(mTokenId);
         assertEq(uint256(uint128(locked.amount)), 0);
-        assertEq(locked.end, 128822400);
+        assertEq(locked.end, 0);
+        assertEq(locked.isPermanent, true);
         locked = escrow.locked(tokenId);
         assertEq(uint256(uint128(locked.amount)), TOKEN_1M + managedRebaseTotal);
         assertEq(locked.end, 128822400);
+        assertEq(locked.isPermanent, false);
         assertEq(lockedManagedReward.earned(address(VELO), tokenId), 0);
         assertEq(VELO.balanceOf(address(lockedManagedReward)), 0);
     }

@@ -7,7 +7,7 @@ import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 contract VeArtProxy is IVeArtProxy {
     IVotingEscrow public immutable ve;
 
-    constructor(address _ve) public {
+    constructor(address _ve) {
         ve = IVotingEscrow(_ve);
     }
 

@@ -54,6 +54,8 @@ abstract contract BaseTest is Base, TestOwner {
     FeesVotingReward feesVotingReward3;
     BribeVotingReward bribeVotingReward3;
 
+    SigUtils sigUtils;
+
     uint256 optimismFork;
     /// @dev set OPTIMISM_RPC_URL in .env to run mainnet tests
     string OPTIMISM_RPC_URL = vm.envString("OPTIMISM_RPC_URL");
@@ -145,6 +147,17 @@ abstract contract BaseTest is Base, TestOwner {
         );
         feesVotingReward3 = FeesVotingReward(voter.gaugeToFees(address(gauge3)));
         bribeVotingReward3 = BribeVotingReward(voter.gaugeToBribe(address(gauge3)));
+
+        bytes32 domainSeparator = keccak256(
+            abi.encode(
+                escrow.DOMAIN_TYPEHASH(),
+                keccak256(bytes(escrow.name())),
+                keccak256(bytes(escrow.version())),
+                block.chainid,
+                address(escrow)
+            )
+        );
+        sigUtils = new SigUtils(domainSeparator);
 
         vm.label(address(owner), "Owner");
         vm.label(address(owner2), "Owner 2");
@@ -373,5 +386,11 @@ abstract contract BaseTest is Base, TestOwner {
             block.timestamp
         );
         vm.stopPrank();
+    }
+
+    /// @dev Used to convert IVotingEscrow int128s to uint256
+    ///      These values are always positive
+    function convert(int128 _amount) internal returns (uint256) {
+        return uint256(uint128(_amount));
     }
 }
