@@ -133,7 +133,6 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         if (_msgSender() != voter) revert NotVoter();
         if (escrowType[_mTokenId] != EscrowType.MANAGED) revert NotManagedNFT();
         if (escrowType[_tokenId] != EscrowType.NORMAL) revert NotNormalNFT();
-        if (ownershipChange[_tokenId] == block.number) revert OwnershipChange();
         if (_balanceOfNFT(_tokenId, block.timestamp) == 0) revert ZeroBalance();
 
         // adjust user nft

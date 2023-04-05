@@ -209,20 +209,6 @@ contract ManagedNftTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
     }
 
-    function testCannotDepositManagedWithFlashLoanedNft() public {
-        skipAndRoll(1 hours);
-        VELO.approve(address(escrow), type(uint256).max);
-        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
-
-        // simulate flashloan by transferring, but not modifying time / block number
-        escrow.transferFrom(address(owner), address(owner2), tokenId);
-
-        vm.prank(address(owner2));
-        vm.expectRevert(IVotingEscrow.OwnershipChange.selector);
-        voter.depositManaged(tokenId, mTokenId);
-    }
-
     function testCannotWithdrawManagedIfNotLocked() public {
         skipAndRoll(1 hours);
         escrow.createManagedLockFor(address(owner));
