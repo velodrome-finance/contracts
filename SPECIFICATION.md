@@ -104,9 +104,16 @@ In addition, Velodrome supports "managed NFTs" which aggregates NFT voting power
 
 ### Minter
 
-The minting contract handles emissions for the Velodrome protocol. Emissions start at 15m per epoch, decaying at a rate of 1% per epoch. Rebases (which are sent to `RewardsDistributor`) are added on top of the base emissions to produce the total emission. 
+The minting contract handles emissions for the Velodrome protocol. Emissions
+start at 15m per epoch, decaying at a rate of 1% per epoch. Rebases (which are
+sent to `RewardsDistributor`) are added on top of the base emissions to produce
+the total emission. 
 
-The minter has a modified emissions schedule that turns on once emissions fall below 5m per epoch (~110 epochs). After it turns on, weekly emissions will become a percentage of circulating supply, with the initial percentage starting at 30 basis points (i.e. 0.003). Every epoch, the emissions can be modified by one basis point with a vote conducted by `EpochGovernor`. See `EpochGovernor` for information on the vote. 
+The minter has a modified emissions schedule that turns on once emissions fall
+below 6m per epoch (~92 epochs). After it turns on, weekly emissions will become
+a percentage of circulating supply, with the initial percentage starting at 30 basis
+points (i.e. 0.003). Every epoch, the emissions can be modified by one basis point
+with a vote conducted by `EpochGovernor`. See `EpochGovernor` for information on the vote. 
 
 ## RewardsDistributor
 

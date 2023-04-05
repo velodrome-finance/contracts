@@ -32,7 +32,7 @@ contract Minter is IMinter {
     /// @notice Rate change per proposal
     uint256 public constant NUDGE = 1;
     /// @notice When emissions fall below this amount, begin tail emissions
-    uint256 public constant TAIL_START = 5_000_000 * 1e18;
+    uint256 public constant TAIL_START = 6_000_000 * 1e18;
     /// @notice Tail emissions rate in basis points
     uint256 public tailEmissionRate = 30;
     /// @notice Starting weekly emission of 15M VELO (VELO has 18 decimals)
