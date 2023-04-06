@@ -11,7 +11,6 @@ import {IVoter} from "./interfaces/IVoter.sol";
 import {IGauge} from "./interfaces/IGauge.sol";
 import {IWETH} from "./interfaces/IWETH.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {IERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
@@ -32,8 +31,12 @@ contract Router is IRouter, ERC2771Context {
     address public constant v1Factory = 0x25CbdDb98b35ab1FF77413456B31EC81A6B6B746;
 
     modifier ensure(uint256 deadline) {
-        if (deadline < block.timestamp) revert Expired();
+        _ensureDeadline(deadline);
         _;
+    }
+
+    function _ensureDeadline(uint256 deadline) internal view {
+        if (deadline < block.timestamp) revert Expired();
     }
 
     constructor(
@@ -368,33 +371,6 @@ contract Router is IRouter, ERC2771Context {
         _safeTransfer(token, to, IERC20(token).balanceOf(address(this)));
         weth.withdraw(amountETH);
         _safeTransferETH(to, amountETH);
-    }
-
-    function removeLiquidityETHWithPermitSupportingFeeOnTransferTokens(
-        address token,
-        bool stable,
-        uint256 liquidity,
-        uint256 amountTokenMin,
-        uint256 amountETHMin,
-        address to,
-        uint256 deadline,
-        bool approveMax,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) external returns (uint256 amountETH) {
-        address pair = pairFor(token, address(weth), stable, address(0));
-        uint256 value = approveMax ? type(uint256).max : liquidity;
-        IERC20Permit(pair).permit(_msgSender(), address(this), value, deadline, v, r, s);
-        amountETH = removeLiquidityETHSupportingFeeOnTransferTokens(
-            token,
-            stable,
-            liquidity,
-            amountTokenMin,
-            amountETHMin,
-            to,
-            deadline
-        );
     }
 
     // **** SWAP ****
@@ -851,14 +827,17 @@ contract Router is IRouter, ERC2771Context {
     ) external view returns (uint256 ratio) {
         IPair pair = IPair(pairFor(tokenA, tokenB, true, _factory));
 
-        uint256 investment = 10**IERC20Metadata(tokenA).decimals();
+        uint256 decimalsA = 10**IERC20Metadata(tokenA).decimals();
+        uint256 decimalsB = 10**IERC20Metadata(tokenB).decimals();
+
+        uint256 investment = decimalsA;
         uint256 out = pair.getAmountOut(investment, tokenA);
         (uint256 amountA, uint256 amountB, ) = quoteAddLiquidity(tokenA, tokenB, true, _factory, investment, out);
 
-        amountA = (amountA * 1e18) / 10**IERC20Metadata(tokenA).decimals();
-        amountB = (amountB * 1e18) / 10**IERC20Metadata(tokenB).decimals();
-        out = (out * 1e18) / 10**IERC20Metadata(tokenB).decimals();
-        investment = (investment * 1e18) / 10**IERC20Metadata(tokenA).decimals();
+        amountA = (amountA * 1e18) / decimalsA;
+        amountB = (amountB * 1e18) / decimalsB;
+        out = (out * 1e18) / decimalsB;
+        investment = (investment * 1e18) / decimalsA;
 
         ratio = (((out * 1e18) / investment) * amountA) / amountB;
 

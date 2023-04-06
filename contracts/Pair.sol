@@ -10,12 +10,11 @@ import {PairFees} from "./PairFees.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20Votes} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 // The base pair of pools, either stable or volatile
-contract Pair is IPair, ERC20Votes, ReentrancyGuard {
+contract Pair is IPair, ERC20Permit, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     string private _name;
@@ -94,14 +93,14 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
         _voter = IPairFactory(factory).voter();
         (token0, token1, stable) = (_token0, _token1, _stable);
         pairFees = address(new PairFees(_token0, _token1));
+        string memory symbol0 = ERC20(_token0).symbol();
+        string memory symbol1 = ERC20(_token1).symbol();
         if (_stable) {
-            _name = string(abi.encodePacked("StableV2 AMM - ", ERC20(_token0).symbol(), "/", ERC20(_token1).symbol()));
-            _symbol = string(abi.encodePacked("sAMMV2-", ERC20(_token0).symbol(), "/", ERC20(_token1).symbol()));
+            _name = string(abi.encodePacked("StableV2 AMM - ", symbol0, "/", symbol1));
+            _symbol = string(abi.encodePacked("sAMMV2-", symbol0, "/", symbol1));
         } else {
-            _name = string(
-                abi.encodePacked("VolatileV2 AMM - ", ERC20(_token0).symbol(), "/", ERC20(_token1).symbol())
-            );
-            _symbol = string(abi.encodePacked("vAMMV2-", ERC20(_token0).symbol(), "/", ERC20(_token1).symbol()));
+            _name = string(abi.encodePacked("VolatileV2 AMM - ", symbol0, "/", symbol1));
+            _symbol = string(abi.encodePacked("vAMMV2-", symbol0, "/", symbol1));
         }
 
         decimals0 = 10**ERC20(_token0).decimals();
@@ -551,10 +550,5 @@ contract Pair is IPair, ERC20Votes, ReentrancyGuard {
     ) internal override {
         _updateFor(from);
         _updateFor(to);
-    }
-
-    /// @dev https://github.com/OpenZeppelin/openzeppelin-contracts/blob/16fa1834e576764ed3901bafad6d9fc86661649d/contracts/mocks/ERC20VotesMock.sol#L18
-    function getChainId() external view returns (uint256) {
-        return block.chainid;
     }
 }
