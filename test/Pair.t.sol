@@ -784,7 +784,7 @@ contract PairTest is BaseTest {
         // base setup, and so they need to be deployed for these tests
         deployPairCoins();
 
-        assertEq(pair.name(), "StableV2 AMM - FRAX/USDC");
+        assertEq(pair.name(), "StableV2 AMM - USDC/FRAX");
         pair.setName("Some new name");
         assertEq(pair.name(), "Some new name");
     }
@@ -800,7 +800,7 @@ contract PairTest is BaseTest {
     function testSetPairSymbol() external {
         deployPairCoins();
 
-        assertEq(pair.symbol(), "sAMMV2-FRAX/USDC");
+        assertEq(pair.symbol(), "sAMMV2-USDC/FRAX");
         pair.setSymbol("Some new symbol");
         assertEq(pair.symbol(), "Some new symbol");
     }

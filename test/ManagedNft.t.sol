@@ -284,8 +284,8 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.ownerOf(tokenId), address(owner));
         assertEq(escrow.supply(), supply);
         assertEq(escrow.totalSupply(), TOKEN_1 + 992437206566602005);
-        assertEq(escrow.getVotes(address(owner), tokenId2), TOKEN_1 + 992437206566602005);
-        assertEq(escrow.getVotes(address(owner2), mTokenId), 0);
+        assertEq(escrow.getPastVotes(address(owner), tokenId2, 1213201), TOKEN_1 + 992437206566602005);
+        assertEq(escrow.getPastVotes(address(owner2), mTokenId, 1213201), 0);
 
         // check deposit represented in locked / free managed rewards
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
@@ -1132,7 +1132,7 @@ contract ManagedNftTest is BaseTest {
         assertEq(checkpoint.owner, address(owner));
         assertEq(checkpoint.delegatedBalance, 0);
         assertEq(checkpoint.delegatee, 0);
-        assertEq(escrow.getVotes(address(owner), tokenId2), 987642686019226005);
+        assertEq(escrow.getPastVotes(address(owner), tokenId2, 1818001), 987642686019226005);
         assertEq(escrow.balanceOfNFTAt(tokenId2, 1818000), 987642693946674000);
         assertEq(escrow.getPastVotes(address(owner), tokenId2, 1818000), TOKEN_1 * 2 + 987642693946674000);
 

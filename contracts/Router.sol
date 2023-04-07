@@ -479,14 +479,8 @@ contract Router is IRouter, ERC2771Context {
             uint256 amountOutput;
             {
                 // stack too deep
-                (uint256 reserve0, uint256 reserve1) = getReserves(
-                    routes[i].from,
-                    routes[i].to,
-                    routes[i].stable,
-                    routes[i].factory
-                );
-                uint256 reserveInput = routes[i].from == token0 ? reserve0 : reserve1;
-                amountInput = IERC20(routes[i].from).balanceOf(pair) - reserveInput;
+                (uint256 reserveA, ) = getReserves(routes[i].from, routes[i].to, routes[i].stable, routes[i].factory); // getReserves sorts it for us i.e. reserveA is always for from
+                amountInput = IERC20(routes[i].from).balanceOf(pair) - reserveA;
             }
             amountOutput = IPair(pair).getAmountOut(amountInput, routes[i].from);
             (uint256 amount0Out, uint256 amount1Out) = routes[i].from == token0

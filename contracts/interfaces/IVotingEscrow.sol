@@ -53,6 +53,8 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
 
     error AlreadyVoted();
     error AmountTooBig();
+    error ERC721ReceiverRejectedTokens();
+    error ERC721TransferToNonERC721ReceiverImplementer();
     error InvalidNonce();
     error InvalidSignature();
     error InvalidManagedNFTId();
@@ -224,6 +226,9 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
                       ERC721 BALANCE/OWNER STORAGE
     //////////////////////////////////////////////////////////////*/
 
+    /// @dev Mapping from owner address to mapping of index to tokenId
+    function ownerToNFTokenIdList(address _owner, uint256 _index) external view returns (uint256 _tokenId);
+
     /// @inheritdoc IERC721
     function ownerOf(uint256 tokenId) external view returns (address owner);
 
@@ -284,24 +289,12 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 
     /*//////////////////////////////////////////////////////////////
-                        INTERNAL MINT/BURN LOGIC
-    //////////////////////////////////////////////////////////////*/
-
-    /// @notice Get token by index
-    /// @param _owner Address of token owner
-    /// @param _tokenIndex Index of token to query
-    /// @return tokenId at the given index
-    function tokenOfOwnerByIndex(address _owner, uint256 _tokenIndex) external view returns (uint256);
-
-    /*//////////////////////////////////////////////////////////////
                              ESCROW STORAGE
     //////////////////////////////////////////////////////////////*/
 
     function epoch() external view returns (uint256);
 
     function supply() external view returns (uint256);
-
-    function anyoneCanSplit() external view returns (bool);
 
     function userPointEpoch(uint256 _tokenId) external view returns (uint256 _epoch);
 
@@ -384,11 +377,8 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @return _tokenId2 Return tokenId of veNFT with `_amount`.
     function split(uint256 _from, uint256 _amount) external returns (uint256 _tokenId1, uint256 _tokenId2);
 
-    /// @notice Toggle split for public access.
-    /// @param _bool True to allow, false to disallow
-    function toggleSplitForAll(bool _bool) external;
-
     /// @notice Toggle split for a specific veNFT.
+    /// @dev Toggle split for address(0) to enable or disable for all.
     /// @param _account Address to toggle split permissions
     /// @param _bool True to allow, false to disallow
     function toggleSplit(address _account, bool _bool) external;
@@ -410,19 +400,6 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
                            GAUGE VOTING STORAGE
     //////////////////////////////////////////////////////////////*/
 
-    /// @notice Binary search to get the user point index for a token id at or prior to a given timestamp
-    /// @dev If a user point does not exist prior to the timestamp, this will return 0.
-    /// @param _tokenId .
-    /// @param _timestamp .
-    /// @return User point index
-    function getPastUserPointIndex(uint256 _tokenId, uint256 _timestamp) external view returns (uint256);
-
-    /// @notice Binary search to get the global point index at or prior to a given timestamp
-    /// @dev If a checkpoint does not exist prior to the timestamp, this will return 0.
-    /// @param _timestamp .
-    /// @return Global point index
-    function getPastGlobalPointIndex(uint256 _timestamp) external view returns (uint256);
-
     /// @notice Get the voting power for _tokenId at the current timestamp
     /// @dev Returns 0 if called in the same block as a transfer.
     /// @param _tokenId .
@@ -439,11 +416,6 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @return Total voting power
     function totalSupply() external view returns (uint256);
 
-    /// @notice Calculate total voting power
-    /// @dev Adheres to the ERC20 `totalSupply` interface for Aragon compatibility
-    /// @return Total voting power
-    function totalSupplyAtT(uint256 t) external view returns (uint256);
-
     /*///////////////////////////////////////////////////////////////
                             GAUGE VOTING LOGIC
     //////////////////////////////////////////////////////////////*/
@@ -457,13 +429,11 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @dev This is only called once, at setup
     function setVoterAndDistributor(address _voter, address _distributor) external;
 
-    /// @notice Set `voted` for _tokenId to true
-    /// @dev only callable by voter
-    function voting(uint256 _tokenId) external;
-
-    /// @notice Set `voted` for _tokenId to false
-    /// @dev only callable by voter
-    function abstain(uint256 _tokenId) external;
+    /// @notice Set `voted` for _tokenId to true or false
+    /// @dev Only callable by voter
+    /// @param _tokenId .
+    /// @param _voted .
+    function voting(uint256 _tokenId, bool _voted) external;
 
     /*///////////////////////////////////////////////////////////////
                             DAO VOTING STORAGE
@@ -483,16 +453,6 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
     /// @param index .
     /// @return Checkpoint
     function checkpoints(uint256 tokenId, uint48 index) external view returns (Checkpoint memory);
-
-    /// @inheritdoc IVotes
-    function getVotes(address account, uint256 tokenId) external view returns (uint256);
-
-    /// @notice Binary search to get the voting checkpoint for an account at or prior to a given timestamp
-    /// @dev If a checkpoint does not exist prior to the timestamp, this will return 0.
-    /// @param account .
-    /// @param timestamp .
-    /// @return Index of checkpoint
-    function getPastVotesIndex(uint256 account, uint256 timestamp) external view returns (uint48);
 
     /// @inheritdoc IVotes
     function getPastVotes(

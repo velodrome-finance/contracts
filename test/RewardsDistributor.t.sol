@@ -217,7 +217,7 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(escrow.balanceOfNFTAt(2, 1209600), 992465753306832000);
         assertEq(distributor.veForAt(2, 1209600), 992465753306832000);
         assertEq(distributor.veSupply(1209600), 992465753306832000 + TOKEN_1);
-        assertEq(distributor.veSupply(1209600), escrow.totalSupplyAtT(1209600));
+        assertEq(distributor.veSupply(1209600), escrow.getPastTotalSupply(1209600));
 
         skipToNextEpoch(0);
         distributor.checkpointTotalSupply();
@@ -228,7 +228,7 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(escrow.balanceOfNFTAt(2, 1814400), 987671232759456000);
         assertEq(distributor.veForAt(2, 1814400), 987671232759456000);
         assertEq(distributor.veSupply(1814400), 987671232759456000 + TOKEN_1);
-        assertEq(distributor.veSupply(1814400), escrow.totalSupplyAtT(1814400));
+        assertEq(distributor.veSupply(1814400), escrow.getPastTotalSupply(1814400));
     }
 
     function testClaimWithExpiredNFT() public {

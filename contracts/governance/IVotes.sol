@@ -14,13 +14,6 @@ interface IVotes {
     event DelegateVotesChanged(address indexed delegate, uint256 previousBalance, uint256 newBalance);
 
     /**
-     * @dev Returns the current amount of votes that `tokenId` has.
-     *      If the account passed in is not the owner, returns 0.
-     *      Returns 0 if called in the same block as a transfer.
-     */
-    function getVotes(address account, uint256 tokenId) external view returns (uint256);
-
-    /**
      * @dev Returns the amount of votes that `tokenId` had at a specific moment in the past.
      *      If the account passed in is not the owner, returns 0.
      */

@@ -194,7 +194,7 @@ contract RouterTest is BaseTest {
         assertEq(pairFee.getAmountOut(TOKEN_1, address(erc20Fee)), expectedOutput);
 
         uint256 ethBalanceBefore = address(owner).balance;
-        uint256 actualExpectedOutput = router.getAmountsOut(TOKEN_1 - erc20Fee.fee() * 2, routes)[1];
+        uint256 actualExpectedOutput = router.getAmountsOut(TOKEN_1 - erc20Fee.fee(), routes)[1];
 
         erc20Fee.approve(address(router), TOKEN_1);
         router.swapExactTokensForETHSupportingFeeOnTransferTokens(TOKEN_1, 0, routes, address(owner), block.timestamp);

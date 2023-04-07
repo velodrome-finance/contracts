@@ -289,9 +289,9 @@ contract EpochGovernorTest is BaseTest {
 
         skipAndRoll(15 minutes);
         assertEq(escrow.balanceOfNFT(1), 1994506262572926509); // voting power at proposal start
-        assertEq(escrow.getVotes(address(owner), 1), TOKEN_1 + 1994506262572926509);
+        assertEq(escrow.getPastVotes(address(owner), 1, block.timestamp), TOKEN_1 + 1994506262572926509);
         assertEq(escrow.balanceOfNFT(4), TOKEN_1);
-        assertEq(escrow.getVotes(address(owner4), 4), 0);
+        assertEq(escrow.getPastVotes(address(owner4), 4, block.timestamp), 0);
         assertEq(escrow.balanceOfNFT(2), 997253131223564505); // voting power at proposal start
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1, 1);

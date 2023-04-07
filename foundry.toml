@@ -1,6 +1,15 @@
 [profile.default]
 src = 'contracts'
 out = 'artifacts'
+gas_reports = [
+    "VotingEscrow",
+    "Voter",
+    "Gauge",
+    "Minter",
+    "Pair",
+    "RewardsDistributor",
+    "Router"
+]
 
 fs_permissions = [{ access = "read", path = "./"}]
 

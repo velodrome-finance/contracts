@@ -179,7 +179,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 emit Abstained(_tokenId, _votes);
             }
         }
-        IVotingEscrow(ve).abstain(_tokenId);
+        IVotingEscrow(ve).voting(_tokenId, false);
         totalWeight -= _totalWeight;
         usedWeights[_tokenId] = 0;
         delete poolVote[_tokenId];
@@ -240,7 +240,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 emit Voted(_msgSender(), _tokenId, _poolWeight);
             }
         }
-        if (_usedWeight > 0) IVotingEscrow(ve).voting(_tokenId);
+        if (_usedWeight > 0) IVotingEscrow(ve).voting(_tokenId, true);
         totalWeight += uint256(_totalWeight);
         usedWeights[_tokenId] = uint256(_usedWeight);
     }
