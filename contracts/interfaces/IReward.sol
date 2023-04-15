@@ -10,9 +10,9 @@ interface IReward {
     error NotWhitelisted();
     error ZeroAmount();
 
-    event Deposit(address indexed from, uint256 tokenId, uint256 amount);
-    event Withdraw(address indexed from, uint256 tokenId, uint256 amount);
-    event NotifyReward(address indexed from, address indexed reward, uint256 epoch, uint256 amount);
+    event Deposit(address indexed from, uint256 indexed tokenId, uint256 amount);
+    event Withdraw(address indexed from, uint256 indexed tokenId, uint256 amount);
+    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
     event ClaimRewards(address indexed from, address indexed reward, uint256 amount);
 
     /// @notice Deposit an amount into the rewards contract to earn future rewards associated to a veNFT

@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 import "./BaseTest.sol";
 
 contract BribeVotingRewardTest is BaseTest {
-    event NotifyReward(address indexed from, address indexed reward, uint256 epoch, uint256 amount);
+    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
 
     function _setUp() public override {
         // ve
@@ -1615,7 +1615,7 @@ contract BribeVotingRewardTest is BaseTest {
     function testNotifyRewardAmountWithWhiteListedToken() public {
         LR.approve(address(bribeVotingReward), TOKEN_1);
         uint256 pre = LR.balanceOf(address(owner));
-        vm.expectEmit(true, false, false, true, address(bribeVotingReward));
+        vm.expectEmit(true, true, true, true, address(bribeVotingReward));
         emit NotifyReward(address(owner), address(LR), 604800, TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
         uint256 post = LR.balanceOf(address(owner));
@@ -1629,7 +1629,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         LR.approve(address(bribeVotingReward), TOKEN_1 * 2);
         pre = LR.balanceOf(address(owner));
-        vm.expectEmit(true, false, false, true, address(bribeVotingReward));
+        vm.expectEmit(true, true, true, true, address(bribeVotingReward));
         emit NotifyReward(address(owner), address(LR), 604800, TOKEN_1 * 2);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         post = LR.balanceOf(address(owner));

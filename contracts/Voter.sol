@@ -176,7 +176,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 IReward(gaugeToFees[gauges[_pool]])._withdraw(uint256(_votes), _tokenId);
                 IReward(gaugeToBribe[gauges[_pool]])._withdraw(uint256(_votes), _tokenId);
                 _totalWeight += _votes;
-                emit Abstained(_tokenId, _votes);
+                emit Abstained(_msgSender(), _pool, _tokenId, _votes, weights[_pool], block.timestamp);
             }
         }
         IVotingEscrow(ve).voting(_tokenId, false);
@@ -237,7 +237,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 IReward(gaugeToBribe[_gauge])._deposit(uint256(_poolWeight), _tokenId);
                 _usedWeight += _poolWeight;
                 _totalWeight += _poolWeight;
-                emit Voted(_msgSender(), _tokenId, _poolWeight);
+                emit Voted(_msgSender(), _pool, _tokenId, _poolWeight, weights[_pool], block.timestamp);
             }
         }
         if (_usedWeight > 0) IVotingEscrow(ve).voting(_tokenId, true);
@@ -361,8 +361,16 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         _updateFor(_gauge);
         pools.push(_pool);
 
-        // TODO: add factories as args
-        emit GaugeCreated(_gauge, sender, _feeVotingReward, _bribeVotingReward, _pool);
+        emit GaugeCreated(
+            _pairFactory,
+            _votingRewardsFactory,
+            _gaugeFactory,
+            _pool,
+            _bribeVotingReward,
+            _feeVotingReward,
+            _gauge,
+            sender
+        );
         return _gauge;
     }
 

@@ -220,7 +220,7 @@ contract RewardsDistributor is IRewardsDistributor {
         userEpochOf[_tokenId] = userEpoch;
         timeCursorOf[_tokenId] = weekCursor;
 
-        emit Claimed(_tokenId, toDistribute, userEpoch, maxUserEpoch);
+        emit Claimed(_tokenId, userEpoch, maxUserEpoch, toDistribute);
 
         return toDistribute;
     }

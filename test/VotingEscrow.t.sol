@@ -6,7 +6,29 @@ contract VotingEscrowTest is BaseTest {
     event DelegateChanged(address indexed delegator, uint256 indexed fromDelegate, uint256 indexed toDelegate);
     event LockPermanent(address indexed _owner, uint256 indexed _tokenId, uint256 amount, uint256 _ts);
     event UnlockPermanent(address indexed _owner, uint256 indexed _tokenId, uint256 amount, uint256 _ts);
-    event NotifyReward(address indexed from, address indexed reward, uint256 epoch, uint256 amount);
+    event BatchMetadataUpdate(uint256 _fromTokenId, uint256 _toTokenId);
+    event Merge(
+        address indexed _sender,
+        uint256 indexed _from,
+        uint256 indexed _to,
+        uint256 _amountFrom,
+        uint256 _amountTo,
+        uint256 _amountFinal,
+        uint256 _locktime,
+        uint256 _ts
+    );
+    event MetadataUpdate(uint256 _tokenId);
+    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
+    event Split(
+        uint256 indexed _from,
+        uint256 indexed _tokenId1,
+        uint256 indexed _tokenId2,
+        address _sender,
+        uint256 _splitAmount1,
+        uint256 _splitAmount2,
+        uint256 _locktime,
+        uint256 _ts
+    );
 
     function testInitialState() public {
         assertEq(escrow.team(), address(owner));
@@ -54,12 +76,15 @@ contract VotingEscrowTest is BaseTest {
         uint256 pre = VELO.balanceOf(address(lockedManagedReward));
         IVotingEscrow.LockedBalance memory preLocked = escrow.locked(mTokenId);
         vm.prank(address(distributor));
-        vm.expectEmit(true, false, false, true, address(lockedManagedReward));
+        vm.expectEmit(true, true, true, true, address(lockedManagedReward));
         emit NotifyReward(address(escrow), address(VELO), 604800, reward);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(mTokenId);
         escrow.depositFor(mTokenId, reward);
         uint256 post = VELO.balanceOf(address(lockedManagedReward));
         IVotingEscrow.LockedBalance memory postLocked = escrow.locked(mTokenId);
 
+        assertEq(uint256(uint128(postLocked.end)), uint256(uint128(preLocked.end)));
         assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), reward);
         assertEq(post - pre, reward);
         assertEq(VELO.allowance(address(escrow), address(lockedManagedReward)), 0);
@@ -71,10 +96,45 @@ contract VotingEscrowTest is BaseTest {
 
         IVotingEscrow.LockedBalance memory preLocked = escrow.locked(tokenId);
         VELO.approve(address(escrow), TOKEN_1);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
         escrow.depositFor(tokenId, TOKEN_1);
         IVotingEscrow.LockedBalance memory postLocked = escrow.locked(tokenId);
 
+        assertEq(uint256(uint128(postLocked.end)), uint256(uint128(preLocked.end)));
         assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), TOKEN_1);
+    }
+
+    function testIncreaseAmount() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        IVotingEscrow.LockedBalance memory preLocked = escrow.locked(tokenId);
+        VELO.approve(address(escrow), TOKEN_1);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
+        escrow.increaseAmount(tokenId, TOKEN_1);
+        IVotingEscrow.LockedBalance memory postLocked = escrow.locked(tokenId);
+
+        assertEq(uint256(uint128(postLocked.end)), uint256(uint128(preLocked.end)));
+        assertEq(uint256(uint128(postLocked.amount)) - uint256(uint128(preLocked.amount)), TOKEN_1);
+    }
+
+    function testIncreaseUnlockTime() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, 4 weeks);
+
+        skip((1 weeks) / 2);
+
+        IVotingEscrow.LockedBalance memory preLocked = escrow.locked(tokenId);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
+        escrow.increaseUnlockTime(tokenId, MAXTIME);
+        IVotingEscrow.LockedBalance memory postLocked = escrow.locked(tokenId);
+
+        uint256 expectedLockTime = ((block.timestamp + MAXTIME) / WEEK) * WEEK;
+        assertEq(uint256(uint128(postLocked.end)), expectedLockTime);
+        assertEq(uint256(uint128(postLocked.amount)), uint256(uint128(preLocked.amount)));
     }
 
     function testCreateLock() public {
@@ -517,6 +577,10 @@ contract VotingEscrowTest is BaseTest {
         uint256 expectedLockTime = escrow.locked(tokenId).end;
         skip(1);
 
+        vm.expectEmit(true, true, true, true, address(escrow));
+        emit Merge(address(owner), tokenId, tokenId2, TOKEN_1, TOKEN_1, TOKEN_1 * 2, expectedLockTime, 604802);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId2);
         escrow.merge(tokenId, tokenId2);
 
         assertEq(escrow.balanceOf(address(owner)), 1);
@@ -524,9 +588,23 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.ownerOf(tokenId2), address(owner));
         assertEq(escrow.supply(), veloSupply);
 
+        IVotingEscrow.UserPoint memory pt = escrow.userPointHistory(tokenId, 2);
+        assertEq(uint256(int256(pt.bias)), 0);
+        assertEq(uint256(int256(pt.slope)), 0);
+        assertEq(pt.ts, 604802);
+        assertEq(pt.blk, 1);
+
         IVotingEscrow.LockedBalance memory lockedFrom = escrow.locked(tokenId);
         assertEq(lockedFrom.amount, 0);
         assertEq(lockedFrom.end, 0);
+
+        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(tokenId2, 2);
+        uint256 slope = (TOKEN_1 * 2) / MAXTIME;
+        uint256 bias = slope * (expectedLockTime - block.timestamp);
+        assertEq(uint256(int256(pt2.bias)), bias);
+        assertEq(uint256(int256(pt2.slope)), slope);
+        assertEq(pt2.ts, 604802);
+        assertEq(pt2.blk, 1);
 
         IVotingEscrow.LockedBalance memory lockedTo = escrow.locked(tokenId2);
         assertEq(uint256(uint128(lockedTo.amount)), TOKEN_1 * 2);
@@ -547,6 +625,10 @@ contract VotingEscrowTest is BaseTest {
 
         skip(1);
 
+        vm.expectEmit(true, true, true, true, address(escrow));
+        emit Merge(address(owner), tokenId2, tokenId, TOKEN_1, TOKEN_1, TOKEN_1 * 2, expectedLockTime, 604802);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
         escrow.merge(tokenId2, tokenId);
 
         assertEq(escrow.balanceOf(address(owner)), 1);
@@ -554,9 +636,23 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.ownerOf(tokenId2), address(0));
         assertEq(escrow.supply(), veloSupply);
 
+        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(tokenId2, 2);
+        assertEq(uint256(int256(pt2.bias)), 0);
+        assertEq(uint256(int256(pt2.slope)), 0);
+        assertEq(pt2.ts, 604802);
+        assertEq(pt2.blk, 1);
+
         IVotingEscrow.LockedBalance memory lockedFrom = escrow.locked(tokenId2);
         assertEq(lockedFrom.amount, 0);
         assertEq(lockedFrom.end, 0);
+
+        IVotingEscrow.UserPoint memory pt = escrow.userPointHistory(tokenId, 2);
+        uint256 slope = (TOKEN_1 * 2) / MAXTIME;
+        uint256 bias = slope * (expectedLockTime - block.timestamp);
+        assertEq(uint256(int256(pt.bias)), bias);
+        assertEq(uint256(int256(pt.slope)), slope);
+        assertEq(pt.ts, 604802);
+        assertEq(pt.blk, 1);
 
         IVotingEscrow.LockedBalance memory lockedTo = escrow.locked(tokenId);
         assertEq(uint256(uint128(lockedTo.amount)), TOKEN_1 * 2);
@@ -733,15 +829,33 @@ contract VotingEscrowTest is BaseTest {
         uint256 lock = escrow.locked(tokenId2).end;
         assertLt(lock, block.timestamp); // check expired
 
+        vm.expectEmit(true, true, true, true, address(escrow));
+        emit Merge(address(owner), tokenId2, tokenId, TOKEN_1, TOKEN_1, TOKEN_1 * 2, expectedLockTime, 3024001);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
         escrow.merge(tokenId2, tokenId);
 
         assertEq(escrow.balanceOf(address(owner)), 1);
         assertEq(escrow.ownerOf(tokenId), address(owner));
         assertEq(escrow.ownerOf(tokenId2), address(0));
 
+        IVotingEscrow.UserPoint memory pt2 = escrow.userPointHistory(tokenId2, 2);
+        assertEq(uint256(int256(pt2.bias)), 0);
+        assertEq(uint256(int256(pt2.slope)), 0);
+        assertEq(pt2.ts, 3024001);
+        assertEq(pt2.blk, 1);
+
         IVotingEscrow.LockedBalance memory lockedFrom = escrow.locked(tokenId2);
         assertEq(lockedFrom.amount, 0);
         assertEq(lockedFrom.end, 0);
+
+        IVotingEscrow.UserPoint memory pt = escrow.userPointHistory(tokenId, 2);
+        uint256 slope = (TOKEN_1 * 2) / MAXTIME;
+        uint256 bias = slope * (expectedLockTime - block.timestamp);
+        assertEq(uint256(int256(pt.bias)), bias);
+        assertEq(uint256(int256(pt.slope)), slope);
+        assertEq(pt.ts, 3024001);
+        assertEq(pt.blk, 1);
 
         IVotingEscrow.LockedBalance memory lockedTo = escrow.locked(tokenId);
         assertEq(uint256(uint128(lockedTo.amount)), TOKEN_1 * 2);
@@ -989,6 +1103,8 @@ contract VotingEscrowTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         escrow.createLock(TOKEN_1, MAXTIME);
 
+        vm.expectEmit(true, true, true, true, address(escrow));
+        emit Split(1, 2, 3, address(owner), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
         (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
         assertEq(escrow.ownerOf(splitTokenId1), address(owner));
         assertEq(escrow.ownerOf(splitTokenId2), address(owner));
@@ -1004,6 +1120,8 @@ contract VotingEscrowTest is BaseTest {
         escrow.approve(address(owner2), 1);
 
         vm.prank(address(owner2));
+        vm.expectEmit(true, true, true, true, address(escrow));
+        emit Split(1, 2, 3, address(owner2), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
         (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
         assertEq(escrow.ownerOf(splitTokenId1), address(owner));
         assertEq(escrow.ownerOf(splitTokenId2), address(owner));
@@ -1198,6 +1316,8 @@ contract VotingEscrowTest is BaseTest {
         uint256 expectedLockTime = escrow.locked(1).end;
         uint256 veloSupply = escrow.supply();
 
+        vm.expectEmit(true, true, true, true, address(escrow));
+        emit Split(1, 4, 5, address(owner), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
         (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
         assertEq(splitTokenId1, 4);
         assertEq(splitTokenId2, 5);
@@ -1226,8 +1346,8 @@ contract VotingEscrowTest is BaseTest {
         IVotingEscrow.UserPoint memory point = escrow.userPointHistory(1, lastEpochStored);
         assertEq(point.bias, 0);
         assertEq(point.slope, 0);
-        assertEq(point.ts, block.timestamp);
-        assertEq(point.blk, block.number);
+        assertEq(point.ts, 907201);
+        assertEq(point.blk, 1);
         assertEq(escrow.balanceOfNFT(1), 0);
 
         // compare point history of first split veNFT and 2
@@ -1265,6 +1385,8 @@ contract VotingEscrowTest is BaseTest {
         uint256 expectedLockTime = escrow.locked(1).end;
         uint256 veloSupply = escrow.supply();
 
+        vm.expectEmit(true, true, true, true, address(escrow));
+        emit Split(1, 4, 5, address(owner), (TOKEN_1 * 3) / 4, TOKEN_1 / 4, 127008000, 907201);
         (uint256 splitTokenId1, uint256 splitTokenId2) = escrow.split(1, TOKEN_1 / 4);
         assertEq(splitTokenId1, 4);
         assertEq(splitTokenId2, 5);
@@ -1293,8 +1415,8 @@ contract VotingEscrowTest is BaseTest {
         IVotingEscrow.UserPoint memory point = escrow.userPointHistory(1, lastEpochStored);
         assertEq(point.bias, 0);
         assertEq(point.slope, 0);
-        assertEq(point.ts, block.timestamp);
-        assertEq(point.blk, block.number);
+        assertEq(point.ts, 907201);
+        assertEq(point.blk, 1);
         assertEq(escrow.balanceOfNFT(1), 0);
 
         // compare point history of first split veNFT and 2
@@ -2040,5 +2162,24 @@ contract VotingEscrowTest is BaseTest {
             escrow.balanceOfNFTAt(tokenId, timestamp) + escrow.balanceOfNFTAt(tokenId2, timestamp),
             escrow.getPastTotalSupply(timestamp)
         );
+    }
+
+    function testCannotSetArtProxyIfNotTeam() public {
+        VeArtProxy artProxy2 = new VeArtProxy(address(escrow));
+
+        vm.expectRevert();
+        vm.prank(address(owner2));
+        escrow.setArtProxy(address(artProxy2));
+    }
+
+    function testSetArtProxy() public {
+        assertEq(escrow.artProxy(), address(artProxy));
+        VeArtProxy artProxy2 = new VeArtProxy(address(escrow));
+
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit BatchMetadataUpdate(0, type(uint256).max);
+        escrow.setArtProxy(address(artProxy2));
+
+        assertEq(escrow.artProxy(), address(artProxy2));
     }
 }

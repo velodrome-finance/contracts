@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 import "./BaseTest.sol";
 
 contract FreeManagedRewardTest is BaseTest {
-    event NotifyReward(address indexed from, address indexed reward, uint256 epoch, uint256 amount);
+    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
 
     FreeManagedReward freeManagedReward;
     uint256 mTokenId;
@@ -44,7 +44,7 @@ contract FreeManagedRewardTest is BaseTest {
     function testNotifyRewardAmount() public {
         LR.approve(address(freeManagedReward), TOKEN_1);
         uint256 pre = LR.balanceOf(address(owner));
-        vm.expectEmit(true, false, false, true, address(freeManagedReward));
+        vm.expectEmit(true, true, true, true, address(freeManagedReward));
         emit NotifyReward(address(owner), address(LR), 604800, TOKEN_1);
         freeManagedReward.notifyRewardAmount(address(LR), TOKEN_1);
         uint256 post = LR.balanceOf(address(owner));
@@ -58,7 +58,7 @@ contract FreeManagedRewardTest is BaseTest {
 
         LR.approve(address(freeManagedReward), TOKEN_1 * 2);
         pre = LR.balanceOf(address(owner));
-        vm.expectEmit(true, false, false, true, address(freeManagedReward));
+        vm.expectEmit(true, true, true, true, address(freeManagedReward));
         emit NotifyReward(address(owner), address(LR), 604800, TOKEN_1 * 2);
         freeManagedReward.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         post = LR.balanceOf(address(owner));

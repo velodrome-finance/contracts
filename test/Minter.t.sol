@@ -7,7 +7,7 @@ contract MinterTest is BaseTest {
     using stdStorage for StdStorage;
     uint256 tokenId;
 
-    event Nudge(uint256 _period, uint256 _oldRate, uint256 _newRate);
+    event Nudge(uint256 indexed _period, uint256 _oldRate, uint256 _newRate);
 
     function _setUp() public override {
         VELO.approve(address(escrow), TOKEN_1);

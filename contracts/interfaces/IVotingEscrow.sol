@@ -1,9 +1,10 @@
 pragma solidity 0.8.13;
 
 import {IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IVotes} from "../governance/IVotes.sol";
 
-interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
+interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     struct LockedBalance {
         int128 amount;
         uint256 end;
@@ -91,20 +92,40 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
 
     event Deposit(
         address indexed provider,
-        uint256 tokenId,
+        uint256 indexed tokenId,
+        DepositType indexed depositType,
         uint256 value,
-        uint256 indexed locktime,
-        DepositType depositType,
+        uint256 locktime,
         uint256 ts
     );
-    event Withdraw(address indexed provider, uint256 tokenId, uint256 value, uint256 ts);
+    event Withdraw(address indexed provider, uint256 indexed tokenId, uint256 value, uint256 ts);
     event LockPermanent(address indexed _owner, uint256 indexed _tokenId, uint256 amount, uint256 _ts);
     event UnlockPermanent(address indexed _owner, uint256 indexed _tokenId, uint256 amount, uint256 _ts);
     event Supply(uint256 prevSupply, uint256 supply);
+    event Merge(
+        address indexed _sender,
+        uint256 indexed _from,
+        uint256 indexed _to,
+        uint256 _amountFrom,
+        uint256 _amountTo,
+        uint256 _amountFinal,
+        uint256 _locktime,
+        uint256 _ts
+    );
+    event Split(
+        uint256 indexed _from,
+        uint256 indexed _tokenId1,
+        uint256 indexed _tokenId2,
+        address _sender,
+        uint256 _splitAmount1,
+        uint256 _splitAmount2,
+        uint256 _locktime,
+        uint256 _ts
+    );
     event CreateManaged(
         address indexed _to,
         uint256 indexed _mTokenId,
-        address _from,
+        address indexed _from,
         address _lockedManagedReward,
         address _freeManagedReward
     );
@@ -122,7 +143,7 @@ interface IVotingEscrow is IVotes, IERC721, IERC721Metadata {
         uint256 _weight,
         uint256 _ts
     );
-    event SetAllowedManager(address _allowedManager);
+    event SetAllowedManager(address indexed _allowedManager);
 
     // State variables
     function factoryRegistry() external view returns (address);

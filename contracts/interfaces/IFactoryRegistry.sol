@@ -7,9 +7,9 @@ interface IFactoryRegistry {
     error SameAddress();
     error ZeroAddress();
 
-    event Approve(address pairFactory, address votingRewardsFactory, address gaugeFactory);
-    event Unapprove(address pairFactory, address votingRewardsFactory, address gaugeFactory);
-    event SetManagedRewardsFactory(address _newRewardsFactory);
+    event Approve(address indexed pairFactory, address indexed votingRewardsFactory, address indexed gaugeFactory);
+    event Unapprove(address indexed pairFactory, address indexed votingRewardsFactory, address indexed gaugeFactory);
+    event SetManagedRewardsFactory(address indexed _newRewardsFactory);
 
     /// @notice Approve a set of factories used in Velodrome Protocol
     /// @dev Callable by onlyOwner

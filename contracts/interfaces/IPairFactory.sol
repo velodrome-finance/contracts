@@ -5,8 +5,8 @@ interface IPairFactory {
     event SetPauser(address pauser);
     event SetPauseState(bool state);
     event SetVoter(address voter);
-    event PairCreated(address indexed token0, address indexed token1, bool stable, address pair, uint256);
-    event SetCustomFee(address pair, uint256 fee);
+    event PairCreated(address indexed token0, address indexed token1, bool indexed stable, address pair, uint256);
+    event SetCustomFee(address indexed pair, uint256 fee);
 
     error FeeTooHigh();
     error InvalidPair();

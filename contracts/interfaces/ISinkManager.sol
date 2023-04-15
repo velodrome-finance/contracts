@@ -4,17 +4,17 @@ pragma solidity 0.8.13;
 import {IVelo} from "./IVelo.sol";
 
 interface ISinkManager {
-    event ConvertVELO(address who, uint256 amount, uint256 timestamp);
+    event ConvertVELO(address indexed who, uint256 amount, uint256 timestamp);
     event ConvertVe(
-        address who,
+        address indexed who,
+        uint256 indexed tokenId,
+        uint256 indexed tokenIdV2,
         uint256 amount,
         uint256 lockEnd,
-        uint256 tokenId,
-        uint256 tokenIdV2,
         uint256 timestamp
     );
     event ClaimRebaseAndGaugeRewards(
-        address who,
+        address indexed who,
         uint256 amountResidual,
         uint256 amountRewarded,
         uint256 amountRebased,

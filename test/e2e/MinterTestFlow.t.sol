@@ -4,7 +4,7 @@ import "./ExtendedBaseTest.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract MinterTestFlow is ExtendedBaseTest {
-    event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool _tail);
+    event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool indexed _tail);
 
     function testMinterRebaseFlow() public {
         /// epoch 0

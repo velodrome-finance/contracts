@@ -5,8 +5,8 @@ interface IMinter {
     error NotEpochGovernor();
     error TailEmissionsInactive();
 
-    event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool _tail);
-    event Nudge(uint256 _period, uint256 _oldRate, uint256 _newRate);
+    event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool indexed _tail);
+    event Nudge(uint256 indexed _period, uint256 _oldRate, uint256 _newRate);
 
     /// @notice Allows epoch governor to modify the tail emission rate by at most 1 basis point
     ///         per epoch to a maximum of 100 basis points or to a minimum of 1 basis point.

@@ -161,6 +161,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         IReward(_freeManagedReward)._deposit(uint256(uint128(_amount)), _tokenId);
 
         emit DepositManaged(_ownerOf(_tokenId), _tokenId, _mTokenId, _weight, block.timestamp);
+        emit MetadataUpdate(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -203,8 +204,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         delete weights[_tokenId][_mTokenId];
         delete escrowType[_tokenId];
 
-        // TODO: make this withdraw with updated weight (incl rebase)
-        emit WithdrawManaged(_ownerOf(_tokenId), _tokenId, _mTokenId, _weight, block.timestamp);
+        emit WithdrawManaged(_ownerOf(_tokenId), _tokenId, _mTokenId, _total, block.timestamp);
+        emit MetadataUpdate(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -242,6 +243,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     function setArtProxy(address _proxy) external {
         if (_msgSender() != team) revert NotTeam();
         artProxy = _proxy;
+        emit BatchMetadataUpdate(0, type(uint256).max);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -787,7 +789,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
             IERC20(token).safeTransferFrom(from, address(this), _value);
         }
 
-        emit Deposit(from, _tokenId, _value, newLocked.end, _depositType, block.timestamp);
+        emit Deposit(from, _tokenId, _depositType, _value, newLocked.end, block.timestamp);
         emit Supply(supplyBefore, supplyBefore + _value);
     }
 
@@ -864,6 +866,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
             IReward(_lockedManagedReward).notifyRewardAmount(_token, _value);
             IERC20(_token).safeApprove(_lockedManagedReward, 0);
         }
+
+        emit MetadataUpdate(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -887,6 +891,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         if (unlockTime > block.timestamp + MAXTIME) revert LockDurationTooLong();
 
         _depositFor(_tokenId, 0, unlockTime, oldLocked, DepositType.INCREASE_UNLOCK_TIME);
+
+        emit MetadataUpdate(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -949,6 +955,18 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         _checkpointDelegatee(_delegates[_to], uint256(int256(oldLockedFrom.amount)), true);
         _checkpoint(_to, oldLockedTo, newLockedTo);
         _locked[_to] = newLockedTo;
+
+        emit Merge(
+            sender,
+            _from,
+            _to,
+            uint256(uint128(oldLockedFrom.amount)),
+            uint256(uint128(oldLockedTo.amount)),
+            uint256(uint128(newLockedTo.amount)),
+            uint256(uint128(newLockedTo.end)),
+            block.timestamp
+        );
+        emit MetadataUpdate(_to);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -981,6 +999,17 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         // Create new veNFT using amount
         newLocked.amount = _splitAmount;
         _tokenId2 = _createSplitNFT(owner, newLocked);
+
+        emit Split(
+            _from,
+            _tokenId1,
+            _tokenId2,
+            sender,
+            uint256(uint128(_locked[_tokenId1].amount)),
+            uint256(uint128(_splitAmount)),
+            uint256(uint128(newLocked.end)),
+            block.timestamp
+        );
     }
 
     function _createSplitNFT(address _to, LockedBalance memory _newLocked) private returns (uint256 _tokenId) {

@@ -67,20 +67,6 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
     mapping(address => uint256) public claimable0;
     mapping(address => uint256) public claimable1;
 
-    event Fees(address indexed sender, uint256 amount0, uint256 amount1);
-    event Mint(address indexed sender, uint256 amount0, uint256 amount1);
-    event Burn(address indexed sender, uint256 amount0, uint256 amount1, address indexed to);
-    event Swap(
-        address indexed sender,
-        uint256 amount0In,
-        uint256 amount1In,
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address indexed to
-    );
-    event Sync(uint256 reserve0, uint256 reserve1);
-    event Claim(address indexed sender, address indexed recipient, uint256 amount0, uint256 amount1);
-
     constructor() ERC20("", "") ERC20Permit("") {}
 
     function initialize(
@@ -379,7 +365,7 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
         _balance1 = IERC20(_token1).balanceOf(address(this));
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
-        emit Burn(_msgSender(), amount0, amount1, to);
+        emit Burn(_msgSender(), to, amount0, amount1);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -421,7 +407,7 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
         }
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
-        emit Swap(_msgSender(), amount0In, amount1In, amount0Out, amount1Out, to);
+        emit Swap(_msgSender(), to, amount0In, amount1In, amount0Out, amount1Out);
     }
 
     // force balances to match reserves

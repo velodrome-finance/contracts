@@ -82,7 +82,7 @@ The (ERC-721 compliant) NFT has a balance which represents the voting weight of 
 escrowed tokens, which decays linearly over time. Tokens can be locked for a maximum
 of four years. veVELO NFT vote weights can be used to vote for pools, which in turn
 determines the proportion of weekly emissions that go to each pool. VotingEscrow's
-clock mode is timestamps (see EIP-6372).
+clock mode is timestamps (see EIP-6372). Metadata updates (EIP-4906) are also supported. 
 
 There are three states that veVELO NFTs can be in: `NORMAL`, `LOCKED`, `MANAGED`.
 `NORMAL` NFTs are the NFTs that users are familiar with. `Managed` NFTs are a new

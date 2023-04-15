@@ -20,6 +20,7 @@ contract ManagedNftTest is BaseTest {
         uint256 _weight,
         uint256 _ts
     );
+    event MetadataUpdate(uint256 _tokenId);
 
     function assertNeq(address a, address b) internal {
         if (a == b) {
@@ -123,8 +124,10 @@ contract ManagedNftTest is BaseTest {
         uint256 supply = escrow.supply();
 
         skipToNextEpoch(1 hours + 1);
-        vm.expectEmit(true, false, false, false, address(escrow));
+        vm.expectEmit(true, true, true, true, address(escrow));
         emit DepositManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1213201);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
         voter.depositManaged(tokenId, mTokenId);
 
         // updates balance of managed nft
@@ -731,8 +734,10 @@ contract ManagedNftTest is BaseTest {
         uint256 supply = escrow.supply();
 
         skipAndRoll(2 weeks);
-        vm.expectEmit(true, false, false, false, address(escrow));
+        vm.expectEmit(true, true, true, true, address(escrow));
         emit WithdrawManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1818001);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
         voter.withdrawManaged(tokenId);
 
         IVotingEscrow.LockedBalance memory locked;
@@ -846,8 +851,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(lockedManagedReward.tokenRewardsPerEpoch(address(VELO), 604800), TOKEN_1);
 
         skipAndRoll(2 weeks);
-        vm.expectEmit(true, false, false, false, address(escrow));
-        emit WithdrawManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1818001);
+        vm.expectEmit(true, true, true, true, address(escrow));
+        emit WithdrawManaged(address(owner), tokenId, mTokenId, TOKEN_1 * 2, 1818001);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
         voter.withdrawManaged(tokenId);
 
         IVotingEscrow.LockedBalance memory locked;
@@ -942,8 +949,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(freeManagedReward.tokenRewardsPerEpoch(address(VELO), 604800), TOKEN_1);
 
         skipAndRoll(2 weeks);
-        vm.expectEmit(true, false, false, false, address(escrow));
+        vm.expectEmit(true, true, true, true, address(escrow));
         emit WithdrawManaged(address(owner), tokenId, mTokenId, TOKEN_1, 1818001);
+        vm.expectEmit(false, false, false, true, address(escrow));
+        emit MetadataUpdate(tokenId);
         voter.withdrawManaged(tokenId);
 
         IVotingEscrow.LockedBalance memory locked;

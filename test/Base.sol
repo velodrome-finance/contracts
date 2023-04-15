@@ -69,6 +69,7 @@ abstract contract Base is Script, Test {
     Gauge gauge;
     VeloGovernor governor;
     EpochGovernor epochGovernor;
+    VeArtProxy artProxy;
 
     /// @dev velodrome v1 contracts
     Velo vVELO;
@@ -100,7 +101,7 @@ abstract contract Base is Script, Test {
         forwarder = new Forwarder();
 
         escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry), team);
-        VeArtProxy artProxy = new VeArtProxy(address(escrow));
+        artProxy = new VeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
 
         // Setup voter and distributor

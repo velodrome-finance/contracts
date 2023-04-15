@@ -82,9 +82,7 @@ contract RouterForkTest is BaseTest {
             // get address of factory since default of address(0) signifies v2 factory
             address factory_ = routes[i].factory == address(0) ? address(factory) : routes[i].factory;
             address expectedPair = router.pairFor(routes[i].from, routes[i].to, routes[i].stable, factory_);
-            vm.expectEmit(false, false, false, false, expectedPair);
             assertEq(IPairFactory(factory_).getPair(routes[i].from, routes[i].to, routes[i].stable), expectedPair);
-            emit Swap(address(router), 0, 0, 0, 0, address(0));
         }
     }
 

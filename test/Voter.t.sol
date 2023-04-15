@@ -4,9 +4,24 @@ pragma solidity 0.8.13;
 import "./BaseTest.sol";
 
 contract VoterTest is BaseTest {
-    event WhitelistToken(address indexed whitelister, address indexed token, bool _bool);
-    event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool _bool);
-    event Voted(address indexed voter, uint256 tokenId, uint256 weight);
+    event WhitelistToken(address indexed whitelister, address indexed token, bool indexed _bool);
+    event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool indexed _bool);
+    event Voted(
+        address indexed voter,
+        address indexed pool,
+        uint256 indexed tokenId,
+        uint256 weight,
+        uint256 totalWeight,
+        uint256 timestamp
+    );
+    event Abstained(
+        address indexed voter,
+        address indexed pool,
+        uint256 indexed tokenId,
+        uint256 weight,
+        uint256 totalWeight,
+        uint256 timestamp
+    );
     event NotifyReward(address indexed sender, address indexed reward, uint256 amount);
 
     // Note: _vote are not included in one-vote-per-epoch
@@ -138,9 +153,9 @@ contract VoterTest is BaseTest {
 
         /// balance: 997231719186530010
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), 1, 332410573062176670);
+        emit Voted(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), 1, 664821146124353340);
+        emit Voted(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.vote(tokenId, pools, weights);
 
         assertTrue(escrow.voted(tokenId));
@@ -155,9 +170,9 @@ contract VoterTest is BaseTest {
         assertEq(voter.poolVote(tokenId, 1), address(pair2));
 
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), 1, 332410573062176670);
+        emit Voted(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), 1, 664821146124353340);
+        emit Voted(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.poke(1);
 
         assertTrue(escrow.voted(tokenId));
@@ -174,9 +189,9 @@ contract VoterTest is BaseTest {
         // balance: 996546787679762010
         skipAndRoll(1 days);
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), 1, 332182262559920670);
+        emit Voted(address(owner), address(pair), 1, 332182262559920670, 332182262559920670, block.timestamp);
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), 1, 664364525119841340);
+        emit Voted(address(owner), address(pair2), 1, 664364525119841340, 664364525119841340, block.timestamp);
         voter.poke(1);
 
         assertTrue(escrow.voted(tokenId));
@@ -241,10 +256,10 @@ contract VoterTest is BaseTest {
         weights[1] = 2;
 
         /// balance: 997231719186530010
-        vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), 1, 332410573062176670);
-        vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), 1, 664821146124353340);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Voted(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Voted(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.vote(tokenId, pools, weights);
 
         assertTrue(escrow.voted(tokenId));
@@ -261,6 +276,10 @@ contract VoterTest is BaseTest {
         vm.startPrank(address(owner2));
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId2 = escrow.createLock(TOKEN_1, MAXTIME);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Voted(address(owner2), address(pair), 2, 332410573062176670, 664821146124353340, block.timestamp);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Voted(address(owner2), address(pair2), 2, 664821146124353340, 1329642292248706680, block.timestamp);
         voter.vote(tokenId2, pools, weights);
         vm.stopPrank();
 
@@ -308,8 +327,16 @@ contract VoterTest is BaseTest {
         weights[0] = 1;
         weights[1] = 2;
 
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Voted(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Voted(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.vote(tokenId, pools, weights);
         vm.prank(address(owner2));
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Voted(address(owner2), address(pair), 2, 332410573062176670, 664821146124353340, block.timestamp);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Voted(address(owner2), address(pair2), 2, 664821146124353340, 1329642292248706680, block.timestamp);
         voter.vote(tokenId2, pools, weights);
 
         assertEq(voter.totalWeight(), 1994463438373060020);
@@ -324,6 +351,10 @@ contract VoterTest is BaseTest {
         uint256 lastVoted = voter.lastVoted(tokenId);
         skipToNextEpoch(1 hours + 1);
 
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Abstained(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
+        vm.expectEmit(true, true, false, true, address(voter));
+        emit Abstained(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.reset(tokenId);
 
         assertFalse(escrow.voted(tokenId));
@@ -492,7 +523,7 @@ contract VoterTest is BaseTest {
         assertFalse(voter.isWhitelistedToken(token));
 
         vm.prank(address(governor));
-        vm.expectEmit(true, true, false, true, address(voter));
+        vm.expectEmit(true, true, true, true, address(voter));
         emit WhitelistToken(address(governor), address(token), true);
         voter.whitelistToken(token, true);
 
@@ -510,7 +541,7 @@ contract VoterTest is BaseTest {
         assertTrue(voter.isWhitelistedToken(token));
 
         vm.prank(address(governor));
-        vm.expectEmit(true, true, false, true, address(voter));
+        vm.expectEmit(true, true, true, true, address(voter));
         emit WhitelistToken(address(governor), address(token), false);
         voter.whitelistToken(token, false);
 
@@ -527,7 +558,7 @@ contract VoterTest is BaseTest {
         assertFalse(voter.isWhitelistedNFT(1));
 
         vm.prank(address(governor));
-        vm.expectEmit(true, true, false, true, address(voter));
+        vm.expectEmit(true, true, true, true, address(voter));
         emit WhitelistNFT(address(governor), 1, true);
         voter.whitelistNFT(1, true);
 
@@ -543,7 +574,7 @@ contract VoterTest is BaseTest {
         assertTrue(voter.isWhitelistedNFT(1));
 
         vm.prank(address(governor));
-        vm.expectEmit(true, true, false, true, address(voter));
+        vm.expectEmit(true, true, true, true, address(voter));
         emit WhitelistNFT(address(governor), 1, false);
         voter.whitelistNFT(1, false);
 

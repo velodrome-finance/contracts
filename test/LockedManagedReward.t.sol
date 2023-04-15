@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 import "./BaseTest.sol";
 
 contract LockedManagedRewardTest is BaseTest {
-    event NotifyReward(address indexed from, address indexed reward, uint256 epoch, uint256 amount);
+    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
 
     LockedManagedReward lockedManagedReward;
     uint256 mTokenId;
@@ -55,7 +55,7 @@ contract LockedManagedRewardTest is BaseTest {
         VELO.approve(address(lockedManagedReward), TOKEN_1);
         uint256 pre = VELO.balanceOf(address(escrow));
         vm.prank(address(escrow));
-        vm.expectEmit(true, false, false, true, address(lockedManagedReward));
+        vm.expectEmit(true, true, true, true, address(lockedManagedReward));
         emit NotifyReward(address(escrow), address(VELO), 604800, TOKEN_1);
         lockedManagedReward.notifyRewardAmount(address(VELO), TOKEN_1);
         uint256 post = VELO.balanceOf(address(escrow));
@@ -71,7 +71,7 @@ contract LockedManagedRewardTest is BaseTest {
         VELO.approve(address(lockedManagedReward), TOKEN_1 * 2);
         pre = VELO.balanceOf(address(escrow));
         vm.prank(address(escrow));
-        vm.expectEmit(true, false, false, true, address(lockedManagedReward));
+        vm.expectEmit(true, true, true, true, address(lockedManagedReward));
         emit NotifyReward(address(escrow), address(VELO), 604800, TOKEN_1 * 2);
         lockedManagedReward.notifyRewardAmount(address(VELO), TOKEN_1 * 2);
         post = VELO.balanceOf(address(escrow));

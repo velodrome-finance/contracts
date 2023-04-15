@@ -146,7 +146,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         conversions[tokenId] = tokenIdV2;
         facilitators[tokenId] = address(facilitator);
         _captured[VelodromeTimeLibrary.epochStart(block.timestamp)] += lockAmount;
-        emit ConvertVe(sender, lockAmount, lockEnd, tokenId, tokenIdV2, block.timestamp);
+        emit ConvertVe(sender, tokenId, tokenIdV2, lockAmount, lockEnd, block.timestamp);
     }
 
     // --------------------------------------------------------------------

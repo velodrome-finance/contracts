@@ -3,7 +3,7 @@ pragma solidity 0.8.13;
 import "./BaseTest.sol";
 
 contract FeesVotingRewardTest is BaseTest {
-    event NotifyReward(address indexed from, address indexed reward, uint256 epoch, uint256 amount);
+    event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
 
     function _setUp() public override {
         // ve
@@ -1733,7 +1733,7 @@ contract FeesVotingRewardTest is BaseTest {
     function testNotifyRewardAmountWithValidRewardToken() public {
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
-        vm.expectEmit(true, false, false, true, address(feesVotingReward));
+        vm.expectEmit(true, true, true, true, address(feesVotingReward));
         emit NotifyReward(address(gauge), address(FRAX), 604800, TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
 
@@ -1743,7 +1743,7 @@ contract FeesVotingRewardTest is BaseTest {
         skip(1 hours);
 
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
-        vm.expectEmit(true, false, false, true, address(feesVotingReward));
+        vm.expectEmit(true, true, true, true, address(feesVotingReward));
         emit NotifyReward(address(gauge), address(FRAX), 604800, TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
 

@@ -24,22 +24,37 @@ interface IVoter {
     error ZeroBalance();
 
     event GaugeCreated(
-        address indexed gauge,
-        address creator,
-        address feesVotingReward,
-        address indexed bribeVotingReward,
-        address indexed pool
+        address indexed pairFactory,
+        address indexed votingRewardsFactory,
+        address indexed gaugeFactory,
+        address pool,
+        address bribeVotingReward,
+        address feeVotingReward,
+        address gauge,
+        address creator
     );
     event GaugeKilled(address indexed gauge);
     event GaugeRevived(address indexed gauge);
-    event Voted(address indexed voter, uint256 tokenId, uint256 weight);
-    event Abstained(uint256 tokenId, uint256 weight);
-    event Deposit(address indexed lp, address indexed gauge, uint256 amount);
-    event Withdraw(address indexed lp, address indexed gauge, uint256 amount);
+    event Voted(
+        address indexed voter,
+        address indexed pool,
+        uint256 indexed tokenId,
+        uint256 weight,
+        uint256 totalWeight,
+        uint256 timestamp
+    );
+    event Abstained(
+        address indexed voter,
+        address indexed pool,
+        uint256 indexed tokenId,
+        uint256 weight,
+        uint256 totalWeight,
+        uint256 timestamp
+    );
     event NotifyReward(address indexed sender, address indexed reward, uint256 amount);
     event DistributeReward(address indexed sender, address indexed gauge, uint256 amount);
-    event WhitelistToken(address indexed whitelister, address indexed token, bool _bool);
-    event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool _bool);
+    event WhitelistToken(address indexed whitelister, address indexed token, bool indexed _bool);
+    event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool indexed _bool);
 
     // mappings
     function gauges(address pool) external view returns (address);
