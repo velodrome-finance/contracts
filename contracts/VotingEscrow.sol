@@ -52,6 +52,12 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     /// @dev ERC165 interface ID of ERC721Metadata
     bytes4 internal constant ERC721_METADATA_INTERFACE_ID = 0x5b5e139f;
 
+    /// @dev ERC165 interface ID of ERC4906
+    bytes4 internal constant ERC4906_INTERFACE_ID = 0x49064906;
+
+    /// @dev ERC165 interface ID of ERC6372
+    bytes4 internal constant ERC6372_INTERFACE_ID = 0xda287a1d;
+
     /// @dev Current count of token
     uint256 public tokenId;
 
@@ -76,6 +82,8 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         supportedInterfaces[ERC165_INTERFACE_ID] = true;
         supportedInterfaces[ERC721_INTERFACE_ID] = true;
         supportedInterfaces[ERC721_METADATA_INTERFACE_ID] = true;
+        supportedInterfaces[ERC4906_INTERFACE_ID] = true;
+        supportedInterfaces[ERC6372_INTERFACE_ID] = true;
 
         // mint-ish
         emit Transfer(address(0), address(this), tokenId);
@@ -1043,6 +1051,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         _locked[_tokenId] = _newLocked;
 
         emit LockPermanent(sender, _tokenId, _amount, block.timestamp);
+        emit MetadataUpdate(_tokenId);
     }
 
     /// @inheritdoc IVotingEscrow
@@ -1063,6 +1072,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         _locked[_tokenId] = _newLocked;
 
         emit UnlockPermanent(sender, _tokenId, _amount, block.timestamp);
+        emit MetadataUpdate(_tokenId);
     }
 
     /*///////////////////////////////////////////////////////////////

@@ -1,6 +1,9 @@
 pragma solidity 0.8.13;
 
 import "./BaseTest.sol";
+import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
+import {IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 contract VotingEscrowTest is BaseTest {
     event DelegateChanged(address indexed delegator, uint256 indexed fromDelegate, uint256 indexed toDelegate);
@@ -35,6 +38,14 @@ contract VotingEscrowTest is BaseTest {
         assertEq(escrow.allowedManager(), address(owner));
         // voter should already have been setup
         assertEq(escrow.voter(), address(voter));
+    }
+
+    function testSupportInterfaces() public {
+        assertTrue(escrow.supportsInterface(type(IERC165).interfaceId));
+        assertTrue(escrow.supportsInterface(type(IERC721).interfaceId));
+        assertTrue(escrow.supportsInterface(type(IERC721Metadata).interfaceId));
+        assertTrue(escrow.supportsInterface(0x49064906)); // 4906 is events only, so uses a custom interface id
+        assertTrue(escrow.supportsInterface(type(IERC6372).interfaceId));
     }
 
     function testCannotDepositForWithLockedNFT() public {

@@ -390,7 +390,7 @@ abstract contract BaseTest is Base, TestOwner {
 
     /// @dev Used to convert IVotingEscrow int128s to uint256
     ///      These values are always positive
-    function convert(int128 _amount) internal returns (uint256) {
+    function convert(int128 _amount) internal pure returns (uint256) {
         return uint256(uint128(_amount));
     }
 }
