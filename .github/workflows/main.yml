@@ -43,6 +43,10 @@ jobs:
         run: FOUNDRY_PROFILE=ci forge test
         env:
           OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
+          PRIVATE_KEY_DEPLOY: ${{ secrets.PRIVATE_KEY_DEPLOY }}
+          CONSTANTS_FILENAME: ${{ secrets.CONSTANTS_FILENAME }}
+          OUTPUT_FILENAME: ${{ secrets.OUTPUT_FILENAME }}
+          
         
       - name: slither-static-analysis
         continue-on-error: true

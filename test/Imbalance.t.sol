@@ -16,7 +16,7 @@ contract ImbalanceTest is BaseTest {
         amounts[0] = 1e25;
         mintToken(address(VELO), owners, amounts);
 
-        escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry), address(owner));
+        escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry));
         VeArtProxy artProxy = new VeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
     }

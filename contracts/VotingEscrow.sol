@@ -61,20 +61,19 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     /// @dev Current count of token
     uint256 public tokenId;
 
+    /// @param _forwarder address of trusted forwarder
     /// @param _token `VELO` token address
     /// @param _factoryRegistry Factory Registry address
-    /// @param _team Team multisig
     constructor(
         address _forwarder,
         address _token,
-        address _factoryRegistry,
-        address _team
+        address _factoryRegistry
     ) ERC2771Context(_forwarder) {
-        voter = _msgSender();
         forwarder = _forwarder;
-        team = _team;
         token = _token;
         factoryRegistry = _factoryRegistry;
+        team = _msgSender();
+        voter = _msgSender();
 
         _pointHistory[0].blk = block.number;
         _pointHistory[0].ts = block.timestamp;

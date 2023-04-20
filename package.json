@@ -12,9 +12,9 @@
     "solhint-plugin-prettier": "^0.0.5"
   },
   "scripts": {
-    "format": "prettier --write 'contracts/**/*.(sol|json)' 'test/**/*.(sol|json)'",
-    "format:check": "prettier --check 'contracts/**/*.*(sol|json)' 'test/**/*.(sol|json)'",
-    "lint": "solhint --fix 'contracts/**/*.sol' 'test/**/*.sol'",
-    "lint:check": "solhint 'contracts/**/*.sol' 'test/**/*.sol'"
+    "format": "prettier --write 'contracts/**/*.(sol|json)' 'test/**/*.(sol|json)' 'script/**/*.sol'",
+    "format:check": "prettier --check 'contracts/**/*.*(sol|json)' 'test/**/*.(sol|json)' 'script/**/*.sol'",
+    "lint": "solhint --fix 'contracts/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'",
+    "lint:check": "solhint 'contracts/**/*.sol' 'test/**/*.sol' 'script/**/*.sol'"
   }
 }

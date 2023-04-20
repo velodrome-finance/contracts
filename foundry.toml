@@ -11,12 +11,12 @@ gas_reports = [
     "Router"
 ]
 
-fs_permissions = [{ access = "read", path = "./"}]
+fs_permissions = [{ access = "read-write", path = "./"}]
 
 [rpc_endpoints]
 goerli = "${GOERLI_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"
 
 [etherscan]
-goerli = { key = "${OP_SCAN_API_KEY}" }
-optimism = { key = "${OP_SCAN_API_KEY}" }
+es_goerli = { key = "${GOERLI_SCAN_API_KEY}", url = "${GOERLI_ETHERSCAN_VERIFIER_URL}" }
+es_optimism = { key = "${OPTIMISM_SCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}" }

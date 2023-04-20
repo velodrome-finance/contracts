@@ -61,6 +61,7 @@ abstract contract BaseTest is Base, TestOwner {
     string OPTIMISM_RPC_URL = vm.envString("OPTIMISM_RPC_URL");
     /// @dev optionally set FORK_BLOCK_NUMBER in .env / test set up for faster tests / fixed tests
     uint256 BLOCK_NUMBER = vm.envOr("FORK_BLOCK_NUMBER", uint256(0));
+    string CONSTANTS_FILENAME = vm.envString("CONSTANTS_FILENAME");
 
     /// @dev Default set up of local v2 deployment run if Deployment.DEFAULT selected
     ///      Mainnet fork + v2 deployment + sink deployed if Deployment.FORK selected
@@ -88,7 +89,7 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     function _forkSetup() public {
-        _forkSetupBefore();
+        _forkSetupBefore(CONSTANTS_FILENAME);
         _testSetup();
         _sinkSetup();
         _forkSetupAfter();
@@ -118,10 +119,18 @@ abstract contract BaseTest is Base, TestOwner {
         tokens.push(address(WETH));
 
         allowedManager = address(owner);
-        team = address(owner);
+
+        // initial setup of sinkDrain - governance would add as a gauge
+        sinkDrain = new SinkDrain();
     }
 
     function _testSetupAfter() public {
+        // Setup governors
+        governor = new VeloGovernor(escrow);
+        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));
+        voter.setEpochGovernor(address(epochGovernor));
+        voter.setGovernor(address(governor));
+
         assertEq(factory.allPairsLength(), 0);
         assertEq(router.defaultFactory(), address(factory));
 
@@ -194,7 +203,7 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(bribeVotingReward3), "Bribe Voting Reward 3");
     }
 
-    function _forkSetupBefore() public {
+    function _forkSetupBefore(string memory constantsFilename) public {
         if (BLOCK_NUMBER != 0) {
             optimismFork = vm.createFork(OPTIMISM_RPC_URL, BLOCK_NUMBER);
         } else {
@@ -202,7 +211,7 @@ abstract contract BaseTest is Base, TestOwner {
         }
         vm.selectFork(optimismFork);
 
-        _loadV1("Optimism");
+        _loadV1(constantsFilename);
     }
 
     function _forkSetupAfter() public {
@@ -215,19 +224,15 @@ abstract contract BaseTest is Base, TestOwner {
         amounts[4] = 1e25;
         mintToken(address(vVELO), owners, amounts);
 
-        // create v1 nft to seed black hole
+        // create v1 nft as the ownedTokenId for SinkManager
         vVELO.approve(address(vEscrow), TOKEN_1 / 4);
-        ownedTokenId = vEscrow.create_lock(TOKEN_1 / 4, 4 * 365 * 86400);
+        ownedTokenId = vEscrow.create_lock_for(TOKEN_1 / 4, 4 * 365 * 86400, address(sinkManager));
 
         // Set ownedTokenId
-        vEscrow.safeTransferFrom(address(owner), address(sinkManager), ownedTokenId);
         sinkManager.setOwnedTokenId(ownedTokenId);
 
-        // Move forward in time as escrow transfer above has balance to 0 for flash tx protection
-        skip(1);
-        vm.roll(block.number + 1);
-
         // Set SinkDrain
+        sinkDrain.mint(address(sinkManager));
         assertEq(sinkDrain.totalSupply(), sinkDrain.balanceOf(address(sinkManager)));
         vm.prank(vVoter.governor());
         gaugeSinkDrain = IGaugeV1(vVoter.createGauge(address(sinkDrain)));

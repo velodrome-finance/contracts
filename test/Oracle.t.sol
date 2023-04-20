@@ -22,7 +22,7 @@ contract OracleTest is BaseTest {
         deployBaseCoins();
         deployFactories();
 
-        escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry), address(owner));
+        escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry));
         VeArtProxy artProxy = new VeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));

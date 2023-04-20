@@ -42,6 +42,7 @@ contract SinkManagerTest is BaseTest {
         // Create new sinkManager
         SinkManager newSinkManager = new SinkManager(
             address(forwarder),
+            address(sinkDrain),
             facilitatorImplementation,
             address(voter),
             address(vVELO),
@@ -377,6 +378,7 @@ contract SinkManagerTest is BaseTest {
         // Create new sinkManager
         SinkManager newSinkManager = new SinkManager(
             address(forwarder),
+            address(sinkDrain),
             facilitatorImplementation,
             address(voter),
             address(vVELO),
@@ -392,8 +394,10 @@ contract SinkManagerTest is BaseTest {
 
     function testSetupSinkDrain() external {
         // NOTE: everything to gaugeSinkDrain is recycled from BaseTest._forkSetup()
+        sinkDrain = new SinkDrain();
         sinkManager = new SinkManager(
             address(forwarder),
+            address(sinkDrain),
             facilitatorImplementation,
             address(vVoter),
             address(vVELO),
@@ -402,8 +406,13 @@ contract SinkManagerTest is BaseTest {
             address(escrow),
             address(vDistributor)
         );
+        sinkDrain.mint(address(sinkManager));
 
-        // create v1 nft to seed black hole
+        // Setup SinkDrain
+        vm.prank(vVoter.governor());
+        gaugeSinkDrain = IGaugeV1(vVoter.createGauge(address(sinkDrain)));
+
+        // create v1 nft as the ownedTokenId for SinkManager
         vVELO.approve(address(vEscrow), TOKEN_1 / 4);
         ownedTokenId = vEscrow.create_lock(TOKEN_1 / 4, 4 * 365 * 86400);
         vEscrow.safeTransferFrom(address(owner), address(sinkManager), ownedTokenId);
@@ -412,12 +421,6 @@ contract SinkManagerTest is BaseTest {
         // Move forward in time as escrow transfer above has balance to 0 for flash tx protection
         skip(1);
         vm.roll(block.number + 1);
-
-        // Setup SinkDrain
-        sinkDrain = new SinkDrain(address(sinkManager));
-        assertEq(sinkDrain.totalSupply(), sinkDrain.balanceOf(address(sinkManager)));
-        vm.prank(vVoter.governor());
-        gaugeSinkDrain = IGaugeV1(vVoter.createGauge(address(sinkDrain)));
 
         uint256 preTotalWeight = vVoter.totalWeight();
         sinkManager.setupSinkDrain(address(gaugeSinkDrain));

@@ -24,6 +24,12 @@ interface IVotingEscrowV1 {
 
     function create_lock(uint256 _amount, uint256 _end) external returns (uint256 tokenId);
 
+    function create_lock_for(
+        uint256 _amount,
+        uint256 _end,
+        address _to
+    ) external returns (uint256 tokenId);
+
     function approve(address who, uint256 tokenId) external;
 
     function balanceOfNFT(uint256) external view returns (uint256 amount);

@@ -11,6 +11,8 @@ interface IVoterV1 {
 
     function createGauge(address _pool) external returns (address _gauge);
 
+    function gauges(address pool) external view returns (address);
+
     function distribute(address _gauge) external;
 
     function poke(uint256 _tokenId) external;

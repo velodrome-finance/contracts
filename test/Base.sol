@@ -49,58 +49,57 @@ abstract contract Base is Script, Test {
     ///      Local v2 deployment used by default
     Deployment deploymentType;
 
-    IWETH WETH;
-    Velo VELO;
-    address[] tokens;
+    IWETH public WETH;
+    Velo public VELO;
+    address[] public tokens;
 
     /// @dev Core v2 Deployment
-    Forwarder forwarder;
-    Pair implementation;
-    Router router;
-    VotingEscrow escrow;
-    PairFactory factory;
-    FactoryRegistry factoryRegistry;
-    GaugeFactory gaugeFactory;
-    VotingRewardsFactory votingRewardsFactory;
-    ManagedRewardsFactory managedRewardsFactory;
-    Voter voter;
-    RewardsDistributor distributor;
-    Minter minter;
-    Gauge gauge;
-    VeloGovernor governor;
-    EpochGovernor epochGovernor;
-    VeArtProxy artProxy;
+    Forwarder public forwarder;
+    Pair public implementation;
+    Router public router;
+    VotingEscrow public escrow;
+    VeArtProxy public artProxy;
+    PairFactory public factory;
+    FactoryRegistry public factoryRegistry;
+    GaugeFactory public gaugeFactory;
+    VotingRewardsFactory public votingRewardsFactory;
+    ManagedRewardsFactory public managedRewardsFactory;
+    Voter public voter;
+    RewardsDistributor public distributor;
+    Minter public minter;
+    Gauge public gauge;
+    VeloGovernor public governor;
+    EpochGovernor public epochGovernor;
 
     /// @dev velodrome v1 contracts
-    Velo vVELO;
-    IVotingEscrowV1 vEscrow;
-    IVoterV1 vVoter;
-    PairFactory vFactory;
-    Router vRouter;
-    VeloGovernor vGov;
-    RewardsDistributor vDistributor;
-    Minter vMinter;
+    Velo public vVELO;
+    IVotingEscrowV1 public vEscrow;
+    IVoterV1 public vVoter;
+    PairFactory public vFactory;
+    Router public vRouter;
+    VeloGovernor public vGov;
+    RewardsDistributor public vDistributor;
+    Minter public vMinter;
 
     /// @dev additional contracts required by v2
-    address facilitatorImplementation;
-    SinkManager sinkManager;
-    IGaugeV1 gaugeSinkDrain;
-    SinkDrain sinkDrain;
-    SinkConverter sinkConverter;
+    address public facilitatorImplementation;
+    SinkManager public sinkManager;
+    IGaugeV1 public gaugeSinkDrain;
+    SinkDrain public sinkDrain;
+    SinkConverter public sinkConverter;
 
-    /// @dev tokenId of nft owned by black hole
-    uint256 ownedTokenId;
+    /// @dev tokenId of nft owned by sinkManager
+    uint256 public ownedTokenId;
 
     /// @dev Global address to set
-    address allowedManager;
-    address team;
+    address public allowedManager;
 
     function _coreSetup() public {
         deployFactories();
 
         forwarder = new Forwarder();
 
-        escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry), team);
+        escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry));
         artProxy = new VeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
 
@@ -121,12 +120,6 @@ abstract contract Base is Script, Test {
 
         /// @dev tokens are already set in the respective setupBefore()
         voter.initialize(tokens, address(minter));
-
-        // Setup governors
-        governor = new VeloGovernor(escrow);
-        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));
-        voter.setEpochGovernor(address(epochGovernor));
-        voter.setGovernor(address(governor));
     }
 
     function _sinkSetup() public {
@@ -135,6 +128,7 @@ abstract contract Base is Script, Test {
         facilitatorImplementation = address(new SinkManagerFacilitator());
         sinkManager = new SinkManager(
             address(forwarder),
+            address(sinkDrain),
             facilitatorImplementation,
             address(vVoter),
             address(vVELO),
@@ -144,23 +138,20 @@ abstract contract Base is Script, Test {
             address(vDistributor)
         );
 
-        sinkDrain = new SinkDrain(address(sinkManager));
         sinkConverter = new SinkConverter(address(sinkManager));
-
         factory.setSinkConverter(address(sinkConverter), address(vVELO), address(VELO));
         VELO.setSinkManager(address(sinkManager));
     }
 
-    function _loadV1(string memory chainName) public {
+    function _loadV1(string memory constantsFilename) public {
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/script/constants/");
-        path = string.concat(path, chainName);
-        path = string.concat(path, ".json");
+        path = string.concat(path, constantsFilename);
 
         string memory json = vm.readFile(path);
 
         vVELO = Velo(abi.decode(vm.parseJson(json, ".v1.VELO"), (address)));
-        vEscrow = IVotingEscrowV1(abi.decode(vm.parseJson(json, ".v1.Escrow"), (address)));
+        vEscrow = IVotingEscrowV1(abi.decode(vm.parseJson(json, ".v1.VotingEscrow"), (address)));
         vVoter = IVoterV1(abi.decode(vm.parseJson(json, ".v1.Voter"), (address)));
         vFactory = PairFactory(abi.decode(vm.parseJson(json, ".v1.Factory"), (address)));
         vRouter = Router(payable(abi.decode(vm.parseJson(json, ".v1.Router"), (address))));
@@ -185,5 +176,9 @@ abstract contract Base is Script, Test {
             address(gaugeFactory),
             address(managedRewardsFactory)
         );
+        // approve factory registry path to create gauges from v1 pairs
+        if (address(vFactory) != address(0)) {
+            factoryRegistry.approve(address(vFactory), address(votingRewardsFactory), address(gaugeFactory));
+        }
     }
 }

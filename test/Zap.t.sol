@@ -36,7 +36,6 @@ contract ZapTest is BaseTest {
         vm.deal(address(owner2), TOKEN_100K);
 
         _router = new Router(address(forwarder), address(factory), address(voter), address(WETH));
-        factoryRegistry.approve(address(vFactory), address(votingRewardsFactory), address(gaugeFactory));
         vGauge = Gauge(
             voter.createGauge(address(vFactory), address(votingRewardsFactory), address(gaugeFactory), address(vPair))
         );

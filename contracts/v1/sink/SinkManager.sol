@@ -33,6 +33,9 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
     /// @dev token id of veNFT owned by this contract to capture v1 VELO emissions
     uint256 public ownedTokenId;
 
+    /// @dev Address of fake pair used to capture emissions
+    address private sinkDrain;
+
     // @dev Address of deployed facilitator contract to clone
     address public facilitatorImplementation;
 
@@ -48,13 +51,14 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
     IVotingEscrow public immutable veV2;
     /// @dev V1 Rewards Distributor contract
     IRewardsDistributorV1 public immutable rewardsDistributor;
-    /// @dev V1 black hole gauge
+    /// @dev V1 sinkDrain gauge
     IGaugeV1 public gauge;
     /// @dev epoch start => velo captured
     mapping(uint256 => uint256) internal _captured;
 
     constructor(
         address _forwarder,
+        address _sinkDrain,
         address _facilitatorImplementation,
         address _voter,
         address _velo,
@@ -63,6 +67,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         address _veV2,
         address _rewardsDistributor
     ) ERC2771Context(_forwarder) {
+        sinkDrain = _sinkDrain;
         facilitatorImplementation = _facilitatorImplementation;
         voter = IVoterV1(_voter);
         velo = IVelo(_velo);
