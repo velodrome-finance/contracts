@@ -1,4 +1,4 @@
-pragma solidity 0.8.13;
+pragma solidity 0.8.19;
 
 import {ManagedRewardsFactory} from "contracts/factories/ManagedRewardsFactory.sol";
 import {VotingRewardsFactory} from "contracts/factories/VotingRewardsFactory.sol";

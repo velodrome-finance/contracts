@@ -1,4 +1,5 @@
-pragma solidity 0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
 
 interface IGaugeV1 {
     function balanceOf(address _account) external returns (uint256 _balance);

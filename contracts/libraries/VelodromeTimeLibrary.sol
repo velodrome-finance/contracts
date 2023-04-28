@@ -1,4 +1,5 @@
-pragma solidity 0.8.13;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.19;
 
 library VelodromeTimeLibrary {
     uint256 internal constant WEEK = 7 days;

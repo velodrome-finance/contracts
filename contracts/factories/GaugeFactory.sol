@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.13;
+pragma solidity 0.8.19;
 
 import {IGaugeFactory} from "../interfaces/IGaugeFactory.sol";
 import {Gauge} from "../Gauge.sol";

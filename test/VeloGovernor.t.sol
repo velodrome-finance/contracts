@@ -1,4 +1,4 @@
-pragma solidity 0.8.13;
+pragma solidity 0.8.19;
 
 import "./BaseTest.sol";
 import {IVetoGovernor} from "contracts/governance/IVetoGovernor.sol";
