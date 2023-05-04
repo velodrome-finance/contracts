@@ -529,7 +529,7 @@ contract ManagedNftTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -621,7 +621,7 @@ contract ManagedNftTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         vm.startPrank(address(owner2));
@@ -652,7 +652,7 @@ contract ManagedNftTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         vm.startPrank(address(owner2));
@@ -680,7 +680,7 @@ contract ManagedNftTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         vm.prank(address(owner2));

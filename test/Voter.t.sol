@@ -34,7 +34,7 @@ contract VoterTest is BaseTest {
         // vote
         skipToNextEpoch(1 hours + 1);
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
         voter.vote(1, pools, weights);
@@ -43,7 +43,7 @@ contract VoterTest is BaseTest {
         skip(1 weeks / 2);
 
         // try voting again and fail
-        pools[0] = address(pair2);
+        pools[0] = address(pool2);
         vm.expectRevert(IVoter.AlreadyVotedOrDeposited.selector);
         voter.vote(1, pools, weights);
     }
@@ -55,7 +55,7 @@ contract VoterTest is BaseTest {
         // vote
         skipToNextEpoch(1 hours + 1);
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
         voter.vote(1, pools, weights);
@@ -83,7 +83,7 @@ contract VoterTest is BaseTest {
         // vote
         skipToNextEpoch(1 hours + 1);
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
         voter.vote(1, pools, weights);
@@ -103,7 +103,7 @@ contract VoterTest is BaseTest {
         // vote
         skipToNextEpoch(1 hours + 1);
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
         voter.vote(1, pools, weights);
@@ -144,65 +144,65 @@ contract VoterTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 1;
         weights[1] = 2;
 
         /// balance: 997231719186530010
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
+        emit Voted(address(owner), address(pool), 1, 332410573062176670, 332410573062176670, block.timestamp);
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
+        emit Voted(address(owner), address(pool2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.vote(tokenId, pools, weights);
 
         assertTrue(escrow.voted(tokenId));
         assertEq(voter.lastVoted(tokenId), 608402);
         assertEq(voter.totalWeight(), 997231719186530010);
         assertEq(voter.usedWeights(tokenId), 997231719186530010);
-        assertEq(voter.weights(address(pair)), 332410573062176670);
-        assertEq(voter.weights(address(pair2)), 664821146124353340);
-        assertEq(voter.votes(tokenId, address(pair)), 332410573062176670);
-        assertEq(voter.votes(tokenId, address(pair2)), 664821146124353340);
-        assertEq(voter.poolVote(tokenId, 0), address(pair));
-        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+        assertEq(voter.weights(address(pool)), 332410573062176670);
+        assertEq(voter.weights(address(pool2)), 664821146124353340);
+        assertEq(voter.votes(tokenId, address(pool)), 332410573062176670);
+        assertEq(voter.votes(tokenId, address(pool2)), 664821146124353340);
+        assertEq(voter.poolVote(tokenId, 0), address(pool));
+        assertEq(voter.poolVote(tokenId, 1), address(pool2));
 
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
+        emit Voted(address(owner), address(pool), 1, 332410573062176670, 332410573062176670, block.timestamp);
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
+        emit Voted(address(owner), address(pool2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.poke(1);
 
         assertTrue(escrow.voted(tokenId));
         assertEq(voter.lastVoted(tokenId), 608402);
         assertEq(voter.totalWeight(), 997231719186530010);
         assertEq(voter.usedWeights(tokenId), 997231719186530010);
-        assertEq(voter.weights(address(pair)), 332410573062176670);
-        assertEq(voter.weights(address(pair2)), 664821146124353340);
-        assertEq(voter.votes(tokenId, address(pair)), 332410573062176670);
-        assertEq(voter.votes(tokenId, address(pair2)), 664821146124353340);
-        assertEq(voter.poolVote(tokenId, 0), address(pair));
-        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+        assertEq(voter.weights(address(pool)), 332410573062176670);
+        assertEq(voter.weights(address(pool2)), 664821146124353340);
+        assertEq(voter.votes(tokenId, address(pool)), 332410573062176670);
+        assertEq(voter.votes(tokenId, address(pool2)), 664821146124353340);
+        assertEq(voter.poolVote(tokenId, 0), address(pool));
+        assertEq(voter.poolVote(tokenId, 1), address(pool2));
 
         // balance: 996546787679762010
         skipAndRoll(1 days);
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), address(pair), 1, 332182262559920670, 332182262559920670, block.timestamp);
+        emit Voted(address(owner), address(pool), 1, 332182262559920670, 332182262559920670, block.timestamp);
         vm.expectEmit(true, false, false, true, address(voter));
-        emit Voted(address(owner), address(pair2), 1, 664364525119841340, 664364525119841340, block.timestamp);
+        emit Voted(address(owner), address(pool2), 1, 664364525119841340, 664364525119841340, block.timestamp);
         voter.poke(1);
 
         assertTrue(escrow.voted(tokenId));
         assertEq(voter.lastVoted(tokenId), 608402);
         assertEq(voter.totalWeight(), 996546787679762010);
         assertEq(voter.usedWeights(tokenId), 996546787679762010);
-        assertEq(voter.weights(address(pair)), 332182262559920670);
-        assertEq(voter.weights(address(pair2)), 664364525119841340);
-        assertEq(voter.votes(tokenId, address(pair)), 332182262559920670);
-        assertEq(voter.votes(tokenId, address(pair2)), 664364525119841340);
-        assertEq(voter.poolVote(tokenId, 0), address(pair));
-        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+        assertEq(voter.weights(address(pool)), 332182262559920670);
+        assertEq(voter.weights(address(pool2)), 664364525119841340);
+        assertEq(voter.votes(tokenId, address(pool)), 332182262559920670);
+        assertEq(voter.votes(tokenId, address(pool2)), 664364525119841340);
+        assertEq(voter.poolVote(tokenId, 0), address(pool));
+        assertEq(voter.poolVote(tokenId, 1), address(pool2));
     }
 
     function testVoteAfterResetInSameEpoch() public {
@@ -216,7 +216,7 @@ contract VoterTest is BaseTest {
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 1;
         voter.vote(1, pools, weights);
@@ -231,12 +231,12 @@ contract VoterTest is BaseTest {
 
         LR.approve(address(bribeVotingReward2), TOKEN_1);
         bribeVotingReward2.notifyRewardAmount(address(LR), TOKEN_1);
-        pools[0] = address(pair2);
+        pools[0] = address(pool2);
         voter.vote(1, pools, weights);
 
         skipToNextEpoch(1);
 
-        // rewards only occur for pair2, not pair
+        // rewards only occur for pool2, not pool
         assertEq(bribeVotingReward.earned(address(LR), 1), TOKEN_1);
         assertEq(bribeVotingReward2.earned(address(LR), 1), TOKEN_1);
     }
@@ -248,37 +248,37 @@ contract VoterTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 1;
         weights[1] = 2;
 
         /// balance: 997231719186530010
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Voted(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
+        emit Voted(address(owner), address(pool), 1, 332410573062176670, 332410573062176670, block.timestamp);
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Voted(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
+        emit Voted(address(owner), address(pool2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.vote(tokenId, pools, weights);
 
         assertTrue(escrow.voted(tokenId));
         assertEq(voter.lastVoted(tokenId), block.timestamp);
         assertEq(voter.totalWeight(), 997231719186530010);
         assertEq(voter.usedWeights(tokenId), 997231719186530010);
-        assertEq(voter.weights(address(pair)), 332410573062176670);
-        assertEq(voter.weights(address(pair2)), 664821146124353340);
-        assertEq(voter.votes(tokenId, address(pair)), 332410573062176670);
-        assertEq(voter.votes(tokenId, address(pair2)), 664821146124353340);
-        assertEq(voter.poolVote(tokenId, 0), address(pair));
-        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+        assertEq(voter.weights(address(pool)), 332410573062176670);
+        assertEq(voter.weights(address(pool2)), 664821146124353340);
+        assertEq(voter.votes(tokenId, address(pool)), 332410573062176670);
+        assertEq(voter.votes(tokenId, address(pool2)), 664821146124353340);
+        assertEq(voter.poolVote(tokenId, 0), address(pool));
+        assertEq(voter.poolVote(tokenId, 1), address(pool2));
 
         vm.startPrank(address(owner2));
         VELO.approve(address(escrow), TOKEN_1);
         uint256 tokenId2 = escrow.createLock(TOKEN_1, MAXTIME);
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Voted(address(owner2), address(pair), 2, 332410573062176670, 664821146124353340, block.timestamp);
+        emit Voted(address(owner2), address(pool), 2, 332410573062176670, 664821146124353340, block.timestamp);
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Voted(address(owner2), address(pair2), 2, 664821146124353340, 1329642292248706680, block.timestamp);
+        emit Voted(address(owner2), address(pool2), 2, 664821146124353340, 1329642292248706680, block.timestamp);
         voter.vote(tokenId2, pools, weights);
         vm.stopPrank();
 
@@ -286,12 +286,12 @@ contract VoterTest is BaseTest {
         assertEq(voter.lastVoted(tokenId), block.timestamp);
         assertEq(voter.totalWeight(), 1994463438373060020);
         assertEq(voter.usedWeights(tokenId), 997231719186530010);
-        assertEq(voter.weights(address(pair)), 664821146124353340);
-        assertEq(voter.weights(address(pair2)), 1329642292248706680);
-        assertEq(voter.votes(tokenId, address(pair)), 332410573062176670);
-        assertEq(voter.votes(tokenId, address(pair2)), 664821146124353340);
-        assertEq(voter.poolVote(tokenId, 0), address(pair));
-        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+        assertEq(voter.weights(address(pool)), 664821146124353340);
+        assertEq(voter.weights(address(pool2)), 1329642292248706680);
+        assertEq(voter.votes(tokenId, address(pool)), 332410573062176670);
+        assertEq(voter.votes(tokenId, address(pool2)), 664821146124353340);
+        assertEq(voter.poolVote(tokenId, 0), address(pool));
+        assertEq(voter.poolVote(tokenId, 1), address(pool2));
     }
 
     function testReset() public {
@@ -320,50 +320,50 @@ contract VoterTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 1;
         weights[1] = 2;
 
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Voted(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
+        emit Voted(address(owner), address(pool), 1, 332410573062176670, 332410573062176670, block.timestamp);
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Voted(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
+        emit Voted(address(owner), address(pool2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.vote(tokenId, pools, weights);
         vm.prank(address(owner2));
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Voted(address(owner2), address(pair), 2, 332410573062176670, 664821146124353340, block.timestamp);
+        emit Voted(address(owner2), address(pool), 2, 332410573062176670, 664821146124353340, block.timestamp);
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Voted(address(owner2), address(pair2), 2, 664821146124353340, 1329642292248706680, block.timestamp);
+        emit Voted(address(owner2), address(pool2), 2, 664821146124353340, 1329642292248706680, block.timestamp);
         voter.vote(tokenId2, pools, weights);
 
         assertEq(voter.totalWeight(), 1994463438373060020);
         assertEq(voter.usedWeights(tokenId), 997231719186530010);
-        assertEq(voter.weights(address(pair)), 664821146124353340);
-        assertEq(voter.weights(address(pair2)), 1329642292248706680);
-        assertEq(voter.votes(tokenId, address(pair)), 332410573062176670);
-        assertEq(voter.votes(tokenId, address(pair2)), 664821146124353340);
-        assertEq(voter.poolVote(tokenId, 0), address(pair));
-        assertEq(voter.poolVote(tokenId, 1), address(pair2));
+        assertEq(voter.weights(address(pool)), 664821146124353340);
+        assertEq(voter.weights(address(pool2)), 1329642292248706680);
+        assertEq(voter.votes(tokenId, address(pool)), 332410573062176670);
+        assertEq(voter.votes(tokenId, address(pool2)), 664821146124353340);
+        assertEq(voter.poolVote(tokenId, 0), address(pool));
+        assertEq(voter.poolVote(tokenId, 1), address(pool2));
 
         uint256 lastVoted = voter.lastVoted(tokenId);
         skipToNextEpoch(1 hours + 1);
 
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Abstained(address(owner), address(pair), 1, 332410573062176670, 332410573062176670, block.timestamp);
+        emit Abstained(address(owner), address(pool), 1, 332410573062176670, 332410573062176670, block.timestamp);
         vm.expectEmit(true, true, false, true, address(voter));
-        emit Abstained(address(owner), address(pair2), 1, 664821146124353340, 664821146124353340, block.timestamp);
+        emit Abstained(address(owner), address(pool2), 1, 664821146124353340, 664821146124353340, block.timestamp);
         voter.reset(tokenId);
 
         assertFalse(escrow.voted(tokenId));
         assertEq(voter.lastVoted(tokenId), lastVoted);
         assertEq(voter.totalWeight(), 997231719186530010);
         assertEq(voter.usedWeights(tokenId), 0);
-        assertEq(voter.weights(address(pair)), 332410573062176670);
-        assertEq(voter.weights(address(pair2)), 664821146124353340);
-        assertEq(voter.votes(tokenId, address(pair)), 0);
-        assertEq(voter.votes(tokenId, address(pair2)), 0);
+        assertEq(voter.weights(address(pool)), 332410573062176670);
+        assertEq(voter.weights(address(pool2)), 664821146124353340);
+        assertEq(voter.votes(tokenId, address(pool)), 0);
+        assertEq(voter.votes(tokenId, address(pool2)), 0);
         vm.expectRevert();
         voter.poolVote(tokenId, 0);
     }
@@ -377,7 +377,7 @@ contract VoterTest is BaseTest {
         assertTrue(escrow.deactivated(mTokenId));
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 1;
 
@@ -393,7 +393,7 @@ contract VoterTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
 
@@ -421,7 +421,7 @@ contract VoterTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
 
@@ -605,11 +605,11 @@ contract VoterTest is BaseTest {
 
     function testKillGaugeWithRewards() public {
         /// epoch 0
-        minter.update_period();
+        minter.updatePeriod();
 
         // add deposit
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         // Create nft to vote for gauge
         VELO.approve(address(escrow), TOKEN_1);
@@ -619,13 +619,13 @@ contract VoterTest is BaseTest {
 
         // vote for gauge
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 1;
         voter.vote(tokenId, pools, weights);
-        uint256 weight = voter.weights(address(pair));
+        uint256 weight = voter.weights(address(pool));
         assertGt(weight, 0);
-        uint256 votes = voter.votes(tokenId, address(pair));
+        uint256 votes = voter.votes(tokenId, address(pool));
         assertGt(votes, 0);
         uint256 totalWeight = voter.totalWeight();
         assertGt(totalWeight, 0);
@@ -633,7 +633,7 @@ contract VoterTest is BaseTest {
         skipToNextEpoch(2 hours); // past epochVoteStart
 
         // distribute rebase and sync gauge
-        uint256 rebase = minter.update_period();
+        uint256 rebase = minter.updatePeriod();
         assertGt(rebase, 0);
         voter.updateFor(address(gauge));
 
@@ -659,14 +659,14 @@ contract VoterTest is BaseTest {
         skipToNextEpoch(2 hours);
 
         // distribute rebase and sync gauge
-        rebase = minter.update_period();
+        rebase = minter.updatePeriod();
         assertGt(rebase, 0);
         assertEq(voter.claimable(address(gauge)), 0);
         voter.updateFor(address(gauge));
 
         // votes/weights stay the same
-        assertEq(voter.weights(address(pair)), weight);
-        assertEq(voter.votes(tokenId, address(pair)), votes);
+        assertEq(voter.weights(address(pool)), weight);
+        assertEq(voter.votes(tokenId, address(pool)), votes);
         assertEq(voter.totalWeight(), totalWeight);
         assertEq(voter.claimable(address(gauge)), 0);
 
@@ -712,15 +712,15 @@ contract VoterTest is BaseTest {
     function testKilledGaugeCanWithdraw() public {
         _addLiquidityToPool(address(owner), address(router), address(FRAX), address(USDC), true, TOKEN_100K, USDC_100K);
 
-        uint256 supply = pair.balanceOf(address(owner));
-        pair.approve(address(gauge), supply);
+        uint256 supply = pool.balanceOf(address(owner));
+        pool.approve(address(gauge), supply);
         gauge.deposit(supply);
 
         voter.killGauge(address(gauge));
 
-        uint256 pre = pair.balanceOf(address(gauge));
+        uint256 pre = pool.balanceOf(address(gauge));
         gauge.withdraw(supply);
-        uint256 post = pair.balanceOf(address(gauge));
+        uint256 post = pool.balanceOf(address(gauge));
 
         assertEq(pre - post, supply);
     }
@@ -729,7 +729,7 @@ contract VoterTest is BaseTest {
         _seedVoterWithVotingSupply();
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
         voter.updateFor(address(gauge));
 
         // expect distribution
@@ -746,7 +746,7 @@ contract VoterTest is BaseTest {
         _seedVoterWithVotingSupply();
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         voter.updateFor(address(gauge));
 
@@ -765,7 +765,7 @@ contract VoterTest is BaseTest {
         _seedVoterWithVotingSupply();
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         // both gauges have equal voting weight
         voter.updateFor(address(gauge));
@@ -925,7 +925,7 @@ contract VoterTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         vm.prank(address(owner2));
@@ -951,7 +951,7 @@ contract VoterTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         vm.prank(address(owner2));
@@ -981,7 +981,7 @@ contract VoterTest is BaseTest {
         voter.depositManaged(tokenId2, mTokenId);
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         vm.prank(address(owner2));
@@ -998,7 +998,7 @@ contract VoterTest is BaseTest {
         assertEq(voter.usedWeights(mTokenId), escrow.balanceOfNFT(mTokenId));
 
         address poolVote = voter.poolVote(mTokenId, 0);
-        assertEq(poolVote, address(pair));
+        assertEq(poolVote, address(pool));
     }
 
     function _seedVoterWithVotingSupply() internal {
@@ -1008,8 +1008,8 @@ contract VoterTest is BaseTest {
         skip(1);
 
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 1;
         weights[1] = 1;

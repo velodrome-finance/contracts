@@ -79,7 +79,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // test voting
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 10000;
         address[] memory rewards = new address[](2);
@@ -319,7 +319,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         /// tokenId contribution: ~= 3 / 4
         /// tokenId3 contribution: ~= 1 / 4
 
-        // owner votes for pair now
+        // owner votes for pool now
         voter.vote(tokenId, pools, weights);
 
         // create velo bribe for epoch 4
@@ -389,7 +389,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // test voting
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 10000;
         address[] memory rewards = new address[](2);
@@ -549,7 +549,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(escrow.supply(), supply);
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -561,7 +561,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // epoch 1: minter mints rebases, but not claimable until epoch 2
         skipToNextEpoch(1);
-        minter.update_period(); // rebases not claimable until following week
+        minter.updatePeriod(); // rebases not claimable until following week
 
         skip(1 hours);
         assertEq(distributor.claimable(mTokenId), 0);
@@ -570,7 +570,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // epoch 2: claim rebases
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         uint256 rebase = distributor.claim(mTokenId);
         assertEq(rebase, 108145615642046646056);
@@ -618,7 +618,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         // epoch 3: claim rebases
         skipToNextEpoch(1);
         assertEq(lockedManagedReward.earned(address(VELO), tokenId), managedRebaseTotal);
-        minter.update_period();
+        minter.updatePeriod();
 
         rebase = distributor.claim(mTokenId);
 

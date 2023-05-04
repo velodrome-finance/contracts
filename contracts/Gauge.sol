@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IReward} from "./interfaces/IReward.sol";
 import {IGauge} from "./interfaces/IGauge.sol";
-import {IPair} from "./interfaces/IPair.sol";
+import {IPool} from "./interfaces/IPool.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
@@ -21,7 +21,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
     address public immutable feesVotingReward;
     address public immutable voter;
 
-    bool public immutable isForPair;
+    bool public immutable isPool;
 
     uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
     uint256 internal constant PRECISION = 10**18;
@@ -46,24 +46,24 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         address _feesVotingReward,
         address _rewardToken,
         address _voter,
-        bool _forPair
+        bool _isPool
     ) ERC2771Context(_forwarder) {
         stakingToken = _stakingToken;
         feesVotingReward = _feesVotingReward;
         rewardToken = _rewardToken;
         voter = _voter;
-        isForPair = _forPair;
+        isPool = _isPool;
     }
 
     function _claimFees() internal returns (uint256 claimed0, uint256 claimed1) {
-        if (!isForPair) {
+        if (!isPool) {
             return (0, 0);
         }
-        (claimed0, claimed1) = IPair(stakingToken).claimFees();
+        (claimed0, claimed1) = IPool(stakingToken).claimFees();
         if (claimed0 > 0 || claimed1 > 0) {
             uint256 _fees0 = fees0 + claimed0;
             uint256 _fees1 = fees1 + claimed1;
-            (address _token0, address _token1) = IPair(stakingToken).tokens();
+            (address _token0, address _token1) = IPool(stakingToken).tokens();
             if (_fees0 > DURATION) {
                 fees0 = 0;
                 IERC20(_token0).safeApprove(feesVotingReward, _fees0);

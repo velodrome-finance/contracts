@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IPair {
+interface IPool {
     error DepositsNotEqual();
     error BelowMinimumK();
     error FactoryAlreadySet();
@@ -45,6 +45,10 @@ interface IPair {
     function claimFees() external returns (uint256, uint256);
 
     function tokens() external view returns (address, address);
+
+    function token0() external view returns (address);
+
+    function token1() external view returns (address);
 
     function stable() external view returns (bool);
 

@@ -38,8 +38,8 @@ contract Minter is IMinter {
     /// @notice Starting weekly emission of 15M VELO (VELO has 18 decimals)
     uint256 public weekly = 15_000_000 * 1e18;
     /// @notice Start time of currently active epoch
-    uint256 public active_period;
-    /// @dev active_period => proposal existing, used to enforce one proposal per epoch
+    uint256 public activePeriod;
+    /// @dev activePeriod => proposal existing, used to enforce one proposal per epoch
     mapping(uint256 => bool) public proposals;
 
     constructor(
@@ -51,11 +51,11 @@ contract Minter is IMinter {
         voter = IVoter(_voter);
         ve = IVotingEscrow(_ve);
         rewardsDistributor = IRewardsDistributor(_rewardsDistributor);
-        active_period = ((block.timestamp) / WEEK) * WEEK; // allow emissions this coming epoch
+        activePeriod = ((block.timestamp) / WEEK) * WEEK; // allow emissions this coming epoch
     }
 
     /// @inheritdoc IMinter
-    function calculate_growth(uint256 _minted) public view returns (uint256 _growth) {
+    function calculateGrowth(uint256 _minted) public view returns (uint256 _growth) {
         uint256 _veTotal = ve.totalSupply();
         uint256 _veloTotal = velo.totalSupply();
         return (((((_minted * _veTotal) / _veloTotal) * _veTotal) / _veloTotal) * _veTotal) / _veloTotal / 2;
@@ -67,7 +67,7 @@ contract Minter is IMinter {
         if (msg.sender != _epochGovernor) revert NotEpochGovernor();
         IEpochGovernor.ProposalState _state = IEpochGovernor(_epochGovernor).result();
         if (weekly >= TAIL_START) revert TailEmissionsInactive();
-        uint256 _period = active_period;
+        uint256 _period = activePeriod;
         if (proposals[_period]) revert AlreadyNudged();
         uint256 _newRate = tailEmissionRate;
         uint256 _oldRate = _newRate;
@@ -85,11 +85,11 @@ contract Minter is IMinter {
     }
 
     /// @inheritdoc IMinter
-    function update_period() external returns (uint256 _period) {
-        _period = active_period;
+    function updatePeriod() external returns (uint256 _period) {
+        _period = activePeriod;
         if (block.timestamp >= _period + WEEK) {
             _period = (block.timestamp / WEEK) * WEEK;
-            active_period = _period;
+            activePeriod = _period;
             uint256 _weekly = weekly;
             uint256 _emission;
             uint256 _totalSupply = velo.totalSupply();
@@ -103,7 +103,7 @@ contract Minter is IMinter {
                 weekly = _weekly;
             }
 
-            uint256 _growth = calculate_growth(_emission);
+            uint256 _growth = calculateGrowth(_emission);
             uint256 _required = _growth + _emission;
             uint256 _balanceOf = velo.balanceOf(address(this));
             if (_balanceOf < _required) {

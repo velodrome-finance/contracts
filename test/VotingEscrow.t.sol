@@ -564,7 +564,7 @@ contract VotingEscrowTest is BaseTest {
         skip(1);
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(tokenId, pools, weights);
@@ -908,7 +908,7 @@ contract VotingEscrowTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -1035,7 +1035,7 @@ contract VotingEscrowTest is BaseTest {
         skip(1);
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(tokenId, pools, weights);
@@ -1595,7 +1595,7 @@ contract VotingEscrowTest is BaseTest {
         skipAndRoll(1 hours);
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(tokenId, pools, weights);

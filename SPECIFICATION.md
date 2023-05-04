@@ -10,7 +10,7 @@ protocol users.
 
 - VELO: The native token in the Velodrome ecosystem. It is emitted by the Minter and is an ERC-20 compliant token.
 - Epoch: An epoch is one week in length, beginning at Thursday midnight UTC time. After 4 years, the day of the week it resets on will shift. 
-- Pool: AMM constant-product implementation similar to Uniswap V2 liquidity pools.
+- Pool: AMM constant-product implementation similar to Uniswap V2 liquidity pools.  Note that in Velodrome V1, "pools" were referred to as "pairs".
 
 
 ## Permissions
@@ -24,12 +24,12 @@ The following roles are granted various positions in the protocol:
 
 Velodrome V2 is immutable, just like V1. To allow improving the protocol, V2
 factories are all upgradable. This means we can release new versions of
-factories for our pairs and gauges, and leave it up to the users to decide if
+factories for our pools and gauges, and leave it up to the users to decide if
 they want to migrate their positions.
 
 ## AMM
 
-### Pair
+### Pool
 
 AMM constant-product implementation similar to Uniswap V2 liquidity pools. 
 
@@ -38,7 +38,7 @@ Lightly modified to allow for the following:
 - Custom fees per pool.
 - Modifying a pool's name and symbol (requires `emergencyCouncil` permissions).
 
-Stable pairs use the `x^3 * y + y^3 * x` curve, which may have a larger
+Stable pools use the `x^3 * y + y^3 * x` curve, which may have a larger
 rounding error when calculating the invariant `K` when compared to Uniswap
 V2's constant product formula. The invariant `K` can temporarily decrease
 when a user performs certain actions like depositing liquidity, doing
@@ -48,9 +48,9 @@ is negligible and the ratio will eventually increase again. In most cases, this 
 is not critical. This is mentioned as a courtesy to integrators that may depend
  on the ratio of `K` to `totalSupply`as a way of measuring the value of LP tokens.
 
-### PairFees
+### PoolFees
 
-Pair helper contract that stores pool trading fees to keep them separate from the liquidity pool. 
+Pool helper contract that stores pool trading fees to keep them separate from the liquidity pool. 
 
 ### Router
 
@@ -66,7 +66,7 @@ In addition, the router also supports:
 
 ### FactoryRegistry
 
-Registry of pair, gauge, bribe and managed rewards factories. Contains a default list of factories so swaps via the router will always work. 
+Registry of pool, gauge, bribe and managed rewards factories. Contains a default list of factories so swaps via the router will always work. 
 
 
 ## Token
@@ -234,7 +234,7 @@ Managed rewards are rewards that accrue to users that deposited their voting pow
 
 ### LockedManagedReward
 
-Locked rewards are VELO token rewards that have been compounded into the managed NFT (usually rebases but can also include non-VELO rewards that have converted to VELO to be compounded into the NFT). This contract functions similar to `PairFees`, as it separates "reward" VELO from the "locked" VotingEscrow VELO. These rewards are not distributed and are returned to `VotingEscrow` when a user withdraws their NFT from a managed NFT. 
+Locked rewards are VELO token rewards that have been compounded into the managed NFT (usually rebases but can also include non-VELO rewards that have converted to VELO to be compounded into the NFT). This contract functions similar to `PoolFees`, as it separates "reward" VELO from the "locked" VotingEscrow VELO. These rewards are not distributed and are returned to `VotingEscrow` when a user withdraws their NFT from a managed NFT. 
 
 ### FreeManagedReward
 
@@ -250,10 +250,10 @@ Manager, Facilitator, Drainer, and Converter.
 
 For existing LPs/stake the V2 gauges will be provided for V1 pools, allowing
 those users to switch to V2 by simply re-staking their LPs. Any new liquidity
-pools, will be using V2 Pair Factory after the V1 release.
+pools, will be using V2 Pool Factory after the V1 release.
 
-The V2 Router allows swaps between V1 and V2 pairs. Swapping V1 tokens into any
-other tokens on V2 will automatically route through the right pairs seamlessly.
+The V2 Router allows swaps between V1 and V2 pools. Swapping V1 tokens into any
+other tokens on V2 will automatically route through the right pools seamlessly.
 
 The V2 UI will allow converting an existing V1 veNFT into a V2 veNFT. The user
 will have to reset their V1 veNFT to allow the operation to succeed, but they
@@ -275,11 +275,11 @@ A lightweight contract created for every v1 NFT to v2 NFT conversion to facilita
 
 ### Sink Drain
 
-A "fake" pair used solely for the purpose of collecting gauge emissions from V1. LP tokens for the Sink Drain are minted only to the Sink Manager. 
+A "fake" pool used solely for the purpose of collecting gauge emissions from V1. LP tokens for the Sink Drain are minted only to the Sink Manager. 
 
 ### Sink Converter
 
-A "fake" pair used to provide liquidity to routers for routes going from v1 VELO to any other token (via v2 pools). Any VELO captured in this way ends up in the `SinkDrain`.
+A "fake" pool used to provide liquidity to routers for routes going from v1 VELO to any other token (via v2 pools). Any VELO captured in this way ends up in the `SinkDrain`.
 
 
 ## Governance

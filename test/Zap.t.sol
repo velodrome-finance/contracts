@@ -4,9 +4,9 @@ import "./BaseTest.sol";
 
 contract ZapTest is BaseTest {
     Router _router;
-    Pair vPair;
+    Pool vPool;
     Gauge vGauge;
-    Pair sPair;
+    Pool sPool;
     Gauge sGauge;
     uint256 constant feeRate = 2; // .02% fee on mainnet
 
@@ -26,44 +26,44 @@ contract ZapTest is BaseTest {
         // Current State:
         // 1.25m USDC, 763.8 WETH, current WETH price ~$1638
         // Pool has slightly more USDC than WETH
-        vPair = Pair(0x79c912FEF520be002c2B6e57EC4324e260f38E50);
+        vPool = Pool(0x79c912FEF520be002c2B6e57EC4324e260f38E50);
         /// Current State:
         /// ~295k FRAX, ~356k USDC
         /// Pool has more USDC than FRAX
-        sPair = Pair(0xAdF902b11e4ad36B227B84d856B229258b0b0465);
+        sPool = Pool(0xAdF902b11e4ad36B227B84d856B229258b0b0465);
 
         deal(address(USDC), address(owner2), USDC_100K);
         vm.deal(address(owner2), TOKEN_100K);
 
         _router = new Router(address(forwarder), address(factory), address(voter), address(WETH));
         vGauge = Gauge(
-            voter.createGauge(address(vFactory), address(votingRewardsFactory), address(gaugeFactory), address(vPair))
+            voter.createGauge(address(vFactory), address(votingRewardsFactory), address(gaugeFactory), address(vPool))
         );
         sGauge = Gauge(
-            voter.createGauge(address(vFactory), address(votingRewardsFactory), address(gaugeFactory), address(sPair))
+            voter.createGauge(address(vFactory), address(votingRewardsFactory), address(gaugeFactory), address(sPool))
         );
 
-        vm.label(address(vPair), "vAMM WETH/USDC");
-        vm.label(address(sPair), "sAMM FRAX/USDC");
+        vm.label(address(vPool), "vAMM WETH/USDC");
+        vm.label(address(sPool), "sAMM FRAX/USDC");
         vm.label(address(vGauge), "vAMM Gauge");
         vm.label(address(sGauge), "sAMM Gauge");
         vm.label(address(_router), "Router");
     }
 
-    function testZapInWithStablePair() public {
+    function testZapInWithStablePool() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
 
-        uint256 usdcPairPreBal = USDC.balanceOf(address(sPair));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(sPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 fraxOwnerPreBal = FRAX.balanceOf(address(owner2));
-        assertEq(sPair.balanceOf(address(owner2)), 0);
+        assertEq(sPool.balanceOf(address(owner2)), 0);
 
         uint256 ratio = _router.quoteStableLiquidityRatio(address(FRAX), address(USDC), address(vFactory));
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
         routesA[0] = IRouter.Route(address(USDC), address(FRAX), true, address(vFactory));
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
-        IRouter.Zap memory zapInPair = _createZapInParams(
+        IRouter.Zap memory zapInPool = _createZapInParams(
             address(FRAX),
             address(USDC),
             true,
@@ -78,42 +78,42 @@ contract ZapTest is BaseTest {
             address(USDC),
             (USDC_10K * (1e18 - ratio)) / 1e18,
             (USDC_10K * ratio) / 1e18,
-            zapInPair,
+            zapInPool,
             routesA,
             routesB,
             address(owner2),
             false
         );
 
-        uint256 usdcPairPostBal = USDC.balanceOf(address(sPair));
+        uint256 usdcPoolPostBal = USDC.balanceOf(address(sPool));
         uint256 usdcOwnerPostBal = USDC.balanceOf(address(owner2));
         uint256 fraxOwnerPostBal = FRAX.balanceOf(address(owner2));
 
-        assertApproxEqAbs(usdcPairPostBal - usdcPairPreBal, USDC_10K, USDC_1);
+        assertApproxEqAbs(usdcPoolPostBal - usdcPoolPreBal, USDC_10K, USDC_1);
         assertApproxEqAbs(usdcOwnerPreBal - usdcOwnerPostBal, USDC_10K, USDC_1);
         assertLt(fraxOwnerPostBal - fraxOwnerPreBal, (TOKEN_100K * 150) / MAX_BPS);
-        assertGt(sPair.balanceOf(address(owner2)), 0);
+        assertGt(sPool.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(FRAX.balanceOf(address(_router)), 0);
         vm.stopPrank();
     }
 
-    function testZapAndStakeWithStablePair() public {
+    function testZapAndStakeWithStablePool() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
 
-        uint256 usdcPairPreBal = USDC.balanceOf(address(sPair));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(sPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 fraxOwnerPreBal = FRAX.balanceOf(address(owner2));
-        assertEq(sPair.balanceOf(address(owner2)), 0);
-        assertEq(sPair.balanceOf(address(sGauge)), 0);
+        assertEq(sPool.balanceOf(address(owner2)), 0);
+        assertEq(sPool.balanceOf(address(sGauge)), 0);
         assertEq(sGauge.balanceOf(address(owner2)), 0);
 
         uint256 ratio = _router.quoteStableLiquidityRatio(address(FRAX), address(USDC), address(vFactory));
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
         routesA[0] = IRouter.Route(address(USDC), address(FRAX), true, address(vFactory));
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
-        IRouter.Zap memory zapInPair = _createZapInParams(
+        IRouter.Zap memory zapInPool = _createZapInParams(
             address(FRAX),
             address(USDC),
             true,
@@ -128,26 +128,26 @@ contract ZapTest is BaseTest {
             address(USDC),
             (USDC_10K * (1e18 - ratio)) / 1e18,
             (USDC_10K * ratio) / 1e18,
-            zapInPair,
+            zapInPool,
             routesA,
             routesB,
             address(owner2),
             true
         );
 
-        uint256 usdcPairPostBal = USDC.balanceOf(address(sPair));
+        uint256 usdcPoolPostBal = USDC.balanceOf(address(sPool));
         uint256 usdcOwnerPostBal = USDC.balanceOf(address(owner2));
         uint256 fraxOwnerPostBal = FRAX.balanceOf(address(owner2));
 
-        assertApproxEqAbs(usdcPairPostBal - usdcPairPreBal, USDC_10K, USDC_1);
+        assertApproxEqAbs(usdcPoolPostBal - usdcPoolPreBal, USDC_10K, USDC_1);
         assertApproxEqAbs(usdcOwnerPreBal - usdcOwnerPostBal, USDC_10K, USDC_1);
         assertLt(fraxOwnerPostBal - fraxOwnerPreBal, (TOKEN_100K * 150) / MAX_BPS);
-        assertEq(sPair.balanceOf(address(owner2)), 0);
-        assertGt(sPair.balanceOf(address(sGauge)), 0);
+        assertEq(sPool.balanceOf(address(owner2)), 0);
+        assertGt(sPool.balanceOf(address(sGauge)), 0);
         assertGt(sGauge.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(FRAX.balanceOf(address(_router)), 0);
-        assertEq(sPair.allowance(address(_router), address(sGauge)), 0);
+        assertEq(sPool.allowance(address(_router), address(sGauge)), 0);
         vm.stopPrank();
     }
 
@@ -157,7 +157,7 @@ contract ZapTest is BaseTest {
 
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
-        IRouter.Zap memory zapInPair = IRouter.Zap(address(WETH), address(USDC), false, address(vFactory), 0, 0, 0, 0);
+        IRouter.Zap memory zapInPool = IRouter.Zap(address(WETH), address(USDC), false, address(vFactory), 0, 0, 0, 0);
 
         // tokenIn != WETH
         vm.expectRevert(IRouter.InvalidTokenInForETHDeposit.selector);
@@ -165,7 +165,7 @@ contract ZapTest is BaseTest {
             address(0),
             TOKEN_1 / 2,
             TOKEN_1 / 2,
-            zapInPair,
+            zapInPool,
             routesA,
             routesB,
             address(owner2),
@@ -178,7 +178,7 @@ contract ZapTest is BaseTest {
             ETHER,
             TOKEN_1 / 2,
             TOKEN_1 / 4,
-            zapInPair,
+            zapInPool,
             routesA,
             routesB,
             address(owner2),
@@ -188,22 +188,22 @@ contract ZapTest is BaseTest {
         vm.stopPrank();
     }
 
-    function testZapInWithVolatilePair() public {
+    function testZapInWithVolatilePool() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
 
-        uint256 usdcPairPreBal = USDC.balanceOf(address(vPair));
-        uint256 wethPairPreBal = WETH.balanceOf(address(vPair));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(vPool));
+        uint256 wethPoolPreBal = WETH.balanceOf(address(vPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 wethOwnerPreBal = WETH.balanceOf(address(owner2));
         uint256 ethOwnerPreBal = address(owner2).balance;
-        assertEq(vPair.balanceOf(address(owner2)), 0);
-        assertEq(vPair.balanceOf(address(owner3)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(owner3)), 0);
 
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
         routesA[0] = IRouter.Route(address(USDC), address(WETH), false, address(vFactory));
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
-        IRouter.Zap memory zapInPair = _createZapInParams(
+        IRouter.Zap memory zapInPool = _createZapInParams(
             address(WETH),
             address(USDC),
             false,
@@ -214,39 +214,39 @@ contract ZapTest is BaseTest {
             routesB
         );
 
-        _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zapInPair, routesA, routesB, address(owner3), false);
+        _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zapInPool, routesA, routesB, address(owner3), false);
 
         uint256 fee = ((USDC_10K / 2) * feeRate) / MAX_BPS;
         uint256 slippage = ((((USDC_10K / 2) * 1e12) / ETH_PRICE) * vSLIPPAGE) / MAX_BPS;
 
-        assertEq(USDC.balanceOf(address(vPair)) - usdcPairPreBal, USDC_10K - fee);
+        assertEq(USDC.balanceOf(address(vPool)) - usdcPoolPreBal, USDC_10K - fee);
         assertEq(usdcOwnerPreBal - USDC.balanceOf(address(owner2)), USDC_10K);
-        assertLt(wethPairPreBal - WETH.balanceOf(address(vPair)), slippage);
+        assertLt(wethPoolPreBal - WETH.balanceOf(address(vPool)), slippage);
         assertEq(address(owner2).balance, ethOwnerPreBal);
         assertLt(WETH.balanceOf(address(owner2)) - wethOwnerPreBal, slippage);
-        assertEq(vPair.balanceOf(address(owner2)), 0);
-        assertGt(vPair.balanceOf(address(owner3)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
+        assertGt(vPool.balanceOf(address(owner3)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
         vm.stopPrank();
     }
 
-    function testZapInWithVolatilePairAndETH() public {
+    function testZapInWithVolatilePoolAndETH() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
 
-        uint256 usdcPairPreBal = USDC.balanceOf(address(vPair));
-        uint256 wethPairPreBal = WETH.balanceOf(address(vPair));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(vPool));
+        uint256 wethPoolPreBal = WETH.balanceOf(address(vPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 wethOwnerPreBal = WETH.balanceOf(address(owner2));
         uint256 ethOwnerPreBal = address(owner2).balance;
-        assertEq(vPair.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
 
         uint256 zapAmount = TOKEN_1 * 5;
         IRouter.Route[] memory routesA = new IRouter.Route[](0);
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
         routesB[0] = IRouter.Route(address(WETH), address(USDC), false, address(vFactory));
-        IRouter.Zap memory zapInPair = _createZapInParams(
+        IRouter.Zap memory zapInPool = _createZapInParams(
             address(WETH),
             address(USDC),
             false,
@@ -261,7 +261,7 @@ contract ZapTest is BaseTest {
             ETHER,
             zapAmount / 2,
             zapAmount / 2,
-            zapInPair,
+            zapInPool,
             routesA,
             routesB,
             address(owner2),
@@ -271,34 +271,34 @@ contract ZapTest is BaseTest {
         uint256 fee = ((zapAmount / 2) * feeRate) / MAX_BPS;
         uint256 slippage = ((zapAmount / 2 / 1e12) * ETH_PRICE * vSLIPPAGE) / MAX_BPS;
 
-        assertEq(WETH.balanceOf(address(vPair)) - wethPairPreBal, 5 * TOKEN_1 - fee);
-        assertLt(usdcPairPreBal - USDC.balanceOf(address(vPair)), slippage);
+        assertEq(WETH.balanceOf(address(vPool)) - wethPoolPreBal, 5 * TOKEN_1 - fee);
+        assertLt(usdcPoolPreBal - USDC.balanceOf(address(vPool)), slippage);
         assertLt(USDC.balanceOf(address(owner2)) - usdcOwnerPreBal, slippage);
         assertEq(ethOwnerPreBal - address(owner2).balance, 5 * TOKEN_1);
         assertEq(WETH.balanceOf(address(owner2)), wethOwnerPreBal);
-        assertGt(vPair.balanceOf(address(owner2)), 0);
+        assertGt(vPool.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
         vm.stopPrank();
     }
 
-    function testZapAndStakeWithVolatilePair() public {
+    function testZapAndStakeWithVolatilePool() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
 
-        uint256 usdcPairPreBal = USDC.balanceOf(address(vPair));
-        uint256 wethPairPreBal = WETH.balanceOf(address(vPair));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(vPool));
+        uint256 wethPoolPreBal = WETH.balanceOf(address(vPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 wethOwnerPreBal = WETH.balanceOf(address(owner2));
         uint256 ethOwnerPreBal = address(owner2).balance;
-        assertEq(vPair.balanceOf(address(owner2)), 0);
-        assertEq(vPair.balanceOf(address(vGauge)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(vGauge)), 0);
         assertEq(vGauge.balanceOf(address(owner2)), 0);
 
         IRouter.Route[] memory routesA = new IRouter.Route[](1);
         routesA[0] = IRouter.Route(address(USDC), address(WETH), false, address(vFactory));
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
-        IRouter.Zap memory zapInPair = _createZapInParams(
+        IRouter.Zap memory zapInPool = _createZapInParams(
             address(WETH),
             address(USDC),
             false,
@@ -309,43 +309,43 @@ contract ZapTest is BaseTest {
             routesB
         );
 
-        _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zapInPair, routesA, routesB, address(owner2), true);
+        _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zapInPool, routesA, routesB, address(owner2), true);
 
         uint256 fee = ((USDC_10K / 2) * feeRate) / MAX_BPS;
         uint256 slippage = ((((USDC_10K / 2) * 1e12) / ETH_PRICE) * vSLIPPAGE) / MAX_BPS;
 
-        assertEq(USDC.balanceOf(address(vPair)) - usdcPairPreBal, USDC_10K - fee);
+        assertEq(USDC.balanceOf(address(vPool)) - usdcPoolPreBal, USDC_10K - fee);
         assertEq(usdcOwnerPreBal - USDC.balanceOf(address(owner2)), USDC_10K);
-        assertLt(wethPairPreBal - WETH.balanceOf(address(vPair)), slippage);
+        assertLt(wethPoolPreBal - WETH.balanceOf(address(vPool)), slippage);
         assertEq(address(owner2).balance, ethOwnerPreBal);
         assertLt(WETH.balanceOf(address(owner2)) - wethOwnerPreBal, slippage);
-        assertEq(vPair.balanceOf(address(owner2)), 0);
-        assertGt(vPair.balanceOf(address(vGauge)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
+        assertGt(vPool.balanceOf(address(vGauge)), 0);
         assertGt(vGauge.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
-        assertEq(vPair.allowance(address(_router), address(vGauge)), 0);
+        assertEq(vPool.allowance(address(_router), address(vGauge)), 0);
         vm.stopPrank();
     }
 
-    function testZapAndStakeWithVolatilePairAndETH() public {
+    function testZapAndStakeWithVolatilePoolAndETH() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
 
-        uint256 usdcPairPreBal = USDC.balanceOf(address(vPair));
-        uint256 wethPairPreBal = WETH.balanceOf(address(vPair));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(vPool));
+        uint256 wethPoolPreBal = WETH.balanceOf(address(vPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 wethOwnerPreBal = WETH.balanceOf(address(owner2));
         uint256 ethOwnerPreBal = address(owner2).balance;
-        assertEq(vPair.balanceOf(address(owner2)), 0);
-        assertEq(vPair.balanceOf(address(vGauge)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(vGauge)), 0);
         assertEq(vGauge.balanceOf(address(owner2)), 0);
 
         uint256 zapAmount = TOKEN_1 * 5;
         IRouter.Route[] memory routesA = new IRouter.Route[](0);
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
         routesB[0] = IRouter.Route(address(WETH), address(USDC), false, address(vFactory));
-        IRouter.Zap memory zapInPair = _createZapInParams(
+        IRouter.Zap memory zapInPool = _createZapInParams(
             address(WETH),
             address(USDC),
             false,
@@ -360,7 +360,7 @@ contract ZapTest is BaseTest {
             ETHER,
             zapAmount / 2,
             zapAmount / 2,
-            zapInPair,
+            zapInPool,
             routesA,
             routesB,
             address(owner2),
@@ -370,24 +370,24 @@ contract ZapTest is BaseTest {
         uint256 fee = ((zapAmount / 2) * feeRate) / MAX_BPS;
         uint256 slippage = ((zapAmount / 2 / 1e12) * ETH_PRICE * vSLIPPAGE) / MAX_BPS;
 
-        assertEq(WETH.balanceOf(address(vPair)) - wethPairPreBal, 5 * TOKEN_1 - fee);
-        assertLt(usdcPairPreBal - USDC.balanceOf(address(vPair)), slippage);
+        assertEq(WETH.balanceOf(address(vPool)) - wethPoolPreBal, 5 * TOKEN_1 - fee);
+        assertLt(usdcPoolPreBal - USDC.balanceOf(address(vPool)), slippage);
         assertLt(USDC.balanceOf(address(owner2)) - usdcOwnerPreBal, slippage);
         assertEq(WETH.balanceOf(address(owner2)), wethOwnerPreBal);
         assertEq(ethOwnerPreBal - address(owner2).balance, 5 * TOKEN_1);
-        assertEq(vPair.balanceOf(address(owner2)), 0);
-        assertGt(vPair.balanceOf(address(vGauge)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
+        assertGt(vPool.balanceOf(address(vGauge)), 0);
         assertGt(vGauge.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
-        assertEq(vPair.allowance(address(_router), address(vGauge)), 0);
+        assertEq(vPool.allowance(address(_router), address(vGauge)), 0);
         vm.stopPrank();
     }
 
-    function testZapOutWithVolatilePairWithTokenInPair() public {
+    function testZapOutWithVolatilePoolWithTokenInPool() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
-        assertEq(vPair.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
 
         IRouter.Route[] memory routesA = new IRouter.Route[](0);
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
@@ -404,19 +404,19 @@ contract ZapTest is BaseTest {
         );
 
         _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zap, routesA, routesB, address(owner2), false);
-        uint256 liquidity = vPair.balanceOf(address(owner2));
+        uint256 liquidity = vPool.balanceOf(address(owner2));
         assertGt(liquidity, 0);
 
-        uint256 amount = vPair.balanceOf(address(owner2));
-        uint256 usdcPairPreBal = USDC.balanceOf(address(vPair));
-        uint256 wethPairPreBal = WETH.balanceOf(address(vPair));
+        uint256 amount = vPool.balanceOf(address(owner2));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(vPool));
+        uint256 wethPoolPreBal = WETH.balanceOf(address(vPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 wethOwnerPreBal = WETH.balanceOf(address(owner2));
         uint256 ethOwnerPreBal = address(owner2).balance;
 
         routesB[0] = IRouter.Route(address(WETH), address(USDC), false, address(vFactory));
         zap = _createZapOutParams(address(USDC), address(WETH), false, address(vFactory), liquidity, routesA, routesB);
-        vPair.approve(address(_router), type(uint256).max);
+        vPool.approve(address(_router), type(uint256).max);
         _router.zapOut(address(USDC), amount, zap, routesA, routesB);
 
         uint256 slippage = ((USDC_10K / 2) * vSLIPPAGE) / MAX_BPS;
@@ -424,19 +424,19 @@ contract ZapTest is BaseTest {
         // experience slippage twice as we zap in and out
         assertEq(address(owner2).balance, ethOwnerPreBal);
         assertGt(USDC.balanceOf(address(owner2)) - usdcOwnerPreBal, USDC_10K - 2 * slippage);
-        assertGt(usdcPairPreBal - USDC.balanceOf(address(vPair)), USDC_10K - 2 * slippage);
-        assertLt(wethPairPreBal - WETH.balanceOf(address(vPair)), TOKEN_1 / 100);
+        assertGt(usdcPoolPreBal - USDC.balanceOf(address(vPool)), USDC_10K - 2 * slippage);
+        assertLt(wethPoolPreBal - WETH.balanceOf(address(vPool)), TOKEN_1 / 100);
         assertEq(WETH.balanceOf(address(owner2)), wethOwnerPreBal);
-        assertEq(vPair.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
         vm.stopPrank();
     }
 
-    function testZapOutWithVolatilePairWithTokenInPairWithETH() public {
+    function testZapOutWithVolatilePoolWithTokenInPoolWithETH() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
-        assertEq(vPair.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
 
         IRouter.Route[] memory routesA = new IRouter.Route[](0);
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
@@ -454,16 +454,16 @@ contract ZapTest is BaseTest {
 
         _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zap, routesA, routesB, address(owner2), false);
 
-        uint256 liquidity = vPair.balanceOf(address(owner2));
+        uint256 liquidity = vPool.balanceOf(address(owner2));
         assertGt(liquidity, 0);
 
-        uint256 usdcPairPreBal = USDC.balanceOf(address(vPair));
-        uint256 wethPairPreBal = WETH.balanceOf(address(vPair));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(vPool));
+        uint256 wethPoolPreBal = WETH.balanceOf(address(vPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 wethOwnerPreBal = WETH.balanceOf(address(owner2));
         uint256 ethOwnerPreBal = address(owner2).balance;
         // approximate return value
-        uint256 expectedETH = vPair.getAmountOut(USDC_10K, address(USDC));
+        uint256 expectedETH = vPool.getAmountOut(USDC_10K, address(USDC));
 
         delete routesB[0];
         routesA = new IRouter.Route[](1);
@@ -472,26 +472,26 @@ contract ZapTest is BaseTest {
         zap = _createZapOutParams(address(USDC), address(WETH), false, address(vFactory), liquidity, routesA, routesB);
 
         // request WETH
-        vPair.approve(address(_router), type(uint256).max);
+        vPool.approve(address(_router), type(uint256).max);
         _router.zapOut(ETHER, liquidity, zap, routesA, routesB);
 
         uint256 slippage = ((((USDC_10K / 2) * 1e12) / ETH_PRICE) * vSLIPPAGE) / MAX_BPS;
 
         assertGt(address(owner2).balance - ethOwnerPreBal, expectedETH - 2 * slippage);
         assertEq(USDC.balanceOf(address(owner2)), usdcOwnerPreBal);
-        assertLt(usdcPairPreBal - USDC.balanceOf(address(vPair)), USDC_1);
-        assertApproxEqRel(wethPairPreBal - WETH.balanceOf(address(vPair)), expectedETH, 1e16);
+        assertLt(usdcPoolPreBal - USDC.balanceOf(address(vPool)), USDC_1);
+        assertApproxEqRel(wethPoolPreBal - WETH.balanceOf(address(vPool)), expectedETH, 1e16);
         assertEq(WETH.balanceOf(address(owner2)), wethOwnerPreBal); // no change in WETH balance
-        assertEq(vPair.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
         vm.stopPrank();
     }
 
-    function testZapOutWithVolatilePairWithTokenInPairWithWETH() public {
+    function testZapOutWithVolatilePoolWithTokenInPoolWithWETH() public {
         vm.startPrank(address(owner2));
         USDC.approve(address(_router), type(uint256).max);
-        assertEq(vPair.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
 
         IRouter.Route[] memory routesA = new IRouter.Route[](0);
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
@@ -508,16 +508,16 @@ contract ZapTest is BaseTest {
         );
 
         _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zap, routesA, routesB, address(owner2), false);
-        uint256 liquidity = vPair.balanceOf(address(owner2));
+        uint256 liquidity = vPool.balanceOf(address(owner2));
         assertGt(liquidity, 0);
 
-        uint256 usdcPairPreBal = USDC.balanceOf(address(vPair));
-        uint256 wethPairPreBal = WETH.balanceOf(address(vPair));
+        uint256 usdcPoolPreBal = USDC.balanceOf(address(vPool));
+        uint256 wethPoolPreBal = WETH.balanceOf(address(vPool));
         uint256 usdcOwnerPreBal = USDC.balanceOf(address(owner2));
         uint256 wethOwnerPreBal = WETH.balanceOf(address(owner2));
         uint256 ethOwnerPreBal = address(owner2).balance;
         // approximate return value
-        uint256 expectedETH = vPair.getAmountOut(USDC_10K, address(USDC));
+        uint256 expectedETH = vPool.getAmountOut(USDC_10K, address(USDC));
 
         delete routesB;
         routesA = new IRouter.Route[](1);
@@ -526,17 +526,17 @@ contract ZapTest is BaseTest {
         zap = _createZapOutParams(address(USDC), address(WETH), false, address(vFactory), liquidity, routesA, routesB);
 
         // request WETH
-        vPair.approve(address(_router), type(uint256).max);
+        vPool.approve(address(_router), type(uint256).max);
         _router.zapOut(address(WETH), liquidity, zap, routesA, routesB);
 
         uint256 slippage = ((((USDC_10K / 2) * 1e12) / ETH_PRICE) * vSLIPPAGE) / MAX_BPS;
 
         assertGt(WETH.balanceOf(address(owner2)) - wethOwnerPreBal, expectedETH - 2 * slippage);
         assertEq(USDC.balanceOf(address(owner2)), usdcOwnerPreBal);
-        assertLt(usdcPairPreBal - USDC.balanceOf(address(vPair)), USDC_1);
-        assertApproxEqRel(wethPairPreBal - WETH.balanceOf(address(vPair)), expectedETH, 1e16);
+        assertLt(usdcPoolPreBal - USDC.balanceOf(address(vPool)), USDC_1);
+        assertApproxEqRel(wethPoolPreBal - WETH.balanceOf(address(vPool)), expectedETH, 1e16);
         assertEq(address(owner2).balance, ethOwnerPreBal); // no change in ETH balance
-        assertEq(vPair.balanceOf(address(owner2)), 0);
+        assertEq(vPool.balanceOf(address(owner2)), 0);
         assertEq(USDC.balanceOf(address(_router)), 0);
         assertEq(WETH.balanceOf(address(_router)), 0);
         vm.stopPrank();

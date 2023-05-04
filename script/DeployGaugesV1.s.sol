@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import "forge-std/StdJson.sol";
 import "../test/Base.sol";
 
-/// @notice Deploy script to deploy new gauges using existing v1 pairs
+/// @notice Deploy script to deploy new gauges using existing v1 pools
 contract DeployGaugesV1 is Script {
     using stdJson for string;
 
@@ -14,7 +14,7 @@ contract DeployGaugesV1 is Script {
     string jsonConstants;
     string jsonOutput;
 
-    PairFactory public vFactory;
+    PoolFactory public vFactory;
     Voter public voter;
 
     address[] gauges;
@@ -28,8 +28,8 @@ contract DeployGaugesV1 is Script {
         // load in vars
         string memory path = string.concat(basePath, constantsFilename);
         jsonConstants = vm.readFile(path);
-        address[] memory pairs = abi.decode(jsonConstants.parseRaw(".pairsV1"), (address[]));
-        vFactory = PairFactory(abi.decode(jsonConstants.parseRaw(".v1.Factory"), (address)));
+        address[] memory pools = abi.decode(jsonConstants.parseRaw(".poolsV1"), (address[]));
+        vFactory = PoolFactory(abi.decode(jsonConstants.parseRaw(".v1.Factory"), (address)));
 
         path = string.concat(basePath, "output/DeployVelodromeV2-");
         path = string.concat(path, outputFilename);
@@ -40,9 +40,9 @@ contract DeployGaugesV1 is Script {
 
         vm.startBroadcast(deployPrivateKey);
 
-        for (uint256 i = 0; i < pairs.length; i++) {
-            address pair = pairs[i];
-            address newGauge = voter.createGauge(address(vFactory), votingRewardsFactory, gaugeFactory, pair);
+        for (uint256 i = 0; i < pools.length; i++) {
+            address pool = pools[i];
+            address newGauge = voter.createGauge(address(vFactory), votingRewardsFactory, gaugeFactory, pool);
             gauges.push(newGauge);
         }
 
@@ -51,6 +51,6 @@ contract DeployGaugesV1 is Script {
         // Write to file
         path = string.concat(basePath, "output/DeployGaugesV1-");
         path = string.concat(path, outputFilename);
-        vm.writeJson(vm.serializeAddress("v2", "gaugesPairsV1", gauges), path);
+        vm.writeJson(vm.serializeAddress("v2", "gaugesPoolsV1", gauges), path);
     }
 }

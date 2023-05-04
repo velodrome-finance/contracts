@@ -26,9 +26,9 @@ interface IMinter {
     ///         Note that ve.totalSupply is the locked ve supply
     ///         velo.totalSupply is the total ve supply minted
     /// @return _growth Rebases
-    function calculate_growth(uint256 _minted) external view returns (uint256 _growth);
+    function calculateGrowth(uint256 _minted) external view returns (uint256 _growth);
 
     /// @notice Processes emissions and rebases. Callable once per epoch (1 week).
     /// @return _period Start of current epoch.
-    function update_period() external returns (uint256 _period);
+    function updatePeriod() external returns (uint256 _period);
 }

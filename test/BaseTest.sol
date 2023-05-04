@@ -4,7 +4,7 @@ import "forge-std/Test.sol";
 import "forge-std/console2.sol";
 
 import "./Base.sol";
-import {IPair, Pair} from "contracts/Pair.sol";
+import {IPool, Pool} from "contracts/Pool.sol";
 import {TestOwner} from "utils/TestOwner.sol";
 import {MockERC20} from "utils/MockERC20.sol";
 import {MockWETH} from "utils/MockWETH.sol";
@@ -20,7 +20,7 @@ abstract contract BaseTest is Base, TestOwner {
     uint256 constant TOKEN_10M = 1e25; // 1e7 = 10M tokens with 18 decimals
     uint256 constant TOKEN_100M = 1e26; // 1e8 = 100M tokens with 18 decimals
     uint256 constant TOKEN_10B = 1e28; // 1e10 = 10B tokens with 18 decimals
-    uint256 constant PAIR_1 = 1e9;
+    uint256 constant POOL_1 = 1e9;
 
     uint256 constant DURATION = 7 days;
     uint256 constant WEEK = 1 weeks;
@@ -41,9 +41,9 @@ abstract contract BaseTest is Base, TestOwner {
     MockERC20 WEVE;
     MockERC20 LR; // late reward
 
-    Pair pair;
-    Pair pair2;
-    Pair pair3;
+    Pool pool;
+    Pool pool2;
+    Pool pool3;
 
     FeesVotingReward feesVotingReward;
     BribeVotingReward bribeVotingReward;
@@ -131,28 +131,28 @@ abstract contract BaseTest is Base, TestOwner {
         voter.setEpochGovernor(address(epochGovernor));
         voter.setGovernor(address(governor));
 
-        assertEq(factory.allPairsLength(), 0);
+        assertEq(factory.allPoolsLength(), 0);
         assertEq(router.defaultFactory(), address(factory));
 
-        deployPairWithOwner(address(owner));
+        deployPoolWithOwner(address(owner));
 
         // USDC - FRAX stable
         gauge = Gauge(
-            voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair))
+            voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool))
         );
         feesVotingReward = FeesVotingReward(voter.gaugeToFees(address(gauge)));
         bribeVotingReward = BribeVotingReward(voter.gaugeToBribe(address(gauge)));
 
         // USDC - FRAX unstable
         gauge2 = Gauge(
-            voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair2))
+            voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool2))
         );
         feesVotingReward2 = FeesVotingReward(voter.gaugeToFees(address(gauge2)));
         bribeVotingReward2 = BribeVotingReward(voter.gaugeToBribe(address(gauge2)));
 
         // FRAX - DAI stable
         gauge3 = Gauge(
-            voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair3))
+            voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool3))
         );
         feesVotingReward3 = FeesVotingReward(voter.gaugeToFees(address(gauge3)));
         bribeVotingReward3 = BribeVotingReward(voter.gaugeToBribe(address(gauge3)));
@@ -178,12 +178,12 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(DAI), "DAI");
         vm.label(address(WETH), "WETH");
         vm.label(address(LR), "Bribe Voting Reward");
-        vm.label(address(factory), "Pair Factory");
+        vm.label(address(factory), "Pool Factory");
         vm.label(address(factoryRegistry), "Factory Registry");
         vm.label(address(router), "Router");
-        vm.label(address(pair), "Pair");
-        vm.label(address(pair2), "Pair 2");
-        vm.label(address(pair3), "Pair 3");
+        vm.label(address(pool), "Pool");
+        vm.label(address(pool2), "Pool 2");
+        vm.label(address(pool3), "Pool 3");
 
         vm.label(address(escrow), "Voting Escrow");
         vm.label(address(gaugeFactory), "Gauge Factory");
@@ -313,21 +313,21 @@ abstract contract BaseTest is Base, TestOwner {
         }
     }
 
-    function deployPairWithOwner(address _owner) public {
+    function deployPoolWithOwner(address _owner) public {
         _addLiquidityToPool(_owner, address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
         _addLiquidityToPool(_owner, address(router), address(FRAX), address(USDC), false, TOKEN_1, USDC_1);
         _addLiquidityToPool(_owner, address(router), address(FRAX), address(DAI), true, TOKEN_1, TOKEN_1);
-        assertEq(factory.allPairsLength(), 3);
+        assertEq(factory.allPoolsLength(), 3);
 
-        // last arg default as these are all v2 pairs
-        address create2address = router.pairFor(address(FRAX), address(USDC), true, address(0));
-        address address1 = factory.getPair(address(FRAX), address(USDC), true);
-        pair = Pair(address1);
-        address address2 = factory.getPair(address(FRAX), address(USDC), false);
-        pair2 = Pair(address2);
-        address address3 = factory.getPair(address(FRAX), address(DAI), true);
-        pair3 = Pair(address3);
-        assertEq(address(pair), create2address);
+        // last arg default as these are all v2 pools
+        address create2address = router.poolFor(address(FRAX), address(USDC), true, address(0));
+        address address1 = factory.getPool(address(FRAX), address(USDC), true);
+        pool = Pool(address1);
+        address address2 = factory.getPool(address(FRAX), address(USDC), false);
+        pool2 = Pool(address2);
+        address address3 = factory.getPool(address(FRAX), address(DAI), true);
+        pool3 = Pool(address3);
+        assertEq(address(pool), create2address);
     }
 
     /// @dev Helper utility to forward time to next week

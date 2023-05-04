@@ -33,7 +33,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
     /// @dev token id of veNFT owned by this contract to capture v1 VELO emissions
     uint256 public ownedTokenId;
 
-    /// @dev Address of fake pair used to capture emissions
+    /// @dev Address of fake pool used to capture emissions
     address private sinkDrain;
 
     // @dev Address of deployed facilitator contract to clone

@@ -2,12 +2,12 @@ pragma solidity 0.8.19;
 
 import "./BaseTest.sol";
 
-contract PairTest is BaseTest {
+contract PoolTest is BaseTest {
     constructor() {
         deploymentType = Deployment.CUSTOM;
     }
 
-    function deployPairCoins() public {
+    function deployPoolCoins() public {
         skip(1 weeks);
 
         deployOwners();
@@ -32,12 +32,12 @@ contract PairTest is BaseTest {
         escrow.setVoterAndDistributor(address(voter), address(distributor));
         factory.setVoter(address(voter));
 
-        deployPairWithOwner(address(owner));
-        deployPairWithOwner(address(owner2));
+        deployPoolWithOwner(address(owner));
+        deployPoolWithOwner(address(owner2));
     }
 
     function createLock() public {
-        deployPairCoins();
+        deployPoolCoins();
 
         VELO.approve(address(escrow), 5e17);
         escrow.createLock(5e17, MAXTIME);
@@ -113,33 +113,33 @@ contract PairTest is BaseTest {
         votingEscrowMerge();
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));
-        assertEq(pair.token0(), token0);
-        assertEq(pair.token1(), token1);
+        assertEq(pool.token0(), token0);
+        assertEq(pool.token1(), token1);
     }
 
-    function mintAndBurnTokensForPairFraxUsdc() public {
+    function mintAndBurnTokensForPoolFraxUsdc() public {
         confirmTokensForFraxUsdc();
 
-        USDC.transfer(address(pair), USDC_1);
-        FRAX.transfer(address(pair), TOKEN_1);
-        pair.mint(address(owner));
-        assertEq(pair.getAmountOut(USDC_1, address(USDC)), 982117769725505988);
+        USDC.transfer(address(pool), USDC_1);
+        FRAX.transfer(address(pool), TOKEN_1);
+        pool.mint(address(owner));
+        assertEq(pool.getAmountOut(USDC_1, address(USDC)), 982117769725505988);
     }
 
-    function mintAndBurnTokensForPairFraxUsdcOwner2() public {
-        mintAndBurnTokensForPairFraxUsdc();
+    function mintAndBurnTokensForPoolFraxUsdcOwner2() public {
+        mintAndBurnTokensForPoolFraxUsdc();
 
         vm.startPrank(address(owner2));
-        USDC.transfer(address(pair), USDC_1);
-        FRAX.transfer(address(pair), TOKEN_1);
-        pair.mint(address(owner2));
+        USDC.transfer(address(pool), USDC_1);
+        FRAX.transfer(address(pool), TOKEN_1);
+        pool.mint(address(owner2));
         vm.stopPrank();
 
-        assertEq(pair.getAmountOut(USDC_1, address(USDC)), 992220948146798746);
+        assertEq(pool.getAmountOut(USDC_1, address(USDC)), 992220948146798746);
     }
 
     function routerAddLiquidity() public {
-        mintAndBurnTokensForPairFraxUsdcOwner2();
+        mintAndBurnTokensForPoolFraxUsdcOwner2();
 
         _addLiquidityToPool(address(owner), address(router), address(USDC), address(FRAX), true, USDC_100K, TOKEN_100K);
         _addLiquidityToPool(
@@ -195,67 +195,67 @@ contract PairTest is BaseTest {
         );
     }
 
-    function routerPair1GetAmountsOutAndSwapExactTokensForTokens() public {
+    function routerPool1GetAmountsOutAndSwapExactTokensForTokens() public {
         routerAddLiquidityOwner2();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(USDC), address(FRAX), true, address(0));
 
-        assertEq(router.getAmountsOut(USDC_1, routes)[1], pair.getAmountOut(USDC_1, address(USDC)));
+        assertEq(router.getAmountsOut(USDC_1, routes)[1], pool.getAmountOut(USDC_1, address(USDC)));
 
         uint256[] memory assertedOutput = router.getAmountsOut(USDC_1, routes);
         USDC.approve(address(router), USDC_1);
         router.swapExactTokensForTokens(USDC_1, assertedOutput[1], routes, address(owner), block.timestamp);
         skip(1801);
         vm.roll(block.number + 1);
-        address pairFees = pair.pairFees();
-        assertEq(USDC.balanceOf(pairFees), 100);
+        address poolFees = pool.poolFees();
+        assertEq(USDC.balanceOf(poolFees), 100);
         uint256 b = USDC.balanceOf(address(owner));
-        pair.claimFees();
+        pool.claimFees();
         assertGt(USDC.balanceOf(address(owner)), b);
     }
 
-    function routerPair1GetAmountsOutAndSwapExactTokensForTokensOwner2() public {
-        routerPair1GetAmountsOutAndSwapExactTokensForTokens();
+    function routerPool1GetAmountsOutAndSwapExactTokensForTokensOwner2() public {
+        routerPool1GetAmountsOutAndSwapExactTokensForTokens();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(USDC), address(FRAX), true, address(0));
 
-        assertEq(router.getAmountsOut(USDC_1, routes)[1], pair.getAmountOut(USDC_1, address(USDC)));
+        assertEq(router.getAmountsOut(USDC_1, routes)[1], pool.getAmountOut(USDC_1, address(USDC)));
 
         uint256[] memory expectedOutput = router.getAmountsOut(USDC_1, routes);
         vm.startPrank(address(owner2));
         owner2.approve(address(USDC), address(router), USDC_1);
         router.swapExactTokensForTokens(USDC_1, expectedOutput[1], routes, address(owner2), block.timestamp);
         vm.stopPrank();
-        address pairFees = pair.pairFees();
-        assertEq(USDC.balanceOf(pairFees), 101);
+        address poolFees = pool.poolFees();
+        assertEq(USDC.balanceOf(poolFees), 101);
         uint256 b = USDC.balanceOf(address(owner));
         vm.prank(address(owner2));
-        pair.claimFees();
+        pool.claimFees();
         assertEq(USDC.balanceOf(address(owner)), b);
     }
 
-    function routerPair2GetAmountsOutAndSwapExactTokensForTokens() public {
-        routerPair1GetAmountsOutAndSwapExactTokensForTokensOwner2();
+    function routerPool2GetAmountsOutAndSwapExactTokensForTokens() public {
+        routerPool1GetAmountsOutAndSwapExactTokensForTokensOwner2();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(USDC), address(FRAX), false, address(0));
 
-        assertEq(router.getAmountsOut(USDC_1, routes)[1], pair2.getAmountOut(USDC_1, address(USDC)));
+        assertEq(router.getAmountsOut(USDC_1, routes)[1], pool2.getAmountOut(USDC_1, address(USDC)));
 
         uint256[] memory expectedOutput = router.getAmountsOut(USDC_1, routes);
         USDC.approve(address(router), USDC_1);
         router.swapExactTokensForTokens(USDC_1, expectedOutput[1], routes, address(owner), block.timestamp);
     }
 
-    function routerPair3GetAmountsOutAndSwapExactTokensForTokens() public {
-        routerPair2GetAmountsOutAndSwapExactTokensForTokens();
+    function routerPool3GetAmountsOutAndSwapExactTokensForTokens() public {
+        routerPool2GetAmountsOutAndSwapExactTokensForTokens();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(FRAX), address(DAI), true, address(0));
 
-        assertEq(router.getAmountsOut(TOKEN_1M, routes)[1], pair3.getAmountOut(TOKEN_1M, address(FRAX)));
+        assertEq(router.getAmountsOut(TOKEN_1M, routes)[1], pool3.getAmountOut(TOKEN_1M, address(FRAX)));
 
         uint256[] memory expectedOutput = router.getAmountsOut(TOKEN_1M, routes);
         FRAX.approve(address(router), TOKEN_1M);
@@ -279,23 +279,23 @@ contract PairTest is BaseTest {
         voter.initialize(tokens, address(minter));
     }
 
-    function deployPairFactoryGauge() public {
+    function deployPoolFactoryGauge() public {
         deployMinter();
 
         VELO.approve(address(gaugeFactory), 15 * TOKEN_100K);
-        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair));
-        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair2));
-        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair3));
-        assertFalse(voter.gauges(address(pair)) == address(0));
+        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool));
+        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool2));
+        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool3));
+        assertFalse(voter.gauges(address(pool)) == address(0));
 
-        address gaugeAddress = voter.gauges(address(pair));
+        address gaugeAddress = voter.gauges(address(pool));
         address feesVotingRewardAddress = voter.gaugeToFees(gaugeAddress);
         address bribeVotingRewardAddress = voter.gaugeToBribe(gaugeAddress);
 
-        address gaugeAddress2 = voter.gauges(address(pair2));
+        address gaugeAddress2 = voter.gauges(address(pool2));
         address feesVotingRewardAddress2 = voter.gaugeToFees(gaugeAddress2);
 
-        address gaugeAddress3 = voter.gauges(address(pair3));
+        address gaugeAddress3 = voter.gauges(address(pool3));
         address feesVotingRewardAddress3 = voter.gaugeToFees(gaugeAddress3);
 
         gauge = Gauge(gaugeAddress);
@@ -307,27 +307,27 @@ contract PairTest is BaseTest {
         feesVotingReward2 = FeesVotingReward(feesVotingRewardAddress2);
         feesVotingReward3 = FeesVotingReward(feesVotingRewardAddress3);
 
-        pair.approve(address(gauge), PAIR_1);
-        pair2.approve(address(gauge2), PAIR_1);
-        pair3.approve(address(gauge3), PAIR_1);
-        gauge.deposit(PAIR_1);
-        gauge2.deposit(PAIR_1);
-        gauge3.deposit(PAIR_1);
-        assertEq(gauge.totalSupply(), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        pool2.approve(address(gauge2), POOL_1);
+        pool3.approve(address(gauge3), POOL_1);
+        gauge.deposit(POOL_1);
+        gauge2.deposit(POOL_1);
+        gauge3.deposit(POOL_1);
+        assertEq(gauge.totalSupply(), POOL_1);
         assertEq(gauge.earned(address(owner)), 0);
     }
 
-    function deployPairFactoryGaugeOwner2() public {
-        deployPairFactoryGauge();
+    function deployPoolFactoryGaugeOwner2() public {
+        deployPoolFactoryGauge();
 
-        owner2.approve(address(pair), address(gauge), PAIR_1);
-        owner2.deposit(address(gauge), PAIR_1);
-        assertEq(gauge.totalSupply(), 2 * PAIR_1);
+        owner2.approve(address(pool), address(gauge), POOL_1);
+        owner2.deposit(address(gauge), POOL_1);
+        assertEq(gauge.totalSupply(), 2 * POOL_1);
         assertEq(gauge.earned(address(owner2)), 0);
     }
 
     function withdrawGaugeStake() public {
-        deployPairFactoryGaugeOwner2();
+        deployPoolFactoryGaugeOwner2();
 
         gauge.withdraw(gauge.balanceOf(address(owner)));
         owner2.withdrawGauge(address(gauge), gauge.balanceOf(address(owner2)));
@@ -341,11 +341,11 @@ contract PairTest is BaseTest {
     function addGaugeAndVotingRewards() public {
         withdrawGaugeStake();
 
-        _addRewardToGauge(address(voter), address(gauge), PAIR_1);
+        _addRewardToGauge(address(voter), address(gauge), POOL_1);
 
-        VELO.approve(address(bribeVotingReward), PAIR_1);
+        VELO.approve(address(bribeVotingReward), POOL_1);
 
-        bribeVotingReward.notifyRewardAmount(address(VELO), PAIR_1);
+        bribeVotingReward.notifyRewardAmount(address(VELO), POOL_1);
 
         assertEq(gauge.rewardRate(), 1653);
     }
@@ -353,13 +353,13 @@ contract PairTest is BaseTest {
     function exitAndGetRewardGaugeStake() public {
         addGaugeAndVotingRewards();
 
-        uint256 supply = pair.balanceOf(address(owner));
-        pair.approve(address(gauge), supply);
+        uint256 supply = pool.balanceOf(address(owner));
+        pool.approve(address(gauge), supply);
         gauge.deposit(supply);
         gauge.withdraw(gauge.balanceOf(address(owner)));
         assertEq(gauge.totalSupply(), 0);
-        pair.approve(address(gauge), supply);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), supply);
+        gauge.deposit(POOL_1);
     }
 
     function voterReset() public {
@@ -389,20 +389,20 @@ contract PairTest is BaseTest {
         createLock2();
 
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
         skip(1 weeks + 1 hours + 1);
 
         voter.vote(1, pools, weights);
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pair))));
+        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
         skip(1 weeks);
 
         voter.reset(1);
         assertLt(voter.usedWeights(1), escrow.balanceOfNFT(1));
         assertEq(voter.usedWeights(1), 0);
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pair))));
+        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
         assertEq(feesVotingReward.balanceOf(1), 0);
     }
 
@@ -410,18 +410,18 @@ contract PairTest is BaseTest {
         voteHacking();
 
         assertEq(voter.usedWeights(1), 0);
-        assertEq(voter.votes(1, address(pair)), 0);
+        assertEq(voter.votes(1, address(pool)), 0);
         voter.poke(1);
         assertEq(voter.usedWeights(1), 0);
-        assertEq(voter.votes(1, address(pair)), 0);
+        assertEq(voter.votes(1, address(pool)), 0);
     }
 
     function gaugeVoteAndBribeBalanceOf() public {
         gaugePokeHacking();
 
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 5000;
         weights[1] = 5000;
@@ -440,17 +440,17 @@ contract PairTest is BaseTest {
         gaugeVoteAndBribeBalanceOf();
 
         uint256 weightBefore = voter.usedWeights(1);
-        uint256 votesBefore = voter.votes(1, address(pair));
+        uint256 votesBefore = voter.votes(1, address(pool));
         voter.poke(1);
         assertEq(voter.usedWeights(1), weightBefore);
-        assertEq(voter.votes(1, address(pair)), votesBefore);
+        assertEq(voter.votes(1, address(pool)), votesBefore);
     }
 
     function voteHackingBreakMint() public {
         gaugePokeHacking2();
 
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 5000;
         skip(1 weeks);
@@ -458,25 +458,25 @@ contract PairTest is BaseTest {
         voter.vote(1, pools, weights);
 
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pair))));
+        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
     }
 
     function gaugePokeHacking3() public {
         voteHackingBreakMint();
 
-        assertEq(voter.usedWeights(1), uint256(voter.votes(1, address(pair))));
+        assertEq(voter.usedWeights(1), uint256(voter.votes(1, address(pool))));
         voter.poke(1);
-        assertEq(voter.usedWeights(1), uint256(voter.votes(1, address(pair))));
+        assertEq(voter.usedWeights(1), uint256(voter.votes(1, address(pool))));
     }
 
     function gaugeDistributeBasedOnVoting() public {
         gaugePokeHacking3();
 
-        deal(address(VELO), address(minter), PAIR_1);
+        deal(address(VELO), address(minter), POOL_1);
 
         vm.startPrank(address(minter));
-        VELO.approve(address(voter), PAIR_1);
-        voter.notifyRewardAmount(PAIR_1);
+        VELO.approve(address(voter), POOL_1);
+        voter.notifyRewardAmount(POOL_1);
         vm.stopPrank();
 
         voter.updateFor(0, voter.length());
@@ -494,7 +494,7 @@ contract PairTest is BaseTest {
         feesVotingReward.getReward(1, rewards);
     }
 
-    function routerPair1GetAmountsOutAndSwapExactTokensForTokens2() public {
+    function routerPool1GetAmountsOutAndSwapExactTokensForTokens2() public {
         feesVotingRewardClaimRewards();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
@@ -505,8 +505,8 @@ contract PairTest is BaseTest {
         router.swapExactTokensForTokens(USDC_1, expectedOutput[1], routes, address(owner), block.timestamp);
     }
 
-    function routerPair2GetAmountsOutAndSwapExactTokensForTokens2() public {
-        routerPair1GetAmountsOutAndSwapExactTokensForTokens2();
+    function routerPool2GetAmountsOutAndSwapExactTokensForTokens2() public {
+        routerPool1GetAmountsOutAndSwapExactTokensForTokens2();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(USDC), address(FRAX), false, address(0));
@@ -516,8 +516,8 @@ contract PairTest is BaseTest {
         router.swapExactTokensForTokens(USDC_1, expectedOutput[1], routes, address(owner), block.timestamp);
     }
 
-    function routerPair1GetAmountsOutAndSwapExactTokensForTokens2Again() public {
-        routerPair2GetAmountsOutAndSwapExactTokensForTokens2();
+    function routerPool1GetAmountsOutAndSwapExactTokensForTokens2Again() public {
+        routerPool2GetAmountsOutAndSwapExactTokensForTokens2();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(FRAX), address(USDC), false, address(0));
@@ -527,8 +527,8 @@ contract PairTest is BaseTest {
         router.swapExactTokensForTokens(TOKEN_1, expectedOutput[1], routes, address(owner), block.timestamp);
     }
 
-    function routerPair2GetAmountsOutAndSwapExactTokensForTokens2Again() public {
-        routerPair1GetAmountsOutAndSwapExactTokensForTokens2Again();
+    function routerPool2GetAmountsOutAndSwapExactTokensForTokens2Again() public {
+        routerPool1GetAmountsOutAndSwapExactTokensForTokens2Again();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(FRAX), address(USDC), false, address(0));
@@ -538,8 +538,8 @@ contract PairTest is BaseTest {
         router.swapExactTokensForTokens(TOKEN_1, expectedOutput[1], routes, address(owner), block.timestamp);
     }
 
-    function routerPair1Pair2GetAmountsOutAndSwapExactTokensForTokens() public {
-        routerPair2GetAmountsOutAndSwapExactTokensForTokens2Again();
+    function routerPool1Pool2GetAmountsOutAndSwapExactTokensForTokens() public {
+        routerPool2GetAmountsOutAndSwapExactTokensForTokens2Again();
 
         IRouter.Route[] memory route = new IRouter.Route[](2);
         route[0] = IRouter.Route(address(FRAX), address(USDC), false, address(0));
@@ -555,7 +555,7 @@ contract PairTest is BaseTest {
     }
 
     function distributeAndClaimFees() public {
-        routerPair1Pair2GetAmountsOutAndSwapExactTokensForTokens();
+        routerPool1Pool2GetAmountsOutAndSwapExactTokensForTokens();
 
         skip(8 days);
         vm.roll(block.number + 1);
@@ -571,7 +571,7 @@ contract PairTest is BaseTest {
     function minterMint() public {
         distributeAndClaimFees();
 
-        minter.update_period();
+        minter.updatePeriod();
         voter.updateFor(address(gauge));
         voter.distribute(0, voter.length());
         skip(30 minutes);
@@ -585,9 +585,9 @@ contract PairTest is BaseTest {
         assertTrue(escrow.isApprovedOrOwner(address(owner), 1));
         gauge.withdraw(gauge.balanceOf(address(owner)));
         skip(1);
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         skip(1);
-        gauge.deposit(PAIR_1);
+        gauge.deposit(POOL_1);
         skip(1);
         uint256 before = VELO.balanceOf(address(owner));
         skip(1);
@@ -599,28 +599,28 @@ contract PairTest is BaseTest {
         assertEq(earned, received);
 
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         skip(1 weeks);
         vm.roll(block.number + 1);
@@ -631,32 +631,32 @@ contract PairTest is BaseTest {
     function gaugeClaimRewardsAfterExpiry() public {
         gaugeClaimRewards();
 
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         gauge.withdraw(gauge.balanceOf(address(owner)));
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
         gauge.getReward(address(owner));
         skip(1 weeks);
         vm.roll(block.number + 1);
@@ -693,39 +693,39 @@ contract PairTest is BaseTest {
         _addLiquidityToPool(address(owner3), address(router), address(USDC), address(FRAX), true, 1e12, TOKEN_1M);
     }
 
-    function deployPairFactoryGaugeOwner3() public {
+    function deployPoolFactoryGaugeOwner3() public {
         routerAddLiquidityOwner3();
 
-        owner3.approve(address(pair), address(gauge), PAIR_1);
-        owner3.deposit(address(gauge), PAIR_1);
+        owner3.approve(address(pool), address(gauge), POOL_1);
+        owner3.deposit(address(gauge), POOL_1);
     }
 
     function gaugeClaimRewardsOwner3() public {
-        deployPairFactoryGaugeOwner3();
+        deployPoolFactoryGaugeOwner3();
 
         owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pair), address(gauge), PAIR_1);
-        owner3.deposit(address(gauge), PAIR_1);
+        owner3.approve(address(pool), address(gauge), POOL_1);
+        owner3.deposit(address(gauge), POOL_1);
         owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pair), address(gauge), PAIR_1);
-        owner3.deposit(address(gauge), PAIR_1);
+        owner3.approve(address(pool), address(gauge), POOL_1);
+        owner3.deposit(address(gauge), POOL_1);
 
         owner3.getGaugeReward(address(gauge), address(owner3));
         owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pair), address(gauge), PAIR_1);
-        owner3.deposit(address(gauge), PAIR_1);
+        owner3.approve(address(pool), address(gauge), POOL_1);
+        owner3.deposit(address(gauge), POOL_1);
         owner3.getGaugeReward(address(gauge), address(owner3));
         owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pair), address(gauge), PAIR_1);
-        owner3.deposit(address(gauge), PAIR_1);
+        owner3.approve(address(pool), address(gauge), POOL_1);
+        owner3.deposit(address(gauge), POOL_1);
         owner3.getGaugeReward(address(gauge), address(owner3));
         owner3.getGaugeReward(address(gauge), address(owner3));
         owner3.getGaugeReward(address(gauge), address(owner3));
         owner3.getGaugeReward(address(gauge), address(owner3));
 
         owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner)));
-        owner3.approve(address(pair), address(gauge), PAIR_1);
-        owner3.deposit(address(gauge), PAIR_1);
+        owner3.approve(address(pool), address(gauge), POOL_1);
+        owner3.deposit(address(gauge), POOL_1);
         owner3.getGaugeReward(address(gauge), address(owner3));
     }
 
@@ -734,7 +734,7 @@ contract PairTest is BaseTest {
 
         skip(2 weeks);
         vm.roll(block.number + 1);
-        minter.update_period();
+        minter.updatePeriod();
         voter.updateFor(address(gauge));
         address[] memory gauges = new address[](1);
         gauges[0] = address(gauge);
@@ -749,8 +749,8 @@ contract PairTest is BaseTest {
         minterMint2();
 
         owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner3)));
-        owner3.approve(address(pair), address(gauge), PAIR_1);
-        owner3.deposit(address(gauge), PAIR_1);
+        owner3.approve(address(pool), address(gauge), POOL_1);
+        owner3.deposit(address(gauge), POOL_1);
         uint256 before = VELO.balanceOf(address(owner3));
         skip(1);
         owner3.getGaugeReward(address(gauge), address(owner3));
@@ -759,16 +759,16 @@ contract PairTest is BaseTest {
         assertGt(received, 0);
 
         owner3.withdrawGauge(address(gauge), gauge.balanceOf(address(owner)));
-        owner3.approve(address(pair), address(gauge), PAIR_1);
-        owner3.deposit(address(gauge), PAIR_1);
+        owner3.approve(address(pool), address(gauge), POOL_1);
+        owner3.deposit(address(gauge), POOL_1);
         owner3.getGaugeReward(address(gauge), address(owner3));
     }
 
     function testGaugeClaimRewards2() public {
         gaugeClaimRewardsOwner3NextCycle();
 
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         _addRewardToGauge(address(voter), address(gauge), TOKEN_1);
 
@@ -778,37 +778,37 @@ contract PairTest is BaseTest {
         gauge.withdraw(gauge.balanceOf(address(owner)));
     }
 
-    function testSetPairName() external {
-        // Note: as this contract is a custom setup, the pair contracts are not already deployed from
+    function testSetPoolName() external {
+        // Note: as this contract is a custom setup, the pool contracts are not already deployed from
         // base setup, and so they need to be deployed for these tests
-        deployPairCoins();
+        deployPoolCoins();
 
-        assertEq(pair.name(), "StableV2 AMM - USDC/FRAX");
-        pair.setName("Some new name");
-        assertEq(pair.name(), "Some new name");
+        assertEq(pool.name(), "StableV2 AMM - USDC/FRAX");
+        pool.setName("Some new name");
+        assertEq(pool.name(), "Some new name");
     }
 
-    function testCannotSetPairNameIfNotEmergencyCouncil() external {
-        deployPairCoins();
+    function testCannotSetPoolNameIfNotEmergencyCouncil() external {
+        deployPoolCoins();
 
         vm.prank(address(owner2));
-        vm.expectRevert(IPair.NotEmergencyCouncil.selector);
-        pair.setName("Some new name");
+        vm.expectRevert(IPool.NotEmergencyCouncil.selector);
+        pool.setName("Some new name");
     }
 
-    function testSetPairSymbol() external {
-        deployPairCoins();
+    function testSetPoolSymbol() external {
+        deployPoolCoins();
 
-        assertEq(pair.symbol(), "sAMMV2-USDC/FRAX");
-        pair.setSymbol("Some new symbol");
-        assertEq(pair.symbol(), "Some new symbol");
+        assertEq(pool.symbol(), "sAMMV2-USDC/FRAX");
+        pool.setSymbol("Some new symbol");
+        assertEq(pool.symbol(), "Some new symbol");
     }
 
-    function testCannotSetPairSymbolIfNotEmergencyCouncil() external {
-        deployPairCoins();
+    function testCannotSetPoolSymbolIfNotEmergencyCouncil() external {
+        deployPoolCoins();
 
         vm.prank(address(owner2));
-        vm.expectRevert(IPair.NotEmergencyCouncil.selector);
-        pair.setSymbol("Some new symbol");
+        vm.expectRevert(IPool.NotEmergencyCouncil.selector);
+        pool.setSymbol("Some new symbol");
     }
 }

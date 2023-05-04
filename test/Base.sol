@@ -3,9 +3,9 @@ pragma solidity 0.8.19;
 import {ManagedRewardsFactory} from "contracts/factories/ManagedRewardsFactory.sol";
 import {VotingRewardsFactory} from "contracts/factories/VotingRewardsFactory.sol";
 import {GaugeFactory} from "contracts/factories/GaugeFactory.sol";
-import {PairFactory, IPairFactory} from "contracts/factories/PairFactory.sol";
+import {PoolFactory, IPoolFactory} from "contracts/factories/PoolFactory.sol";
 import {IFactoryRegistry, FactoryRegistry} from "contracts/FactoryRegistry.sol";
-import {Pair} from "contracts/Pair.sol";
+import {Pool} from "contracts/Pool.sol";
 import {IMinter, Minter} from "contracts/Minter.sol";
 import {IReward, Reward} from "contracts/rewards/Reward.sol";
 import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
@@ -13,7 +13,7 @@ import {BribeVotingReward} from "contracts/rewards/BribeVotingReward.sol";
 import {FreeManagedReward} from "contracts/rewards/FreeManagedReward.sol";
 import {LockedManagedReward} from "contracts/rewards/LockedManagedReward.sol";
 import {IGauge, Gauge} from "contracts/Gauge.sol";
-import {PairFees} from "contracts/PairFees.sol";
+import {PoolFees} from "contracts/PoolFees.sol";
 import {RewardsDistributor} from "contracts/RewardsDistributor.sol";
 import {IRouter, Router} from "contracts/Router.sol";
 import {IVelo, Velo} from "contracts/Velo.sol";
@@ -27,8 +27,10 @@ import {ISinkManager, SinkManager} from "contracts/v1/sink/SinkManager.sol";
 import {SinkDrain} from "contracts/v1/sink/SinkDrain.sol";
 import {SinkConverter} from "contracts/v1/sink/SinkConverter.sol";
 import {IGaugeV1} from "contracts/interfaces/v1/IGaugeV1.sol";
+import {IMinterV1} from "contracts/interfaces/v1/IMinterV1.sol";
 import {IVoterV1} from "contracts/interfaces/v1/IVoterV1.sol";
 import {IVotingEscrowV1} from "contracts/interfaces/v1/IVotingEscrowV1.sol";
+import {IRewardsDistributorV1} from "contracts/interfaces/v1/IRewardsDistributorV1.sol";
 import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -55,11 +57,11 @@ abstract contract Base is Script, Test {
 
     /// @dev Core v2 Deployment
     Forwarder public forwarder;
-    Pair public implementation;
+    Pool public implementation;
     Router public router;
     VotingEscrow public escrow;
     VeArtProxy public artProxy;
-    PairFactory public factory;
+    PoolFactory public factory;
     FactoryRegistry public factoryRegistry;
     GaugeFactory public gaugeFactory;
     VotingRewardsFactory public votingRewardsFactory;
@@ -75,11 +77,11 @@ abstract contract Base is Script, Test {
     Velo public vVELO;
     IVotingEscrowV1 public vEscrow;
     IVoterV1 public vVoter;
-    PairFactory public vFactory;
+    PoolFactory public vFactory;
     Router public vRouter;
     VeloGovernor public vGov;
-    RewardsDistributor public vDistributor;
-    Minter public vMinter;
+    IRewardsDistributorV1 public vDistributor;
+    IMinterV1 public vMinter;
 
     /// @dev additional contracts required by v2
     address public facilitatorImplementation;
@@ -153,16 +155,16 @@ abstract contract Base is Script, Test {
         vVELO = Velo(abi.decode(vm.parseJson(json, ".v1.VELO"), (address)));
         vEscrow = IVotingEscrowV1(abi.decode(vm.parseJson(json, ".v1.VotingEscrow"), (address)));
         vVoter = IVoterV1(abi.decode(vm.parseJson(json, ".v1.Voter"), (address)));
-        vFactory = PairFactory(abi.decode(vm.parseJson(json, ".v1.Factory"), (address)));
+        vFactory = PoolFactory(abi.decode(vm.parseJson(json, ".v1.Factory"), (address)));
         vRouter = Router(payable(abi.decode(vm.parseJson(json, ".v1.Router"), (address))));
         vGov = VeloGovernor(payable(abi.decode(vm.parseJson(json, ".v1.Gov"), (address))));
-        vDistributor = RewardsDistributor(abi.decode(vm.parseJson(json, ".v1.Distributor"), (address)));
-        vMinter = Minter(abi.decode(vm.parseJson(json, ".v1.Minter"), (address)));
+        vDistributor = IRewardsDistributorV1(abi.decode(vm.parseJson(json, ".v1.Distributor"), (address)));
+        vMinter = IMinterV1(abi.decode(vm.parseJson(json, ".v1.Minter"), (address)));
     }
 
     function deployFactories() public {
-        implementation = new Pair();
-        factory = new PairFactory(address(implementation));
+        implementation = new Pool();
+        factory = new PoolFactory(address(implementation));
         // TODO: set correct fees
         factory.setFee(true, 1); // set fee back to 0.01% for old tests
         factory.setFee(false, 1);
@@ -176,7 +178,7 @@ abstract contract Base is Script, Test {
             address(gaugeFactory),
             address(managedRewardsFactory)
         );
-        // approve factory registry path to create gauges from v1 pairs
+        // approve factory registry path to create gauges from v1 pools
         if (address(vFactory) != address(0)) {
             factoryRegistry.approve(address(vFactory), address(votingRewardsFactory), address(gaugeFactory));
         }

@@ -26,24 +26,24 @@ contract OracleTest is BaseTest {
         escrow.setArtProxy(address(artProxy));
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
         router = new Router(address(forwarder), address(factory), address(voter), address(WETH));
-        deployPairWithOwner(address(owner));
+        deployPoolWithOwner(address(owner));
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));
-        assertEq((pair.token0()), token0);
-        assertEq((pair.token1()), token1);
+        assertEq((pool.token0()), token0);
+        assertEq((pool.token1()), token1);
     }
 
-    function mintAndBurnTokensForPairFraxUsdc() public {
+    function mintAndBurnTokensForPoolFraxUsdc() public {
         confirmTokensForFraxUsdc();
 
-        USDC.transfer(address(pair), USDC_1);
-        FRAX.transfer(address(pair), TOKEN_1);
-        pair.mint(address(owner));
-        assertEq(pair.getAmountOut(USDC_1, address(USDC)), 945128557522723966);
+        USDC.transfer(address(pool), USDC_1);
+        FRAX.transfer(address(pool), TOKEN_1);
+        pool.mint(address(owner));
+        assertEq(pool.getAmountOut(USDC_1, address(USDC)), 945128557522723966);
     }
 
     function routerAddLiquidity() public {
-        mintAndBurnTokensForPairFraxUsdc();
+        mintAndBurnTokensForPoolFraxUsdc();
 
         USDC.approve(address(router), USDC_100K);
         FRAX.approve(address(router), TOKEN_100K);
@@ -86,13 +86,13 @@ contract OracleTest is BaseTest {
         );
     }
 
-    function routerPair1GetAmountsOutAndSwapExactTokensForTokens() public {
+    function routerPool1GetAmountsOutAndSwapExactTokensForTokens() public {
         routerAddLiquidity();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(USDC), address(FRAX), true, address(0));
 
-        assertEq(router.getAmountsOut(USDC_1, routes)[1], pair.getAmountOut(USDC_1, address(USDC)));
+        assertEq(router.getAmountsOut(USDC_1, routes)[1], pool.getAmountOut(USDC_1, address(USDC)));
 
         uint256[] memory asserted_output = router.getAmountsOut(USDC_1, routes);
         USDC.approve(address(router), USDC_1);
@@ -109,17 +109,17 @@ contract OracleTest is BaseTest {
         vm.roll(block.number + 1);
         USDC.approve(address(router), USDC_1);
         router.swapExactTokensForTokens(USDC_1, 0, routes, address(owner), block.timestamp);
-        address pairFees = pair.pairFees();
-        assertEq(USDC.balanceOf(pairFees), 400);
+        address poolFees = pool.poolFees();
+        assertEq(USDC.balanceOf(poolFees), 400);
         uint256 b = USDC.balanceOf(address(owner));
-        pair.claimFees();
+        pool.claimFees();
         assertGt(USDC.balanceOf(address(owner)), b);
     }
 
     function testOracle() public {
-        routerPair1GetAmountsOutAndSwapExactTokensForTokens();
+        routerPool1GetAmountsOutAndSwapExactTokensForTokens();
 
-        assertEq(pair.quote(address(USDC), 1e9, 1), 999999494004424240546);
-        assertEq(pair.quote(address(FRAX), 1e21, 1), 999999506);
+        assertEq(pool.quote(address(USDC), 1e9, 1), 999999494004424240546);
+        assertEq(pool.quote(address(FRAX), 1e21, 1), 999999506);
     }
 }

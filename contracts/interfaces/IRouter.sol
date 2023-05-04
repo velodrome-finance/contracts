@@ -25,7 +25,7 @@ interface IRouter {
     error InvalidRouteA();
     error InvalidRouteB();
     error OnlyWETH();
-    error PairDoesNotExist();
+    error PoolDoesNotExist();
 
     /// @dev Struct containing information necessary to zap in and out of pools
     /// @param tokenA .
@@ -47,12 +47,26 @@ interface IRouter {
         uint256 amountBMin;
     }
 
+    /// @notice Calculate the address of a pool
+    /// @dev Returns a randomly generated address for a nonexistent pool
+    /// @param tokenA Address of token to query
+    /// @param tokenB Address of token to query
+    /// @param stable Boolean to indicate if the pool is stable or volatile
+    /// @param factory Address of factory which created the pool
+    function poolFor(
+        address tokenA,
+        address tokenB,
+        bool stable,
+        address factory
+    ) external view returns (address pool);
+
+    /// @notice Wraps around poolFor(tokenA,tokenB,stable,factory) for backwards compatibility to Velodrome v1
     function pairFor(
         address tokenA,
         address tokenB,
         bool stable,
         address factory
-    ) external view returns (address pair);
+    ) external view returns (address pool);
 
     function getReserves(
         address tokenA,
@@ -221,7 +235,7 @@ interface IRouter {
     /// @param tokenIn Token you are zapping in from (i.e. input token).
     /// @param amountInA Amount of input token you wish to send down routesA
     /// @param amountInB Amount of input token you wish to send down routesB
-    /// @param zapInPair Contains zap struct information. See Zap struct.
+    /// @param zapInPool Contains zap struct information. See Zap struct.
     /// @param routesA Route used to convert input token to tokenA
     /// @param routesB Route used to convert input token to tokenB
     /// @param to Address you wish to mint liquidity to.
@@ -231,7 +245,7 @@ interface IRouter {
         address tokenIn,
         uint256 amountInA,
         uint256 amountInB,
-        Zap calldata zapInPair,
+        Zap calldata zapInPool,
         Route[] calldata routesA,
         Route[] calldata routesB,
         address to,
@@ -245,13 +259,13 @@ interface IRouter {
     ///         price of the token may have changed.
     /// @param tokenOut Token you are zapping out to (i.e. output token).
     /// @param liquidity Amount of liquidity you wish to remove.
-    /// @param zapOutPair Contains zap struct information. See Zap struct.
+    /// @param zapOutPool Contains zap struct information. See Zap struct.
     /// @param routesA Route used to convert tokenA into output token.
     /// @param routesB Route used to convert tokenB into output token.
     function zapOut(
         address tokenOut,
         uint256 liquidity,
-        Zap calldata zapOutPair,
+        Zap calldata zapOutPool,
         Route[] calldata routesA,
         Route[] calldata routesB
     ) external;
@@ -324,13 +338,13 @@ interface IRouter {
             uint256 amountBMin
         );
 
-    /// @notice Used by zapper to determine appropriate ratio of A to B to deposit liquidity. Assumes stable pair.
+    /// @notice Used by zapper to determine appropriate ratio of A to B to deposit liquidity. Assumes stable pool.
     /// @dev Returns stable liquidity ratio of B to (A + B).
     ///      E.g. if ratio is 0.4, it means there is more of A than there is of B.
     ///      Therefore you should deposit more of token A than B.
-    /// @param tokenA tokenA of stable pair you are zapping into.
-    /// @param tokenB tokenB of stable pair you are zapping into.
-    /// @param factory Factory that created stable pair.
+    /// @param tokenA tokenA of stable pool you are zapping into.
+    /// @param tokenB tokenB of stable pool you are zapping into.
+    /// @param factory Factory that created stable pool.
     /// @return ratio Ratio of token0 to token1 required to deposit into zap.
     function quoteStableLiquidityRatio(
         address tokenA,

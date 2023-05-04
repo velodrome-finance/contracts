@@ -27,7 +27,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
     function testMultiEpochBribeVotingRewardFlow() public {
         // set up votes and rewards
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 10000;
         address[] memory rewards = new address[](2);
@@ -123,7 +123,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         /// epoch three
         skipToNextEpoch(1);
 
-        // test multiple reward tokens for pair2
+        // test multiple reward tokens for pool2
         currentBribe = TOKEN_1 * 4;
         usdcBribe = USDC_1 * 4;
         _createBribeWithAmount(bribeVotingReward2, address(LR), currentBribe);
@@ -141,8 +141,8 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         assertEq(earned, deferredUsdcBribe / 2);
         skip(1 hours);
 
-        // vote for pair2 instead with owner3
-        pools[0] = address(pair2);
+        // vote for pool2 instead with owner3
+        pools[0] = address(pool2);
         voter.vote(1, pools, weights);
         vm.prank(address(owner3));
         voter.vote(3, pools, weights);
@@ -199,7 +199,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         // owner re-locks to max time, is currently 4 weeks ahead
         escrow.increaseUnlockTime(1, MAX_TIME);
 
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights); // balance: 978082175809808010
         skip(1 days);
@@ -275,10 +275,10 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         voter.reset(2);
 
         // test multiple pools. only bribe pool1 with LR, pool2 with USDC
-        // create normal bribes for pair
+        // create normal bribes for pool
         currentBribe = TOKEN_1 * 7;
         _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        // create usdc bribe for pair2
+        // create usdc bribe for pool2
         usdcBribe = USDC_1 * 7;
         _createBribeWithAmount(bribeVotingReward2, address(USDC), usdcBribe);
         skip(1);
@@ -289,20 +289,20 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         escrow.increaseUnlockTime(3, MAX_TIME);
         skip(1 hours);
 
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         weights[0] = 2000;
         weights[1] = 8000;
 
-        voter.vote(1, pools, weights); // 1 votes 20% pair 80 pair2
+        voter.vote(1, pools, weights); // 1 votes 20% pool 80 pool2
         weights[0] = 8000;
         weights[1] = 2000;
         vm.prank(address(owner3));
-        voter.vote(3, pools, weights); // 3 votes 80% pair 20%% pair2
+        voter.vote(3, pools, weights); // 3 votes 80% pool 20%% pool2
 
         skipToNextEpoch(1);
 
-        // owner should receive 1/5, owner3 should receive 4/5 of pair bribes
+        // owner should receive 1/5, owner3 should receive 4/5 of pool bribes
         pre = LR.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward.getReward(1, rewards);
@@ -315,7 +315,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         post = LR.balanceOf(address(owner3));
         assertEq(post - pre, (currentBribe * 4) / 5);
 
-        // owner should receive 4/5, owner3 should receive 1/5 of pair2 bribes
+        // owner should receive 4/5, owner3 should receive 1/5 of pool2 bribes
         rewards[0] = address(USDC);
         delete rewards[1];
         usdcPre = USDC.balanceOf(address(owner));
@@ -339,7 +339,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
         skip(1 hours);
 
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         rewards[0] = address(LR);
         rewards[1] = address(USDC);
         delete pools[1];
@@ -426,7 +426,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
     function testCanClaimRewardAfterTransferWhileVoted() public {
         // set up votes and rewards
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 10000;
         address[] memory rewards = new address[](2);

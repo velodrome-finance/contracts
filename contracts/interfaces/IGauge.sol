@@ -25,9 +25,10 @@ interface IGauge {
 
     function left() external view returns (uint256 _left);
 
-    function isForPair() external view returns (bool _isPair);
+    /// @notice Returns if gauge is linked to a legitimate Velodrome pool
+    function isPool() external view returns (bool _isPool);
 
-    function stakingToken() external view returns (address _pair);
+    function stakingToken() external view returns (address _pool);
 
     /// @notice Retrieve rewards for an address.
     /// @dev Throws if not called by same address or voter.

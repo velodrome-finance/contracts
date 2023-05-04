@@ -235,16 +235,16 @@ contract SinkManagerTest is BaseTest {
         assertEq(veloV2BalanceOwner + amount, VELO.balanceOf(address(owner)));
     }
 
-    function testPairConverter() external {
+    function testPoolConverter() external {
         // Ensure the factory recognized the sinkConverter
-        assertTrue(factory.isPair(address(sinkConverter)));
+        assertTrue(factory.isPool(address(sinkConverter)));
 
-        // Ensure the router shows the correct pair for the sinkConverter
-        address routerPair = router.pairFor(address(vVELO), address(VELO), false, address(0));
-        assertGt(uint256(uint160(routerPair)), 0);
-        assertEq(routerPair, address(sinkConverter));
+        // Ensure the router shows the correct pool for the sinkConverter
+        address routerPool = router.poolFor(address(vVELO), address(VELO), false, address(0));
+        assertGt(uint256(uint160(routerPool)), 0);
+        assertEq(routerPool, address(sinkConverter));
 
-        // Create route and assert the amount out returned between the router and pair is the same
+        // Create route and assert the amount out returned between the router and pool is the same
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(vVELO), address(VELO), false, address(0));
         uint256 expectedAmountOut = sinkConverter.getAmountOut(TOKEN_1, address(vVELO));
@@ -350,14 +350,14 @@ contract SinkManagerTest is BaseTest {
     }
 
     function testConvertVeSuccessfullyIncreasesVoteToGauge() external {
-        uint256 votesToPairBefore = vVoter.votes(ownedTokenId, address(sinkDrain));
+        uint256 votesToPoolBefore = vVoter.votes(ownedTokenId, address(sinkDrain));
 
         vm.startPrank(address(owner3));
         vEscrow.approve(address(sinkManager), tokenId3);
         sinkManager.convertVe(tokenId3);
 
-        uint256 votesToPairAfter = vVoter.votes(ownedTokenId, address(sinkDrain));
-        assertGt(votesToPairAfter, votesToPairBefore);
+        uint256 votesToPoolAfter = vVoter.votes(ownedTokenId, address(sinkDrain));
+        assertGt(votesToPoolAfter, votesToPoolBefore);
     }
 
     // --------------------------------------------------------------------

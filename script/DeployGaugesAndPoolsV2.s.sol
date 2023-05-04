@@ -4,8 +4,8 @@ pragma solidity 0.8.19;
 import "forge-std/StdJson.sol";
 import "../test/Base.sol";
 
-/// @notice Deploy script to deploy new pairs and gauges for v2
-contract DeployGaugesAndPairsV2 is Script {
+/// @notice Deploy script to deploy new pools and gauges for v2
+contract DeployGaugesAndPoolsV2 is Script {
     using stdJson for string;
 
     uint256 deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
@@ -14,16 +14,16 @@ contract DeployGaugesAndPairsV2 is Script {
     string jsonConstants;
     string jsonOutput;
 
-    PairFactory public factory;
+    PoolFactory public factory;
     Voter public voter;
 
-    struct PairV2 {
+    struct PoolV2 {
         bool stable;
         address tokenA;
         address tokenB;
     }
 
-    address[] pairsV2;
+    address[] poolsV2;
     address[] gauges;
 
     constructor() {}
@@ -35,32 +35,32 @@ contract DeployGaugesAndPairsV2 is Script {
 
         // load in vars
         jsonConstants = vm.readFile(path);
-        PairV2[] memory pairs = abi.decode(jsonConstants.parseRaw(".pairsV2"), (PairV2[]));
+        PoolV2[] memory pools = abi.decode(jsonConstants.parseRaw(".poolsV2"), (PoolV2[]));
 
         path = string.concat(basePath, "output/DeployVelodromeV2-");
         path = string.concat(path, outputFilename);
         jsonOutput = vm.readFile(path);
-        factory = PairFactory(abi.decode(jsonOutput.parseRaw(".PairFactory"), (address)));
+        factory = PoolFactory(abi.decode(jsonOutput.parseRaw(".PoolFactory"), (address)));
         voter = Voter(abi.decode(jsonOutput.parseRaw(".Voter"), (address)));
         address votingRewardsFactory = abi.decode(jsonOutput.parseRaw(".VotingRewardsFactory"), (address));
         address gaugeFactory = abi.decode(jsonOutput.parseRaw(".GaugeFactory"), (address));
 
         vm.startBroadcast(deployPrivateKey);
 
-        for (uint256 i = 0; i < pairs.length; i++) {
-            address newPair = factory.createPair(pairs[i].tokenA, pairs[i].tokenB, pairs[i].stable);
-            address newGauge = voter.createGauge(address(factory), votingRewardsFactory, gaugeFactory, newPair);
+        for (uint256 i = 0; i < pools.length; i++) {
+            address newPool = factory.createPool(pools[i].tokenA, pools[i].tokenB, pools[i].stable);
+            address newGauge = voter.createGauge(address(factory), votingRewardsFactory, gaugeFactory, newPool);
 
-            pairsV2.push(newPair);
+            poolsV2.push(newPool);
             gauges.push(newGauge);
         }
 
         vm.stopBroadcast();
 
         // Write to file
-        path = string.concat(basePath, "output/DeployGaugesAndPairsV2-");
+        path = string.concat(basePath, "output/DeployGaugesAndPoolsV2-");
         path = string.concat(path, outputFilename);
-        vm.writeJson(vm.serializeAddress("v2", "gaugesPairsV2", gauges), path);
-        vm.writeJson(vm.serializeAddress("v2", "pairsV2", pairsV2), path);
+        vm.writeJson(vm.serializeAddress("v2", "gaugesPoolsV2", gauges), path);
+        vm.writeJson(vm.serializeAddress("v2", "poolsV2", poolsV2), path);
     }
 }

@@ -108,7 +108,7 @@ contract DeployVelodromeV2 is Base {
         vm.writeJson(vm.serializeAddress("v2", "Voter", address(voter)), path);
         vm.writeJson(vm.serializeAddress("v2", "Router", address(router)), path);
         vm.writeJson(vm.serializeAddress("v2", "Minter", address(minter)), path);
-        vm.writeJson(vm.serializeAddress("v2", "PairFactory", address(factory)), path);
+        vm.writeJson(vm.serializeAddress("v2", "PoolFactory", address(factory)), path);
         vm.writeJson(vm.serializeAddress("v2", "VotingRewardsFactory", address(votingRewardsFactory)), path);
         vm.writeJson(vm.serializeAddress("v2", "GaugeFactory", address(gaugeFactory)), path);
         vm.writeJson(vm.serializeAddress("v2", "ManagedRewardsFactory", address(managedRewardsFactory)), path);

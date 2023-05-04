@@ -28,8 +28,8 @@ contract PokeVoteFlow is ExtendedBaseTest {
 
         // set up votes and rewards
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 5000;
         weights[1] = 5000;
@@ -87,7 +87,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
 
         skipToNextEpoch(1);
 
-        // check pair bribe (LR) is correct
+        // check pool bribe (LR) is correct
         uint256 pre = LR.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward.getReward(1, rewards);
@@ -100,7 +100,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
         post = LR.balanceOf(address(owner2));
         assertEq(post - pre, (TOKEN_1 * 3) / 2);
 
-        // check pair2 bribe (usdc) is correct
+        // check pool2 bribe (usdc) is correct
         uint256 usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward2.getReward(1, usdcRewards);
@@ -162,20 +162,20 @@ contract PokeVoteFlow is ExtendedBaseTest {
         // switch to voting for pools 2 and 3
         currentBribe = TOKEN_1 * 4;
         usdcBribe = USDC_1 * 4;
-        pools[0] = address(pair2);
-        pools[1] = address(pair3);
+        pools[0] = address(pool2);
+        pools[1] = address(pool3);
         _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
         _createBribeWithAmount(bribeVotingReward2, address(LR), currentBribe);
         _createBribeWithAmount(bribeVotingReward3, address(USDC), usdcBribe);
         skip(1);
 
         address[] memory singlePool = new address[](2);
-        singlePool[0] = address(pair);
+        singlePool[0] = address(pool);
         uint256[] memory singleWeight = new uint256[](2);
         singleWeight[0] = 1;
 
         skip(1 hours);
-        // deposit into pair to provide supply
+        // deposit into pool to provide supply
         vm.prank(address(owner3));
         voter.vote(3, singlePool, singleWeight);
         voter.vote(1, pools, weights);
@@ -188,7 +188,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
 
         skipToNextEpoch(1);
 
-        // check no bribes from pair
+        // check no bribes from pool
         earned = bribeVotingReward.earned(address(LR), 1);
         assertEq(earned, 0);
         earned = bribeVotingReward.earned(address(LR), 2);
@@ -222,29 +222,29 @@ contract PokeVoteFlow is ExtendedBaseTest {
         // switch back to voting for pool 1 and 2
         currentBribe = TOKEN_1 * 5;
         usdcBribe = USDC_1 * 5;
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
         _createBribeWithAmount(bribeVotingReward2, address(USDC), usdcBribe);
         _createBribeWithAmount(bribeVotingReward3, address(LR), currentBribe);
         skip(1 hours);
 
-        // deposit into pair3 to provide supply
-        singlePool[0] = address(pair3);
+        // deposit into pool3 to provide supply
+        singlePool[0] = address(pool3);
         vm.prank(address(owner3));
         voter.vote(3, singlePool, singleWeight);
 
-        // get poked prior to vote (will 'vote' for pair2, pair3)
+        // get poked prior to vote (will 'vote' for pool2, pool3)
         for (uint256 i = 0; i < 5; i++) {
             skip(1 hours);
             voter.poke(1);
         }
         skip(1 hours);
 
-        // vote for pair, pair2
+        // vote for pool, pool2
         voter.vote(1, pools, weights);
 
-        // get poked after vote (will 'vote' for pair, pair2)
+        // get poked after vote (will 'vote' for pool, pool2)
         for (uint256 i = 0; i < 5; i++) {
             skip(1 hours);
             voter.poke(1);
@@ -255,7 +255,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
 
         skipToNextEpoch(1);
 
-        // check no bribes from pair
+        // check no bribes from pool
         earned = bribeVotingReward3.earned(address(LR), 1);
         assertEq(earned, 0);
         earned = bribeVotingReward3.earned(address(LR), 2);

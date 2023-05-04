@@ -50,24 +50,24 @@ contract WashTradeTest is BaseTest {
         deployFactories();
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
         router = new Router(address(forwarder), address(factory), address(voter), address(WETH));
-        deployPairWithOwner(address(owner));
+        deployPoolWithOwner(address(owner));
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));
-        assertEq(pair.token0(), token0);
-        assertEq(pair.token1(), token1);
+        assertEq(pool.token0(), token0);
+        assertEq(pool.token1(), token1);
     }
 
-    function mintAndBurnTokensForPairFraxUsdc() public {
+    function mintAndBurnTokensForPoolFraxUsdc() public {
         confirmTokensForFraxUsdc();
 
-        USDC.transfer(address(pair), USDC_1);
-        FRAX.transfer(address(pair), TOKEN_1);
-        pair.mint(address(owner));
-        assertEq(pair.getAmountOut(USDC_1, address(USDC)), 945128557522723966);
+        USDC.transfer(address(pool), USDC_1);
+        FRAX.transfer(address(pool), TOKEN_1);
+        pool.mint(address(owner));
+        assertEq(pool.getAmountOut(USDC_1, address(USDC)), 945128557522723966);
     }
 
     function routerAddLiquidity() public {
-        mintAndBurnTokensForPairFraxUsdc();
+        mintAndBurnTokensForPoolFraxUsdc();
 
         USDC.approve(address(router), USDC_100K);
         FRAX.approve(address(router), TOKEN_100K);
@@ -124,28 +124,28 @@ contract WashTradeTest is BaseTest {
         assertEq(voter.length(), 0);
     }
 
-    function deployPairFactoryGauge() public {
+    function deployPoolFactoryGauge() public {
         deployVoter();
 
         VELO.approve(address(gaugeFactory), 5 * TOKEN_100K);
-        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pair3));
-        assertFalse(voter.gauges(address(pair3)) == address(0));
+        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool3));
+        assertFalse(voter.gauges(address(pool3)) == address(0));
 
-        address gaugeAddr3 = voter.gauges(address(pair3));
+        address gaugeAddr3 = voter.gauges(address(pool3));
         address feesVotingRewardAddr3 = voter.gaugeToFees(gaugeAddr3);
 
         gauge3 = Gauge(gaugeAddr3);
 
         feesVotingReward3 = FeesVotingReward(feesVotingRewardAddr3);
-        uint256 total = pair3.balanceOf(address(owner));
-        pair3.approve(address(gauge3), total);
+        uint256 total = pool3.balanceOf(address(owner));
+        pool3.approve(address(gauge3), total);
         gauge3.deposit(total);
         assertEq(gauge3.totalSupply(), total);
         assertEq(gauge3.earned(address(owner)), 0);
     }
 
-    function routerPair3GetAmountsOutAndSwapExactTokensForTokens() public {
-        deployPairFactoryGauge();
+    function routerPool3GetAmountsOutAndSwapExactTokensForTokens() public {
+        deployPoolFactoryGauge();
 
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(FRAX), address(DAI), true, address(0));
@@ -154,13 +154,13 @@ contract WashTradeTest is BaseTest {
 
         uint256 i;
         for (i = 0; i < 10; i++) {
-            assertEq(router.getAmountsOut(TOKEN_1M, routes)[1], pair3.getAmountOut(TOKEN_1M, address(FRAX)));
+            assertEq(router.getAmountsOut(TOKEN_1M, routes)[1], pool3.getAmountOut(TOKEN_1M, address(FRAX)));
 
             uint256[] memory expectedOutput = router.getAmountsOut(TOKEN_1M, routes);
             FRAX.approve(address(router), TOKEN_1M);
             router.swapExactTokensForTokens(TOKEN_1M, expectedOutput[1], routes, address(owner), block.timestamp);
 
-            assertEq(router.getAmountsOut(TOKEN_1M, routes2)[1], pair3.getAmountOut(TOKEN_1M, address(DAI)));
+            assertEq(router.getAmountsOut(TOKEN_1M, routes2)[1], pool3.getAmountOut(TOKEN_1M, address(DAI)));
 
             uint256[] memory expectedOutput2 = router.getAmountsOut(TOKEN_1M, routes2);
             DAI.approve(address(router), TOKEN_1M);
@@ -169,7 +169,7 @@ contract WashTradeTest is BaseTest {
     }
 
     function voterReset() public {
-        routerPair3GetAmountsOutAndSwapExactTokensForTokens();
+        routerPool3GetAmountsOutAndSwapExactTokensForTokens();
 
         distributor = new RewardsDistributor(address(escrow));
         escrow.setVoterAndDistributor(address(voter), address(distributor));
@@ -188,13 +188,13 @@ contract WashTradeTest is BaseTest {
 
         skipToNextEpoch(1 hours + 1);
 
-        address[] memory pairs = new address[](2);
-        pairs[0] = address(pair3);
-        pairs[1] = address(pair2);
+        address[] memory pools = new address[](2);
+        pools[0] = address(pool3);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 5000;
         weights[1] = 5000;
-        voter.vote(1, pairs, weights);
+        voter.vote(1, pools, weights);
         assertFalse(voter.totalWeight() == 0);
         assertFalse(feesVotingReward3.balanceOf(1) == 0);
     }

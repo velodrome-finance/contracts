@@ -14,8 +14,8 @@ contract MinterTest is BaseTest {
         skip(1);
 
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 1;
         weights[1] = 1;
@@ -31,7 +31,7 @@ contract MinterTest is BaseTest {
         assertEq(minter.TAIL_START(), 6_000_000 * 1e18);
         assertEq(minter.weekly(), 15_000_000 * 1e18);
         assertEq(minter.tailEmissionRate(), 30); // .3%
-        assertEq(minter.active_period(), 604800);
+        assertEq(minter.activePeriod(), 604800);
     }
 
     function testTailEmissionFlipsWhenWeeklyEmissionDecaysBelowTailStart() public {
@@ -44,14 +44,14 @@ contract MinterTest is BaseTest {
         stdstore.target(address(minter)).sig("weekly()").checked_write(6_010_270 * 1e18);
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
         assertApproxEqRel(VELO.balanceOf(address(voter)), 6_010_270 * 1e18, 1e12);
         voter.distribute(0, voter.length());
 
         skipToNextEpoch(1);
         // totalSupply ~= 56_010_270 * 1e18
         // expected mint = totalSupply * .3% ~= 168_030
-        minter.update_period();
+        minter.updatePeriod();
         assertApproxEqAbs(VELO.balanceOf(address(voter)), 168_030 * 1e18, TOKEN_1);
         assertLt(minter.weekly(), 6_000_000 * 1e18);
     }
@@ -99,7 +99,7 @@ contract MinterTest is BaseTest {
         assertEq(minter.tailEmissionRate(), 100); // nudge above at maximum does nothing
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(3); // nudge down
 
@@ -112,7 +112,7 @@ contract MinterTest is BaseTest {
         assertTrue(minter.proposals(1209600));
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(6); // no nudge
 
@@ -138,7 +138,7 @@ contract MinterTest is BaseTest {
         assertEq(minter.tailEmissionRate(), 1); // nudge below at minimum does nothing
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(4); // nudge up
 
@@ -151,7 +151,7 @@ contract MinterTest is BaseTest {
         assertTrue(minter.proposals(1209600));
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(6); // no nudge
 
@@ -179,7 +179,7 @@ contract MinterTest is BaseTest {
         assertTrue(minter.proposals(604800));
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(3); // nudge down
 
@@ -192,7 +192,7 @@ contract MinterTest is BaseTest {
         assertTrue(minter.proposals(1209600));
 
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
 
         stdstore.target(address(epochGovernor)).sig("result()").checked_write(6); // no nudge
 
@@ -206,12 +206,12 @@ contract MinterTest is BaseTest {
     }
 
     function testMinterWeeklyDistribute() public {
-        minter.update_period();
+        minter.updatePeriod();
         assertEq(minter.weekly(), 15 * TOKEN_1M); // 15M
 
         uint256 pre = VELO.balanceOf(address(voter));
         skipToNextEpoch(1);
-        minter.update_period();
+        minter.updatePeriod();
         assertEq(distributor.claimable(tokenId), 0);
         // emissions decay by 1% after one epoch
         uint256 post = VELO.balanceOf(address(voter));
@@ -221,7 +221,7 @@ contract MinterTest is BaseTest {
         pre = post;
         skipToNextEpoch(1);
         vm.roll(block.number + 1);
-        minter.update_period();
+        minter.updatePeriod();
         post = VELO.balanceOf(address(voter));
 
         // check rebase accumulated
@@ -234,13 +234,13 @@ contract MinterTest is BaseTest {
 
         skip(1 weeks);
         vm.roll(block.number + 1);
-        minter.update_period();
+        minter.updatePeriod();
 
         distributor.claim(1);
 
         skip(1 weeks);
         vm.roll(block.number + 1);
-        minter.update_period();
+        minter.updatePeriod();
 
         uint256[] memory tokenIds = new uint256[](1);
         tokenIds[0] = 1;
@@ -248,17 +248,17 @@ contract MinterTest is BaseTest {
 
         skip(1 weeks);
         vm.roll(block.number + 1);
-        minter.update_period();
+        minter.updatePeriod();
         distributor.claim(1);
 
         skip(1 weeks);
         vm.roll(block.number + 1);
-        minter.update_period();
+        minter.updatePeriod();
         distributor.claimMany(tokenIds);
 
         skip(1 weeks);
         vm.roll(block.number + 1);
-        minter.update_period();
+        minter.updatePeriod();
         distributor.claim(1);
     }
 }

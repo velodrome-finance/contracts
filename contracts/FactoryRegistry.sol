@@ -6,24 +6,24 @@ import {IFactoryRegistry} from "./interfaces/IFactoryRegistry.sol";
 
 /// @author Carter Carlson (@pegahcarter)
 contract FactoryRegistry is IFactoryRegistry, Ownable {
-    /// @dev pairFactory => votingRewardsFactory => gaugeFactory => true if path exists, else false
+    /// @dev poolFactory => votingRewardsFactory => gaugeFactory => true if path exists, else false
     mapping(address => mapping(address => mapping(address => bool))) private _approved;
 
     /// @dev factory to create free and locked rewards for a managed veNFT
     address private _managedRewardsFactory;
 
-    // Velodrome protocol will always have a usable pairFactory, votingRewardsFactory, and gaugeFactory
-    address public immutable fallbackPairFactory;
+    // Velodrome protocol will always have a usable poolFactory, votingRewardsFactory, and gaugeFactory
+    address public immutable fallbackPoolFactory;
     address public immutable fallbackVotingRewardsFactory;
     address public immutable fallbackGaugeFactory;
 
     constructor(
-        address _fallbackPairFactory,
+        address _fallbackPoolFactory,
         address _fallbackVotingRewardsFactory,
         address _fallbackGaugeFactory,
         address _newManagedRewardsFactory
     ) {
-        fallbackPairFactory = _fallbackPairFactory;
+        fallbackPoolFactory = _fallbackPoolFactory;
         fallbackVotingRewardsFactory = _fallbackVotingRewardsFactory;
         fallbackGaugeFactory = _fallbackGaugeFactory;
 
@@ -32,38 +32,38 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
 
     /// @inheritdoc IFactoryRegistry
     function approve(
-        address pairFactory,
+        address poolFactory,
         address votingRewardsFactory,
         address gaugeFactory
     ) public onlyOwner {
-        if (_approved[pairFactory][votingRewardsFactory][gaugeFactory]) revert PathAlreadyApproved();
-        _approved[pairFactory][votingRewardsFactory][gaugeFactory] = true;
-        emit Approve(pairFactory, votingRewardsFactory, gaugeFactory);
+        if (_approved[poolFactory][votingRewardsFactory][gaugeFactory]) revert PathAlreadyApproved();
+        _approved[poolFactory][votingRewardsFactory][gaugeFactory] = true;
+        emit Approve(poolFactory, votingRewardsFactory, gaugeFactory);
     }
 
     /// @inheritdoc IFactoryRegistry
     function unapprove(
-        address pairFactory,
+        address poolFactory,
         address votingRewardsFactory,
         address gaugeFactory
     ) external onlyOwner {
-        if (!_approved[pairFactory][votingRewardsFactory][gaugeFactory]) revert PathNotApproved();
-        delete _approved[pairFactory][votingRewardsFactory][gaugeFactory];
-        emit Unapprove(pairFactory, votingRewardsFactory, gaugeFactory);
+        if (!_approved[poolFactory][votingRewardsFactory][gaugeFactory]) revert PathNotApproved();
+        delete _approved[poolFactory][votingRewardsFactory][gaugeFactory];
+        emit Unapprove(poolFactory, votingRewardsFactory, gaugeFactory);
     }
 
     /// @inheritdoc IFactoryRegistry
     function isApproved(
-        address pairFactory,
+        address poolFactory,
         address votingRewardsFactory,
         address gaugeFactory
     ) external view returns (bool) {
         if (
-            (pairFactory == fallbackPairFactory) &&
+            (poolFactory == fallbackPoolFactory) &&
             (votingRewardsFactory == fallbackVotingRewardsFactory) &&
             (gaugeFactory == fallbackGaugeFactory)
         ) return true;
-        return _approved[pairFactory][votingRewardsFactory][gaugeFactory];
+        return _approved[poolFactory][votingRewardsFactory][gaugeFactory];
     }
 
     /// @inheritdoc IFactoryRegistry

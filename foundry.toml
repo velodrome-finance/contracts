@@ -6,7 +6,7 @@ gas_reports = [
     "Voter",
     "Gauge",
     "Minter",
-    "Pair",
+    "Pool",
     "RewardsDistributor",
     "Router"
 ]

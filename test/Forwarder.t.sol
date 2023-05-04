@@ -27,7 +27,6 @@ contract ForwarderTest is BaseTest {
 
     function testForwarderCreateLock() public {
         bytes memory payload = abi.encodeWithSelector(escrow.createLock.selector, TOKEN_1, MAXTIME);
-        // TODO: add this to Base.sol once working
         bytes32 requestType = erc2771Helper.registerRequestType(
             forwarder,
             "createLock",
@@ -42,7 +41,7 @@ contract ForwarderTest is BaseTest {
         skip(1 hours + 1);
         escrow.createLockFor(TOKEN_1, MAXTIME, sender);
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 

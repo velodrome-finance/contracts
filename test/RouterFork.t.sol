@@ -4,8 +4,8 @@ import "./BaseTest.sol";
 import {MockERC20WithTransferFee} from "utils/MockERC20WithTransferFee.sol";
 
 contract RouterForkTest is BaseTest {
-    Pair _pair;
-    Pair pairFee;
+    Pool _pool;
+    Pool poolFee;
     MockERC20WithTransferFee erc20Fee;
 
     event Swap(
@@ -72,8 +72,8 @@ contract RouterForkTest is BaseTest {
             block.timestamp
         );
 
-        _pair = Pair(factory.getPair(address(USDC), address(WETH), false));
-        pairFee = Pair(factory.getPair(address(erc20Fee), address(WETH), false));
+        _pool = Pool(factory.getPair(address(USDC), address(WETH), false));
+        poolFee = Pool(factory.getPair(address(erc20Fee), address(WETH), false));
     }
 
     /// @dev ensures routes are using the correct v1 / v2 route
@@ -81,8 +81,8 @@ contract RouterForkTest is BaseTest {
         for (uint256 i = 0; i < routes.length; i++) {
             // get address of factory since default of address(0) signifies v2 factory
             address factory_ = routes[i].factory == address(0) ? address(factory) : routes[i].factory;
-            address expectedPair = router.pairFor(routes[i].from, routes[i].to, routes[i].stable, factory_);
-            assertEq(IPairFactory(factory_).getPair(routes[i].from, routes[i].to, routes[i].stable), expectedPair);
+            address expectedPool = router.poolFor(routes[i].from, routes[i].to, routes[i].stable, factory_);
+            assertEq(IPoolFactory(factory_).getPair(routes[i].from, routes[i].to, routes[i].stable), expectedPool);
         }
     }
 

@@ -32,43 +32,43 @@ contract GaugeTest is BaseTest {
         voter.killGauge(address(gauge));
 
         vm.expectRevert(IGauge.NotAlive.selector);
-        gauge.deposit(PAIR_1, address(owner2));
+        gauge.deposit(POOL_1, address(owner2));
     }
 
     function testDepositWithRecipient() public {
         assertEq(gauge.totalSupply(), 0);
 
         // deposit to owner3 from owner
-        uint256 pre = pair.balanceOf(address(owner));
-        pair.approve(address(gauge), PAIR_1);
+        uint256 pre = pool.balanceOf(address(owner));
+        pool.approve(address(gauge), POOL_1);
         vm.expectEmit(true, false, false, true, address(gauge));
-        emit Deposit(address(owner), address(owner3), PAIR_1);
-        gauge.deposit(PAIR_1, address(owner3));
-        uint256 post = pair.balanceOf(address(owner));
+        emit Deposit(address(owner), address(owner3), POOL_1);
+        gauge.deposit(POOL_1, address(owner3));
+        uint256 post = pool.balanceOf(address(owner));
 
-        assertEq(gauge.totalSupply(), PAIR_1);
+        assertEq(gauge.totalSupply(), POOL_1);
         assertEq(gauge.earned(address(owner3)), 0);
-        assertEq(gauge.balanceOf(address(owner3)), PAIR_1);
-        assertEq(pre - post, PAIR_1);
+        assertEq(gauge.balanceOf(address(owner3)), POOL_1);
+        assertEq(pre - post, POOL_1);
 
         skip(1 hours);
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
 
         skip(1 hours);
         // deposit to owner4 from owner2
-        pre = pair.balanceOf(address(owner2));
+        pre = pool.balanceOf(address(owner2));
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.expectEmit(true, false, false, true, address(gauge));
-        emit Deposit(address(owner2), address(owner4), PAIR_1);
+        emit Deposit(address(owner2), address(owner4), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1, address(owner4));
-        post = pair.balanceOf(address(owner2));
+        gauge.deposit(POOL_1, address(owner4));
+        post = pool.balanceOf(address(owner2));
 
-        assertEq(gauge.totalSupply(), PAIR_1 * 2);
+        assertEq(gauge.totalSupply(), POOL_1 * 2);
         assertEq(gauge.earned(address(owner4)), 0);
-        assertEq(gauge.balanceOf(address(owner4)), PAIR_1);
-        assertEq(pre - post, PAIR_1);
+        assertEq(gauge.balanceOf(address(owner4)), POOL_1);
+        assertEq(pre - post, POOL_1);
     }
 
     function testCannotDepositZeroAmount() public {
@@ -80,135 +80,135 @@ contract GaugeTest is BaseTest {
         voter.killGauge(address(gauge));
 
         vm.expectRevert(IGauge.NotAlive.selector);
-        gauge.deposit(PAIR_1);
+        gauge.deposit(POOL_1);
     }
 
     function testDeposit() public {
         assertEq(gauge.totalSupply(), 0);
 
-        uint256 pre = pair.balanceOf(address(owner));
-        pair.approve(address(gauge), PAIR_1);
+        uint256 pre = pool.balanceOf(address(owner));
+        pool.approve(address(gauge), POOL_1);
         vm.expectEmit(true, false, false, true, address(gauge));
-        emit Deposit(address(owner), address(owner), PAIR_1);
-        gauge.deposit(PAIR_1);
-        uint256 post = pair.balanceOf(address(owner));
+        emit Deposit(address(owner), address(owner), POOL_1);
+        gauge.deposit(POOL_1);
+        uint256 post = pool.balanceOf(address(owner));
 
-        assertEq(gauge.totalSupply(), PAIR_1);
+        assertEq(gauge.totalSupply(), POOL_1);
         assertEq(gauge.earned(address(owner)), 0);
-        assertEq(gauge.balanceOf(address(owner)), PAIR_1);
-        assertEq(pre - post, PAIR_1);
+        assertEq(gauge.balanceOf(address(owner)), POOL_1);
+        assertEq(pre - post, POOL_1);
 
         skip(1 hours);
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
 
         skip(1 hours);
-        pre = pair.balanceOf(address(owner2));
+        pre = pool.balanceOf(address(owner2));
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.expectEmit(true, false, false, true, address(gauge));
-        emit Deposit(address(owner2), address(owner2), PAIR_1);
+        emit Deposit(address(owner2), address(owner2), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1);
-        post = pair.balanceOf(address(owner2));
+        gauge.deposit(POOL_1);
+        post = pool.balanceOf(address(owner2));
 
-        assertEq(gauge.totalSupply(), PAIR_1 * 2);
+        assertEq(gauge.totalSupply(), POOL_1 * 2);
         assertEq(gauge.earned(address(owner2)), 0);
-        assertEq(gauge.balanceOf(address(owner2)), PAIR_1);
-        assertEq(pre - post, PAIR_1);
+        assertEq(gauge.balanceOf(address(owner2)), POOL_1);
+        assertEq(pre - post, POOL_1);
     }
 
     function testWithdrawWithDepositWithNoRecipient() public {
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
 
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1);
-        assertEq(gauge.balanceOf(address(owner2)), PAIR_1);
+        gauge.deposit(POOL_1);
+        assertEq(gauge.balanceOf(address(owner2)), POOL_1);
 
         skip(1 hours);
 
-        uint256 pre = pair.balanceOf(address(owner));
+        uint256 pre = pool.balanceOf(address(owner));
         vm.expectEmit(true, false, false, true, address(gauge));
-        emit Withdraw(address(owner), PAIR_1);
-        gauge.withdraw(PAIR_1);
-        uint256 post = pair.balanceOf(address(owner));
+        emit Withdraw(address(owner), POOL_1);
+        gauge.withdraw(POOL_1);
+        uint256 post = pool.balanceOf(address(owner));
 
-        assertEq(gauge.totalSupply(), PAIR_1);
+        assertEq(gauge.totalSupply(), POOL_1);
         assertEq(gauge.earned(address(owner)), 0);
         assertEq(gauge.balanceOf(address(owner)), 0);
-        assertEq(post - pre, PAIR_1);
+        assertEq(post - pre, POOL_1);
 
         skip(1 hours);
 
-        pre = pair.balanceOf(address(owner2));
+        pre = pool.balanceOf(address(owner2));
         vm.expectEmit(true, false, false, true, address(gauge));
-        emit Withdraw(address(owner2), PAIR_1);
+        emit Withdraw(address(owner2), POOL_1);
         vm.prank(address(owner2));
-        gauge.withdraw(PAIR_1);
-        post = pair.balanceOf(address(owner2));
+        gauge.withdraw(POOL_1);
+        post = pool.balanceOf(address(owner2));
 
         assertEq(gauge.totalSupply(), 0);
         assertEq(gauge.earned(address(owner2)), 0);
         assertEq(gauge.balanceOf(address(owner2)), 0);
-        assertEq(post - pre, PAIR_1);
+        assertEq(post - pre, POOL_1);
     }
 
     function testWithdrawWithDepositWithRecipient() public {
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
 
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1, address(owner3));
+        gauge.deposit(POOL_1, address(owner3));
         assertEq(gauge.balanceOf(address(owner2)), 0);
-        assertEq(gauge.balanceOf(address(owner3)), PAIR_1);
+        assertEq(gauge.balanceOf(address(owner3)), POOL_1);
 
         skip(1 hours);
 
-        uint256 pre = pair.balanceOf(address(owner));
+        uint256 pre = pool.balanceOf(address(owner));
         vm.expectEmit(true, false, false, true, address(gauge));
-        emit Withdraw(address(owner), PAIR_1);
-        gauge.withdraw(PAIR_1);
-        uint256 post = pair.balanceOf(address(owner));
+        emit Withdraw(address(owner), POOL_1);
+        gauge.withdraw(POOL_1);
+        uint256 post = pool.balanceOf(address(owner));
 
-        assertEq(gauge.totalSupply(), PAIR_1);
+        assertEq(gauge.totalSupply(), POOL_1);
         assertEq(gauge.earned(address(owner)), 0);
         assertEq(gauge.balanceOf(address(owner)), 0);
-        assertEq(post - pre, PAIR_1);
+        assertEq(post - pre, POOL_1);
 
         skip(1 hours);
 
-        pre = pair.balanceOf(address(owner3));
+        pre = pool.balanceOf(address(owner3));
         vm.expectEmit(true, false, false, true, address(gauge));
-        emit Withdraw(address(owner3), PAIR_1);
+        emit Withdraw(address(owner3), POOL_1);
         vm.prank(address(owner3));
-        gauge.withdraw(PAIR_1);
-        post = pair.balanceOf(address(owner3));
+        gauge.withdraw(POOL_1);
+        post = pool.balanceOf(address(owner3));
 
         assertEq(gauge.totalSupply(), 0);
         assertEq(gauge.earned(address(owner3)), 0);
         assertEq(gauge.balanceOf(address(owner3)), 0);
-        assertEq(post - pre, PAIR_1);
+        assertEq(post - pre, POOL_1);
     }
 
     function testGetRewardWithMultipleDepositors() public {
         // add deposits
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
 
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1);
+        gauge.deposit(POOL_1);
 
         uint256 reward = TOKEN_1;
         _addRewardToGauge(address(voter), address(gauge), reward);
@@ -245,15 +245,15 @@ contract GaugeTest is BaseTest {
 
     function testGetRewardWithMultipleDepositorsAndEarlyWithdrawal() public {
         // add deposits
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
 
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1);
+        gauge.deposit(POOL_1);
 
         uint256 reward = TOKEN_1;
         _addRewardToGauge(address(voter), address(gauge), reward);
@@ -270,7 +270,7 @@ contract GaugeTest is BaseTest {
         assertApproxEqRel(post - pre, reward / 4, 1e6);
 
         // owner withdraws early after claiming
-        gauge.withdraw(PAIR_1);
+        gauge.withdraw(POOL_1);
 
         skip(1 weeks / 2);
 
@@ -288,8 +288,8 @@ contract GaugeTest is BaseTest {
 
     function testEarnedWithStaggeredDepositsAndWithdrawals() public {
         // add deposits
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         uint256 reward = TOKEN_1;
         _addRewardToGauge(address(voter), address(gauge), reward);
@@ -302,9 +302,9 @@ contract GaugeTest is BaseTest {
 
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1);
+        gauge.deposit(POOL_1);
 
         skip(1 days);
         // two deposits, equal in size, 1/7th of epoch
@@ -315,8 +315,8 @@ contract GaugeTest is BaseTest {
         vm.prank(address(owner2));
         gauge.getReward(address(owner2));
 
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         skip(1 days);
         // two deposits, owner with twice the size of owner2, 1/7th of epoch
@@ -328,7 +328,7 @@ contract GaugeTest is BaseTest {
         gauge.getReward(address(owner2));
 
         vm.prank(address(owner2));
-        gauge.withdraw(PAIR_1 / 2);
+        gauge.withdraw(POOL_1 / 2);
 
         skip(1 days);
         // two deposits, owner with four times the size of owner 2, 1/7th of epoch
@@ -339,8 +339,8 @@ contract GaugeTest is BaseTest {
 
     function testEarnedWithStaggeredDepositsAndWithdrawalsWithoutIntermediateClaims() public {
         // add deposits
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         uint256 reward = TOKEN_1;
         _addRewardToGauge(address(voter), address(gauge), reward);
@@ -353,9 +353,9 @@ contract GaugeTest is BaseTest {
 
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1);
+        gauge.deposit(POOL_1);
 
         skip(1 days);
         // two deposits, equal in size, 1/7th of epoch
@@ -364,8 +364,8 @@ contract GaugeTest is BaseTest {
         assertApproxEqRel(gauge.earned(address(owner)), ownerBal, 1e6);
         assertApproxEqRel(gauge.earned(address(owner2)), owner2Bal, 1e6);
 
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         skip(1 days);
         // two deposits, owner with twice the size of owner2, 1/7th of epoch
@@ -375,7 +375,7 @@ contract GaugeTest is BaseTest {
         assertApproxEqRel(gauge.earned(address(owner2)), owner2Bal, 1e6);
 
         vm.prank(address(owner2));
-        gauge.withdraw(PAIR_1 / 2);
+        gauge.withdraw(POOL_1 / 2);
 
         skip(1 days);
         // two deposits, owner with four times the size of owner 2, 1/7th of epoch
@@ -387,15 +387,15 @@ contract GaugeTest is BaseTest {
 
     function testGetRewardWithLateRewards() public {
         // add deposits
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
 
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1);
+        gauge.deposit(POOL_1);
 
         skip(1 weeks / 2);
 
@@ -443,15 +443,15 @@ contract GaugeTest is BaseTest {
 
     function testGetRewardWithNonOverlappingRewards() public {
         // add deposits
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
 
         vm.prank(address(owner2));
-        pair.approve(address(gauge), PAIR_1);
+        pool.approve(address(gauge), POOL_1);
         vm.prank(address(owner2));
-        gauge.deposit(PAIR_1);
+        gauge.deposit(POOL_1);
 
         uint256 reward = TOKEN_1;
         _addRewardToGauge(address(voter), address(gauge), reward);
@@ -527,8 +527,8 @@ contract GaugeTest is BaseTest {
 
     function testCannotGetRewardIfNotOwnerOrVoter() public {
         // add deposits
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         uint256 reward = TOKEN_1;
         _addRewardToGauge(address(voter), address(gauge), reward);

@@ -29,7 +29,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -45,8 +45,8 @@ contract BribeVotingRewardTest is BaseTest {
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         skip(1 hours);
 
-        // remove supply by voting for other pair
-        pools[0] = address(pair2);
+        // remove supply by voting for other pool
+        pools[0] = address(pool2);
         voter.vote(1, pools, weights);
 
         assertEq(bribeVotingReward.totalSupply(), 0);
@@ -80,7 +80,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -116,7 +116,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -157,7 +157,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -200,7 +200,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -228,7 +228,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -263,13 +263,13 @@ contract BribeVotingRewardTest is BaseTest {
         uint256 reward = TOKEN_1;
         uint256 reward2 = TOKEN_1 * 2;
 
-        // create a bribe for pair in epoch 0
+        // create a bribe for pool in epoch 0
         LR.approve(address(bribeVotingReward), reward);
         bribeVotingReward.notifyRewardAmount((address(LR)), reward);
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -279,10 +279,10 @@ contract BribeVotingRewardTest is BaseTest {
 
         skipToNextEpoch(1 hours + 1);
 
-        // create a bribe for pair2 in epoch 1
+        // create a bribe for pool2 in epoch 1
         LR.approve(address(bribeVotingReward2), reward2);
         bribeVotingReward2.notifyRewardAmount((address(LR)), reward2);
-        pools[0] = address(pair2);
+        pools[0] = address(pool2);
 
         voter.vote(1, pools, weights);
 
@@ -292,7 +292,7 @@ contract BribeVotingRewardTest is BaseTest {
         address[] memory rewards = new address[](1);
         rewards[0] = address(LR);
 
-        // check rewards accrue correctly for pair
+        // check rewards accrue correctly for pool
         uint256 pre = LR.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward.getReward(1, rewards);
@@ -300,7 +300,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         assertEq(post - pre, reward / 2);
 
-        // check rewards accrue correctly for pair2
+        // check rewards accrue correctly for pool2
         pre = LR.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward2.getReward(1, rewards);
@@ -319,7 +319,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -372,7 +372,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote in epoch 0
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -472,7 +472,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote in epoch 0
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -517,7 +517,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -572,7 +572,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -609,7 +609,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -648,7 +648,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -698,7 +698,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote for pool
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -781,15 +781,15 @@ contract BribeVotingRewardTest is BaseTest {
         address[] memory pools = new address[](1);
         address[] memory pools2 = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
-        pools2[0] = address(pair2);
+        pools[0] = address(pool);
+        pools2[0] = address(pool2);
         weights[0] = 10000;
 
         // create a bribe in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -810,33 +810,33 @@ contract BribeVotingRewardTest is BaseTest {
 
         skip(1);
 
-        // create a bribe for pair in epoch 1
+        // create a bribe for pool in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
-        // create a bribe for pair2 in epoch 1
+        // create a bribe for pool2 in epoch 1
         LR.approve(address(bribeVotingReward2), TOKEN_1 * 2);
         bribeVotingReward2.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         skip(1 hours);
 
-        // poke causes id 1 to "vote" for pair
+        // poke causes id 1 to "vote" for pool
         voter.poke(1);
         skip(1 hours);
 
-        // vote for pair2 in epoch 1
+        // vote for pool2 in epoch 1
         voter.vote(1, pools2, weights);
 
         // go to next epoch
         skipToNextEpoch(1);
 
-        // earned for pair should be 0
+        // earned for pool should be 0
         uint256 earned = bribeVotingReward.earned(address(LR), 1);
         assertEq(earned, 0);
 
-        // earned for pair for nft 2 should be full bribe amount
+        // earned for pool for nft 2 should be full bribe amount
         earned = bribeVotingReward.earned(address(LR), 2);
         assertEq(earned, TOKEN_1);
 
-        // earned for pair2 should be TOKEN_1
+        // earned for pool2 should be TOKEN_1
         earned = bribeVotingReward2.earned(address(LR), 1);
         assertEq(earned, TOKEN_1 * 2);
 
@@ -858,15 +858,15 @@ contract BribeVotingRewardTest is BaseTest {
         address[] memory pools = new address[](1);
         address[] memory pools2 = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
-        pools2[0] = address(pair2);
+        pools[0] = address(pool);
+        pools2[0] = address(pool2);
         weights[0] = 10000;
 
         // create a bribe in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -885,10 +885,10 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(earned, 0);
         skip(1);
 
-        // create a bribe for pair in epoch 1
+        // create a bribe for pool in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
-        // create a bribe for pair2 in epoch 1
+        // create a bribe for pool2 in epoch 1
         LR.approve(address(bribeVotingReward2), TOKEN_1 * 2);
         bribeVotingReward2.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         skip(1 hours);
@@ -929,13 +929,13 @@ contract BribeVotingRewardTest is BaseTest {
         address[] memory pools = new address[](1);
         address[] memory pools2 = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
-        pools2[0] = address(pair2);
+        pools[0] = address(pool);
+        pools2[0] = address(pool2);
         weights[0] = 10000;
 
         // add initial checkpoints
         for (uint256 i = 0; i < 5; i++) {
-            // vote for pair in epoch 0
+            // vote for pool in epoch 0
             voter.vote(1, pools, weights);
             vm.prank(address(owner2));
             voter.vote(2, pools, weights);
@@ -948,7 +948,7 @@ contract BribeVotingRewardTest is BaseTest {
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -967,10 +967,10 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(earned, 0);
         skip(1);
 
-        // create a bribe for pair in epoch 1
+        // create a bribe for pool in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
-        // create a bribe for pair2 in epoch 1
+        // create a bribe for pool2 in epoch 1
         LR.approve(address(bribeVotingReward2), TOKEN_1 * 2);
         bribeVotingReward2.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         skip(1 hours);
@@ -1009,14 +1009,14 @@ contract BribeVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
         // create a bribe in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1030,12 +1030,12 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(post - pre, TOKEN_1 / 2);
         skip(1);
 
-        // create a bribe for pair in epoch 1
+        // create a bribe for pool in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
         skip(1 hours);
 
-        // poke causes id 1 to "vote" for pair
+        // poke causes id 1 to "vote" for pool
         voter.poke(1);
         skip(1);
 
@@ -1045,7 +1045,7 @@ contract BribeVotingRewardTest is BaseTest {
         // go to next epoch
         skipToNextEpoch(1);
 
-        // earned for pair should be 0
+        // earned for pool should be 0
         uint256 earned = bribeVotingReward.earned(address(LR), 1);
         assertEq(earned, 0);
     }
@@ -1061,14 +1061,14 @@ contract BribeVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
         // create a bribe in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1082,7 +1082,7 @@ contract BribeVotingRewardTest is BaseTest {
         assertEq(post - pre, TOKEN_1 / 2);
         skip(1);
 
-        // create a bribe for pair in epoch 1
+        // create a bribe for pool in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
         skip(1 hours);
@@ -1098,7 +1098,7 @@ contract BribeVotingRewardTest is BaseTest {
         // go to next epoch
         skipToNextEpoch(1);
 
-        // earned for pair should be 0
+        // earned for pool should be 0
         uint256 earned = bribeVotingReward.earned(address(LR), 1);
         assertEq(earned, TOKEN_1 / 2);
     }
@@ -1113,30 +1113,30 @@ contract BribeVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](2);
         uint256[] memory weights = new uint256[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         weights[0] = 2;
         weights[1] = 8;
 
-        // create a bribe in epoch 0 for pair
+        // create a bribe in epoch 0 for pool
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
-        // create a usdc bribe in epoch 1 for pair2
+        // create a usdc bribe in epoch 1 for pool2
         USDC.approve(address(bribeVotingReward2), USDC_1);
         bribeVotingReward2.notifyRewardAmount(address(USDC), USDC_1);
 
-        // vote for pair in epoch 0
-        voter.vote(1, pools, weights); // 20% to pair, 80% to pair2
+        // vote for pool in epoch 0
+        voter.vote(1, pools, weights); // 20% to pool, 80% to pool2
 
         // flip weights around
         weights[0] = 8;
         weights[1] = 2;
         vm.prank(address(owner2));
-        voter.vote(2, pools, weights); // 80% to pair, 20% to pair2
+        voter.vote(2, pools, weights); // 80% to pool, 20% to pool2
 
         skipToNextEpoch(1);
 
-        // check pair bribes are correct
+        // check pool bribes are correct
         uint256 pre = LR.balanceOf(address(owner));
         vm.prank(address(voter));
         bribeVotingReward.getReward(1, rewards);
@@ -1149,7 +1149,7 @@ contract BribeVotingRewardTest is BaseTest {
         post = LR.balanceOf(address(owner2));
         assertEq(post - pre, (TOKEN_1 * 4) / 5);
 
-        // check pair2 bribes are correct
+        // check pool2 bribes are correct
         rewards[0] = address(USDC);
         pre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
@@ -1174,29 +1174,29 @@ contract BribeVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a bribe for pair and pair2 in epoch 0
+        // create a bribe for pool and pool2 in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
         USDC.approve(address(bribeVotingReward2), USDC_1);
         bribeVotingReward2.notifyRewardAmount(address(USDC), USDC_1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
 
-        // owner3 votes for pair2
-        pools[0] = address(pair2);
+        // owner3 votes for pool2
+        pools[0] = address(pool2);
         vm.prank(address(owner3));
         voter.vote(3, pools, weights);
 
         // go to next epoch but do not distribute
         skipToNextEpoch(1 hours + 1);
 
-        // vote for pair2 shortly after epoch flips
+        // vote for pool2 shortly after epoch flips
         voter.vote(1, pools, weights);
         skip(1);
 
@@ -1225,15 +1225,15 @@ contract BribeVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a bribe for pair in epoch 0
+        // create a bribe for pool in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
         skip(1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1247,12 +1247,12 @@ contract BribeVotingRewardTest is BaseTest {
 
         skipToNextEpoch(1);
 
-        // create a bribe for pair in epoch 1
+        // create a bribe for pool in epoch 1
         LR.approve(address(bribeVotingReward), TOKEN_1 * 2);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1 * 2);
         skip(1 hours);
 
-        // vote for pair in epoch 1
+        // vote for pool in epoch 1
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1284,14 +1284,14 @@ contract BribeVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a bribe for pair in epoch 0
+        // create a bribe for pool in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
 
@@ -1311,15 +1311,15 @@ contract BribeVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a bribe for pair in epoch 0
+        // create a bribe for pool in epoch 0
         LR.approve(address(bribeVotingReward), TOKEN_1);
         bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
         skip(1 hours);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1374,7 +1374,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // deposit by voting
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -1396,7 +1396,7 @@ contract BribeVotingRewardTest is BaseTest {
         skipToNextEpoch(1 hours + 1);
 
         // withdraw by voting for other pool
-        pools[0] = address(pair2);
+        pools[0] = address(pool2);
         voter.vote(1, pools, weights);
 
         numSupply = bribeVotingReward.supplyNumCheckpoints();
@@ -1419,7 +1419,7 @@ contract BribeVotingRewardTest is BaseTest {
         // test vote and poke overwrites checkpoints
         // deposit by voting
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -1509,7 +1509,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // deposit by voting
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -1554,7 +1554,7 @@ contract BribeVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);

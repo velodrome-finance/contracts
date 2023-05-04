@@ -83,7 +83,7 @@ contract EpochGovernorTest is BaseTest {
         uint256[] memory values = new uint256[](1);
         values[0] = 0;
         bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(minter.update_period.selector);
+        calldatas[0] = abi.encodeWithSelector(minter.updatePeriod.selector);
         string memory description = "";
 
         vm.expectRevert("GovernorSimple: only nudge allowed");

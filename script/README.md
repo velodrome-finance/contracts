@@ -35,14 +35,14 @@ forge script script/DeploySinkDrain.s.sol:DeploySinkDrain --broadcast --rpc-url 
 forge script script/DeployVelodromeV2.s.sol:DeployVelodromeV2 --broadcast --rpc-url optimism --verify -vvvv
 ```
 
-4. Deploy v1 gauges.  These gauges are built on Velodrome v2 using existing v1 pairs.
+4. Deploy v1 gauges.  These gauges are built on Velodrome v2 using existing v1 pools.
 ```
 forge script script/DeployGaugesV1.s.sol:DeployGaugesV1 --broadcast --rpc-url optimism --verify -vvvv
 ```
 
-5. Deploy v2 gauges and v2 pairs.  These gauges are built on Velodrome v2 using newly created v2 pairs.
+5. Deploy v2 gauges and v2 pools.  These gauges are built on Velodrome v2 using newly created v2 pools.
 ```
-forge script script/DeployGaugesAndPairsV2.s.sol:DeployGaugesAndPairsV2 --broadcast --rpc-url optimism --verify -vvvv
+forge script script/DeployGaugesAndPoolsV2.s.sol:DeployGaugesAndPoolsV2 --broadcast --rpc-url optimism --verify -vvvv
 ```
 
 6. Deploy governor contracts

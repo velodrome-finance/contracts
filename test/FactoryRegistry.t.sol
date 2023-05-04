@@ -4,21 +4,21 @@ import "./BaseTest.sol";
 
 /// @dev Tests factory registry functionality.
 contract FactoryRegistryTest is BaseTest {
-    PairFactory factory2;
+    PoolFactory factory2;
     GaugeFactory gaugeFactory2;
     VotingRewardsFactory votingRewardsFactory2;
     FactoryRegistry factoryRegistry2;
     ManagedRewardsFactory managedRewardsFactory2;
     Router router2;
-    Pair newPair;
-    Pair newPair2;
-    Pair implementation2;
+    Pool newPool;
+    Pool newPool2;
+    Pool implementation2;
 
     function _setUp() public override {
-        implementation2 = new Pair();
+        implementation2 = new Pool();
         // create new factories to test against factory registry
-        factory2 = new PairFactory(address(implementation2));
-        assertEq(factory2.allPairsLength(), 0);
+        factory2 = new PoolFactory(address(implementation2));
+        assertEq(factory2.allPoolsLength(), 0);
         factory2.setFee(true, 1); // set fee back to 0.01% for old tests
         factory2.setFee(false, 1);
         router2 = new Router(address(forwarder), address(factory2), address(voter), address(WETH));
@@ -34,18 +34,18 @@ contract FactoryRegistryTest is BaseTest {
         );
         managedRewardsFactory2 = new ManagedRewardsFactory();
 
-        // we need to create a new pair with the old factory to create the gauge
-        // as existing pairs already have gauges
+        // we need to create a new pool with the old factory to create the gauge
+        // as existing pools already have gauges
         _addLiquidityToPool(address(owner), address(router), address(DAI), address(USDC), true, TOKEN_1, USDC_1);
-        address create2Address = router.pairFor(address(DAI), address(USDC), true, address(0));
-        newPair = Pair(factory.getPair(address(DAI), address(USDC), true));
-        assertEq(create2Address, address(newPair));
+        address create2Address = router.poolFor(address(DAI), address(USDC), true, address(0));
+        newPool = Pool(factory.getPool(address(DAI), address(USDC), true));
+        assertEq(create2Address, address(newPool));
 
-        // create a new pair with new factory / router to test gauge creation against
+        // create a new pool with new factory / router to test gauge creation against
         _addLiquidityToPool(address(owner), address(router2), address(DAI), address(USDC), true, TOKEN_1, USDC_1);
-        create2Address = router2.pairFor(address(DAI), address(USDC), true, address(0));
-        newPair2 = Pair(factory2.getPair(address(DAI), address(USDC), true));
-        assertEq(create2Address, address(newPair2));
+        create2Address = router2.poolFor(address(DAI), address(USDC), true, address(0));
+        newPool2 = Pool(factory2.getPool(address(DAI), address(USDC), true));
+        assertEq(create2Address, address(newPool2));
     }
 
     function testCannotSetManagedRewardsFactoryIfNotOwner() public {
@@ -94,21 +94,21 @@ contract FactoryRegistryTest is BaseTest {
             address(factory2), // bad factory
             address(votingRewardsFactory),
             address(gaugeFactory),
-            address(newPair)
+            address(newPool)
         );
         vm.expectRevert(IVoter.FactoryPathNotApproved.selector);
         voter.createGauge(
             address(factory),
             address(votingRewardsFactory2), // bad factory
             address(gaugeFactory),
-            address(newPair)
+            address(newPool)
         );
         vm.expectRevert(IVoter.FactoryPathNotApproved.selector);
         voter.createGauge(
             address(factory),
             address(votingRewardsFactory),
             address(gaugeFactory2), // bad factory
-            address(newPair)
+            address(newPool)
         );
         vm.stopPrank();
     }
@@ -238,7 +238,7 @@ contract FactoryRegistryTest is BaseTest {
         );
     }
 
-    function testCreateGaugeWithNewPairFactory() external {
+    function testCreateGaugeWithNewPoolFactory() external {
         // approve the new factory for use
         factoryRegistry.approve(
             address(factory2), // new factory
@@ -246,12 +246,12 @@ contract FactoryRegistryTest is BaseTest {
             address(gaugeFactory)
         );
 
-        // use pair2 (created using factory2), or else isPair() voter.createGauge() fails
+        // use pool2 (created using factory2), or else isPool() voter.createGauge() fails
         address newGauge = voter.createGauge(
             address(factory2), // new factory
             address(votingRewardsFactory),
             address(gaugeFactory),
-            address(newPair2)
+            address(newPool2)
         );
         address newFeesVotingReward = voter.gaugeToFees(newGauge);
         address newBribeVotingReward = voter.gaugeToBribe(newGauge);
@@ -262,23 +262,23 @@ contract FactoryRegistryTest is BaseTest {
         assertGt(uint256(uint160(newBribeVotingReward)), 0);
 
         // voting reward validation
-        address token0 = newPair2.token0();
+        address token0 = newPool2.token0();
         assertTrue(Reward(newFeesVotingReward).isReward(token0));
         assertTrue(Reward(newBribeVotingReward).isReward(token0));
-        address token1 = newPair2.token1();
+        address token1 = newPool2.token1();
         assertTrue(Reward(newFeesVotingReward).isReward(token1));
         assertTrue(Reward(newBribeVotingReward).isReward(token1));
 
         // gauge validation
-        assertEq(address(newPair2), Gauge(newGauge).stakingToken());
+        assertEq(address(newPool2), Gauge(newGauge).stakingToken());
         assertEq(newFeesVotingReward, Gauge(newGauge).feesVotingReward());
         assertEq(address(VELO), Gauge(newGauge).rewardToken());
         assertEq(address(voter), Gauge(newGauge).voter());
-        assertTrue(Gauge(newGauge).isForPair());
+        assertTrue(Gauge(newGauge).isPool());
 
         // gauge checks within voter
-        assertEq(newGauge, voter.gauges(address(newPair2)));
-        assertEq(address(newPair2), voter.poolForGauge(newGauge));
+        assertEq(newGauge, voter.gauges(address(newPool2)));
+        assertEq(address(newPool2), voter.poolForGauge(newGauge));
         assertTrue(voter.isGauge(newGauge));
         assertTrue(voter.isAlive(newGauge));
     }
@@ -295,7 +295,7 @@ contract FactoryRegistryTest is BaseTest {
             address(factory),
             address(votingRewardsFactory2), // new factory
             address(gaugeFactory),
-            address(newPair)
+            address(newPool)
         );
         address newFeesVotingReward = voter.gaugeToFees(newGauge);
         address newBribeVotingReward = voter.gaugeToBribe(newGauge);
@@ -306,23 +306,23 @@ contract FactoryRegistryTest is BaseTest {
         assertGt(uint256(uint160(newBribeVotingReward)), 0);
 
         // voting validation
-        address token0 = newPair.token0();
+        address token0 = newPool.token0();
         assertTrue(Reward(newFeesVotingReward).isReward(token0));
         assertTrue(Reward(newBribeVotingReward).isReward(token0));
-        address token1 = newPair.token1();
+        address token1 = newPool.token1();
         assertTrue(Reward(newFeesVotingReward).isReward(token1));
         assertTrue(Reward(newBribeVotingReward).isReward(token1));
 
         // gauge validation
-        assertEq(address(newPair), Gauge(newGauge).stakingToken());
+        assertEq(address(newPool), Gauge(newGauge).stakingToken());
         assertEq(newFeesVotingReward, Gauge(newGauge).feesVotingReward());
         assertEq(address(VELO), Gauge(newGauge).rewardToken());
         assertEq(address(voter), Gauge(newGauge).voter());
-        assertTrue(Gauge(newGauge).isForPair());
+        assertTrue(Gauge(newGauge).isPool());
 
         // gauge checks within voter
-        assertEq(newGauge, voter.gauges(address(newPair)));
-        assertEq(address(newPair), voter.poolForGauge(newGauge));
+        assertEq(newGauge, voter.gauges(address(newPool)));
+        assertEq(address(newPool), voter.poolForGauge(newGauge));
         assertTrue(voter.isGauge(newGauge));
         assertTrue(voter.isAlive(newGauge));
     }
@@ -339,7 +339,7 @@ contract FactoryRegistryTest is BaseTest {
             address(factory),
             address(votingRewardsFactory),
             address(gaugeFactory2), // new factory
-            address(newPair)
+            address(newPool)
         );
         address newFeesVotingReward = voter.gaugeToFees(newGauge);
         address newBribeVotingReward = voter.gaugeToBribe(newGauge);
@@ -350,23 +350,23 @@ contract FactoryRegistryTest is BaseTest {
         assertGt(uint256(uint160(newBribeVotingReward)), 0);
 
         // voting validation
-        address token0 = newPair.token0();
+        address token0 = newPool.token0();
         assertTrue(Reward(newFeesVotingReward).isReward(token0));
         assertTrue(Reward(newBribeVotingReward).isReward(token0));
-        address token1 = newPair.token1();
+        address token1 = newPool.token1();
         assertTrue(Reward(newFeesVotingReward).isReward(token1));
         assertTrue(Reward(newBribeVotingReward).isReward(token1));
 
         // gauge validation
-        assertEq(address(newPair), Gauge(newGauge).stakingToken());
+        assertEq(address(newPool), Gauge(newGauge).stakingToken());
         assertEq(newFeesVotingReward, Gauge(newGauge).feesVotingReward());
         assertEq(address(VELO), Gauge(newGauge).rewardToken());
         assertEq(address(voter), Gauge(newGauge).voter());
-        assertTrue(Gauge(newGauge).isForPair());
+        assertTrue(Gauge(newGauge).isPool());
 
         // gauge checks within voter
-        assertEq(newGauge, voter.gauges(address(newPair)));
-        assertEq(address(newPair), voter.poolForGauge(newGauge));
+        assertEq(newGauge, voter.gauges(address(newPool)));
+        assertEq(address(newPool), voter.poolForGauge(newGauge));
         assertTrue(voter.isGauge(newGauge));
         assertTrue(voter.isAlive(newGauge));
     }

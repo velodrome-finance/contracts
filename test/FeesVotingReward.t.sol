@@ -42,7 +42,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -61,8 +61,8 @@ contract FeesVotingRewardTest is BaseTest {
 
         skip(1 hours);
 
-        // remove supply by voting for other pair
-        pools[0] = address(pair2);
+        // remove supply by voting for other pool
+        pools[0] = address(pool2);
         voter.vote(1, pools, weights);
 
         assertEq(feesVotingReward.totalSupply(), 0);
@@ -98,7 +98,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -138,7 +138,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -181,7 +181,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -227,7 +227,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -264,7 +264,7 @@ contract FeesVotingRewardTest is BaseTest {
         uint256 reward = TOKEN_1;
         uint256 reward2 = TOKEN_1 * 2;
 
-        // create a reward for pair in epoch 0
+        // create a reward for pool in epoch 0
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward);
@@ -272,7 +272,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -282,12 +282,12 @@ contract FeesVotingRewardTest is BaseTest {
 
         skipToNextEpoch(1 hours + 1);
 
-        // create a reward for pair2 in epoch 1
+        // create a reward for pool2 in epoch 1
         vm.startPrank(address(gauge2));
         FRAX.approve(address(feesVotingReward2), reward2);
         feesVotingReward2.notifyRewardAmount((address(FRAX)), reward2);
         vm.stopPrank();
-        pools[0] = address(pair2);
+        pools[0] = address(pool2);
 
         voter.vote(1, pools, weights);
 
@@ -297,7 +297,7 @@ contract FeesVotingRewardTest is BaseTest {
         address[] memory rewards = new address[](1);
         rewards[0] = address(FRAX);
 
-        // check rewards accrue correctly for pair
+        // check rewards accrue correctly for pool
         uint256 pre = FRAX.balanceOf(address(owner));
         vm.prank(address(voter));
         feesVotingReward.getReward(1, rewards);
@@ -305,7 +305,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         assertEq(post - pre, reward / 2);
 
-        // check rewards accrue correctly for pair2
+        // check rewards accrue correctly for pool2
         pre = FRAX.balanceOf(address(owner));
         vm.prank(address(voter));
         feesVotingReward2.getReward(1, rewards);
@@ -326,7 +326,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -383,7 +383,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote in epoch 0
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -495,7 +495,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote in epoch 0
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -544,7 +544,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -603,7 +603,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -642,7 +642,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -683,7 +683,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -735,7 +735,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote for pool
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -822,8 +822,8 @@ contract FeesVotingRewardTest is BaseTest {
         address[] memory pools = new address[](1);
         address[] memory pools2 = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
-        pools2[0] = address(pair2);
+        pools[0] = address(pool);
+        pools2[0] = address(pool2);
         weights[0] = 10000;
 
         // create a reward in epoch 0
@@ -832,7 +832,7 @@ contract FeesVotingRewardTest is BaseTest {
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -853,37 +853,37 @@ contract FeesVotingRewardTest is BaseTest {
 
         skip(1);
 
-        // create a reward for pair in epoch 1
+        // create a reward for pool in epoch 1
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
-        // create a reward for pair2 in epoch 1
+        // create a reward for pool2 in epoch 1
         vm.startPrank(address(gauge2));
         FRAX.approve(address(feesVotingReward2), TOKEN_1 * 2);
         feesVotingReward2.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
         vm.stopPrank();
         skip(1 hours);
 
-        // poke causes id 1 to "vote" for pair
+        // poke causes id 1 to "vote" for pool
         voter.poke(1);
         skip(1 hours);
 
-        // vote for pair2 in epoch 1
+        // vote for pool2 in epoch 1
         voter.vote(1, pools2, weights);
 
         // go to next epoch
         skipToNextEpoch(1);
 
-        // earned for pair should be 0
+        // earned for pool should be 0
         uint256 earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, 0);
 
-        // earned for pair for nft 2 should be full reward amount
+        // earned for pool for nft 2 should be full reward amount
         earned = feesVotingReward.earned(address(FRAX), 2);
         assertEq(earned, TOKEN_1);
 
-        // earned for pair2 should be TOKEN_1
+        // earned for pool2 should be TOKEN_1
         earned = feesVotingReward2.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1 * 2);
 
@@ -905,8 +905,8 @@ contract FeesVotingRewardTest is BaseTest {
         address[] memory pools = new address[](1);
         address[] memory pools2 = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
-        pools2[0] = address(pair2);
+        pools[0] = address(pool);
+        pools2[0] = address(pool2);
         weights[0] = 10000;
 
         // create a reward in epoch 0
@@ -915,7 +915,7 @@ contract FeesVotingRewardTest is BaseTest {
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -934,12 +934,12 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(earned, 0);
         skip(1);
 
-        // create a reward for pair in epoch 1
+        // create a reward for pool in epoch 1
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
-        // create a reward for pair2 in epoch 1
+        // create a reward for pool2 in epoch 1
         vm.startPrank(address(gauge2));
         FRAX.approve(address(feesVotingReward2), TOKEN_1 * 2);
         feesVotingReward2.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
@@ -983,13 +983,13 @@ contract FeesVotingRewardTest is BaseTest {
         address[] memory pools = new address[](1);
         address[] memory pools2 = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
-        pools2[0] = address(pair2);
+        pools[0] = address(pool);
+        pools2[0] = address(pool2);
         weights[0] = 10000;
 
         // add initial checkpoints
         for (uint256 i = 0; i < 5; i++) {
-            // vote for pair in epoch 0
+            // vote for pool in epoch 0
             voter.vote(1, pools, weights);
             vm.prank(address(owner2));
             voter.vote(2, pools, weights);
@@ -1004,7 +1004,7 @@ contract FeesVotingRewardTest is BaseTest {
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1023,12 +1023,12 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(earned, 0);
         skip(1);
 
-        // create a reward for pair in epoch 1
+        // create a reward for pool in epoch 1
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
-        // create a reward for pair2 in epoch 1
+        // create a reward for pool2 in epoch 1
         vm.startPrank(address(gauge2));
         FRAX.approve(address(feesVotingReward2), TOKEN_1 * 2);
         feesVotingReward2.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
@@ -1069,7 +1069,7 @@ contract FeesVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
         // create a reward in epoch 0
@@ -1078,7 +1078,7 @@ contract FeesVotingRewardTest is BaseTest {
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1092,14 +1092,14 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(post - pre, TOKEN_1 / 2);
         skip(1);
 
-        // create a reward for pair in epoch 1
+        // create a reward for pool in epoch 1
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
         skip(1 hours);
 
-        // poke causes id 1 to "vote" for pair
+        // poke causes id 1 to "vote" for pool
         voter.poke(1);
         skip(1);
 
@@ -1109,7 +1109,7 @@ contract FeesVotingRewardTest is BaseTest {
         // go to next epoch
         skipToNextEpoch(1);
 
-        // earned for pair should be 0
+        // earned for pool should be 0
         uint256 earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, 0);
     }
@@ -1125,7 +1125,7 @@ contract FeesVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
         // create a reward in epoch 0
@@ -1134,7 +1134,7 @@ contract FeesVotingRewardTest is BaseTest {
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1148,7 +1148,7 @@ contract FeesVotingRewardTest is BaseTest {
         assertEq(post - pre, TOKEN_1 / 2);
         skip(1);
 
-        // create a reward for pair in epoch 1
+        // create a reward for pool in epoch 1
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
@@ -1166,7 +1166,7 @@ contract FeesVotingRewardTest is BaseTest {
         // go to next epoch
         skipToNextEpoch(1);
 
-        // earned for pair should be 0
+        // earned for pool should be 0
         uint256 earned = feesVotingReward.earned(address(FRAX), 1);
         assertEq(earned, TOKEN_1 / 2);
     }
@@ -1181,34 +1181,34 @@ contract FeesVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](2);
         uint256[] memory weights = new uint256[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         weights[0] = 2;
         weights[1] = 8;
 
-        // create a reward in epoch 0 for pair
+        // create a reward in epoch 0 for pool
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
-        // create a usdc reward in epoch 1 for pair2
+        // create a usdc reward in epoch 1 for pool2
         vm.startPrank(address(gauge2));
         USDC.approve(address(feesVotingReward2), USDC_1);
         feesVotingReward2.notifyRewardAmount(address(USDC), USDC_1);
         vm.stopPrank();
 
-        // vote for pair in epoch 0
-        voter.vote(1, pools, weights); // 20% to pair, 80% to pair2
+        // vote for pool in epoch 0
+        voter.vote(1, pools, weights); // 20% to pool, 80% to pool2
 
         // flip weights around
         weights[0] = 8;
         weights[1] = 2;
         vm.prank(address(owner2));
-        voter.vote(2, pools, weights); // 80% to pair, 20% to pair2
+        voter.vote(2, pools, weights); // 80% to pool, 20% to pool2
 
         skipToNextEpoch(1);
 
-        // check pair rewards are correct
+        // check pool rewards are correct
         uint256 pre = FRAX.balanceOf(address(owner));
         vm.prank(address(voter));
         feesVotingReward.getReward(1, rewards);
@@ -1221,7 +1221,7 @@ contract FeesVotingRewardTest is BaseTest {
         post = FRAX.balanceOf(address(owner2));
         assertEq(post - pre, (TOKEN_1 * 4) / 5);
 
-        // check pair2 rewards are correct
+        // check pool2 rewards are correct
         rewards[0] = address(USDC);
         pre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
@@ -1246,10 +1246,10 @@ contract FeesVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a reward for pair and pair2 in epoch 0
+        // create a reward for pool and pool2 in epoch 0
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
@@ -1259,20 +1259,20 @@ contract FeesVotingRewardTest is BaseTest {
         feesVotingReward2.notifyRewardAmount(address(USDC), USDC_1);
         vm.stopPrank();
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
 
-        // owner3 votes for pair2
-        pools[0] = address(pair2);
+        // owner3 votes for pool2
+        pools[0] = address(pool2);
         vm.prank(address(owner3));
         voter.vote(3, pools, weights);
 
         // go to next epoch but do not distribute
         skipToNextEpoch(1 hours + 1);
 
-        // vote for pair2 shortly after epoch flips
+        // vote for pool2 shortly after epoch flips
         voter.vote(1, pools, weights);
         skip(1);
 
@@ -1301,17 +1301,17 @@ contract FeesVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a reward for pair in epoch 0
+        // create a reward for pool in epoch 0
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
         skip(1);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1325,14 +1325,14 @@ contract FeesVotingRewardTest is BaseTest {
 
         skipToNextEpoch(1);
 
-        // create a reward for pair in epoch 1
+        // create a reward for pool in epoch 1
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1 * 2);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1 * 2);
         vm.stopPrank();
         skip(1 hours);
 
-        // vote for pair in epoch 1
+        // vote for pool in epoch 1
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1364,16 +1364,16 @@ contract FeesVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a bribe for pair in epoch 0
+        // create a bribe for pool in epoch 0
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
 
@@ -1396,7 +1396,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -1422,17 +1422,17 @@ contract FeesVotingRewardTest is BaseTest {
         // set up votes
         address[] memory pools = new address[](1);
         uint256[] memory weights = new uint256[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a reward for pair in epoch 0
+        // create a reward for pool in epoch 0
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
         vm.stopPrank();
         skip(1 hours);
 
-        // vote for pair in epoch 0
+        // vote for pool in epoch 0
         voter.vote(1, pools, weights);
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
@@ -1489,7 +1489,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // deposit by voting
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);
@@ -1511,7 +1511,7 @@ contract FeesVotingRewardTest is BaseTest {
         skipToNextEpoch(1 hours + 1);
 
         // withdraw by voting for other pool
-        pools[0] = address(pair2);
+        pools[0] = address(pool2);
         voter.vote(1, pools, weights);
 
         numSupply = feesVotingReward.supplyNumCheckpoints();
@@ -1534,7 +1534,7 @@ contract FeesVotingRewardTest is BaseTest {
         // test vote and poke overwrites checkpoints
         // deposit by voting
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -1624,7 +1624,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // deposit by voting
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
 
@@ -1671,7 +1671,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // vote
         address[] memory pools = new address[](1);
-        pools[0] = address(pair);
+        pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         voter.vote(1, pools, weights);

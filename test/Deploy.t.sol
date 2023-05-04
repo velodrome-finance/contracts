@@ -6,7 +6,7 @@ import "forge-std/StdJson.sol";
 import "../script/DeploySinkDrain.s.sol";
 import "../script/DeployVelodromeV2.s.sol";
 import "../script/DeployGaugesV1.s.sol";
-import "../script/DeployGaugesAndPairsV2.s.sol";
+import "../script/DeployGaugesAndPoolsV2.s.sol";
 import "../script/DeployGovernors.s.sol";
 
 import "./BaseTest.sol";
@@ -22,7 +22,7 @@ contract TestDeploy is BaseTest {
     address feeManager;
     address team;
 
-    struct PairV2 {
+    struct PoolV2 {
         bool stable;
         address tokenA;
         address tokenB;
@@ -32,7 +32,7 @@ contract TestDeploy is BaseTest {
     DeploySinkDrain deploySinkDrain;
     DeployVelodromeV2 deployVelodromeV2;
     DeployGaugesV1 deployGaugesV1;
-    DeployGaugesAndPairsV2 deployGaugesAndPairsV2;
+    DeployGaugesAndPoolsV2 deployGaugesAndPoolsV2;
     DeployGovernors deployGovernors;
 
     constructor() {
@@ -46,7 +46,7 @@ contract TestDeploy is BaseTest {
         deploySinkDrain = new DeploySinkDrain();
         deployVelodromeV2 = new DeployVelodromeV2();
         deployGaugesV1 = new DeployGaugesV1();
-        deployGaugesAndPairsV2 = new DeployGaugesAndPairsV2();
+        deployGaugesAndPoolsV2 = new DeployGaugesAndPoolsV2();
         deployGovernors = new DeployGovernors();
 
         string memory root = vm.projectRoot();
@@ -81,7 +81,7 @@ contract TestDeploy is BaseTest {
 
         deployVelodromeV2.run();
         deployGaugesV1.run();
-        deployGaugesAndPairsV2.run();
+        deployGaugesAndPoolsV2.run();
         deployGovernors.run();
 
         assertEq(deployVelodromeV2.voter().epochGovernor(), team);
@@ -113,7 +113,7 @@ contract TestDeploy is BaseTest {
         assertTrue(address(deployVelodromeV2.WETH()) == address(WETH));
         assertTrue(address(deployVelodromeV2.vDistributor()) != address(0));
 
-        // PairFactory
+        // PoolFactory
         assertEq(deployVelodromeV2.factory().sinkConverter(), address(deployVelodromeV2.sinkConverter()));
         assertEq(deployVelodromeV2.factory().velo(), address(deployVelodromeV2.vVELO()));
         assertEq(deployVelodromeV2.factory().veloV2(), address(deployVelodromeV2.VELO()));
@@ -167,23 +167,23 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.factory().feeManager(), feeManager);
         assertEq(deployVelodromeV2.factory().voter(), address(deployVelodromeV2.voter()));
 
-        // ensure all gauges for v1 pairs were created - DeployGaugesV1
-        address[] memory pairsV1 = abi.decode(jsonConstants.parseRaw(".pairsV1"), (address[]));
-        for (uint256 i = 0; i < pairsV1.length; i++) {
-            Pair p = Pair(pairsV1[i]);
-            address pairAddr = deployVelodromeV2.vFactory().getPair(p.token0(), p.token1(), p.stable());
-            assertTrue(pairAddr != address(0));
-            address gaugeAddr = deployVelodromeV2.voter().gauges(pairAddr);
+        // ensure all gauges for v1 pools were created - DeployGaugesV1
+        address[] memory poolsV1 = abi.decode(jsonConstants.parseRaw(".poolsV1"), (address[]));
+        for (uint256 i = 0; i < poolsV1.length; i++) {
+            Pool p = Pool(poolsV1[i]);
+            address poolAddr = deployVelodromeV2.vFactory().getPair(p.token0(), p.token1(), p.stable());
+            assertTrue(poolAddr != address(0));
+            address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
             assertTrue(gaugeAddr != address(0));
         }
 
-        // ensure all v2 pairs were created with their respective gauges - DeployGaugesAndPairsV2
-        PairV2[] memory pairsV2 = abi.decode(jsonConstants.parseRaw(".pairsV2"), (PairV2[]));
-        for (uint256 i = 0; i < pairsV2.length; i++) {
-            PairV2 memory p = pairsV2[i];
-            address pairAddr = deployVelodromeV2.factory().getPair(p.tokenA, p.tokenB, p.stable);
-            assertTrue(pairAddr != address(0));
-            address gaugeAddr = deployVelodromeV2.voter().gauges(pairAddr);
+        // ensure all v2 pools were created with their respective gauges - DeployGaugesAndPoolsV2
+        PoolV2[] memory poolsV2 = abi.decode(jsonConstants.parseRaw(".poolsV2"), (PoolV2[]));
+        for (uint256 i = 0; i < poolsV2.length; i++) {
+            PoolV2 memory p = poolsV2[i];
+            address poolAddr = deployVelodromeV2.factory().getPool(p.tokenA, p.tokenB, p.stable);
+            assertTrue(poolAddr != address(0));
+            address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
             assertTrue(gaugeAddr != address(0));
         }
 

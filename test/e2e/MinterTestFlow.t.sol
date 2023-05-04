@@ -8,7 +8,7 @@ contract MinterTestFlow is ExtendedBaseTest {
 
     function testMinterRebaseFlow() public {
         /// epoch 0
-        minter.update_period();
+        minter.updatePeriod();
         assertEq(VELO.balanceOf(address(voter)), 0);
 
         VELO.approve(address(escrow), TOKEN_100K);
@@ -26,8 +26,8 @@ contract MinterTestFlow is ExtendedBaseTest {
 
         // equal votes for both pools
         address[] memory pools = new address[](2);
-        pools[0] = address(pair);
-        pools[1] = address(pair2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
         uint256[] memory weights = new uint256[](2);
         weights[0] = 1;
         weights[1] = 1;
@@ -36,8 +36,8 @@ contract MinterTestFlow is ExtendedBaseTest {
         voter.vote(2, pools, weights);
         skipAndRoll(1);
 
-        pair.approve(address(gauge), PAIR_1);
-        gauge.deposit(PAIR_1);
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
 
         /// epoch 1
         skipToNextEpoch(2 days); // gauge distributions spread out over 5 days
@@ -46,7 +46,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         uint256 expectedMint = _expectedMintAfter(1);
         vm.expectEmit(true, true, false, false, address(minter));
         emit Mint(address(owner), expectedMint, 0, false);
-        minter.update_period();
+        minter.updatePeriod();
         assertEq(VELO.balanceOf(address(voter)), expectedMint);
 
         address[] memory gauges = new address[](1);
@@ -62,7 +62,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         assertApproxEqRel(gauge.rewardRateByEpoch(epochStart), expectedMint / 2 / (5 days), 1e6);
         skipAndRoll(1);
 
-        minter.update_period();
+        minter.updatePeriod();
         assertApproxEqRel(VELO.balanceOf(address(voter)), expectedMint / 2, 1e6);
         skipAndRoll(1);
 
@@ -97,7 +97,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         /// after 92 epochs, tail emissions turn on
         for (uint256 i = 0; i < 90; i++) {
             skipToNextEpoch(1);
-            minter.update_period();
+            minter.updatePeriod();
         }
         voter.distribute(0, voter.length());
         assertTrue(minter.weekly() < minter.TAIL_START());
@@ -105,7 +105,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         // skip to first tail distribution
         skipToNextEpoch(1);
 
-        minter.update_period();
+        minter.updatePeriod();
         /// total velo supply ~954983290, tail emissions .3% of total supply
         /// 954983290 ~= 50_000_000 initial supply + emissions until now
         assertApproxEqAbs(VELO.balanceOf(address(voter)), 2_864_950 * TOKEN_1, TOKEN_1);
@@ -140,7 +140,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
         assertEq(minter.tailEmissionRate(), 31);
 
-        minter.update_period();
+        minter.updatePeriod();
         /// total velo supply ~957848240, tail emissions .31% of total supply
         assertApproxEqAbs(VELO.balanceOf(address(voter)), 2_969_329 * TOKEN_1, TOKEN_1);
         voter.distribute(0, voter.length());
@@ -163,7 +163,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
         assertEq(minter.tailEmissionRate(), 31);
 
-        minter.update_period();
+        minter.updatePeriod();
         /// total velo supply ~960817569, tail emissions .31% of total supply
         assertApproxEqAbs(VELO.balanceOf(address(voter)), 2_978_534 * TOKEN_1, TOKEN_1);
         voter.distribute(0, voter.length());
@@ -177,7 +177,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description2)));
         assertEq(minter.tailEmissionRate(), 30);
 
-        minter.update_period();
+        minter.updatePeriod();
         /// total velo supply ~963796104, tail emissions .30% of total supply
         assertApproxEqAbs(VELO.balanceOf(address(voter)), 2_891_388 * TOKEN_1, TOKEN_1);
         voter.distribute(0, voter.length());

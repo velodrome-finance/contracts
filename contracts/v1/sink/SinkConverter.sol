@@ -6,7 +6,7 @@ import {ISinkManager} from "../../interfaces/ISinkManager.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-/// @notice Fake pair used which enables routers to swap v1 VELO to v2 VELO
+/// @notice Fake pool used which enables routers to swap v1 VELO to v2 VELO
 /// @dev Used in voter v2
 /// @author Carter Carlson (@pegahcarter)
 contract SinkConverter is ERC20, ReentrancyGuard {
@@ -14,7 +14,7 @@ contract SinkConverter is ERC20, ReentrancyGuard {
     IVelo public immutable velo;
     IVelo public immutable veloV2;
 
-    /// @dev public variables found in Pair.sol
+    /// @dev public variables found in Pool.sol
     address public immutable token0;
     address public immutable token1;
 
@@ -36,7 +36,7 @@ contract SinkConverter is ERC20, ReentrancyGuard {
         // approve transfers of the sinkManager for sending VELO v1
         velo.approve(_sinkManager, type(uint256).max);
 
-        // sort tokens just like in PairFactory - needed as Router._swap()
+        // sort tokens just like in PoolFactory - needed as Router._swap()
         // sorts the token route
         (token0, token1) = address(velo) < address(veloV2)
             ? (address(velo), address(veloV2))
@@ -49,8 +49,8 @@ contract SinkConverter is ERC20, ReentrancyGuard {
         return amountIn;
     }
 
-    /// @dev low-level function which works like Pair.swap() which assumes
-    ///         that the tokenIn has already been transferred to the pair
+    /// @dev low-level function which works like Pool.swap() which assumes
+    ///         that the tokenIn has already been transferred to the pool
     function swap(
         uint256 amount0Out,
         uint256 amount1Out,
@@ -67,7 +67,7 @@ contract SinkConverter is ERC20, ReentrancyGuard {
         // transfer velo v2 to recipient
         veloV2.transfer(to, amountOut);
 
-        // Swap event to follow convention of Swap() from Pair.sol
+        // Swap event to follow convention of Swap() from Pool.sol
         uint256 amount0In;
         uint256 amount1In;
         // Note; amountIn will only ever be velo v1 token

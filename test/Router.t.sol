@@ -4,8 +4,8 @@ import "./BaseTest.sol";
 import {MockERC20WithTransferFee} from "utils/MockERC20WithTransferFee.sol";
 
 contract RouterTest is BaseTest {
-    Pair _pair;
-    Pair pairFee;
+    Pool _pool;
+    Pool poolFee;
     MockERC20WithTransferFee erc20Fee;
 
     function _setUp() public override {
@@ -19,7 +19,7 @@ contract RouterTest is BaseTest {
         dealETH(owners, amounts);
 
         _addLiquidityToPool(address(owner), address(router), address(WETH), address(USDC), false, TOKEN_1, USDC_1);
-        _pair = Pair(factory.getPair(address(USDC), address(WETH), false));
+        _pool = Pool(factory.getPool(address(USDC), address(WETH), false));
 
         erc20Fee = new MockERC20WithTransferFee("Mock Token", "FEE", 18);
         erc20Fee.mint(address(owner), TOKEN_100K);
@@ -62,7 +62,7 @@ contract RouterTest is BaseTest {
             address(owner),
             block.timestamp
         );
-        pairFee = Pair(factory.getPair(address(erc20Fee), address(WETH), false));
+        poolFee = Pool(factory.getPool(address(erc20Fee), address(WETH), false));
     }
 
     function testCannotSendETHToRouter() public {
@@ -73,8 +73,8 @@ contract RouterTest is BaseTest {
     function testRemoveETHLiquidity() public {
         uint256 initialEth = address(this).balance;
         uint256 initialUsdc = USDC.balanceOf(address(this));
-        uint256 pairInitialEth = address(_pair).balance;
-        uint256 pairInitialUsdc = USDC.balanceOf(address(_pair));
+        uint256 poolInitialEth = address(_pool).balance;
+        uint256 poolInitialUsdc = USDC.balanceOf(address(_pool));
 
         // add liquidity to pool
         USDC.approve(address(router), USDC_100K);
@@ -100,7 +100,7 @@ contract RouterTest is BaseTest {
             liquidity
         );
 
-        Pair(_pair).approve(address(router), liquidity);
+        Pool(_pool).approve(address(router), liquidity);
         router.removeLiquidityETH(
             address(USDC),
             false,
@@ -113,26 +113,26 @@ contract RouterTest is BaseTest {
 
         assertEq(address(this).balance, initialEth);
         assertEq(USDC.balanceOf(address(this)), initialUsdc);
-        assertEq(address(_pair).balance, pairInitialEth);
-        assertEq(USDC.balanceOf(address(_pair)), pairInitialUsdc);
+        assertEq(address(_pool).balance, poolInitialEth);
+        assertEq(USDC.balanceOf(address(_pool)), poolInitialUsdc);
     }
 
-    function testRouterPairGetAmountsOutAndSwapExactTokensForETH() public {
+    function testRouterPoolGetAmountsOutAndSwapExactTokensForETH() public {
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(USDC), address(WETH), false, address(0));
 
-        assertEq(router.getAmountsOut(USDC_1, routes)[1], _pair.getAmountOut(USDC_1, address(USDC)));
+        assertEq(router.getAmountsOut(USDC_1, routes)[1], _pool.getAmountOut(USDC_1, address(USDC)));
 
         uint256[] memory expectedOutput = router.getAmountsOut(USDC_1, routes);
         USDC.approve(address(router), USDC_1);
         router.swapExactTokensForETH(USDC_1, expectedOutput[1], routes, address(owner), block.timestamp);
     }
 
-    function testRouterPairGetAmountsOutAndSwapExactETHForTokens() public {
+    function testRouterPoolGetAmountsOutAndSwapExactETHForTokens() public {
         IRouter.Route[] memory routes = new IRouter.Route[](1);
         routes[0] = IRouter.Route(address(WETH), address(USDC), false, address(0));
 
-        assertEq(router.getAmountsOut(TOKEN_1, routes)[1], _pair.getAmountOut(TOKEN_1, address(WETH)));
+        assertEq(router.getAmountsOut(TOKEN_1, routes)[1], _pool.getAmountOut(TOKEN_1, address(WETH)));
 
         uint256[] memory expectedOutput = router.getAmountsOut(TOKEN_1, routes);
         USDC.approve(address(router), TOKEN_1);
@@ -142,14 +142,14 @@ contract RouterTest is BaseTest {
     // TESTS FOR FEE-ON-TRANSFER TOKENS
 
     function testRouterRemoveLiquidityETHSupportingFeeOnTransferTokens() public {
-        uint256 liquidity = pairFee.balanceOf(address(owner));
+        uint256 liquidity = poolFee.balanceOf(address(owner));
 
-        uint256 currentBalance = erc20Fee.balanceOf(address(pairFee));
+        uint256 currentBalance = erc20Fee.balanceOf(address(poolFee));
         uint256 expectedBalanceAfterRemove = currentBalance - (erc20Fee.fee() * 2);
         // subtract 1,000 as even though we're removing all liquidity, MINIMUM_LIQUIDITY amount remains in pool
         expectedBalanceAfterRemove -= 1000;
 
-        pairFee.approve(address(router), type(uint256).max);
+        poolFee.approve(address(router), type(uint256).max);
         router.removeLiquidityETHSupportingFeeOnTransferTokens(
             address(erc20Fee),
             false,
@@ -168,7 +168,7 @@ contract RouterTest is BaseTest {
         routes[0] = IRouter.Route(address(WETH), address(erc20Fee), false, address(0));
 
         uint256 expectedOutput = router.getAmountsOut(TOKEN_1, routes)[1];
-        assertEq(pairFee.getAmountOut(TOKEN_1, address(WETH)), expectedOutput);
+        assertEq(poolFee.getAmountOut(TOKEN_1, address(WETH)), expectedOutput);
 
         assertEq(erc20Fee.balanceOf(address(owner)), 0);
         uint256 actualExpectedOutput = expectedOutput - erc20Fee.fee();
@@ -191,7 +191,7 @@ contract RouterTest is BaseTest {
         routes[0] = IRouter.Route(address(erc20Fee), address(WETH), false, address(0));
 
         uint256 expectedOutput = router.getAmountsOut(TOKEN_1, routes)[1];
-        assertEq(pairFee.getAmountOut(TOKEN_1, address(erc20Fee)), expectedOutput);
+        assertEq(poolFee.getAmountOut(TOKEN_1, address(erc20Fee)), expectedOutput);
 
         uint256 ethBalanceBefore = address(owner).balance;
         uint256 actualExpectedOutput = router.getAmountsOut(TOKEN_1 - erc20Fee.fee(), routes)[1];

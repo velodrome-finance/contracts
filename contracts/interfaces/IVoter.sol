@@ -26,7 +26,7 @@ interface IVoter {
     error ZeroAddress();
 
     event GaugeCreated(
-        address indexed pairFactory,
+        address indexed poolFactory,
         address indexed votingRewardsFactory,
         address indexed gaugeFactory,
         address pool,
@@ -202,13 +202,13 @@ interface IVoter {
     function whitelistNFT(uint256 _tokenId, bool _bool) external;
 
     /// @notice Create a new gauge (unpermissioned).
-    /// @dev Governor can create a new gauge for a pair with any address.
-    /// @param _pairFactory .
+    /// @dev Governor can create a new gauge for a pool with any address.
+    /// @param _poolFactory .
     /// @param _votingRewardsFactory .
     /// @param _gaugeFactory .
     /// @param _pool .
     function createGauge(
-        address _pairFactory,
+        address _poolFactory,
         address _votingRewardsFactory,
         address _gaugeFactory,
         address _pool

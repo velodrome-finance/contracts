@@ -14,7 +14,7 @@
         "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
         "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb"
     ],
-    "pairsV2": [
+    "poolsV2": [
         {
             "stable": false,
             "tokenA": "0x4200000000000000000000000000000000000042",
@@ -41,7 +41,7 @@
             "tokenB": "0xE405de8F52ba7559f9df3C368500B6E6ae6Cee49"
         }
     ],
-    "pairsV1": [
+    "poolsV1": [
         "0x79c912FEF520be002c2B6e57EC4324e260f38E50",
         "0x9355292f66552ea5717B274d27EEFc8254011d83",
         "0xFd7FddFc0A729eCF45fB6B12fA3B71A575E1966F",

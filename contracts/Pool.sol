@@ -2,26 +2,26 @@
 pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
-import {IPair} from "./interfaces/IPair.sol";
+import {IPool} from "./interfaces/IPool.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
-import {IPairCallee} from "./interfaces/IPairCallee.sol";
-import {IPairFactory} from "./interfaces/IPairFactory.sol";
-import {PairFees} from "./PairFees.sol";
+import {IPoolCallee} from "./interfaces/IPoolCallee.sol";
+import {IPoolFactory} from "./interfaces/IPoolFactory.sol";
+import {PoolFees} from "./PoolFees.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
-// The base pair of pools, either stable or volatile
-contract Pair is IPair, ERC20Permit, ReentrancyGuard {
+// The token pool, either stable or volatile
+contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     string private _name;
     string private _symbol;
     address private _voter;
 
-    // Used to denote stable or volatile pair
+    // Used to denote stable or volatile pool
     bool public stable;
 
     uint256 internal constant MINIMUM_LIQUIDITY = 10**3;
@@ -29,7 +29,7 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
 
     address public token0;
     address public token1;
-    address public pairFees;
+    address public poolFees;
     address public factory;
 
     // Structure to capture time period obervations every 30 minutes, used for local oracles
@@ -76,9 +76,9 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
     ) external {
         if (factory != address(0)) revert FactoryAlreadySet();
         factory = _msgSender();
-        _voter = IPairFactory(factory).voter();
+        _voter = IPoolFactory(factory).voter();
         (token0, token1, stable) = (_token0, _token1, _stable);
-        pairFees = address(new PairFees(_token0, _token1));
+        poolFees = address(new PoolFees(_token0, _token1));
         string memory symbol0 = ERC20(_token0).symbol();
         string memory symbol1 = ERC20(_token1).symbol();
         if (_stable) {
@@ -145,7 +145,7 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
             claimable0[sender] = 0;
             claimable1[sender] = 0;
 
-            PairFees(pairFees).claimFeesFor(sender, claimed0, claimed1);
+            PoolFees(poolFees).claimFeesFor(sender, claimed0, claimed1);
 
             emit Claim(sender, sender, claimed0, claimed1);
         }
@@ -153,9 +153,9 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
 
     // Accrue fees on token0
     function _update0(uint256 amount) internal {
-        // Only update on this pair if there is a fee
+        // Only update on this pool if there is a fee
         if (amount == 0) return;
-        IERC20(token0).safeTransfer(pairFees, amount); // transfer the fees out to PairFees
+        IERC20(token0).safeTransfer(poolFees, amount); // transfer the fees out to PoolFees
         uint256 _ratio = (amount * 1e18) / totalSupply(); // 1e18 adjustment is removed during claim
         if (_ratio > 0) {
             index0 += _ratio;
@@ -165,9 +165,9 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
 
     // Accrue fees on token1
     function _update1(uint256 amount) internal {
-        // Only update on this pair if there is a fee
+        // Only update on this pool if there is a fee
         if (amount == 0) return;
-        IERC20(token1).safeTransfer(pairFees, amount);
+        IERC20(token1).safeTransfer(poolFees, amount);
         uint256 _ratio = (amount * 1e18) / totalSupply();
         if (_ratio > 0) {
             index1 += _ratio;
@@ -255,7 +255,7 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
         reserve0Cumulative = reserve0CumulativeLast;
         reserve1Cumulative = reserve1CumulativeLast;
 
-        // if time has elapsed since the last update on the pair, mock the accumulated price values
+        // if time has elapsed since the last update on the pool, mock the accumulated price values
         (uint256 _reserve0, uint256 _reserve1, uint256 _blockTimestampLast) = getReserves();
         if (_blockTimestampLast != blockTimestamp) {
             // subtraction overflow is desired
@@ -375,7 +375,7 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
         address to,
         bytes calldata data
     ) external nonReentrant {
-        if (IPairFactory(factory).isPaused()) revert IsPaused();
+        if (IPoolFactory(factory).isPaused()) revert IsPaused();
         if (amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
         if (amount0Out >= _reserve0 || amount1Out >= _reserve1) revert InsufficientLiquidity();
@@ -388,7 +388,7 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
             if (to == _token0 || to == _token1) revert InvalidTo();
             if (amount0Out > 0) IERC20(_token0).safeTransfer(to, amount0Out); // optimistically transfer tokens
             if (amount1Out > 0) IERC20(_token1).safeTransfer(to, amount1Out); // optimistically transfer tokens
-            if (data.length > 0) IPairCallee(to).hook(_msgSender(), amount0Out, amount1Out, data); // callback, used for flash loans
+            if (data.length > 0) IPoolCallee(to).hook(_msgSender(), amount0Out, amount1Out, data); // callback, used for flash loans
             _balance0 = IERC20(_token0).balanceOf(address(this));
             _balance1 = IERC20(_token1).balanceOf(address(this));
         }
@@ -398,8 +398,8 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
         {
             // scope for reserve{0,1}Adjusted, avoids stack too deep errors
             (address _token0, address _token1) = (token0, token1);
-            if (amount0In > 0) _update0((amount0In * IPairFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token0 and move them out of pool
-            if (amount1In > 0) _update1((amount1In * IPairFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token1 and move them out of pool
+            if (amount0In > 0) _update0((amount0In * IPoolFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token0 and move them out of pool
+            if (amount1In > 0) _update1((amount1In * IPoolFactory(factory).getFee(address(this), stable)) / 10000); // accrue fees for token1 and move them out of pool
             _balance0 = IERC20(_token0).balanceOf(address(this)); // since we removed tokens, we need to reconfirm balances, can also simply use previous balance - amountIn/ 10000, but doing balanceOf again as safety check
             _balance1 = IERC20(_token1).balanceOf(address(this));
             // The curve, either x3y+y3x for stable pools, or x*y for volatile pools
@@ -480,7 +480,7 @@ contract Pair is IPair, ERC20Permit, ReentrancyGuard {
 
     function getAmountOut(uint256 amountIn, address tokenIn) external view returns (uint256) {
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
-        amountIn -= (amountIn * IPairFactory(factory).getFee(address(this), stable)) / 10000; // remove fee from amount received
+        amountIn -= (amountIn * IPoolFactory(factory).getFee(address(this), stable)) / 10000; // remove fee from amount received
         return _getAmountOut(amountIn, tokenIn, _reserve0, _reserve1);
     }
 

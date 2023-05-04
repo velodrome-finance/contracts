@@ -6,8 +6,8 @@ import {IVotingRewardsFactory} from "./interfaces/IVotingRewardsFactory.sol";
 import {IGauge} from "./interfaces/IGauge.sol";
 import {IGaugeFactory} from "./interfaces/IGaugeFactory.sol";
 import {IMinter} from "./interfaces/IMinter.sol";
-import {IPair} from "./interfaces/IPair.sol";
-import {IPairFactory} from "./interfaces/IPairFactory.sol";
+import {IPool} from "./interfaces/IPool.sol";
+import {IPoolFactory} from "./interfaces/IPoolFactory.sol";
 import {IReward} from "./interfaces/IReward.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
@@ -24,7 +24,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     address public immutable forwarder;
     /// @notice The ve token that governs these contracts
     address public immutable ve;
-    /// @notice Factory registry for valid pair / gauge / rewards factories
+    /// @notice Factory registry for valid pool / gauge / rewards factories
     address public immutable factoryRegistry;
     /// @notice Base token of ve contract
     address internal immutable rewardToken;
@@ -319,31 +319,33 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function createGauge(
-        address _pairFactory,
+        address _poolFactory,
         address _votingRewardsFactory,
         address _gaugeFactory,
         address _pool
     ) external nonReentrant returns (address) {
         address sender = _msgSender();
         if (gauges[_pool] != address(0)) revert GaugeExists();
-        address[] memory rewards = new address[](2);
-        bool isPair = IPairFactory(_pairFactory).isPair(_pool);
-        address tokenA;
-        address tokenB;
+        if (!IFactoryRegistry(factoryRegistry).isApproved(_poolFactory, _votingRewardsFactory, _gaugeFactory))
+            revert FactoryPathNotApproved();
 
-        if (isPair) {
-            (tokenA, tokenB) = IPair(_pool).tokens();
-            rewards[0] = tokenA;
-            rewards[1] = tokenB;
+        address[] memory rewards = new address[](2);
+        bool isPool = IPoolFactory(_poolFactory).isPair(_pool); // backwards compatibility to v1
+        address token0;
+        address token1;
+
+        if (isPool) {
+            token0 = IPool(_pool).token0();
+            token1 = IPool(_pool).token1();
+            rewards[0] = token0;
+            rewards[1] = token1;
         }
 
         if (sender != governor) {
-            if (!isPair) revert NotAPool();
-            if (!isWhitelistedToken[tokenA] || !isWhitelistedToken[tokenB]) revert NotWhitelistedToken();
+            if (!isPool) revert NotAPool();
+            if (!isWhitelistedToken[token0] || !isWhitelistedToken[token1]) revert NotWhitelistedToken();
         }
 
-        if (!IFactoryRegistry(factoryRegistry).isApproved(_pairFactory, _votingRewardsFactory, _gaugeFactory))
-            revert FactoryPathNotApproved();
         (address _feeVotingReward, address _bribeVotingReward) = IVotingRewardsFactory(_votingRewardsFactory)
             .createRewards(forwarder, rewards);
 
@@ -352,7 +354,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
             _pool,
             _feeVotingReward,
             rewardToken,
-            isPair
+            isPool
         );
 
         gaugeToFees[_gauge] = _feeVotingReward;
@@ -365,7 +367,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         pools.push(_pool);
 
         emit GaugeCreated(
-            _pairFactory,
+            _poolFactory,
             _votingRewardsFactory,
             _gaugeFactory,
             _pool,
@@ -504,7 +506,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function distribute(uint256 _start, uint256 _finish) external nonReentrant {
-        IMinter(minter).update_period();
+        IMinter(minter).updatePeriod();
         for (uint256 x = _start; x < _finish; x++) {
             _distribute(gauges[pools[x]]);
         }
@@ -512,7 +514,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IVoter
     function distribute(address[] memory _gauges) external nonReentrant {
-        IMinter(minter).update_period();
+        IMinter(minter).updatePeriod();
         uint256 _length = _gauges.length;
         for (uint256 x = 0; x < _length; x++) {
             _distribute(_gauges[x]);
