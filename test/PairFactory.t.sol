@@ -3,29 +3,41 @@ pragma solidity 0.8.19;
 import "./BaseTest.sol";
 
 contract PairFactoryTest is BaseTest {
-    function testCannotSetNextManagerIfNotFeeManager() public {
+    function testCannotSetFeeManagerIfNotFeeManager() public {
         vm.prank(address(owner2));
         vm.expectRevert(IPairFactory.NotFeeManager.selector);
         factory.setFeeManager(address(owner));
     }
 
-    function testFeeManagerCanSetNextManager() public {
+    function testCannotSetFeeManagerToZeroAddress() public {
+        vm.prank(factory.feeManager());
+        vm.expectRevert(IPairFactory.ZeroAddress.selector);
+        factory.setFeeManager(address(0));
+    }
+
+    function testFeeManagerCanSetFeeManager() public {
         factory.setFeeManager(address(owner2));
         assertEq(factory.feeManager(), address(owner2));
     }
 
-    function testNonPauserCannotSetNextPauser() public {
+    function testCannotSetPauserIfNotPauser() public {
         vm.prank(address(owner2));
         vm.expectRevert(IPairFactory.NotPauser.selector);
         factory.setPauser(address(owner2));
     }
 
-    function testPauserCanSetNextPauser() public {
+    function testCannotSetPauserToZeroAddress() public {
+        vm.prank(factory.pauser());
+        vm.expectRevert(IPairFactory.ZeroAddress.selector);
+        factory.setPauser(address(0));
+    }
+
+    function testPauserCanSetPauser() public {
         factory.setPauser(address(owner2));
         assertEq(factory.pauser(), address(owner2));
     }
 
-    function testNonPauserCannotPause() public {
+    function testCannotPauseIfNotPauser() public {
         vm.prank(address(owner2));
         vm.expectRevert(IPairFactory.NotPauser.selector);
         factory.setPauseState(true);

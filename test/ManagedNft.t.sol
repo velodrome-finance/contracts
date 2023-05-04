@@ -1340,7 +1340,7 @@ contract ManagedNftTest is BaseTest {
         escrow.setAllowedManager(address(owner2));
     }
 
-    function testCannotSetAllowedManagerWithZeroAddress() public {
+    function testCannotSetAllowedManagerToZeroAddress() public {
         vm.prank(address(governor));
         vm.expectRevert(IVotingEscrow.ZeroAddress.selector);
         escrow.setAllowedManager(address(0));

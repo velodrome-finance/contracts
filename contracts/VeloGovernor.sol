@@ -42,6 +42,7 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
 
     function setTeam(address newTeam) external {
         if (msg.sender != team) revert NotTeam();
+        if (newTeam == address(0)) revert ZeroAddress();
         team = newTeam;
     }
 
@@ -59,8 +60,8 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     ///      This can be done by transferring ownership of vetoer to a contract that is "bricked"
     ///      i.e. a non-zero address contract that is immutable with no ability to call this function.
     function setVetoer(address _vetoer) external {
-        if (_vetoer == address(0)) revert ZeroAddress();
         if (msg.sender != vetoer) revert NotVetoer();
+        if (_vetoer == address(0)) revert ZeroAddress();
         pendingVetoer = _vetoer;
     }
 

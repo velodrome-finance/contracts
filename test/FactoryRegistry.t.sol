@@ -48,18 +48,18 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(create2Address, address(newPair2));
     }
 
-    function testSetManagedRewardsFactoryIfNotOwner() public {
+    function testCannotSetManagedRewardsFactoryIfNotOwner() public {
         vm.expectRevert("Ownable: caller is not the owner");
         vm.prank(address(owner2));
         factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory2));
     }
 
-    function testSetManagedRewardsFactoryWithZeroAddress() public {
+    function testCannotSetManagedRewardsFactoryToZeroAddress() public {
         vm.expectRevert(IFactoryRegistry.ZeroAddress.selector);
         factoryRegistry.setManagedRewardsFactory(address(0));
     }
 
-    function testSetManagedRewardsFactoryWithSameAddress() public {
+    function testCannotSetManagedRewardsFactoryToSameAddress() public {
         vm.expectRevert(IFactoryRegistry.SameAddress.selector);
         factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory));
     }

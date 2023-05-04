@@ -18,9 +18,16 @@ contract VeloGovernorTest is BaseTest {
         skipAndRoll(1);
     }
 
-    function testCannotSetVetoerWithZeroAddress() public {
+    function testCannotSetVetoerToZeroAddress() public {
+        vm.prank(governor.vetoer());
         vm.expectRevert(VeloGovernor.ZeroAddress.selector);
         governor.setVetoer(address(0));
+    }
+
+    function testCannotSetTeamToZeroAddress() public {
+        vm.prank(governor.team());
+        vm.expectRevert(VeloGovernor.ZeroAddress.selector);
+        governor.setTeam(address(0));
     }
 
     function testCannotSetVetoerIfNotVetoer() public {

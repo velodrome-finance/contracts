@@ -244,6 +244,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
 
     function setTeam(address _team) external {
         if (_msgSender() != team) revert NotTeam();
+        if (_team == address(0)) revert ZeroAddress();
         team = _team;
     }
 

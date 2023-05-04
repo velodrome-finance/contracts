@@ -23,6 +23,7 @@ interface IVoter {
     error TooManyPools();
     error UnequalLengths();
     error ZeroBalance();
+    error ZeroAddress();
 
     event GaugeCreated(
         address indexed pairFactory,

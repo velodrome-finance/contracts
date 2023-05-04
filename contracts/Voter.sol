@@ -132,18 +132,21 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IVoter
     function setGovernor(address _governor) public {
         if (_msgSender() != governor) revert NotGovernor();
+        if (_governor == address(0)) revert ZeroAddress();
         governor = _governor;
     }
 
     /// @inheritdoc IVoter
     function setEpochGovernor(address _epochGovernor) public {
         if (_msgSender() != governor) revert NotGovernor();
+        if (_epochGovernor == address(0)) revert ZeroAddress();
         epochGovernor = _epochGovernor;
     }
 
     /// @inheritdoc IVoter
     function setEmergencyCouncil(address _council) public {
         if (_msgSender() != emergencyCouncil) revert NotEmergencyCouncil();
+        if (_council == address(0)) revert ZeroAddress();
         emergencyCouncil = _council;
     }
 

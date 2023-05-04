@@ -87,6 +87,7 @@ contract PairFactory is IPairFactory {
 
     function setPauser(address _pauser) external {
         if (msg.sender != pauser) revert NotPauser();
+        if (_pauser == address(0)) revert ZeroAddress();
         pauser = _pauser;
         emit SetPauser(_pauser);
     }
@@ -99,6 +100,7 @@ contract PairFactory is IPairFactory {
 
     function setFeeManager(address _feeManager) external {
         if (msg.sender != feeManager) revert NotFeeManager();
+        if (_feeManager == address(0)) revert ZeroAddress();
         feeManager = _feeManager;
         emit SetFeeManager(_feeManager);
     }

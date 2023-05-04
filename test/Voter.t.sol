@@ -478,6 +478,12 @@ contract VoterTest is BaseTest {
         voter.setGovernor(address(owner2));
     }
 
+    function testCannotSetGovernorToZeroAddress() public {
+        vm.prank(address(governor));
+        vm.expectRevert(IVoter.ZeroAddress.selector);
+        voter.setGovernor(address(0));
+    }
+
     function testSetGovernor() public {
         vm.prank(address(governor));
         voter.setGovernor(address(owner2));
@@ -491,6 +497,12 @@ contract VoterTest is BaseTest {
         voter.setGovernor(address(owner2));
     }
 
+    function testCannotSetEpochGovernorToZeroAddress() public {
+        vm.prank(address(governor));
+        vm.expectRevert(IVoter.ZeroAddress.selector);
+        voter.setEpochGovernor(address(0));
+    }
+
     function testSetEpochGovernor() public {
         vm.prank(address(governor));
         voter.setEpochGovernor(address(owner2));
@@ -502,6 +514,12 @@ contract VoterTest is BaseTest {
         vm.prank(address(owner2));
         vm.expectRevert(IVoter.NotEmergencyCouncil.selector);
         voter.setEmergencyCouncil(address(owner2));
+    }
+
+    function testCannotSetEmergencyCouncilToZeroAddress() public {
+        vm.prank(voter.emergencyCouncil());
+        vm.expectRevert(IVoter.ZeroAddress.selector);
+        voter.setEmergencyCouncil(address(0));
     }
 
     function testSetEmergencyCouncil() public {
