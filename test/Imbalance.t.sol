@@ -46,7 +46,7 @@ contract ImbalanceTest is BaseTest {
         votingEscrowMerge();
         deployFactories();
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
-        router = new Router(address(forwarder), address(factory), address(voter), address(WETH));
+        router = new Router(address(forwarder), address(0), address(factory), address(voter), address(WETH));
         deployPoolWithOwner(address(owner));
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));

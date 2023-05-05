@@ -20,14 +20,14 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 contract Router is IRouter, ERC2771Context {
     using SafeERC20 for IERC20;
 
-    /// @dev v2 default pool factory
+    address public immutable v1Factory;
+    /// @dev v2 default pair factory
     address public immutable defaultFactory;
     address public immutable voter;
     IWETH public immutable weth;
     uint256 internal constant MINIMUM_LIQUIDITY = 10**3;
     /// @dev Represents Ether. Used by zapper to determine whether to return assets as ETH/WETH.
     address public constant ETHER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
-    address public constant v1Factory = 0x25CbdDb98b35ab1FF77413456B31EC81A6B6B746;
 
     modifier ensure(uint256 deadline) {
         _ensureDeadline(deadline);
@@ -40,10 +40,12 @@ contract Router is IRouter, ERC2771Context {
 
     constructor(
         address _forwarder,
+        address _v1Factory,
         address _factory,
         address _voter,
         address _weth
     ) ERC2771Context(_forwarder) {
+        v1Factory = _v1Factory;
         defaultFactory = _factory;
         voter = _voter;
         weth = IWETH(_weth);

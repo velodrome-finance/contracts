@@ -21,7 +21,7 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(factory2.allPoolsLength(), 0);
         factory2.setFee(true, 1); // set fee back to 0.01% for old tests
         factory2.setFee(false, 1);
-        router2 = new Router(address(forwarder), address(factory2), address(voter), address(WETH));
+        router2 = new Router(address(forwarder), address(0), address(factory2), address(voter), address(WETH));
         assertEq(address(router2.defaultFactory()), address(factory2));
 
         votingRewardsFactory2 = new VotingRewardsFactory();
