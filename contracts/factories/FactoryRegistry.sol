@@ -2,8 +2,8 @@
 pragma solidity 0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IFactoryRegistry} from "../interfaces/factories/IFactoryRegistry.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
-import {IFactoryRegistry} from "./interfaces/IFactoryRegistry.sol";
 
 /// @author Carter Carlson (@pegahcarter)
 contract FactoryRegistry is IFactoryRegistry, Ownable {

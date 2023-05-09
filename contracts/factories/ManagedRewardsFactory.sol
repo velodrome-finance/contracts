@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IManagedRewardsFactory} from "../interfaces/IManagedRewardsFactory.sol";
+import {IManagedRewardsFactory} from "../interfaces/factories/IManagedRewardsFactory.sol";
 import {FreeManagedReward} from "../rewards/FreeManagedReward.sol";
 import {LockedManagedReward} from "../rewards/LockedManagedReward.sol";
 

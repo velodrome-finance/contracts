@@ -5,7 +5,7 @@ import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IPool} from "./interfaces/IPool.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IPoolCallee} from "./interfaces/IPoolCallee.sol";
-import {IPoolFactory} from "./interfaces/IPoolFactory.sol";
+import {IPoolFactory} from "./interfaces/factories/IPoolFactory.sol";
 import {PoolFees} from "./PoolFees.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";

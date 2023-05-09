@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IPoolFactory} from "../interfaces/IPoolFactory.sol";
+import {IPoolFactory} from "../interfaces/factories/IPoolFactory.sol";
 import {IPool} from "../interfaces/IPool.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 

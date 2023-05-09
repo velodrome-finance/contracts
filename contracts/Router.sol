@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IPool} from "./interfaces/IPool.sol";
-import {IPoolFactory} from "./interfaces/IPoolFactory.sol";
+import {IPoolFactory} from "./interfaces/factories/IPoolFactory.sol";
 import {IPairFactoryV1} from "./interfaces/v1/IPairFactoryV1.sol";
 import {IRouter} from "./interfaces/IRouter.sol";
 import {IVoter} from "./interfaces/IVoter.sol";

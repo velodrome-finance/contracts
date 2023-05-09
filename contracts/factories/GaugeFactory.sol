@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.19;
 
-import {IGaugeFactory} from "../interfaces/IGaugeFactory.sol";
-import {Gauge} from "../Gauge.sol";
+import {IGaugeFactory} from "../interfaces/factories/IGaugeFactory.sol";
+import {Gauge} from "../gauges/Gauge.sol";
 
 contract GaugeFactory is IGaugeFactory {
     function createGauge(
