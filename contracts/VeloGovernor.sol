@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {IVotes} from "./governance/IVotes.sol";
+import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
 
 import {IVetoGovernor} from "./governance/IVetoGovernor.sol";
 import {VetoGovernor} from "./governance/VetoGovernor.sol";
@@ -10,7 +11,7 @@ import {VetoGovernorVotes} from "./governance/VetoGovernorVotes.sol";
 import {VetoGovernorVotesQuorumFraction} from "./governance/VetoGovernorVotesQuorumFraction.sol";
 
 contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorVotes, VetoGovernorVotesQuorumFraction {
-    address public team;
+    address public immutable ve;
     address public vetoer;
     address public pendingVetoer;
     uint256 public constant MAX_PROPOSAL_NUMERATOR = 500; // max 5%
@@ -28,7 +29,7 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
         VetoGovernorVotes(_ve)
         VetoGovernorVotesQuorumFraction(4) // 4%
     {
-        team = msg.sender;
+        ve = address(_ve);
         vetoer = msg.sender;
     }
 
@@ -40,14 +41,8 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
         return (1 weeks);
     }
 
-    function setTeam(address newTeam) external {
-        if (msg.sender != team) revert NotTeam();
-        if (newTeam == address(0)) revert ZeroAddress();
-        team = newTeam;
-    }
-
     function setProposalNumerator(uint256 numerator) external {
-        if (msg.sender != team) revert NotTeam();
+        if (msg.sender != IVotingEscrow(ve).team()) revert NotTeam();
         if (numerator > MAX_PROPOSAL_NUMERATOR) revert ProposalNumeratorTooHigh();
         proposalNumerator = numerator;
     }

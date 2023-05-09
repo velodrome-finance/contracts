@@ -24,12 +24,6 @@ contract VeloGovernorTest is BaseTest {
         governor.setVetoer(address(0));
     }
 
-    function testCannotSetTeamToZeroAddress() public {
-        vm.prank(governor.team());
-        vm.expectRevert(VeloGovernor.ZeroAddress.selector);
-        governor.setTeam(address(0));
-    }
-
     function testCannotSetVetoerIfNotVetoer() public {
         vm.prank(address(owner2));
         vm.expectRevert(VeloGovernor.NotVetoer.selector);
@@ -119,18 +113,6 @@ contract VeloGovernorTest is BaseTest {
     function testGovernorCanCreateGaugesForAnyAddress() public {
         vm.prank(address(governor));
         voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(1));
-    }
-
-    function testCannotSetTeamIfNotTeam() public {
-        vm.prank(address(owner2));
-        vm.expectRevert(VeloGovernor.NotTeam.selector);
-        governor.setTeam(address(owner2));
-    }
-
-    function testSetTeam() public {
-        governor.setTeam(address(owner2));
-
-        assertEq(governor.team(), address(owner2));
     }
 
     function testCannotSetProposalNumeratorAboveMaximum() public {

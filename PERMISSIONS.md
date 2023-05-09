@@ -110,9 +110,6 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
     - Can nudge the Minter to adjust the VELO emissions rate.
 
 #### [VeloGovernor](TODO: live etherscan link)
-- Team
-    - Can set team in VeloGovernor.
-    - Can set proposalNumerator in VeloGovernor.
 - Vetoer
     - Can set vetoer in VeloGovernor.
     - Can veto proposals.
@@ -144,6 +141,7 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
     - Can set artProxy in VotingEscrow.
     - Can enable split functionality for a single address.
     - Can enable split functionality for all addresses.
+    - Can set proposalNumerator in VeloGovernor.
 - AllowedManager
     - Can create managed NFTs in VotingEscrow.
 
