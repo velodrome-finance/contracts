@@ -66,7 +66,7 @@ In addition, the router also supports:
 
 ### FactoryRegistry
 
-Registry of pool, gauge, bribe and managed rewards factories. Contains a default list of factories so swaps via the router will always work. 
+Registry of pool, gauge, bribe and managed rewards factories. Contains a default list of factories so swaps via the router will always work.  Used within Voter to validate new gauge creation.  Reusing the same pool factory address with a new gauge or new bribe rewards factory is not permitted.
 
 
 ## Token

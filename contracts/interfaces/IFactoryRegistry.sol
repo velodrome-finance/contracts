@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 interface IFactoryRegistry {
     error PathAlreadyApproved();
     error PathNotApproved();
+    error PoolFactoryAlreadyApproved();
     error SameAddress();
     error ZeroAddress();
 
@@ -51,4 +52,12 @@ interface IFactoryRegistry {
     /// @dev Callable by onlyOwner
     /// @param _newManagedRewardsFactory address of new managedRewardsFactory
     function setManagedRewardsFactory(address _newManagedRewardsFactory) external;
+
+    /// @notice Get all PoolFactories used by the registry
+    /// @dev The same PoolFactory address cannot be used twice
+    /// @return Array of PoolFactory addresses
+    function poolFactories() external view returns (address[] memory);
+
+    /// @notice Get the length of the poolFactories array
+    function poolFactoriesLength() external view returns (uint256);
 }

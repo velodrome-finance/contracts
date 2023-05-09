@@ -2,12 +2,12 @@
 pragma solidity 0.8.19;
 
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {IFactoryRegistry} from "./interfaces/IFactoryRegistry.sol";
 
 /// @author Carter Carlson (@pegahcarter)
 contract FactoryRegistry is IFactoryRegistry, Ownable {
-    /// @dev poolFactory => votingRewardsFactory => gaugeFactory => true if path exists, else false
-    mapping(address => mapping(address => mapping(address => bool))) private _approved;
+    using EnumerableSet for EnumerableSet.AddressSet;
 
     /// @dev factory to create free and locked rewards for a managed veNFT
     address private _managedRewardsFactory;
@@ -16,6 +16,11 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
     address public immutable fallbackPoolFactory;
     address public immutable fallbackVotingRewardsFactory;
     address public immutable fallbackGaugeFactory;
+
+    EnumerableSet.AddressSet private _poolFactories;
+
+    /// @dev poolFactory => votingRewardsFactory => gaugeFactory => true if path exists, else false
+    mapping(address => mapping(address => mapping(address => bool))) private _approved;
 
     constructor(
         address _fallbackPoolFactory,
@@ -27,6 +32,7 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         fallbackVotingRewardsFactory = _fallbackVotingRewardsFactory;
         fallbackGaugeFactory = _fallbackGaugeFactory;
 
+        _poolFactories.add(_fallbackPoolFactory);
         setManagedRewardsFactory(_newManagedRewardsFactory);
     }
 
@@ -37,7 +43,9 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         address gaugeFactory
     ) public onlyOwner {
         if (_approved[poolFactory][votingRewardsFactory][gaugeFactory]) revert PathAlreadyApproved();
+        if (_poolFactories.contains(poolFactory)) revert PoolFactoryAlreadyApproved();
         _approved[poolFactory][votingRewardsFactory][gaugeFactory] = true;
+        _poolFactories.add(poolFactory);
         emit Approve(poolFactory, votingRewardsFactory, gaugeFactory);
     }
 
@@ -49,6 +57,7 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
     ) external onlyOwner {
         if (!_approved[poolFactory][votingRewardsFactory][gaugeFactory]) revert PathNotApproved();
         delete _approved[poolFactory][votingRewardsFactory][gaugeFactory];
+        _poolFactories.remove(poolFactory);
         emit Unapprove(poolFactory, votingRewardsFactory, gaugeFactory);
     }
 
@@ -77,5 +86,15 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         if (_newManagedRewardsFactory == address(0)) revert ZeroAddress();
         _managedRewardsFactory = _newManagedRewardsFactory;
         emit SetManagedRewardsFactory(_newManagedRewardsFactory);
+    }
+
+    /// @inheritdoc IFactoryRegistry
+    function poolFactories() external view returns (address[] memory) {
+        return _poolFactories.values();
+    }
+
+    /// @inheritdoc IFactoryRegistry
+    function poolFactoriesLength() external view returns (uint256) {
+        return _poolFactories.length();
     }
 }
