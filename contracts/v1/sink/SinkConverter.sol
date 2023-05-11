@@ -2,6 +2,7 @@
 pragma solidity 0.8.19;
 
 import {IVelo} from "../../interfaces/IVelo.sol";
+import {IPool} from "../../interfaces/IPool.sol";
 import {ISinkManager} from "../../interfaces/ISinkManager.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -9,7 +10,9 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 /// @notice Fake pool used which enables routers to swap v1 VELO to v2 VELO
 /// @dev Used in voter v2
 /// @author Carter Carlson (@pegahcarter)
-contract SinkConverter is ERC20, ReentrancyGuard {
+contract SinkConverter is ERC20, IPool, ReentrancyGuard {
+    error SinkConverter_NotImplemented();
+
     ISinkManager public immutable sinkManager;
     IVelo public immutable velo;
     IVelo public immutable veloV2;
@@ -73,5 +76,126 @@ contract SinkConverter is ERC20, ReentrancyGuard {
         // Note; amountIn will only ever be velo v1 token
         (amount0In, amount1In) = token0 == address(veloV2) ? (uint256(0), amountOut) : (amountOut, uint256(0));
         emit Swap(_msgSender(), amount0In, amount1In, amount0Out, amount1Out, to);
+    }
+
+    // --------------------------------------------------------------
+    // IPool overrides for interface support
+    // --------------------------------------------------------------
+
+    function mint(address) external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function burn(address) external pure returns (uint256, uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function claimable0(address) external view returns (uint256) {
+        return 0;
+    }
+
+    function claimable1(address) external view returns (uint256) {
+        return 0;
+    }
+
+    function claimFees() external pure returns (uint256, uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function currentCumulativePrices()
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function getReserves()
+        external
+        pure
+        returns (
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function initialize(
+        address,
+        address,
+        bool
+    ) external {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function metadata()
+        external
+        view
+        returns (
+            uint256 dec0,
+            uint256 dec1,
+            uint256 r0,
+            uint256 r1,
+            bool st,
+            address t0,
+            address t1
+        )
+    {
+        return (18, 18, 0, 0, true, token0, token1);
+    }
+
+    function quote(
+        address,
+        uint256,
+        uint256
+    ) external view returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function reserve0() external view returns (uint256) {
+        return 0;
+    }
+
+    function reserve1() external view returns (uint256) {
+        return 0;
+    }
+
+    function prices(
+        address,
+        uint256,
+        uint256
+    ) external view returns (uint256[] memory) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function sample(
+        address,
+        uint256,
+        uint256,
+        uint256
+    ) external view returns (uint256[] memory) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function skim(address) external {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function stable() external pure returns (bool) {
+        return true;
+    }
+
+    function sync() external pure returns (bool) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function tokens() external view returns (address, address) {
+        return (token0, token1);
     }
 }
