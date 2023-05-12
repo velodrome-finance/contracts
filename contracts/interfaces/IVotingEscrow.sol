@@ -283,26 +283,13 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     function setApprovalForAll(address operator, bool approved) external;
 
     /// @inheritdoc IERC721
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
+    function transferFrom(address from, address to, uint256 tokenId) external;
 
     /// @inheritdoc IERC721
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external;
+    function safeTransferFrom(address from, address to, uint256 tokenId) external;
 
     /// @inheritdoc IERC721
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId,
-        bytes calldata data
-    ) external;
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) external;
 
     /*//////////////////////////////////////////////////////////////
                               ERC165 LOGIC
@@ -362,11 +349,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     /// @param _lockDuration Number of seconds to lock tokens for (rounded down to nearest week)
     /// @param _to Address to deposit
     /// @return TokenId of created veNFT
-    function createLockFor(
-        uint256 _value,
-        uint256 _lockDuration,
-        address _to
-    ) external returns (uint256);
+    function createLockFor(uint256 _value, uint256 _lockDuration, address _to) external returns (uint256);
 
     /// @notice Deposit `_value` additional tokens for `_tokenId` without modifying the unlock time
     /// @param _value Amount of tokens to deposit and add to the lock
@@ -477,11 +460,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     function checkpoints(uint256 tokenId, uint48 index) external view returns (Checkpoint memory);
 
     /// @inheritdoc IVotes
-    function getPastVotes(
-        address account,
-        uint256 tokenId,
-        uint256 timestamp
-    ) external view returns (uint256);
+    function getPastVotes(address account, uint256 tokenId, uint256 timestamp) external view returns (uint256);
 
     /// @inheritdoc IVotes
     function getPastTotalSupply(uint256 timestamp) external view returns (uint256);

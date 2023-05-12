@@ -13,7 +13,8 @@ interface IManagedRewardsFactory {
     /// @param _voter Address of Voter.sol
     /// @return lockedManagedReward Address of LockedManagedReward contract created
     /// @return freeManagedReward   Address of FreeManagedReward contract created
-    function createRewards(address _forwarder, address _voter)
-        external
-        returns (address lockedManagedReward, address freeManagedReward);
+    function createRewards(
+        address _forwarder,
+        address _voter
+    ) external returns (address lockedManagedReward, address freeManagedReward);
 }

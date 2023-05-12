@@ -8,11 +8,7 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 contract SinkManagerFacilitator is ERC721Holder {
     constructor() {}
 
-    function merge(
-        IVotingEscrowV1 _ve,
-        uint256 _from,
-        uint256 _to
-    ) external {
+    function merge(IVotingEscrowV1 _ve, uint256 _from, uint256 _to) external {
         _ve.merge(_from, _to);
     }
 }

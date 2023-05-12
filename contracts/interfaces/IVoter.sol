@@ -119,11 +119,7 @@ interface IVoter {
     /// @param _tokenId     Id of veNFT you are voting with.
     /// @param _poolVote    Array of pools you are voting for.
     /// @param _weights     Weights of pools.
-    function vote(
-        uint256 _tokenId,
-        address[] calldata _poolVote,
-        uint256[] calldata _weights
-    ) external;
+    function vote(uint256 _tokenId, address[] calldata _poolVote, uint256[] calldata _weights) external;
 
     /// @notice Called by users to reset voting state. Required if you wish to make changes to
     ///         veNFT state (e.g. merge, split, deposit into managed etc).
@@ -156,22 +152,14 @@ interface IVoter {
     /// @param _bribes  Array of BribeVotingReward contracts to collect from.
     /// @param _tokens  Array of tokens that are used as bribes.
     /// @param _tokenId Id of veNFT that you wish to claim bribes for.
-    function claimBribes(
-        address[] memory _bribes,
-        address[][] memory _tokens,
-        uint256 _tokenId
-    ) external;
+    function claimBribes(address[] memory _bribes, address[][] memory _tokens, uint256 _tokenId) external;
 
     /// @notice Claim fees for a given NFT.
     /// @dev Utility to help batch fee claims.
     /// @param _fees    Array of FeesVotingReward contracts to collect from.
     /// @param _tokens  Array of tokens that are used as fees.
     /// @param _tokenId Id of veNFT that you wish to claim fees for.
-    function claimFees(
-        address[] memory _fees,
-        address[][] memory _tokens,
-        uint256 _tokenId
-    ) external;
+    function claimFees(address[] memory _fees, address[][] memory _tokens, uint256 _tokenId) external;
 
     /// @notice Set new governor.
     /// @dev Throws if not called by governor.

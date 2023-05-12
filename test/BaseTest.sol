@@ -289,11 +289,7 @@ abstract contract BaseTest is Base, TestOwner {
         }
     }
 
-    function mintToken(
-        address _token,
-        address[] memory _accounts,
-        uint256[] memory _amounts
-    ) public {
+    function mintToken(address _token, address[] memory _accounts, uint256[] memory _amounts) public {
         if (_token == address(WETH)) {
             for (uint256 i = 0; i < _amounts.length; i++) {
                 vm.deal(_accounts[i], _amounts[i]);
@@ -351,11 +347,7 @@ abstract contract BaseTest is Base, TestOwner {
     }
 
     /// @dev Helper function to add rewards to gauge from voter
-    function _addRewardToGauge(
-        address _voter,
-        address _gauge,
-        uint256 _amount
-    ) internal {
+    function _addRewardToGauge(address _voter, address _gauge, uint256 _amount) internal {
         deal(address(VELO), _voter, _amount);
         vm.startPrank(_voter);
         // do not overwrite approvals if already set

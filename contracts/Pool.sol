@@ -24,8 +24,8 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     // Used to denote stable or volatile pool
     bool public stable;
 
-    uint256 internal constant MINIMUM_LIQUIDITY = 10**3;
-    uint256 internal constant MINIMUM_K = 10**10;
+    uint256 internal constant MINIMUM_LIQUIDITY = 10 ** 3;
+    uint256 internal constant MINIMUM_K = 10 ** 10;
 
     address public token0;
     address public token1;
@@ -69,11 +69,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     constructor() ERC20("", "") ERC20Permit("") {}
 
-    function initialize(
-        address _token0,
-        address _token1,
-        bool _stable
-    ) external {
+    function initialize(address _token0, address _token1, bool _stable) external {
         if (factory != address(0)) revert FactoryAlreadySet();
         factory = _msgSender();
         _voter = IPoolFactory(factory).voter();
@@ -89,8 +85,8 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
             _symbol = string(abi.encodePacked("vAMMV2-", symbol0, "/", symbol1));
         }
 
-        decimals0 = 10**ERC20(_token0).decimals();
-        decimals1 = 10**ERC20(_token1).decimals();
+        decimals0 = 10 ** ERC20(_token0).decimals();
+        decimals1 = 10 ** ERC20(_token1).decimals();
 
         observations.push(Observation(block.timestamp, 0, 0));
     }
@@ -116,15 +112,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     function metadata()
         external
         view
-        returns (
-            uint256 dec0,
-            uint256 dec1,
-            uint256 r0,
-            uint256 r1,
-            bool st,
-            address t0,
-            address t1
-        )
+        returns (uint256 dec0, uint256 dec1, uint256 r0, uint256 r1, bool st, address t0, address t1)
     {
         return (decimals0, decimals1, reserve0, reserve1, stable, token0, token1);
     }
@@ -202,27 +190,14 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
-    function getReserves()
-        public
-        view
-        returns (
-            uint256 _reserve0,
-            uint256 _reserve1,
-            uint256 _blockTimestampLast
-        )
-    {
+    function getReserves() public view returns (uint256 _reserve0, uint256 _reserve1, uint256 _blockTimestampLast) {
         _reserve0 = reserve0;
         _reserve1 = reserve1;
         _blockTimestampLast = blockTimestampLast;
     }
 
     // update reserves and, on the first call per block, price accumulators
-    function _update(
-        uint256 balance0,
-        uint256 balance1,
-        uint256 _reserve0,
-        uint256 _reserve1
-    ) internal {
+    function _update(uint256 balance0, uint256 balance1, uint256 _reserve0, uint256 _reserve1) internal {
         uint256 blockTimestamp = block.timestamp;
         uint256 timeElapsed = blockTimestamp - blockTimestampLast;
         if (timeElapsed > 0 && _reserve0 != 0 && _reserve1 != 0) {
@@ -245,11 +220,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     function currentCumulativePrices()
         public
         view
-        returns (
-            uint256 reserve0Cumulative,
-            uint256 reserve1Cumulative,
-            uint256 blockTimestamp
-        )
+        returns (uint256 reserve0Cumulative, uint256 reserve1Cumulative, uint256 blockTimestamp)
     {
         blockTimestamp = block.timestamp;
         reserve0Cumulative = reserve0CumulativeLast;
@@ -266,11 +237,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     // provides twap price with user configured granularity, up to the full window size
-    function quote(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 granularity
-    ) external view returns (uint256 amountOut) {
+    function quote(address tokenIn, uint256 amountIn, uint256 granularity) external view returns (uint256 amountOut) {
         uint256[] memory _prices = sample(tokenIn, amountIn, granularity, 1);
         uint256 priceAverageCumulative;
         uint256 _length = _prices.length;
@@ -281,11 +248,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     // returns a memory set of twap prices
-    function prices(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 points
-    ) external view returns (uint256[] memory) {
+    function prices(address tokenIn, uint256 amountIn, uint256 points) external view returns (uint256[] memory) {
         return sample(tokenIn, amountIn, points, 1);
     }
 
@@ -369,12 +332,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     }
 
     // this low-level function should be called from a contract which performs important safety checks
-    function swap(
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address to,
-        bytes calldata data
-    ) external nonReentrant {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata data) external nonReentrant {
         if (IPoolFactory(factory).isPaused()) revert IsPaused();
         if (amount0Out == 0 && amount1Out == 0) revert InsufficientOutputAmount();
         (uint256 _reserve0, uint256 _reserve1) = (reserve0, reserve1);
@@ -432,11 +390,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return (3 * x0 * ((y * y) / 1e18)) / 1e18 + ((((x0 * x0) / 1e18) * x0) / 1e18);
     }
 
-    function _get_y(
-        uint256 x0,
-        uint256 xy,
-        uint256 y
-    ) internal view returns (uint256) {
+    function _get_y(uint256 x0, uint256 xy, uint256 y) internal view returns (uint256) {
         for (uint256 i = 0; i < 255; i++) {
             uint256 k = _f(x0, y);
             if (k < xy) {
@@ -529,11 +483,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return _symbol;
     }
 
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256
-    ) internal override {
+    function _beforeTokenTransfer(address from, address to, uint256) internal override {
         _updateFor(from);
         _updateFor(to);
     }

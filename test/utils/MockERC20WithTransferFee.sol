@@ -7,11 +7,7 @@ contract MockERC20WithTransferFee is ERC20 {
     uint8 private _decimals;
     uint256 public fee = 69;
 
-    constructor(
-        string memory name_,
-        string memory symbol_,
-        uint256 decimals_
-    ) ERC20(name_, symbol_) {
+    constructor(string memory name_, string memory symbol_, uint256 decimals_) ERC20(name_, symbol_) {
         _decimals = uint8(decimals_);
     }
 
@@ -19,11 +15,7 @@ contract MockERC20WithTransferFee is ERC20 {
         return _decimals;
     }
 
-    function _afterTokenTransfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override {
+    function _afterTokenTransfer(address from, address to, uint256 amount) internal override {
         // only do fees if not in a _mint or _burn
         if (from == address(0) || to == address(0)) return;
 

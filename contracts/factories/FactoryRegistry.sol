@@ -37,11 +37,7 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
     }
 
     /// @inheritdoc IFactoryRegistry
-    function approve(
-        address poolFactory,
-        address votingRewardsFactory,
-        address gaugeFactory
-    ) public onlyOwner {
+    function approve(address poolFactory, address votingRewardsFactory, address gaugeFactory) public onlyOwner {
         if (_approved[poolFactory][votingRewardsFactory][gaugeFactory]) revert PathAlreadyApproved();
         if (_poolFactories.contains(poolFactory)) revert PoolFactoryAlreadyApproved();
         _approved[poolFactory][votingRewardsFactory][gaugeFactory] = true;
@@ -50,11 +46,7 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
     }
 
     /// @inheritdoc IFactoryRegistry
-    function unapprove(
-        address poolFactory,
-        address votingRewardsFactory,
-        address gaugeFactory
-    ) external onlyOwner {
+    function unapprove(address poolFactory, address votingRewardsFactory, address gaugeFactory) external onlyOwner {
         if (!_approved[poolFactory][votingRewardsFactory][gaugeFactory]) revert PathNotApproved();
         delete _approved[poolFactory][votingRewardsFactory][gaugeFactory];
         _poolFactories.remove(poolFactory);

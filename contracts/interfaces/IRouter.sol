@@ -53,20 +53,10 @@ interface IRouter {
     /// @param tokenB Address of token to query
     /// @param stable Boolean to indicate if the pool is stable or volatile
     /// @param factory Address of factory which created the pool
-    function poolFor(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        address factory
-    ) external view returns (address pool);
+    function poolFor(address tokenA, address tokenB, bool stable, address factory) external view returns (address pool);
 
     /// @notice Wraps around poolFor(tokenA,tokenB,stable,factory) for backwards compatibility to Velodrome v1
-    function pairFor(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        address factory
-    ) external view returns (address pool);
+    function pairFor(address tokenA, address tokenB, bool stable, address factory) external view returns (address pool);
 
     function getReserves(
         address tokenA,
@@ -86,14 +76,7 @@ interface IRouter {
         address _factory,
         uint256 amountADesired,
         uint256 amountBDesired
-    )
-        external
-        view
-        returns (
-            uint256 amountA,
-            uint256 amountB,
-            uint256 liquidity
-        );
+    ) external view returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
     function quoteRemoveLiquidity(
         address tokenA,
@@ -113,13 +96,7 @@ interface IRouter {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    )
-        external
-        returns (
-            uint256 amountA,
-            uint256 amountB,
-            uint256 liquidity
-        );
+    ) external returns (uint256 amountA, uint256 amountB, uint256 liquidity);
 
     function addLiquidityETH(
         address token,
@@ -129,14 +106,7 @@ interface IRouter {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    )
-        external
-        payable
-        returns (
-            uint256 amountToken,
-            uint256 amountETH,
-            uint256 liquidity
-        );
+    ) external payable returns (uint256 amountToken, uint256 amountETH, uint256 liquidity);
 
     // **** REMOVE LIQUIDITY ****
 
@@ -295,15 +265,7 @@ interface IRouter {
         uint256 amountInB,
         Route[] calldata routesA,
         Route[] calldata routesB
-    )
-        external
-        view
-        returns (
-            uint256 amountOutMinA,
-            uint256 amountOutMinB,
-            uint256 amountAMin,
-            uint256 amountBMin
-        );
+    ) external view returns (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin);
 
     /// @notice Used to generate params required for zapping out.
     ///         Zap out => swap then add liquidity.
@@ -328,15 +290,7 @@ interface IRouter {
         uint256 liquidity,
         Route[] calldata routesA,
         Route[] calldata routesB
-    )
-        external
-        view
-        returns (
-            uint256 amountOutMinA,
-            uint256 amountOutMinB,
-            uint256 amountAMin,
-            uint256 amountBMin
-        );
+    ) external view returns (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin);
 
     /// @notice Used by zapper to determine appropriate ratio of A to B to deposit liquidity. Assumes stable pool.
     /// @dev Returns stable liquidity ratio of B to (A + B).

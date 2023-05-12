@@ -20,11 +20,7 @@ contract PoolFees {
     }
 
     /// @notice Allow the pool to transfer fees to users
-    function claimFeesFor(
-        address _recipient,
-        uint256 _amount0,
-        uint256 _amount1
-    ) external {
+    function claimFeesFor(address _recipient, uint256 _amount0, uint256 _amount1) external {
         if (msg.sender != pool) revert NotPool();
         if (_amount0 > 0) IERC20(token0).safeTransfer(_recipient, _amount0);
         if (_amount1 > 0) IERC20(token1).safeTransfer(_recipient, _amount1);

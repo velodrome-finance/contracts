@@ -192,11 +192,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
      * Note: this can be implemented in a number of ways, for example by reading the delegated balance from one (or
      * multiple), {ERC20Votes} tokens.
      */
-    function getVotes(
-        address account,
-        uint256 tokenId,
-        uint256 timepoint
-    ) public view virtual returns (uint256);
+    function getVotes(address account, uint256 tokenId, uint256 timepoint) public view virtual returns (uint256);
 
     /**
      * @notice module:reputation
@@ -249,11 +245,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
      *
      * Emits a {VoteCast} event.
      */
-    function castVote(
-        uint256 proposalId,
-        uint256 tokenId,
-        uint8 support
-    ) public virtual returns (uint256 balance);
+    function castVote(uint256 proposalId, uint256 tokenId, uint8 support) public virtual returns (uint256 balance);
 
     /**
      * @dev Cast a vote with a reason

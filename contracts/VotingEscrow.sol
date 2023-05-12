@@ -64,11 +64,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     /// @param _forwarder address of trusted forwarder
     /// @param _token `VELO` token address
     /// @param _factoryRegistry Factory Registry address
-    constructor(
-        address _forwarder,
-        address _token,
-        address _factoryRegistry
-    ) ERC2771Context(_forwarder) {
+    constructor(address _forwarder, address _token, address _factoryRegistry) ERC2771Context(_forwarder) {
         forwarder = _forwarder;
         token = _token;
         factoryRegistry = _factoryRegistry;
@@ -351,12 +347,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
 
     /* TRANSFER FUNCTIONS */
 
-    function _transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        address _sender
-    ) internal {
+    function _transferFrom(address _from, address _to, uint256 _tokenId, address _sender) internal {
         if (escrowType[_tokenId] == EscrowType.LOCKED) revert NotManagedOrNormalNFT();
         // Check requirements
         if (!_isApprovedOrOwner(_sender, _tokenId)) revert NotApprovedOrOwner();
@@ -376,20 +367,12 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     }
 
     /// @inheritdoc IVotingEscrow
-    function transferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external {
+    function transferFrom(address _from, address _to, uint256 _tokenId) external {
         _transferFrom(_from, _to, _tokenId, _msgSender());
     }
 
     /// @inheritdoc IVotingEscrow
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external {
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external {
         safeTransferFrom(_from, _to, _tokenId, "");
     }
 
@@ -405,12 +388,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     }
 
     /// @inheritdoc IVotingEscrow
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId,
-        bytes memory _data
-    ) public {
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId, bytes memory _data) public {
         address sender = _msgSender();
         _transferFrom(_from, _to, _tokenId, sender);
 
@@ -593,11 +571,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     /// @param _tokenId NFT token ID. No user checkpoint if 0
     /// @param _oldLocked Pevious locked amount / end lock time for the user
     /// @param _newLocked New locked amount / end lock time for the user
-    function _checkpoint(
-        uint256 _tokenId,
-        LockedBalance memory _oldLocked,
-        LockedBalance memory _newLocked
-    ) internal {
+    function _checkpoint(uint256 _tokenId, LockedBalance memory _oldLocked, LockedBalance memory _newLocked) internal {
         UserPoint memory uOld;
         UserPoint memory uNew;
         int128 oldDslope = 0;
@@ -816,11 +790,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     /// @param _value Amount to deposit
     /// @param _lockDuration Number of seconds to lock tokens for (rounded down to nearest week)
     /// @param _to Address to deposit
-    function _createLock(
-        uint256 _value,
-        uint256 _lockDuration,
-        address _to
-    ) internal returns (uint256) {
+    function _createLock(uint256 _value, uint256 _lockDuration, address _to) internal returns (uint256) {
         uint256 unlockTime = ((block.timestamp + _lockDuration) / WEEK) * WEEK; // Locktime is rounded down to weeks
 
         if (_value == 0) revert ZeroAmount();
@@ -840,19 +810,11 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     }
 
     /// @inheritdoc IVotingEscrow
-    function createLockFor(
-        uint256 _value,
-        uint256 _lockDuration,
-        address _to
-    ) external nonReentrant returns (uint256) {
+    function createLockFor(uint256 _value, uint256 _lockDuration, address _to) external nonReentrant returns (uint256) {
         return _createLock(_value, _lockDuration, _to);
     }
 
-    function _increaseAmountFor(
-        uint256 _tokenId,
-        uint256 _value,
-        DepositType _depositType
-    ) internal {
+    function _increaseAmountFor(uint256 _tokenId, uint256 _value, DepositType _depositType) internal {
         EscrowType _escrowType = escrowType[_tokenId];
         if (_escrowType == EscrowType.LOCKED) revert NotManagedOrNormalNFT();
 
@@ -978,11 +940,10 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     }
 
     /// @inheritdoc IVotingEscrow
-    function split(uint256 _from, uint256 _amount)
-        external
-        nonReentrant
-        returns (uint256 _tokenId1, uint256 _tokenId2)
-    {
+    function split(
+        uint256 _from,
+        uint256 _amount
+    ) external nonReentrant returns (uint256 _tokenId1, uint256 _tokenId2) {
         address sender = _msgSender();
         address owner = _ownerOf(_from);
         if (!canSplit[owner] && !canSplit[address(0)]) revert SplitNotAllowed();
@@ -1158,11 +1119,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     }
 
     /// @inheritdoc IVotingEscrow
-    function getPastVotes(
-        address _account,
-        uint256 _tokenId,
-        uint256 _timestamp
-    ) external view returns (uint256) {
+    function getPastVotes(address _account, uint256 _tokenId, uint256 _timestamp) external view returns (uint256) {
         return DelegationLogicLibrary.getPastVotes(numCheckpoints, _checkpoints, _account, _tokenId, _timestamp);
     }
 
@@ -1175,11 +1132,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
                              DAO VOTING LOGIC
     //////////////////////////////////////////////////////////////*/
 
-    function _checkpointDelegator(
-        uint256 _delegator,
-        uint256 _delegatee,
-        address _owner
-    ) internal {
+    function _checkpointDelegator(uint256 _delegator, uint256 _delegatee, address _owner) internal {
         DelegationLogicLibrary.checkpointDelegator(
             _locked,
             numCheckpoints,
@@ -1191,11 +1144,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         );
     }
 
-    function _checkpointDelegatee(
-        uint256 _delegatee,
-        uint256 balance_,
-        bool _increase
-    ) internal {
+    function _checkpointDelegatee(uint256 _delegatee, uint256 balance_, bool _increase) internal {
         DelegationLogicLibrary.checkpointDelegatee(numCheckpoints, _checkpoints, _delegatee, balance_, _increase);
     }
 

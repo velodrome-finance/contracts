@@ -17,22 +17,14 @@ interface IFactoryRegistry {
     /// @param poolFactory .
     /// @param votingRewardsFactory .
     /// @param gaugeFactory .
-    function approve(
-        address poolFactory,
-        address votingRewardsFactory,
-        address gaugeFactory
-    ) external;
+    function approve(address poolFactory, address votingRewardsFactory, address gaugeFactory) external;
 
     /// @notice Unapprove a set of factories used in Velodrome Protocol
     /// @dev Callable by onlyOwner
     /// @param poolFactory .
     /// @param votingRewardsFactory .
     /// @param gaugeFactory .
-    function unapprove(
-        address poolFactory,
-        address votingRewardsFactory,
-        address gaugeFactory
-    ) external;
+    function unapprove(address poolFactory, address votingRewardsFactory, address gaugeFactory) external;
 
     /// @notice Check if a set of factories are approved for use in Velodrome Protocol
     /// @param poolFactory .

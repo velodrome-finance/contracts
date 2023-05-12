@@ -25,7 +25,7 @@ contract Router is IRouter, ERC2771Context {
     address public immutable defaultFactory;
     address public immutable voter;
     IWETH public immutable weth;
-    uint256 internal constant MINIMUM_LIQUIDITY = 10**3;
+    uint256 internal constant MINIMUM_LIQUIDITY = 10 ** 3;
     /// @dev Represents Ether. Used by zapper to determine whether to return assets as ETH/WETH.
     address public constant ETHER = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -72,12 +72,7 @@ contract Router is IRouter, ERC2771Context {
     }
 
     /// @inheritdoc IRouter
-    function poolFor(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        address _factory
-    ) public view returns (address pool) {
+    function poolFor(address tokenA, address tokenB, bool stable, address _factory) public view returns (address pool) {
         address _defaultFactory = defaultFactory;
         address factory = _factory == address(0) ? _defaultFactory : _factory;
         address velo = IPoolFactory(_defaultFactory).velo();
@@ -160,15 +155,7 @@ contract Router is IRouter, ERC2771Context {
         address _factory,
         uint256 amountADesired,
         uint256 amountBDesired
-    )
-        public
-        view
-        returns (
-            uint256 amountA,
-            uint256 amountB,
-            uint256 liquidity
-        )
-    {
+    ) public view returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         address _pool = IPoolFactory(_factory).getPair(tokenA, tokenB, stable);
         (uint256 reserveA, uint256 reserveB) = (0, 0);
         uint256 _totalSupply = 0;
@@ -255,15 +242,7 @@ contract Router is IRouter, ERC2771Context {
         uint256 amountBMin,
         address to,
         uint256 deadline
-    )
-        public
-        ensure(deadline)
-        returns (
-            uint256 amountA,
-            uint256 amountB,
-            uint256 liquidity
-        )
-    {
+    ) public ensure(deadline) returns (uint256 amountA, uint256 amountB, uint256 liquidity) {
         (amountA, amountB) = _addLiquidity(
             tokenA,
             tokenB,
@@ -287,16 +266,7 @@ contract Router is IRouter, ERC2771Context {
         uint256 amountETHMin,
         address to,
         uint256 deadline
-    )
-        external
-        payable
-        ensure(deadline)
-        returns (
-            uint256 amountToken,
-            uint256 amountETH,
-            uint256 liquidity
-        )
-    {
+    ) external payable ensure(deadline) returns (uint256 amountToken, uint256 amountETH, uint256 liquidity) {
         (amountToken, amountETH) = _addLiquidity(
             token,
             address(weth),
@@ -386,11 +356,7 @@ contract Router is IRouter, ERC2771Context {
 
     // **** SWAP ****
     // requires the initial amount to have already been sent to the first pool
-    function _swap(
-        uint256[] memory amounts,
-        Route[] memory routes,
-        address _to
-    ) internal virtual {
+    function _swap(uint256[] memory amounts, Route[] memory routes, address _to) internal virtual {
         uint256 _length = routes.length;
         for (uint256 i = 0; i < _length; i++) {
             (address token0, ) = sortTokens(routes[i].from, routes[i].to);
@@ -684,12 +650,7 @@ contract Router is IRouter, ERC2771Context {
     }
 
     /// @dev Handles swaps internally for zaps.
-    function _internalSwap(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        Route[] memory routes
-    ) internal {
+    function _internalSwap(address tokenIn, uint256 amountIn, uint256 amountOutMin, Route[] memory routes) internal {
         uint256[] memory amounts = getAmountsOut(amountIn, routes);
         if (amounts[amounts.length - 1] < amountOutMin) revert InsufficientOutputAmount();
         address pool = poolFor(routes[0].from, routes[0].to, routes[0].stable, routes[0].factory);
@@ -748,16 +709,7 @@ contract Router is IRouter, ERC2771Context {
         uint256 amountInB,
         Route[] calldata routesA,
         Route[] calldata routesB
-    )
-        external
-        view
-        returns (
-            uint256 amountOutMinA,
-            uint256 amountOutMinB,
-            uint256 amountAMin,
-            uint256 amountBMin
-        )
-    {
+    ) external view returns (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin) {
         amountOutMinA = amountInA;
         amountOutMinB = amountInB;
         uint256[] memory amounts;
@@ -781,16 +733,7 @@ contract Router is IRouter, ERC2771Context {
         uint256 liquidity,
         Route[] calldata routesA,
         Route[] calldata routesB
-    )
-        external
-        view
-        returns (
-            uint256 amountOutMinA,
-            uint256 amountOutMinB,
-            uint256 amountAMin,
-            uint256 amountBMin
-        )
-    {
+    ) external view returns (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin) {
         (amountAMin, amountBMin) = quoteRemoveLiquidity(tokenA, tokenB, stable, _factory, liquidity);
         amountOutMinA = amountAMin;
         amountOutMinB = amountBMin;
@@ -832,8 +775,8 @@ contract Router is IRouter, ERC2771Context {
     ) external view returns (uint256 ratio) {
         IPool pool = IPool(poolFor(tokenA, tokenB, true, _factory));
 
-        uint256 decimalsA = 10**IERC20Metadata(tokenA).decimals();
-        uint256 decimalsB = 10**IERC20Metadata(tokenB).decimals();
+        uint256 decimalsA = 10 ** IERC20Metadata(tokenA).decimals();
+        uint256 decimalsB = 10 ** IERC20Metadata(tokenB).decimals();
 
         uint256 investment = decimalsA;
         uint256 out = pool.getAmountOut(investment, tokenA);
@@ -854,22 +797,13 @@ contract Router is IRouter, ERC2771Context {
         if (!success) revert ETHTransferFailed();
     }
 
-    function _safeTransfer(
-        address token,
-        address to,
-        uint256 value
-    ) internal {
+    function _safeTransfer(address token, address to, uint256 value) internal {
         require(token.code.length > 0);
         (bool success, bytes memory data) = token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, value));
         require(success && (data.length == 0 || abi.decode(data, (bool))));
     }
 
-    function _safeTransferFrom(
-        address token,
-        address from,
-        address to,
-        uint256 value
-    ) internal {
+    function _safeTransferFrom(address token, address from, address to, uint256 value) internal {
         require(token.code.length > 0);
         (bool success, bytes memory data) = token.call(
             abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, value)

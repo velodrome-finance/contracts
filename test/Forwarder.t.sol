@@ -57,11 +57,7 @@ contract ForwarderTest is BaseTest {
         assertTrue(escrow.voted(1));
     }
 
-    function handleRequest(
-        address _to,
-        bytes memory payload,
-        bytes32 requestType
-    ) internal {
+    function handleRequest(address _to, bytes memory payload, bytes32 requestType) internal {
         IForwarder.ForwardRequest memory request = IForwarder.ForwardRequest({
             from: sender,
             to: _to,

@@ -24,7 +24,9 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     error ProposalNumeratorTooHigh();
     error ZeroAddress();
 
-    constructor(IVotes _ve)
+    constructor(
+        IVotes _ve
+    )
         VetoGovernor("Velodrome Governor")
         VetoGovernorVotes(_ve)
         VetoGovernorVotesQuorumFraction(4) // 4%

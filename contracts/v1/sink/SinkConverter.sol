@@ -54,12 +54,7 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
 
     /// @dev low-level function which works like Pool.swap() which assumes
     ///         that the tokenIn has already been transferred to the pool
-    function swap(
-        uint256 amount0Out,
-        uint256 amount1Out,
-        address to,
-        bytes calldata /* data */
-    ) external nonReentrant {
+    function swap(uint256 amount0Out, uint256 amount1Out, address to, bytes calldata /* data */) external nonReentrant {
         // Only allow amount out of veloV2
         uint256 amountOut = token0 == address(veloV2) ? amount0Out : amount1Out;
         require(amountOut > 0, "SinkConverter: nothing to convert");

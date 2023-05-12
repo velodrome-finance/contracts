@@ -25,11 +25,7 @@ interface IVotingEscrowV1 {
 
     function create_lock(uint256 _amount, uint256 _end) external returns (uint256 tokenId);
 
-    function create_lock_for(
-        uint256 _amount,
-        uint256 _end,
-        address _to
-    ) external returns (uint256 tokenId);
+    function create_lock_for(uint256 _amount, uint256 _end, address _to) external returns (uint256 tokenId);
 
     function approve(address who, uint256 tokenId) external;
 
@@ -41,9 +37,5 @@ interface IVotingEscrowV1 {
 
     function merge(uint256 _from, uint256 _to) external;
 
-    function safeTransferFrom(
-        address _from,
-        address _to,
-        uint256 _tokenId
-    ) external;
+    function safeTransferFrom(address _from, address _to, uint256 _tokenId) external;
 }

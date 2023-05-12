@@ -8,19 +8,11 @@ contract TestOwner {
                                IERC20
     //////////////////////////////////////////////////////////////*/
 
-    function approve(
-        address _token,
-        address _spender,
-        uint256 _amount
-    ) public {
+    function approve(address _token, address _spender, uint256 _amount) public {
         IERC20(_token).approve(_spender, _amount);
     }
 
-    function transfer(
-        address _token,
-        address _to,
-        uint256 _amount
-    ) public {
+    function transfer(address _token, address _to, uint256 _amount) public {
         IERC20(_token).transfer(_to, _amount);
     }
 

@@ -17,11 +17,7 @@ interface IVotes {
      * @dev Returns the amount of votes that `tokenId` had at a specific moment in the past.
      *      If the account passed in is not the owner, returns 0.
      */
-    function getPastVotes(
-        address account,
-        uint256 tokenId,
-        uint256 timepoint
-    ) external view returns (uint256);
+    function getPastVotes(address account, uint256 tokenId, uint256 timepoint) external view returns (uint256);
 
     /**
      * @dev Returns the total supply of votes available at a specific moment in the past. If the `clock()` is

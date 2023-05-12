@@ -79,11 +79,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     /// @dev Gauge => Amount claimable
     mapping(address => uint256) public claimable;
 
-    constructor(
-        address _forwarder,
-        address _ve,
-        address _factoryRegistry
-    ) ERC2771Context(_forwarder) {
+    constructor(address _forwarder, address _ve, address _factoryRegistry) ERC2771Context(_forwarder) {
         forwarder = _forwarder;
         ve = _ve;
         factoryRegistry = _factoryRegistry;
@@ -206,12 +202,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         _vote(_tokenId, _weight, _poolVote, _weights);
     }
 
-    function _vote(
-        uint256 _tokenId,
-        uint256 _weight,
-        address[] memory _poolVote,
-        uint256[] memory _weights
-    ) internal {
+    function _vote(uint256 _tokenId, uint256 _weight, address[] memory _poolVote, uint256[] memory _weights) internal {
         _reset(_tokenId);
         uint256 _poolCnt = _poolVote.length;
         uint256 _totalVoteWeight = 0;
@@ -467,11 +458,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVoter
-    function claimBribes(
-        address[] memory _bribes,
-        address[][] memory _tokens,
-        uint256 _tokenId
-    ) external {
+    function claimBribes(address[] memory _bribes, address[][] memory _tokens, uint256 _tokenId) external {
         if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
         uint256 _length = _bribes.length;
         for (uint256 i = 0; i < _length; i++) {
@@ -480,11 +467,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVoter
-    function claimFees(
-        address[] memory _fees,
-        address[][] memory _tokens,
-        uint256 _tokenId
-    ) external {
+    function claimFees(address[] memory _fees, address[][] memory _tokens, uint256 _tokenId) external {
         if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
         uint256 _length = _fees.length;
         for (uint256 i = 0; i < _length; i++) {

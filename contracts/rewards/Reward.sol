@@ -223,11 +223,7 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     function getReward(uint256 tokenId, address[] memory tokens) external virtual nonReentrant {}
 
     /// @dev used with all getReward implementations
-    function _getReward(
-        address recipient,
-        uint256 tokenId,
-        address[] memory tokens
-    ) internal {
+    function _getReward(address recipient, uint256 tokenId, address[] memory tokens) internal {
         uint256 _length = tokens.length;
         for (uint256 i = 0; i < _length; i++) {
             uint256 _reward = earned(tokens[i], tokenId);
@@ -242,11 +238,7 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     function notifyRewardAmount(address token, uint256 amount) external virtual nonReentrant {}
 
     /// @dev used within all notifyRewardAmount implementations
-    function _notifyRewardAmount(
-        address sender,
-        address token,
-        uint256 amount
-    ) internal {
+    function _notifyRewardAmount(address sender, address token, uint256 amount) internal {
         if (amount == 0) revert ZeroAmount();
         IERC20(token).safeTransferFrom(sender, address(this), amount);
 

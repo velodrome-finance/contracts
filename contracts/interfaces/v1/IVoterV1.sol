@@ -18,9 +18,5 @@ interface IVoterV1 {
 
     function poke(uint256 _tokenId) external;
 
-    function vote(
-        uint256 _tokenId,
-        address[] memory _pools,
-        uint256[] memory _weights
-    ) external;
+    function vote(uint256 _tokenId, address[] memory _pools, uint256[] memory _weights) external;
 }

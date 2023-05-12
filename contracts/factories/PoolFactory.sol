@@ -53,29 +53,17 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function getPool(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) external view returns (address) {
+    function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address) {
         return fee > 1 ? address(0) : fee == 1 ? _getPool[tokenA][tokenB][true] : _getPool[tokenA][tokenB][false];
     }
 
     /// @inheritdoc IPoolFactory
-    function getPool(
-        address tokenA,
-        address tokenB,
-        bool stable
-    ) external view returns (address) {
+    function getPool(address tokenA, address tokenB, bool stable) external view returns (address) {
         return _getPool[tokenA][tokenB][stable];
     }
 
     /// @inheritdoc IPoolFactory
-    function getPair(
-        address tokenA,
-        address tokenB,
-        bool stable
-    ) external view returns (address) {
+    function getPair(address tokenA, address tokenB, bool stable) external view returns (address) {
         return _getPool[tokenA][tokenB][stable];
     }
 
@@ -97,11 +85,7 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function setSinkConverter(
-        address _sinkConverter,
-        address _velo,
-        address _veloV2
-    ) external {
+    function setSinkConverter(address _sinkConverter, address _velo, address _veloV2) external {
         if (msg.sender != sinkConverter) revert NotSinkConverter();
         sinkConverter = _sinkConverter;
         velo = _velo;
@@ -171,22 +155,14 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function createPool(
-        address tokenA,
-        address tokenB,
-        uint24 fee
-    ) external returns (address pool) {
+    function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool) {
         if (fee > 1) revert FeeInvalid();
         bool stable = fee == 1;
         return createPool(tokenA, tokenB, stable);
     }
 
     /// @inheritdoc IPoolFactory
-    function createPool(
-        address tokenA,
-        address tokenB,
-        bool stable
-    ) public returns (address pool) {
+    function createPool(address tokenA, address tokenB, bool stable) public returns (address pool) {
         if (tokenA == tokenB) revert SameAddress();
         (address token0, address token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
         if (token0 == address(0)) revert ZeroAddress();
@@ -202,11 +178,7 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function createPair(
-        address tokenA,
-        address tokenB,
-        bool stable
-    ) external returns (address pool) {
+    function createPair(address tokenA, address tokenB, bool stable) external returns (address pool) {
         return createPool(tokenA, tokenB, stable);
     }
 }
