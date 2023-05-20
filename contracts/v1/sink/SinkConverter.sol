@@ -97,59 +97,27 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         revert SinkConverter_NotImplemented();
     }
 
-    function currentCumulativePrices()
-        external
-        view
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
+    function currentCumulativePrices() external view returns (uint256, uint256, uint256) {
         revert SinkConverter_NotImplemented();
     }
 
-    function getReserves()
-        external
-        pure
-        returns (
-            uint256,
-            uint256,
-            uint256
-        )
-    {
+    function getReserves() external pure returns (uint256, uint256, uint256) {
         revert SinkConverter_NotImplemented();
     }
 
-    function initialize(
-        address,
-        address,
-        bool
-    ) external {
+    function initialize(address, address, bool) external {
         revert SinkConverter_NotImplemented();
     }
 
     function metadata()
         external
         view
-        returns (
-            uint256 dec0,
-            uint256 dec1,
-            uint256 r0,
-            uint256 r1,
-            bool st,
-            address t0,
-            address t1
-        )
+        returns (uint256 dec0, uint256 dec1, uint256 r0, uint256 r1, bool st, address t0, address t1)
     {
         return (18, 18, 0, 0, true, token0, token1);
     }
 
-    function quote(
-        address,
-        uint256,
-        uint256
-    ) external view returns (uint256) {
+    function quote(address, uint256, uint256) external view returns (uint256) {
         revert SinkConverter_NotImplemented();
     }
 
@@ -161,20 +129,11 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         return 0;
     }
 
-    function prices(
-        address,
-        uint256,
-        uint256
-    ) external view returns (uint256[] memory) {
+    function prices(address, uint256, uint256) external view returns (uint256[] memory) {
         revert SinkConverter_NotImplemented();
     }
 
-    function sample(
-        address,
-        uint256,
-        uint256,
-        uint256
-    ) external view returns (uint256[] memory) {
+    function sample(address, uint256, uint256, uint256) external view returns (uint256[] memory) {
         revert SinkConverter_NotImplemented();
     }
 

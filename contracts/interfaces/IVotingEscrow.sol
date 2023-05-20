@@ -151,6 +151,8 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
 
     function token() external view returns (address);
 
+    function distributor() external view returns (address);
+
     function voter() external view returns (address);
 
     function team() external view returns (address);

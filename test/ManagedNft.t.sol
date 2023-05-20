@@ -1176,6 +1176,16 @@ contract ManagedNftTest is BaseTest {
         escrow.increaseAmount(tokenId, TOKEN_1);
     }
 
+    function testCannotIncreaseAmountWithManagedNftWithNoBalance() public {
+        skipAndRoll(1 hours);
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
+
+        VELO.approve(address(escrow), type(uint256).max);
+
+        vm.expectRevert(IVotingEscrow.NoLockFound.selector);
+        escrow.increaseAmount(mTokenId, TOKEN_1);
+    }
+
     function testCannotIncreaseUnlockTimeWithLockedNft() public {
         skipAndRoll(1 hours);
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
