@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 import {IVotingEscrowV1} from "../../interfaces/v1/IVotingEscrowV1.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
-// This contract is used to support merging into the Velodrome SinkManager
+/// @notice This contract is used to support merging into the Velodrome SinkManager
 contract SinkManagerFacilitator is ERC721Holder {
     constructor() {}
 
