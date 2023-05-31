@@ -223,12 +223,4 @@ contract AutoCompounderTest is BaseTest {
         assertEq(VELO.balanceOf(address(owner)), veloBalanceBefore);
         assertEq(escrow.balanceOfNFT(mTokenId), balanceBefore + amountOut);
     }
-
-    function testClaimBribesAndCompound() public {
-        // TODO- e2e
-    }
-
-    function testClaimFeesAndCompound() public {
-        // TODO- e2e
-    }
 }
