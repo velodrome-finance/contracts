@@ -24,6 +24,8 @@ import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, ReentrancyGuard {
     uint256 internal constant MAXTIME = 4 * 365 days;
     uint256 internal constant WEEK = 1 weeks;
+    // @dev Additional salt for contract creation
+    uint256 private counter;
 
     /// @dev tokenId => tokenIdV2
     mapping(uint256 => uint256) public conversions;
@@ -120,7 +122,12 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         address sender = _msgSender();
 
         // Create contract to facilitate the merge
-        SinkManagerFacilitator facilitator = SinkManagerFacilitator(Clones.clone(facilitatorImplementation));
+        SinkManagerFacilitator facilitator = SinkManagerFacilitator(
+            Clones.cloneDeterministic(
+                facilitatorImplementation,
+                keccak256(abi.encodePacked(++counter, blockhash(block.number - 1)))
+            )
+        );
 
         // Transfer the veNFT to the facilitator
         ve.safeTransferFrom(sender, address(facilitator), tokenId);
