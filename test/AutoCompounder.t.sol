@@ -80,6 +80,35 @@ contract AutoCompounderTest is BaseTest {
         tokensToSwap.push(address(DAI));
     }
 
+    function testCannotSwapIfNoRouteFound() public {
+        // Create a new pool with liquidity that doesn't swap into VELO
+        IERC20 tokenA = IERC20(new MockERC20("Token A", "A", 18));
+        IERC20 tokenB = IERC20(new MockERC20("Token B", "B", 18));
+        deal(address(tokenA), address(owner), TOKEN_1, true);
+        deal(address(tokenB), address(owner), TOKEN_1, true);
+        _addLiquidityToPool(address(owner), address(router), address(tokenA), address(tokenB), false, TOKEN_1, TOKEN_1);
+
+        // give rewards to the autoCompounder
+        deal(address(tokenA), address(autoCompounder), 1e6);
+
+        // Attempt swapping into VELO - should revert
+        tokensToSwap.push(address(tokenA));
+        vm.expectRevert(ICompoundOptimizer.NoRouteFound.selector);
+        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap);
+
+        // Cannot swap for a token that doesn't have a pool
+        IERC20 tokenC = IERC20(new MockERC20("Token C", "C", 18));
+        deal(address(tokenC), address(autoCompounder), 1e6);
+
+        tokensToSwap = new address[](1);
+        tokensToSwap[0] = address(tokenC);
+
+        // Attempt swapping into VELO - should revert
+        tokensToSwap.push(address(tokenC));
+        vm.expectRevert(ICompoundOptimizer.NoRouteFound.selector);
+        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap);
+    }
+
     function testSwapToVELOAndCompoundWithCompoundRewardAmount() public {
         // Deal USDC, FRAX, and DAI to autocompounder to simulate earning bribes
         // NOTE: the low amount of bribe rewards leads to receiving 1% of the reward amount

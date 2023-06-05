@@ -115,8 +115,11 @@ contract CompoundOptimizer is ICompoundOptimizer {
         IRouter.Route[] memory route = new IRouter.Route[](1);
         route[0] = IRouter.Route(token, velo, false, factory);
         amountsOut = router.getAmountsOut(amountIn, route);
+        uint256 singleSwapAmountOut = amountsOut[1];
+
+        if (singleSwapAmountOut == 0 && optimalAmountOut == 0) revert NoRouteFound();
 
         // compare output and return the best result
-        return amountsOut[1] > optimalAmountOut ? route : routes;
+        return singleSwapAmountOut > optimalAmountOut ? route : routes;
     }
 }
