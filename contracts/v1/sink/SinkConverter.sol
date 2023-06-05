@@ -30,7 +30,7 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         address indexed to
     );
 
-    constructor(address _sinkManager) ERC20("SinkConverter", "CONV") {
+    constructor(address _sinkManager) ERC20("Velodrome V1/V2 Converter", "sCONV-VELOv1/VELOv2") {
         // Set state
         sinkManager = ISinkManager(_sinkManager);
         veloV2 = sinkManager.veloV2();
@@ -85,11 +85,11 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         revert SinkConverter_NotImplemented();
     }
 
-    function claimable0(address) external view returns (uint256) {
+    function claimable0(address) external pure returns (uint256) {
         return 0;
     }
 
-    function claimable1(address) external view returns (uint256) {
+    function claimable1(address) external pure returns (uint256) {
         return 0;
     }
 
@@ -97,7 +97,7 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         revert SinkConverter_NotImplemented();
     }
 
-    function currentCumulativePrices() external view returns (uint256, uint256, uint256) {
+    function currentCumulativePrices() external pure returns (uint256, uint256, uint256) {
         revert SinkConverter_NotImplemented();
     }
 
@@ -105,7 +105,7 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         revert SinkConverter_NotImplemented();
     }
 
-    function initialize(address, address, bool) external {
+    function initialize(address, address, bool) external pure {
         revert SinkConverter_NotImplemented();
     }
 
@@ -117,27 +117,27 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         return (18, 18, 0, 0, true, token0, token1);
     }
 
-    function quote(address, uint256, uint256) external view returns (uint256) {
+    function quote(address, uint256, uint256) external pure returns (uint256) {
         revert SinkConverter_NotImplemented();
     }
 
-    function reserve0() external view returns (uint256) {
+    function reserve0() external pure returns (uint256) {
         return 0;
     }
 
-    function reserve1() external view returns (uint256) {
+    function reserve1() external pure returns (uint256) {
         return 0;
     }
 
-    function prices(address, uint256, uint256) external view returns (uint256[] memory) {
+    function prices(address, uint256, uint256) external pure returns (uint256[] memory) {
         revert SinkConverter_NotImplemented();
     }
 
-    function sample(address, uint256, uint256, uint256) external view returns (uint256[] memory) {
+    function sample(address, uint256, uint256, uint256) external pure returns (uint256[] memory) {
         revert SinkConverter_NotImplemented();
     }
 
-    function skim(address) external {
+    function skim(address) external pure {
         revert SinkConverter_NotImplemented();
     }
 
