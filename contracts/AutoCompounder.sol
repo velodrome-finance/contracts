@@ -11,6 +11,7 @@ import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
 import {IRouter} from "./interfaces/IRouter.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
@@ -21,6 +22,7 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 /// @author Carter Carlson (@pegahcarter)
 /// @notice Auto-Compound voting rewards earned from a Managed veNFT back into the veNFT through call incentivization
 contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, ReentrancyGuard, AccessControl {
+    using SafeERC20 for IERC20;
     bytes32 public constant ALLOWED_CALLER = keccak256("ALLOWED_CALLER");
 
     address public immutable factory;
@@ -106,7 +108,7 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
             IRouter.Route[] memory routes = optimizer.getOptimalTokenToVeloRoute(token, balance);
 
             // swap
-            IERC20(token).approve(address(router), balance);
+            _handleRouterApproval(IERC20(token), balance);
             router.swapExactTokensForTokens(
                 balance,
                 0, // amountOutMin
@@ -183,10 +185,21 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
 
         uint256 balance = IERC20(from).balanceOf(address(this));
         if (balance > 0) {
-            IERC20(from).approve(address(router), balance);
+            _handleRouterApproval(IERC20(from), balance);
             router.swapExactTokensForTokens(balance, 0, routes, address(this), block.timestamp);
         }
         _rewardAndCompound();
+    }
+
+    // -------------------------------------------------
+    // Helpers
+    // -------------------------------------------------
+
+    /// @dev resets approval if needed then approves transfer of tokens to router
+    function _handleRouterApproval(IERC20 token, uint256 amount) internal {
+        uint256 allowance = token.allowance(address(this), address(router));
+        if (allowance > 0) token.safeDecreaseAllowance(address(router), allowance);
+        token.safeIncreaseAllowance(address(router), amount);
     }
 
     // -------------------------------------------------
