@@ -108,7 +108,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     function epochVoteStart(uint256 _timestamp) external pure returns (uint256) {
-        return VelodromeTimeLibrary.epochStart(_timestamp);
+        return VelodromeTimeLibrary.epochVoteStart(_timestamp);
     }
 
     function epochVoteEnd(uint256 _timestamp) external pure returns (uint256) {
