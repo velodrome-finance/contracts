@@ -128,6 +128,7 @@ contract WashTradeTest is BaseTest {
         deployVoter();
 
         VELO.approve(address(gaugeFactory), 5 * TOKEN_100K);
+        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool2));
         voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool3));
         assertFalse(voter.gauges(address(pool3)) == address(0));
 

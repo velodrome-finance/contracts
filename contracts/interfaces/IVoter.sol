@@ -8,6 +8,8 @@ interface IVoter {
     error GaugeAlreadyKilled();
     error GaugeAlreadyRevived();
     error GaugeExists();
+    error GaugeDoesNotExist(address _pool);
+    error GaugeNotAlive(address _gauge);
     error InactiveManagedNFT();
     error MaximumVotingNumberTooLow();
     error NonZeroVotes();
@@ -114,6 +116,7 @@ interface IVoter {
 
     /// @notice Called by users to vote for pools. Votes distributed proportionally based on weights.
     ///         Can only vote or deposit into a managed NFT once per epoch.
+    ///         Can only vote for gauges that have not been killed.
     /// @dev Weights are distributed proportional to the sum of the weights in the array.
     ///      Throws if length of _poolVote and _weights do not match.
     /// @param _tokenId     Id of veNFT you are voting with.

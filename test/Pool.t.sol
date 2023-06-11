@@ -449,9 +449,9 @@ contract PoolTest is BaseTest {
     function voteHackingBreakMint() public {
         gaugePokeHacking2();
 
-        address[] memory pools = new address[](2);
+        address[] memory pools = new address[](1);
         pools[0] = address(pool);
-        uint256[] memory weights = new uint256[](2);
+        uint256[] memory weights = new uint256[](1);
         weights[0] = 5000;
         skip(1 weeks);
 

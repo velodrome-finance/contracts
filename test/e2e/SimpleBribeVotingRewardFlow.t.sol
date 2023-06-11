@@ -26,9 +26,9 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
 
     function testMultiEpochBribeVotingRewardFlow() public {
         // set up votes and rewards
-        address[] memory pools = new address[](2);
+        address[] memory pools = new address[](1);
         pools[0] = address(pool);
-        uint256[] memory weights = new uint256[](2);
+        uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         address[] memory rewards = new address[](2);
         rewards[0] = address(LR);
@@ -289,6 +289,8 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         escrow.increaseUnlockTime(3, MAX_TIME);
         skip(1 hours);
 
+        pools = new address[](2);
+        weights = new uint256[](2);
         pools[0] = address(pool);
         pools[1] = address(pool2);
         weights[0] = 2000;
@@ -339,11 +341,12 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
         skip(1 hours);
 
+        pools = new address[](1);
+        weights = new uint256[](1);
         pools[0] = address(pool);
+        weights[0] = 500;
         rewards[0] = address(LR);
         rewards[1] = address(USDC);
-        delete pools[1];
-        delete weights[1];
         voter.vote(1, pools, weights);
         vm.prank(address(owner3));
         voter.vote(3, pools, weights);
@@ -425,9 +428,9 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
 
     function testCanClaimRewardAfterTransferWhileVoted() public {
         // set up votes and rewards
-        address[] memory pools = new address[](2);
+        address[] memory pools = new address[](1);
         pools[0] = address(pool);
-        uint256[] memory weights = new uint256[](2);
+        uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         address[] memory rewards = new address[](2);
         rewards[0] = address(LR);

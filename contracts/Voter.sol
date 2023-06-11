@@ -216,6 +216,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         for (uint256 i = 0; i < _poolCnt; i++) {
             address _pool = _poolVote[i];
             address _gauge = gauges[_pool];
+            if (_gauge == address(0)) revert GaugeDoesNotExist(_pool);
+            if (!isAlive[_gauge]) revert GaugeNotAlive(_gauge);
 
             if (isGauge[_gauge]) {
                 uint256 _poolWeight = (_weights[i] * _weight) / _totalVoteWeight;

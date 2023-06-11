@@ -169,9 +169,9 @@ contract PokeVoteFlow is ExtendedBaseTest {
         _createBribeWithAmount(bribeVotingReward3, address(USDC), usdcBribe);
         skip(1);
 
-        address[] memory singlePool = new address[](2);
+        address[] memory singlePool = new address[](1);
         singlePool[0] = address(pool);
-        uint256[] memory singleWeight = new uint256[](2);
+        uint256[] memory singleWeight = new uint256[](1);
         singleWeight[0] = 1;
 
         skip(1 hours);

@@ -78,9 +78,9 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(escrow.supply(), supply);
 
         // test voting
-        address[] memory pools = new address[](2);
+        address[] memory pools = new address[](1);
         pools[0] = address(pool);
-        uint256[] memory weights = new uint256[](2);
+        uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         address[] memory rewards = new address[](2);
         rewards[0] = address(VELO);
@@ -388,9 +388,9 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(escrow.supply(), supply);
 
         // test voting
-        address[] memory pools = new address[](2);
+        address[] memory pools = new address[](1);
         pools[0] = address(pool);
-        uint256[] memory weights = new uint256[](2);
+        uint256[] memory weights = new uint256[](1);
         weights[0] = 10000;
         address[] memory rewards = new address[](2);
         rewards[0] = address(VELO);

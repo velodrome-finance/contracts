@@ -368,6 +368,27 @@ contract VoterTest is BaseTest {
         voter.poolVote(tokenId, 0);
     }
 
+    function testResetAfterVoteOnKilledGauge() public {
+        skipAndRoll(1 hours + 1);
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        // vote
+        address[] memory pools = new address[](1);
+        pools[0] = address(pool);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 5000;
+        voter.vote(1, pools, weights);
+
+        // kill the gauge voted for
+        vm.prank(voter.emergencyCouncil());
+        voter.killGauge(address(gauge));
+
+        // skip to the next epoch to be able to reset - no revert
+        skipToNextEpoch(1 hours + 1);
+        voter.reset(tokenId);
+    }
+
     function testCannotVoteWithInactiveManagedNFT() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner));
 
@@ -443,6 +464,43 @@ contract VoterTest is BaseTest {
         voter.vote(1, pools, weights);
 
         skipToNextEpoch(1 hours + 1); /// new epoch
+        voter.vote(1, pools, weights);
+    }
+
+    function testCannotVoteForKilledGauge() public {
+        skipToNextEpoch(60 minutes + 1);
+
+        VELO.approve(address(escrow), TOKEN_1);
+        escrow.createLock(TOKEN_1, MAXTIME);
+
+        // vote
+        address[] memory pools = new address[](1);
+        pools[0] = address(pool);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 5000;
+
+        // kill the gauge voted for
+        vm.prank(voter.emergencyCouncil());
+        voter.killGauge(address(gauge));
+
+        vm.expectRevert(abi.encodeWithSelector(IVoter.GaugeNotAlive.selector, address(gauge)));
+        voter.vote(1, pools, weights);
+    }
+
+    function testCannotVoteForGaugeThatDoesNotExist() public {
+        skipToNextEpoch(60 minutes + 1);
+
+        VELO.approve(address(escrow), TOKEN_1);
+        escrow.createLock(TOKEN_1, MAXTIME);
+
+        // vote
+        address[] memory pools = new address[](1);
+        address fakePool = address(1);
+        pools[0] = fakePool;
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 5000;
+
+        vm.expectRevert(abi.encodeWithSelector(IVoter.GaugeDoesNotExist.selector, fakePool));
         voter.vote(1, pools, weights);
     }
 
