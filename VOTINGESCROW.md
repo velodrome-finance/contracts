@@ -52,7 +52,8 @@ A token's UserPoint is updated whenever `LockedBalance` changes. The global poin
 same time. If there are multiple writes to a token's UserPoint or the GlobalPoint in one block, it will 
 overwrite the prior point. Points retrieved from the user point history and global point history will always
 have unique timestamps. For user points and global points, the first checkpoint at index 0 is always empty.
-The first point is written to index 1.
+The first point is written to index 1. A UserPoints for a certain `tokenId` will always have a unique
+timestamp and block number. The same is true for GlobalPoints.
 
 (Voting) checkpoints have several valid states:
 - `Checkpoint(ts, owner, 0, 0)` when an nft is not delegating (i.e. in normal / normal permanent / locked / managed permanent state and is not delegating) and has not been delegated to.

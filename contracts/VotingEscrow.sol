@@ -618,7 +618,13 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         // initialLastPoint is used for extrapolation to calculate block number
         // (approximately, for *At methods) and save them
         // as we cannot figure that out exactly from inside the contract
-        GlobalPoint memory initialLastPoint = lastPoint;
+        GlobalPoint memory initialLastPoint = GlobalPoint({
+            bias: lastPoint.bias,
+            slope: lastPoint.slope,
+            ts: lastPoint.ts,
+            blk: lastPoint.blk,
+            permanentLockBalance: lastPoint.permanentLockBalance
+        });
         uint256 blockSlope = 0; // dblock/dt
         if (block.timestamp > lastPoint.ts) {
             blockSlope = (MULTIPLIER * (block.number - lastPoint.blk)) / (block.timestamp - lastPoint.ts);
