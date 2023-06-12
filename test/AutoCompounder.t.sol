@@ -195,11 +195,12 @@ contract AutoCompounderTest is BaseTest {
         uint256 balanceVELOBefore = VELO.balanceOf(address(owner3));
         uint256 balanceNFTBefore = escrow.balanceOfNFT(mTokenId);
 
-        vm.prank(address(owner3));
+        // owner calls the compound- so no reward given
         autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap);
 
-        assertGt(VELO.balanceOf(address(owner3)), balanceVELOBefore);
-        assertGt(escrow.balanceOfNFT(mTokenId), balanceNFTBefore);
+        // mTokenId has received the full VELO balance from the autoCompounder - meaning
+        // the VELO has been directly compounded without a swap
+        assertEq(escrow.balanceOfNFT(mTokenId), balanceNFTBefore + 1e18);
         assertEq(VELO.balanceOf(address(autoCompounder)), 0);
     }
 

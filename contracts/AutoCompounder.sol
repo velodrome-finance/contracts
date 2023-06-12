@@ -102,6 +102,7 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
     function _swapTokensToVELOAndCompound(address[] memory _tokensToSwap) internal {
         for (uint256 i = 0; i < _tokensToSwap.length; i++) {
             address token = _tokensToSwap[i];
+            if (token == address(velo)) continue; // Do not need to swap from velo => velo
             uint256 balance = IERC20(token).balanceOf(address(this));
             if (balance == 0) continue; // only swap if there is a balance
 
