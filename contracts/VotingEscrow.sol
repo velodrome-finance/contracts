@@ -195,7 +195,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         // adjust managed nft
         LockedBalance memory newLockedManaged = _locked[_mTokenId];
         newLockedManaged.amount -= int128(int256(_total));
-        permanentLockBalance -= _total;
+        permanentLockBalance -= (_total < permanentLockBalance ? _total : permanentLockBalance);
         _checkpointDelegatee(_delegates[_mTokenId], uint256(uint128(_total)), false);
         _checkpoint(_mTokenId, _locked[_mTokenId], newLockedManaged);
         _locked[_mTokenId] = newLockedManaged;
@@ -1062,6 +1062,11 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     /// @inheritdoc IVotingEscrow
     function totalSupply() external view returns (uint256) {
         return _supplyAt(block.timestamp);
+    }
+
+    /// @inheritdoc IVotingEscrow
+    function totalSupplyAt(uint256 _timestamp) external view returns (uint256) {
+        return _supplyAt(_timestamp);
     }
 
     /*///////////////////////////////////////////////////////////////

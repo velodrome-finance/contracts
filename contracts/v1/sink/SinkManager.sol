@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {SinkManagerFacilitator} from "./SinkManagerFacilitator.sol";
 import {ISinkManager} from "../../interfaces/ISinkManager.sol";
+import {IMinter} from "../../interfaces/IMinter.sol";
 import {IVotingEscrow} from "../../interfaces/IVotingEscrow.sol";
 import {IVelo} from "../../interfaces/IVelo.sol";
 import {IGaugeV1} from "../../interfaces/v1/IGaugeV1.sol";
@@ -47,6 +48,8 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
     IVelo public immutable velo;
     /// @dev V2 Velo contract
     IVelo public immutable veloV2;
+    /// @dev V2 Minter contract
+    IMinter public immutable minterV2;
     /// @dev V1 Voting Escrow contract
     IVotingEscrowV1 public immutable ve;
     /// @dev V2 Voting Escrow contract
@@ -74,6 +77,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         voter = IVoterV1(_voter);
         velo = IVelo(_velo);
         veloV2 = IVelo(_veloV2);
+        minterV2 = IMinter(IVelo(_veloV2).minter());
         ve = IVotingEscrowV1(_ve);
         veV2 = IVotingEscrow(_veV2);
         rewardsDistributor = IRewardsDistributorV1(_rewardsDistributor);
@@ -91,6 +95,9 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         uint256 _ownedTokenId = ownedTokenId;
         if (_ownedTokenId == 0) revert TokenIdNotSet();
         address sender = _msgSender();
+
+        // Mint emissions prior to conversion
+        minterV2.updatePeriod();
 
         // Deposit old VELO
         velo.transferFrom(sender, address(this), amount);
@@ -120,6 +127,9 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
         if (ve.locked__end(tokenId) <= block.timestamp) revert NFTExpired();
 
         address sender = _msgSender();
+
+        // Mint emissions prior to conversion
+        minterV2.updatePeriod();
 
         // Create contract to facilitate the merge
         SinkManagerFacilitator facilitator = SinkManagerFacilitator(

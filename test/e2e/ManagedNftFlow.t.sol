@@ -573,7 +573,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         minter.updatePeriod();
 
         uint256 rebase = distributor.claim(mTokenId);
-        assertEq(rebase, 108145615642046646056);
+        assertEq(rebase, 108145615642053075766);
         // check locked, user points and global points update correctly on rebase claim
         locked = escrow.locked(mTokenId);
         assertEq(convert(locked.amount), TOKEN_1M + rebase);
@@ -587,19 +587,19 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1814401);
         assertEq(userPoint.blk, 3);
-        assertEq(userPoint.permanent, 1000108145615642046646056); // TOKEN_1M + rebase
-        assertEq(escrow.balanceOfNFT(mTokenId), 1000108145615642046646056);
+        assertEq(userPoint.permanent, 1000108145615642053075766); // TOKEN_1M + rebase
+        assertEq(escrow.balanceOfNFT(mTokenId), 1000108145615642053075766);
 
         // check global point updates correctly when rebases are claimed
-        assertEq(escrow.epoch(), 7);
-        IVotingEscrow.GlobalPoint memory globalPoint = escrow.pointHistory(7);
+        assertEq(escrow.epoch(), 6);
+        IVotingEscrow.GlobalPoint memory globalPoint = escrow.pointHistory(6);
         // bias / slope not zero due to tokenIds created in _setUp()
         assertEq(convert(globalPoint.bias), 2963013674496024015); // (TOKEN_1 * 3 / MAXTIME) * (126403200 - 1814401)
         assertEq(convert(globalPoint.slope), 23782343985); // TOKEN_1 * 3 / MAXTIME
         assertEq(globalPoint.ts, 1814401);
         assertEq(globalPoint.blk, 3);
-        assertEq(globalPoint.permanentLockBalance, 2000108145615642046646056); // TOKEN_1M * 2 + rebase
-        assertEq(escrow.totalSupply(), 2000108145615642046646056 + 2963013674496024015); // TOKEN_1M * 2 + rebase + bias
+        assertEq(globalPoint.permanentLockBalance, 2000108145615642053075766); // TOKEN_1M * 2 + rebase
+        assertEq(escrow.totalSupply(), 2000108145615642053075766 + 2963013674496024015); // TOKEN_1M * 2 + rebase + bias
 
         uint256 managedRebaseTotal = rebase;
         assertGt(rebase, 0);
@@ -639,8 +639,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(escrow.balanceOfNFT(mTokenId), tokenAmount + rebase);
 
         // check global point updates correctly when rebases are claimed
-        assertEq(escrow.epoch(), 9);
-        globalPoint = escrow.pointHistory(9);
+        assertEq(escrow.epoch(), 8);
+        globalPoint = escrow.pointHistory(8);
         // bias / slope not zero due to tokenIds created in _setUp()
         assertEq(convert(globalPoint.bias), 2948630112853896015); // (TOKEN_1 * 3 / MAXTIME) * (126403200 - 2419201)
         assertEq(convert(globalPoint.slope), 23782343985); // TOKEN_1 * 3 / MAXTIME

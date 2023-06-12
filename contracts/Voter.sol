@@ -403,7 +403,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         address sender = _msgSender();
         if (sender != minter) revert NotMinter();
         IERC20(rewardToken).safeTransferFrom(sender, address(this), _amount); // transfer the distribution in
-        uint256 _ratio = (_amount * 1e18) / totalWeight; // 1e18 adjustment is removed during claim
+        uint256 _ratio = (_amount * 1e18) / Math.max(totalWeight, 1); // 1e18 adjustment is removed during claim
         if (_ratio > 0) {
             index += _ratio;
         }

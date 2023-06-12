@@ -56,7 +56,7 @@ contract Minter is IMinter {
 
     /// @inheritdoc IMinter
     function calculateGrowth(uint256 _minted) public view returns (uint256 _growth) {
-        uint256 _veTotal = ve.totalSupply();
+        uint256 _veTotal = ve.totalSupplyAt(activePeriod - 1);
         uint256 _veloTotal = velo.totalSupply();
         return (((((_minted * _veTotal) / _veloTotal) * _veTotal) / _veloTotal) * _veTotal) / _veloTotal / 2;
     }
@@ -112,7 +112,6 @@ contract Minter is IMinter {
 
             velo.safeTransfer(address(rewardsDistributor), _growth);
             rewardsDistributor.checkpointToken(); // checkpoint token balance that was just minted in rewards distributor
-            rewardsDistributor.checkpointTotalSupply(); // checkpoint supply
 
             velo.safeApprove(address(voter), _emission);
             voter.notifyRewardAmount(_emission);

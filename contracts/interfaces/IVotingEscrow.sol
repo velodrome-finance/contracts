@@ -420,8 +420,13 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     function balanceOfNFTAt(uint256 _tokenId, uint256 _t) external view returns (uint256);
 
     /// @notice Calculate total voting power at current timestamp
-    /// @return Total voting power
+    /// @return Total voting power at current timestamp
     function totalSupply() external view returns (uint256);
+
+    /// @notice Calculate total voting power at a given timestamp
+    /// @param _t Timestamp to query total voting power
+    /// @return Total voting power at given timestamp
+    function totalSupplyAt(uint256 _t) external view returns (uint256);
 
     /*///////////////////////////////////////////////////////////////
                             GAUGE VOTING LOGIC

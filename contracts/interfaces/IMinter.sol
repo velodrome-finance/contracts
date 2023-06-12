@@ -25,6 +25,7 @@ interface IMinter {
     ///         weekly * (ve.totalSupply / velo.totalSupply) ^ 3 / 2
     ///         Note that ve.totalSupply is the locked ve supply
     ///         velo.totalSupply is the total ve supply minted
+    /// @param _minted Amount of VELO minted this epoch
     /// @return _growth Rebases
     function calculateGrowth(uint256 _minted) external view returns (uint256 _growth);
 

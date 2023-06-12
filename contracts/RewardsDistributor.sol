@@ -17,29 +17,23 @@ contract RewardsDistributor is IRewardsDistributor {
     uint256 constant WEEK = 7 * 86400;
 
     uint256 public startTime;
-    uint256 public timeCursor;
     mapping(uint256 => uint256) public timeCursorOf;
-    mapping(uint256 => uint256) public userEpochOf;
 
     uint256 public lastTokenTime;
     uint256[1000000000000000] public tokensPerWeek;
 
-    address public immutable ve;
+    IVotingEscrow public immutable ve;
     address public token;
-    uint256 public tokenLastBalance;
-
-    uint256[1000000000000000] public veSupply;
-
     address public depositor;
+    uint256 public tokenLastBalance;
 
     constructor(address _ve) {
         uint256 _t = (block.timestamp / WEEK) * WEEK;
         startTime = _t;
         lastTokenTime = _t;
-        timeCursor = _t;
-        address _token = IVotingEscrow(_ve).token();
+        ve = IVotingEscrow(_ve);
+        address _token = ve.token();
         token = _token;
-        ve = _ve;
         depositor = msg.sender;
         IERC20(_token).safeApprove(_ve, type(uint256).max);
     }
@@ -78,218 +72,62 @@ contract RewardsDistributor is IRewardsDistributor {
         emit CheckpointToken(timestamp, toDistribute);
     }
 
+    /// @inheritdoc IRewardsDistributor
     function checkpointToken() external {
         assert(msg.sender == depositor);
         _checkpointToken();
     }
 
-    /// @dev Fetches last global checkpoint prior to timestamp
-    function _findTimestampEpoch(uint256 _timestamp) internal view returns (uint256) {
-        address _ve = ve;
-        uint256 _min = 0;
-        uint256 _max = IVotingEscrow(_ve).epoch();
-        for (uint256 i = 0; i < 128; i++) {
-            if (_min >= _max) break;
-            uint256 _mid = (_min + _max + 2) / 2;
-            IVotingEscrow.GlobalPoint memory pt = IVotingEscrow(_ve).pointHistory(_mid);
-            if (pt.ts <= _timestamp) {
-                _min = _mid;
-            } else {
-                _max = _mid - 1;
-            }
-        }
-        return _min;
-    }
-
-    function _findTimestampUserEpoch(
-        uint256 _tokenId,
-        uint256 _timestamp,
-        uint256 _maxUserEpoch
-    ) internal view returns (uint256) {
-        uint256 _min = 0;
-        uint256 _max = _maxUserEpoch;
-        for (uint256 i = 0; i < 128; i++) {
-            if (_min >= _max) break;
-            uint256 _mid = (_min + _max + 2) / 2;
-            IVotingEscrow.UserPoint memory pt = IVotingEscrow(ve).userPointHistory(_tokenId, _mid);
-            if (pt.ts <= _timestamp) {
-                _min = _mid;
-            } else {
-                _max = _mid - 1;
-            }
-        }
-        return _min;
-    }
-
-    function veForAt(uint256 _tokenId, uint256 _timestamp) external view returns (uint256) {
-        address _ve = ve;
-        uint256 maxUserEpoch = IVotingEscrow(_ve).userPointEpoch(_tokenId);
-        uint256 epoch = _findTimestampUserEpoch(_tokenId, _timestamp, maxUserEpoch);
-        IVotingEscrow.UserPoint memory pt = IVotingEscrow(_ve).userPointHistory(_tokenId, epoch);
-        if (pt.permanent != 0) {
-            return pt.permanent;
-        } else {
-            return uint256(int256(max(pt.bias - pt.slope * int128(int256(_timestamp - pt.ts)), 0)));
-        }
-    }
-
-    function _checkpointTotalSupply() internal {
-        address _ve = ve;
-        uint256 t = timeCursor;
-        uint256 roundedTimestamp = (block.timestamp / WEEK) * WEEK;
-        IVotingEscrow(_ve).checkpoint();
-
-        for (uint256 i = 0; i < 20; i++) {
-            if (t > roundedTimestamp) {
-                break;
-            } else {
-                // fetch last global checkpoint prior to time t
-                uint256 epoch = _findTimestampEpoch(t);
-                IVotingEscrow.GlobalPoint memory pt = IVotingEscrow(_ve).pointHistory(epoch);
-                int128 dt = 0;
-                if (t > pt.ts) {
-                    dt = int128(int256(t - pt.ts));
-                }
-                // walk forward voting power to time t
-                veSupply[t] = uint256(int256(max(pt.bias - pt.slope * dt, 0))) + pt.permanentLockBalance;
-            }
-            t += WEEK;
-        }
-        timeCursor = t;
-    }
-
-    function checkpointTotalSupply() external {
-        _checkpointTotalSupply();
-    }
-
     function _claim(uint256 _tokenId, uint256 _lastTokenTime) internal returns (uint256) {
-        uint256 userEpoch = 0;
-        uint256 toDistribute = 0;
-        address _ve = ve;
-
-        uint256 maxUserEpoch = IVotingEscrow(_ve).userPointEpoch(_tokenId);
-        uint256 _startTime = startTime;
-
-        if (maxUserEpoch == 0) return 0;
-
-        uint256 weekCursor = timeCursorOf[_tokenId];
-        if (weekCursor == 0) {
-            userEpoch = _findTimestampUserEpoch(_tokenId, _startTime, maxUserEpoch);
-        } else {
-            userEpoch = userEpochOf[_tokenId];
-        }
-
-        if (userEpoch == 0) userEpoch = 1;
-
-        IVotingEscrow.UserPoint memory userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
-
-        if (weekCursor == 0) weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
-        if (weekCursor >= lastTokenTime) return 0;
-        if (weekCursor < _startTime) weekCursor = _startTime;
-
-        IVotingEscrow.UserPoint memory oldUserPoint;
-
-        for (uint256 i = 0; i < 50; i++) {
-            if (weekCursor >= _lastTokenTime) break;
-
-            if (weekCursor >= userPoint.ts && userEpoch <= maxUserEpoch) {
-                userEpoch += 1;
-                oldUserPoint = userPoint;
-                if (userEpoch > maxUserEpoch) {
-                    userPoint = IVotingEscrow.UserPoint(0, 0, 0, 0, 0);
-                } else {
-                    userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
-                }
-            } else {
-                int128 dt = int128(int256(weekCursor - oldUserPoint.ts));
-                uint256 balance;
-                if (oldUserPoint.permanent != 0) {
-                    balance = oldUserPoint.permanent;
-                } else {
-                    balance = uint256(int256(max(oldUserPoint.bias - dt * oldUserPoint.slope, 0)));
-                }
-                if (balance == 0 && userEpoch > maxUserEpoch) break;
-                if (balance != 0) {
-                    toDistribute += (balance * tokensPerWeek[weekCursor]) / veSupply[weekCursor];
-                }
-                weekCursor += WEEK;
-            }
-        }
-
-        userEpoch = Math.min(maxUserEpoch, userEpoch - 1);
-        userEpochOf[_tokenId] = userEpoch;
+        (uint256 toDistribute, uint256 epochStart, uint256 weekCursor) = _claimable(_tokenId, _lastTokenTime);
         timeCursorOf[_tokenId] = weekCursor;
+        if (toDistribute == 0) return 0;
 
-        emit Claimed(_tokenId, userEpoch, maxUserEpoch, toDistribute);
-
+        emit Claimed(_tokenId, epochStart, weekCursor, toDistribute);
         return toDistribute;
     }
 
-    function _claimable(uint256 _tokenId, uint256 _lastTokenTime) internal view returns (uint256) {
-        address _ve = ve;
-        uint256 userEpoch = 0;
-        uint256 toDistribute = 0;
-
-        uint256 maxUserEpoch = IVotingEscrow(_ve).userPointEpoch(_tokenId);
+    function _claimable(
+        uint256 _tokenId,
+        uint256 _lastTokenTime
+    ) internal view returns (uint256 toDistribute, uint256 weekCursorStart, uint256 weekCursor) {
         uint256 _startTime = startTime;
+        weekCursor = timeCursorOf[_tokenId];
+        weekCursorStart = weekCursor;
 
-        if (maxUserEpoch == 0) return 0;
+        // case where token does not exist
+        uint256 maxUserEpoch = ve.userPointEpoch(_tokenId);
+        if (maxUserEpoch == 0) return (0, weekCursorStart, weekCursor);
 
-        uint256 weekCursor = timeCursorOf[_tokenId];
+        // case where token exists but has never been claimed
         if (weekCursor == 0) {
-            userEpoch = _findTimestampUserEpoch(_tokenId, _startTime, maxUserEpoch);
-        } else {
-            userEpoch = userEpochOf[_tokenId];
+            IVotingEscrow.UserPoint memory userPoint = ve.userPointHistory(_tokenId, 1);
+            weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
+            weekCursorStart = weekCursor;
         }
-
-        if (userEpoch == 0) userEpoch = 1;
-
-        IVotingEscrow.UserPoint memory userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
-
-        if (weekCursor == 0) weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
-        if (weekCursor >= lastTokenTime) return 0;
+        if (weekCursor >= lastTokenTime) return (0, weekCursorStart, weekCursor);
         if (weekCursor < _startTime) weekCursor = _startTime;
-
-        IVotingEscrow.UserPoint memory oldUserPoint;
 
         for (uint256 i = 0; i < 50; i++) {
             if (weekCursor >= _lastTokenTime) break;
 
-            if (weekCursor >= userPoint.ts && userEpoch <= maxUserEpoch) {
-                userEpoch += 1;
-                oldUserPoint = userPoint;
-                if (userEpoch > maxUserEpoch) {
-                    userPoint = IVotingEscrow.UserPoint(0, 0, 0, 0, 0);
-                } else {
-                    userPoint = IVotingEscrow(_ve).userPointHistory(_tokenId, userEpoch);
-                }
-            } else {
-                int128 dt = int128(int256(weekCursor - oldUserPoint.ts));
-                uint256 balance;
-                if (oldUserPoint.permanent != 0) {
-                    balance = oldUserPoint.permanent;
-                } else {
-                    balance = uint256(int256(max(oldUserPoint.bias - dt * oldUserPoint.slope, 0)));
-                }
-                if (balance == 0 && userEpoch > maxUserEpoch) break;
-                if (balance != 0) {
-                    toDistribute += (balance * tokensPerWeek[weekCursor]) / veSupply[weekCursor];
-                }
-                weekCursor += WEEK;
-            }
+            uint256 balance = ve.balanceOfNFTAt(_tokenId, weekCursor - 1);
+            uint256 supply = ve.totalSupplyAt(weekCursor - 1);
+            supply = supply == 0 ? 1 : supply;
+            toDistribute += (balance * tokensPerWeek[weekCursor]) / supply;
+            weekCursor += WEEK;
         }
-
-        return toDistribute;
     }
 
-    function claimable(uint256 _tokenId) external view returns (uint256) {
+    /// @inheritdoc IRewardsDistributor
+    function claimable(uint256 _tokenId) external view returns (uint256 claimable_) {
         uint256 _lastTokenTime = (lastTokenTime / WEEK) * WEEK;
-        return _claimable(_tokenId, _lastTokenTime);
+        (claimable_, , ) = _claimable(_tokenId, _lastTokenTime);
     }
 
+    /// @inheritdoc IRewardsDistributor
     function claim(uint256 _tokenId) external returns (uint256) {
         uint256 _timestamp = block.timestamp;
-        if (_timestamp >= timeCursor) _checkpointTotalSupply();
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
         uint256 amount = _claim(_tokenId, _lastTokenTime);
@@ -306,9 +144,9 @@ contract RewardsDistributor is IRewardsDistributor {
         return amount;
     }
 
-    function claimMany(uint256[] memory _tokenIds) external returns (bool) {
+    /// @inheritdoc IRewardsDistributor
+    function claimMany(uint256[] calldata _tokenIds) external returns (bool) {
         uint256 _timestamp = block.timestamp;
-        if (_timestamp >= timeCursor) _checkpointTotalSupply();
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
         uint256 total = 0;
@@ -336,7 +174,7 @@ contract RewardsDistributor is IRewardsDistributor {
         return true;
     }
 
-    // Once off event on contract initialize
+    /// @inheritdoc IRewardsDistributor
     function setDepositor(address _depositor) external {
         if (msg.sender != depositor) revert NotDepositor();
         depositor = _depositor;

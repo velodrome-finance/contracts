@@ -3,6 +3,8 @@ pragma solidity 0.8.19;
 import "./BaseTest.sol";
 
 contract RewardsDistributorTest is BaseTest {
+    event Claimed(uint256 indexed tokenId, uint256 indexed epochStart, uint256 indexed epochEnd, uint256 amount);
+
     function _setUp() public override {
         // timestamp: 604801
         VELO.approve(address(escrow), TOKEN_1);
@@ -23,9 +25,8 @@ contract RewardsDistributorTest is BaseTest {
     function testInitialize() public {
         assertEq(distributor.startTime(), 604800);
         assertEq(distributor.lastTokenTime(), 604800);
-        assertEq(distributor.timeCursor(), 604800);
         assertEq(distributor.token(), address(VELO));
-        assertEq(distributor.ve(), address(escrow));
+        assertEq(address(distributor.ve()), address(escrow));
     }
 
     function testClaim() public {
@@ -70,23 +71,25 @@ contract RewardsDistributorTest is BaseTest {
 
         skipToNextEpoch(0); // epoch 1's rebases available
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 104194458010096665703);
-        assertEq(distributor.claimable(tokenId2), 104194458010096665703);
+        assertEq(distributor.claimable(tokenId), 104194460518962953933);
+        assertEq(distributor.claimable(tokenId2), 104194460518962953933);
 
         skipToNextEpoch(0); // epoch 1+2's rebases available
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 159028895672296095334);
-        assertEq(distributor.claimable(tokenId2), 159028895672296095334);
+        assertEq(distributor.claimable(tokenId), 159028899507939716930);
+        assertEq(distributor.claimable(tokenId2), 159028899507939716930);
 
         skipToNextEpoch(0);
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 191249761614125424271);
-        assertEq(distributor.claimable(tokenId2), 191249761614125424271);
+        assertEq(distributor.claimable(tokenId), 191249766233209146832);
+        assertEq(distributor.claimable(tokenId2), 191249766233209146832);
 
         IVotingEscrow.LockedBalance memory preLocked = escrow.locked(tokenId);
+        vm.expectEmit(true, true, true, true, address(distributor));
+        emit Claimed(tokenId, 1814400, 3628800, 191249766233209146832);
         distributor.claim(tokenId);
         IVotingEscrow.LockedBalance memory postLocked = escrow.locked(tokenId);
-        assertEq(postLocked.amount - preLocked.amount, 191249761614125424271);
+        assertEq(postLocked.amount - preLocked.amount, 191249766233209146832);
         assertEq(postLocked.end, 127008000);
         assertEq(postLocked.isPermanent, false);
     }
@@ -137,23 +140,25 @@ contract RewardsDistributorTest is BaseTest {
 
         skipToNextEpoch(0); // epoch 1's rebases available
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 108145184011338358550);
-        assertEq(distributor.claimable(tokenId2), 108145184011338358550);
+        assertEq(distributor.claimable(tokenId), 108145184011339215836);
+        assertEq(distributor.claimable(tokenId2), 108145184011339215836);
 
         skipToNextEpoch(0); // epoch 1+2's rebases available
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 165895710137244019608);
-        assertEq(distributor.claimable(tokenId2), 165895710137244019608);
+        assertEq(distributor.claimable(tokenId), 165895710137245334690);
+        assertEq(distributor.claimable(tokenId2), 165895710137245334690);
 
         skipToNextEpoch(0);
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 200331559938841949783);
-        assertEq(distributor.claimable(tokenId2), 200331559938841949783);
+        assertEq(distributor.claimable(tokenId), 200331559938843537843);
+        assertEq(distributor.claimable(tokenId2), 200331559938843537843);
 
         IVotingEscrow.LockedBalance memory preLocked = escrow.locked(tokenId);
+        vm.expectEmit(true, true, true, true, address(distributor));
+        emit Claimed(tokenId, 1814400, 3628800, 200331559938843537843);
         distributor.claim(tokenId);
         IVotingEscrow.LockedBalance memory postLocked = escrow.locked(tokenId);
-        assertEq(postLocked.amount - preLocked.amount, 200331559938841949783);
+        assertEq(postLocked.amount - preLocked.amount, 200331559938843537843);
         assertEq(postLocked.end, 0);
         assertEq(postLocked.isPermanent, true);
     }
@@ -178,57 +183,79 @@ contract RewardsDistributorTest is BaseTest {
 
         skipToNextEpoch(0); // epoch 1's rebases available
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 106558990028146297350);
-        assertEq(distributor.claimable(tokenId2), 105756148322454775798);
+        assertEq(distributor.claimable(tokenId), 106558990879121991820);
+        assertEq(distributor.claimable(tokenId2), 105756150011759868251);
 
         skipToNextEpoch(0); // epoch 1+2's rebases available
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 163187964338003809527);
-        assertEq(distributor.claimable(tokenId2), 161686957195615410120);
+        assertEq(distributor.claimable(tokenId), 163187965642308344999);
+        assertEq(distributor.claimable(tokenId2), 161686959781583610362);
 
         skipToNextEpoch(0);
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 196791755388778962521);
-        assertEq(distributor.claimable(tokenId2), 194715340865384136653);
+        assertEq(distributor.claimable(tokenId), 196791756962743101163);
+        assertEq(distributor.claimable(tokenId2), 194715343982786789266);
+
+        uint256 pre = convert(escrow.locked(tokenId).amount);
+        vm.expectEmit(true, true, true, true, address(distributor));
+        emit Claimed(tokenId, 1814400, 3628800, 196791756962743101163);
+        distributor.claim(tokenId);
+        uint256 post = convert(escrow.locked(tokenId).amount);
+
+        assertEq(post - pre, 196791756962743101163);
     }
 
-    function testCheckpointTotalSupplyWithPermanentLock() public {
-        // timestamp: 608402
-        // note nft was created at 604801, within current epoch
-        assertEq(distributor.timeCursor(), 604800);
-        assertEq(distributor.veSupply(604800), 0);
+    function testClaimWithLockCreatedMoreThan50EpochsLater() public {
+        for (uint256 i = 0; i < 55; i++) {
+            skipToNextEpoch(0);
+            minter.updatePeriod();
+        }
 
-        skip(1 days);
-        escrow.lockPermanent(1);
-        VELO.approve(address(escrow), TOKEN_1);
-        escrow.createLock(TOKEN_1, MAXTIME);
-        skip(1 hours);
-        distributor.checkpointTotalSupply();
-
-        assertEq(distributor.timeCursor(), 1209600);
-        assertEq(distributor.veSupply(604800), 0);
+        VELO.approve(address(escrow), TOKEN_1M);
+        uint256 tokenId = escrow.createLock(TOKEN_1M, MAXTIME);
+        VELO.approve(address(escrow), TOKEN_1M);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1M, MAXTIME);
 
         skipToNextEpoch(0);
-        distributor.checkpointTotalSupply();
-
-        assertEq(distributor.timeCursor(), 1814400);
-        assertEq(escrow.balanceOfNFTAt(1, 1209600), TOKEN_1);
-        assertEq(distributor.veForAt(1, 1209600), TOKEN_1);
-        assertEq(escrow.balanceOfNFTAt(2, 1209600), 992465753306832000);
-        assertEq(distributor.veForAt(2, 1209600), 992465753306832000);
-        assertEq(distributor.veSupply(1209600), 992465753306832000 + TOKEN_1);
-        assertEq(distributor.veSupply(1209600), escrow.getPastTotalSupply(1209600));
+        minter.updatePeriod();
+        assertEq(distributor.claimable(tokenId), 0);
+        assertEq(distributor.claimable(tokenId2), 0);
 
         skipToNextEpoch(0);
-        distributor.checkpointTotalSupply();
+        minter.updatePeriod();
+        assertEq(distributor.claimable(tokenId), 48916384803390455);
+        assertEq(distributor.claimable(tokenId2), 48916384803390455);
 
-        assertEq(distributor.timeCursor(), 2419200);
-        assertEq(escrow.balanceOfNFTAt(1, 1814400), TOKEN_1);
-        assertEq(distributor.veForAt(1, 1814400), TOKEN_1);
-        assertEq(escrow.balanceOfNFTAt(2, 1814400), 987671232759456000);
-        assertEq(distributor.veForAt(2, 1814400), 987671232759456000);
-        assertEq(distributor.veSupply(1814400), 987671232759456000 + TOKEN_1);
-        assertEq(distributor.veSupply(1814400), escrow.getPastTotalSupply(1814400));
+        uint256 pre = convert(escrow.locked(tokenId).amount);
+        vm.expectEmit(true, true, true, true, address(distributor));
+        emit Claimed(tokenId, 33868800, 35078400, 48916384803390455);
+        distributor.claim(tokenId);
+        uint256 post = convert(escrow.locked(tokenId).amount);
+
+        assertEq(post - pre, 48916384803390455);
+    }
+
+    function testClaimWithIncreaseAmountOnEpochFlip() public {
+        skipToNextEpoch(1 days); // epoch 0
+        VELO.approve(address(escrow), TOKEN_1M);
+        uint256 tokenId = escrow.createLock(TOKEN_1M, MAXTIME);
+        VELO.approve(address(escrow), TOKEN_1M);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1M, MAXTIME);
+
+        skipToNextEpoch(0); // distribute epoch 1's rebases
+        minter.updatePeriod();
+        assertEq(distributor.claimable(tokenId), 0);
+        assertEq(distributor.claimable(tokenId2), 0);
+
+        skipToNextEpoch(0);
+        assertEq(distributor.claimable(tokenId), 0);
+        assertEq(distributor.claimable(tokenId2), 0);
+        // making lock larger on flip should not impact claimable
+        VELO.approve(address(escrow), TOKEN_1M);
+        escrow.increaseAmount(tokenId, TOKEN_1M);
+        minter.updatePeriod(); // epoch 1's rebases available
+        assertEq(distributor.claimable(tokenId), 104194460518962953933);
+        assertEq(distributor.claimable(tokenId2), 104194460518962953933);
     }
 
     function testClaimWithExpiredNFT() public {
@@ -252,6 +279,8 @@ contract RewardsDistributorTest is BaseTest {
 
         uint256 rebase = distributor.claimable(tokenId);
         uint256 pre = VELO.balanceOf(address(owner));
+        vm.expectEmit(true, true, true, true, address(distributor));
+        emit Claimed(tokenId, 1209600, 3024000, 25436828367878);
         distributor.claim(tokenId);
         uint256 post = VELO.balanceOf(address(owner));
 

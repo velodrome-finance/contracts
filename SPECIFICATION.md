@@ -137,7 +137,11 @@ with a vote conducted by `EpochGovernor`. See `EpochGovernor` for information on
 
 ## RewardsDistributor
 
-Standard Curve-fee distribution contract, modified for use with rebases. Rebase claims against expired veNFTs will be distributed as unlocked VELO to the owner of the veNFT.
+Standard Curve-fee distribution contract, modified for use with rebases. Rebases 
+are calculated based on the locked and unlocked VELO one second prior to epoch flip.
+veNFTs will earn rebases proportionally based on their contribution to the total locked
+VELO. Rebase claims against expired veNFTs will be distributed as unlocked VELO to the 
+owner of the veNFT. 
 
 ## VeArtProxy
 
