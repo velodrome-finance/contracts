@@ -12,14 +12,16 @@ interface IFactoryRegistry {
     event Unapprove(address indexed poolFactory, address indexed votingRewardsFactory, address indexed gaugeFactory);
     event SetManagedRewardsFactory(address indexed _newRewardsFactory);
 
-    /// @notice Approve a set of factories used in Velodrome Protocol
+    /// @notice Approve a set of factories used in Velodrome Protocol.  Router is now able to swap with pools created
+    //          by the poolFactory
     /// @dev Callable by onlyOwner
     /// @param poolFactory .
     /// @param votingRewardsFactory .
     /// @param gaugeFactory .
     function approve(address poolFactory, address votingRewardsFactory, address gaugeFactory) external;
 
-    /// @notice Unapprove a set of factories used in Velodrome Protocol
+    /// @notice Unapprove a set of factories used in Velodrome Protocol. Router is no longer able to swap with pools
+    ///         created by the poolFactory
     /// @dev Callable by onlyOwner
     /// @param poolFactory .
     /// @param votingRewardsFactory .
@@ -49,6 +51,12 @@ interface IFactoryRegistry {
     /// @dev The same PoolFactory address cannot be used twice
     /// @return Array of PoolFactory addresses
     function poolFactories() external view returns (address[] memory);
+
+    /// @notice Check if a PoolFactory is registered within the factory registry.  Router uses this method to
+    ///         ensure a pool swapped from is approved.
+    /// @param poolFactory .
+    /// @return True if PoolFactory is approved, else false
+    function poolFactoryExists(address poolFactory) external view returns (bool);
 
     /// @notice Get the length of the poolFactories array
     function poolFactoriesLength() external view returns (uint256);

@@ -21,8 +21,6 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(factory2.allPoolsLength(), 0);
         factory2.setFee(true, 1); // set fee back to 0.01% for old tests
         factory2.setFee(false, 1);
-        router2 = new Router(address(forwarder), address(0), address(factory2), address(voter), address(WETH));
-        assertEq(address(router2.defaultFactory()), address(factory2));
 
         votingRewardsFactory2 = new VotingRewardsFactory();
         gaugeFactory2 = new GaugeFactory();
@@ -33,6 +31,16 @@ contract FactoryRegistryTest is BaseTest {
             address(managedRewardsFactory)
         );
         managedRewardsFactory2 = new ManagedRewardsFactory();
+
+        router2 = new Router(
+            address(forwarder),
+            address(factoryRegistry2),
+            address(0),
+            address(factory2),
+            address(voter),
+            address(WETH)
+        );
+        assertEq(address(router2.defaultFactory()), address(factory2));
 
         // we need to create a new pool with the old factory to create the gauge
         // as existing pools already have gauges

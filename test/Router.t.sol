@@ -65,6 +65,21 @@ contract RouterTest is BaseTest {
         poolFee = Pool(factory.getPool(address(erc20Fee), address(WETH), false));
     }
 
+    function testCannotSortTokensSameRoute() public {
+        vm.expectRevert(IRouter.SameAddresses.selector);
+        router.sortTokens(address(_pool), address(_pool));
+    }
+
+    function testCannotSortTokensZeroAddress() public {
+        vm.expectRevert(IRouter.ZeroAddress.selector);
+        router.sortTokens(address(_pool), address(0));
+    }
+
+    function testCannotSwapNonApprovedFactory() public {
+        vm.expectRevert(IRouter.PoolFactoryDoesNotExist.selector);
+        router.poolFor(address(USDC), address(WETH), false, address(1));
+    }
+
     function testCannotSendETHToRouter() public {
         vm.expectRevert(IRouter.OnlyWETH.selector);
         payable(address(router)).transfer(TOKEN_1);

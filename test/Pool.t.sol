@@ -27,7 +27,14 @@ contract PoolTest is BaseTest {
 
         distributor = new RewardsDistributor(address(escrow));
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
-        router = new Router(address(forwarder), address(0), address(factory), address(voter), address(WETH));
+        router = new Router(
+            address(forwarder),
+            address(factoryRegistry),
+            address(0),
+            address(factory),
+            address(voter),
+            address(WETH)
+        );
 
         escrow.setVoterAndDistributor(address(voter), address(distributor));
         factory.setVoter(address(voter));

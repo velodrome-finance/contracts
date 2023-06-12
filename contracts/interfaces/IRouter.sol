@@ -9,6 +9,7 @@ interface IRouter {
         address factory;
     }
 
+    error ConversionFromV2ToV1VeloProhibited();
     error ETHTransferFailed();
     error Expired();
     error InsufficientAmount();
@@ -26,6 +27,9 @@ interface IRouter {
     error InvalidRouteB();
     error OnlyWETH();
     error PoolDoesNotExist();
+    error PoolFactoryDoesNotExist();
+    error SameAddresses();
+    error ZeroAddress();
 
     /// @dev Struct containing information necessary to zap in and out of pools
     /// @param tokenA .
@@ -47,16 +51,28 @@ interface IRouter {
         uint256 amountBMin;
     }
 
-    /// @notice Calculate the address of a pool
+    /// @notice Calculate the address of a pool by its' factory.
+    ///         Used by all Router functions containing a `Route[]` or `_factory` argument.
+    ///         Reverts if _factory is not approved by the FactoryRegistry
     /// @dev Returns a randomly generated address for a nonexistent pool
     /// @param tokenA Address of token to query
     /// @param tokenB Address of token to query
     /// @param stable Boolean to indicate if the pool is stable or volatile
-    /// @param factory Address of factory which created the pool
-    function poolFor(address tokenA, address tokenB, bool stable, address factory) external view returns (address pool);
+    /// @param _factory Address of factory which created the pool
+    function poolFor(
+        address tokenA,
+        address tokenB,
+        bool stable,
+        address _factory
+    ) external view returns (address pool);
 
-    /// @notice Wraps around poolFor(tokenA,tokenB,stable,factory) for backwards compatibility to Velodrome v1
-    function pairFor(address tokenA, address tokenB, bool stable, address factory) external view returns (address pool);
+    /// @notice Wraps around poolFor(tokenA,tokenB,stable,_factory) for backwards compatibility to Velodrome v1
+    function pairFor(
+        address tokenA,
+        address tokenB,
+        bool stable,
+        address _factory
+    ) external view returns (address pool);
 
     function getReserves(
         address tokenA,

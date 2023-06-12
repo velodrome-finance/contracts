@@ -8,6 +8,7 @@ import {IPairFactoryV1} from "./interfaces/v1/IPairFactoryV1.sol";
 import {IRouter} from "./interfaces/IRouter.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IGauge} from "./interfaces/IGauge.sol";
+import {IFactoryRegistry} from "./interfaces/factories/IFactoryRegistry.sol";
 import {IWETH} from "./interfaces/IWETH.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
@@ -20,6 +21,7 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 contract Router is IRouter, ERC2771Context {
     using SafeERC20 for IERC20;
 
+    address public immutable factoryRegistry;
     address public immutable v1Factory;
     /// @dev v2 default pair factory
     address public immutable defaultFactory;
@@ -40,11 +42,13 @@ contract Router is IRouter, ERC2771Context {
 
     constructor(
         address _forwarder,
+        address _factoryRegistry,
         address _v1Factory,
         address _factory,
         address _voter,
         address _weth
     ) ERC2771Context(_forwarder) {
+        factoryRegistry = _factoryRegistry;
         v1Factory = _v1Factory;
         defaultFactory = _factory;
         voter = _voter;
@@ -56,9 +60,9 @@ contract Router is IRouter, ERC2771Context {
     }
 
     function sortTokens(address tokenA, address tokenB) public pure returns (address token0, address token1) {
-        require(tokenA != tokenB, "Router: identical addresses");
+        if (tokenA == tokenB) revert SameAddresses();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
-        require(token0 != address(0), "Router: zero address");
+        if (token0 == address(0)) revert ZeroAddress();
     }
 
     /// @inheritdoc IRouter
@@ -75,10 +79,11 @@ contract Router is IRouter, ERC2771Context {
     function poolFor(address tokenA, address tokenB, bool stable, address _factory) public view returns (address pool) {
         address _defaultFactory = defaultFactory;
         address factory = _factory == address(0) ? _defaultFactory : _factory;
+        if (!IFactoryRegistry(factoryRegistry).poolFactoryExists(factory)) revert PoolFactoryDoesNotExist();
         address velo = IPoolFactory(_defaultFactory).velo();
         address veloV2 = IPoolFactory(_defaultFactory).veloV2();
         // Disable routing v2 -> v1 velo
-        require(!((tokenA == veloV2) && (tokenB == velo)), "Cannot convert VELO from V2 to V1");
+        if ((tokenA == veloV2) && (tokenB == velo)) revert ConversionFromV2ToV1VeloProhibited();
         // Override for sink converter
         if ((tokenA == velo) && (tokenB == veloV2)) {
             return IPoolFactory(_defaultFactory).sinkConverter();
@@ -147,7 +152,6 @@ contract Router is IRouter, ERC2771Context {
         }
     }
 
-    /// @dev v2 only
     function quoteAddLiquidity(
         address tokenA,
         address tokenB,

@@ -113,7 +113,14 @@ abstract contract Base is Script, Test {
         escrow.setAllowedManager(allowedManager);
 
         // Setup router
-        router = new Router(address(forwarder), address(vFactory), address(factory), address(voter), address(WETH));
+        router = new Router(
+            address(forwarder),
+            address(factoryRegistry),
+            address(vFactory),
+            address(factory),
+            address(voter),
+            address(WETH)
+        );
 
         // Setup minter
         minter = new Minter(address(voter), address(escrow), address(distributor));

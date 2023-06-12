@@ -85,6 +85,10 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         return _poolFactories.values();
     }
 
+    function poolFactoryExists(address _poolFactory) external view returns (bool) {
+        return _poolFactories.contains(_poolFactory);
+    }
+
     /// @inheritdoc IFactoryRegistry
     function poolFactoriesLength() external view returns (uint256) {
         return _poolFactories.length();

@@ -275,4 +275,9 @@ contract RouterForkTest is BaseTest {
 
         assertApproxEqRel(DAI.balanceOf(address(owner)) - balanceBefore, expectedOutput, 1e4);
     }
+
+    function testCannotConvertV2ToV1Velo() public {
+        vm.expectRevert(IRouter.ConversionFromV2ToV1VeloProhibited.selector);
+        router.poolFor(address(VELO), address(vVELO), false, address(0));
+    }
 }
