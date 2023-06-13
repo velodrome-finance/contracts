@@ -194,6 +194,7 @@ interface IVoter {
 
     /// @notice Create a new gauge (unpermissioned).
     /// @dev Governor can create a new gauge for a pool with any address.
+    /// @dev V1 gauges can only be created by governor.
     /// @param _poolFactory .
     /// @param _votingRewardsFactory .
     /// @param _gaugeFactory .

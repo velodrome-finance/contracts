@@ -49,7 +49,7 @@ contract WashTradeTest is BaseTest {
     function confirmTokensForFraxUsdc() public {
         votingEscrowMerge();
         deployFactories();
-        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry), address(vFactory));
         router = new Router(
             address(forwarder),
             address(factoryRegistry),
@@ -121,7 +121,7 @@ contract WashTradeTest is BaseTest {
     function deployVoter() public {
         routerAddLiquidity();
 
-        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
+        voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry), address(vFactory));
         address[] memory tokens = new address[](4);
         tokens[0] = address(USDC);
         tokens[1] = address(FRAX);

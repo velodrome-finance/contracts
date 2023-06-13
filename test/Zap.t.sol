@@ -44,12 +44,14 @@ contract ZapTest is BaseTest {
             address(voter),
             address(WETH)
         );
+        vm.startPrank(address(governor));
         vGauge = Gauge(
             voter.createGauge(address(vFactory), address(votingRewardsFactory), address(gaugeFactory), address(vPool))
         );
         sGauge = Gauge(
             voter.createGauge(address(vFactory), address(votingRewardsFactory), address(gaugeFactory), address(sPool))
         );
+        vm.stopPrank();
 
         vm.label(address(vPool), "vAMM WETH/USDC");
         vm.label(address(sPool), "sAMM FRAX/USDC");

@@ -5,7 +5,6 @@ import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
 import "../script/DeploySinkDrain.s.sol";
 import "../script/DeployVelodromeV2.s.sol";
-import "../script/DeployGaugesV1.s.sol";
 import "../script/DeployGaugesAndPoolsV2.s.sol";
 import "../script/DeployGovernors.s.sol";
 
@@ -31,7 +30,6 @@ contract TestDeploy is BaseTest {
     // Scripts to test
     DeploySinkDrain deploySinkDrain;
     DeployVelodromeV2 deployVelodromeV2;
-    DeployGaugesV1 deployGaugesV1;
     DeployGaugesAndPoolsV2 deployGaugesAndPoolsV2;
     DeployGovernors deployGovernors;
 
@@ -45,7 +43,6 @@ contract TestDeploy is BaseTest {
 
         deploySinkDrain = new DeploySinkDrain();
         deployVelodromeV2 = new DeployVelodromeV2();
-        deployGaugesV1 = new DeployGaugesV1();
         deployGaugesAndPoolsV2 = new DeployGaugesAndPoolsV2();
         deployGovernors = new DeployGovernors();
 
@@ -80,7 +77,6 @@ contract TestDeploy is BaseTest {
         vVoter.createGauge(address(sinkDrain));
 
         deployVelodromeV2.run();
-        deployGaugesV1.run();
         deployGaugesAndPoolsV2.run();
         deployGovernors.run();
 
@@ -120,12 +116,14 @@ contract TestDeploy is BaseTest {
 
         // v2 core
         // From _coreSetup()
+        assertTrue(address(vFactory) != address(0));
         assertTrue(address(deployVelodromeV2.forwarder()) != address(0));
         assertEq(address(deployVelodromeV2.artProxy().ve()), address(deployVelodromeV2.escrow()));
         assertEq(deployVelodromeV2.escrow().voter(), address(deployVelodromeV2.voter()));
         assertEq(deployVelodromeV2.escrow().artProxy(), address(deployVelodromeV2.artProxy()));
         assertEq(deployVelodromeV2.escrow().allowedManager(), allowedManager);
         assertEq(address(deployVelodromeV2.distributor().ve()), address(deployVelodromeV2.escrow()));
+        assertEq(deployVelodromeV2.router().v1Factory(), address(vFactory));
         assertEq(deployVelodromeV2.router().defaultFactory(), address(deployVelodromeV2.factory()));
         assertEq(deployVelodromeV2.router().voter(), address(deployVelodromeV2.voter()));
         assertEq(address(deployVelodromeV2.router().weth()), address(WETH));
@@ -133,6 +131,7 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.VELO().minter(), address(deployVelodromeV2.minter()));
         assertEq(deployVelodromeV2.VELO().sinkManager(), address(deployVelodromeV2.sinkManager()));
 
+        assertEq(deployVelodromeV2.voter().v1Factory(), address(vFactory));
         assertEq(deployVelodromeV2.voter().minter(), address(deployVelodromeV2.minter()));
         assertEq(address(deployVelodromeV2.minter().velo()), address(deployVelodromeV2.VELO()));
         assertEq(address(deployVelodromeV2.minter().voter()), address(deployVelodromeV2.voter()));
@@ -166,16 +165,6 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.factoryRegistry().owner(), team);
         assertEq(deployVelodromeV2.factory().feeManager(), feeManager);
         assertEq(deployVelodromeV2.factory().voter(), address(deployVelodromeV2.voter()));
-
-        // ensure all gauges for v1 pools were created - DeployGaugesV1
-        address[] memory poolsV1 = abi.decode(jsonConstants.parseRaw(".poolsV1"), (address[]));
-        for (uint256 i = 0; i < poolsV1.length; i++) {
-            Pool p = Pool(poolsV1[i]);
-            address poolAddr = deployVelodromeV2.vFactory().getPair(p.token0(), p.token1(), p.stable());
-            assertTrue(poolAddr != address(0));
-            address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
-            assertTrue(gaugeAddr != address(0));
-        }
 
         // ensure all v2 pools were created with their respective gauges - DeployGaugesAndPoolsV2
         PoolV2[] memory poolsV2 = abi.decode(jsonConstants.parseRaw(".poolsV2"), (PoolV2[]));

@@ -35,22 +35,17 @@ forge script script/DeploySinkDrain.s.sol:DeploySinkDrain --broadcast --rpc-url 
 forge script script/DeployVelodromeV2.s.sol:DeployVelodromeV2 --broadcast --rpc-url optimism --verify -vvvv
 ```
 
-4. Deploy v1 gauges.  These gauges are built on Velodrome v2 using existing v1 pools.
-```
-forge script script/DeployGaugesV1.s.sol:DeployGaugesV1 --broadcast --rpc-url optimism --verify -vvvv
-```
-
-5. Deploy v2 gauges and v2 pools.  These gauges are built on Velodrome v2 using newly created v2 pools.
+4. Deploy v2 gauges and v2 pools.  These gauges are built on Velodrome v2 using newly created v2 pools.
 ```
 forge script script/DeployGaugesAndPoolsV2.s.sol:DeployGaugesAndPoolsV2 --broadcast --rpc-url optimism --verify -vvvv
 ```
 
-6. Deploy governor contracts
+5. Deploy governor contracts
 ```
 forge script script/DeployGovernors.s.sol:DeployGovernors --broadcast --rpc-url optimism --verify -vvvv
 ```
-7.  Update the governor addresses on v2.  This needs to be done by the v2 `escrow.team()` address.  Within v2 `voter`:
+6.  Update the governor addresses on v2.  This needs to be done by the v2 `escrow.team()` address.  Within v2 `voter`:
  - call `setEpochGovernor()` using the `EpochGovernor` address located in `script/constants/output/{OUTPUT_FILENAME}`
  - call `setGovernor()` using the `Governor` address located in the same file.
 
-8. Accept governor vetoer status.  This also needs to be done by the v2 `escrow.team()` address.  Within the deployed `Governor` contract call `acceptVetoer()`.
+7. Accept governor vetoer status.  This also needs to be done by the v2 `escrow.team()` address.  Within the deployed `Governor` contract call `acceptVetoer()`.

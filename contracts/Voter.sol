@@ -26,6 +26,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     address public immutable ve;
     /// @notice Factory registry for valid pool / gauge / rewards factories
     address public immutable factoryRegistry;
+    /// @notice V1 factory
+    address public immutable v1Factory;
     /// @notice Base token of ve contract
     address internal immutable rewardToken;
     /// @notice Rewards are released over 7 days
@@ -79,10 +81,16 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     /// @dev Gauge => Amount claimable
     mapping(address => uint256) public claimable;
 
-    constructor(address _forwarder, address _ve, address _factoryRegistry) ERC2771Context(_forwarder) {
+    constructor(
+        address _forwarder,
+        address _ve,
+        address _factoryRegistry,
+        address _v1Factory
+    ) ERC2771Context(_forwarder) {
         forwarder = _forwarder;
         ve = _ve;
         factoryRegistry = _factoryRegistry;
+        v1Factory = _v1Factory;
         rewardToken = IVotingEscrow(_ve).token();
         address _sender = _msgSender();
         minter = _sender;
@@ -321,6 +329,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         if (gauges[_pool] != address(0)) revert GaugeExists();
         if (!IFactoryRegistry(factoryRegistry).isApproved(_poolFactory, _votingRewardsFactory, _gaugeFactory))
             revert FactoryPathNotApproved();
+        if ((_poolFactory == v1Factory) && (sender != governor)) revert NotGovernor();
 
         address[] memory rewards = new address[](2);
         bool isPool = IPoolFactory(_poolFactory).isPair(_pool); // backwards compatibility to v1
