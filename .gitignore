@@ -1,11 +1,9 @@
-# for verify
-args.js 
-
 .env
 
 # Foundry
 cache/
 out/
+broadcast/
 
 # JS
 node_modules/

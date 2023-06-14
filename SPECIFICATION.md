@@ -13,13 +13,6 @@ protocol users.
 - Pool: AMM constant-product implementation similar to Uniswap V2 liquidity pools.  Note that in Velodrome V1, "pools" were referred to as "pairs".
 
 
-## Permissions
-
-The following roles are granted various positions in the protocol:
-- Governor: Governance contract for most issues around governance.
-- EpochGovernor: Epoch governance contract for minter emissions governance. 
-- Emergency Council: A Curve-esque emergency DAO consisting of seven members from both the Velodrome team and prominent figures within the Optimism community. 
-
 ## Protocol Upgradability
 
 Velodrome V2 is immutable, just like V1. To allow improving the protocol, V2
@@ -190,16 +183,6 @@ Standard Operations:
 - Can bulk claim rewards (i.e. bribes + fees), bribes or fees. 
 - Can distribute that epoch's emissions to pools.
 - Can create gauge and reward contracts for a pool (must be a pool created as a part of Velodrome).
-
-Permissioned Operations:
-- Can set `governor` (requires `governor` permissions).
-- Can set `emergencyCouncil` (requires `emergencyCouncil` permissions).
-- Can whitelist a token for use in bribe contracts (requires `governor` permissions).
-- Can whitelist an NFT for voting in the restricted window prior to epoch flip (requires `governor` permissions).
-- Can create gauge and reward contracts for a pool (pool address can be any address, requires `governor` permissions).
-- Can kill a gauge (requires `emergencyCouncil` permissions).
-- Can revive a gauge (requires `emergencyCouncil` persmissions).
-- Can add emissions to Voter (requires `Minter`).
 
 ### Gauge
 

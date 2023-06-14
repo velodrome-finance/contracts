@@ -90,17 +90,8 @@ In order to write hard fork tests, extend `test/HardForkTest.sol`. The `OPTIMISM
 
 ## Deployment
 
-This project's deployment process uses [Hardhat tasks](https://hardhat.org/guides/create-task.html). The scripts are found in `tasks/`.
-
-Deployment contains 3 steps:
-
-1. `npx hardhat deploy:op` which deploys the core contracts, along with RedemptionReceiver, to Optimism.
-
-2. `npx hardhat deploy:ftm` which deploys the RedemptionSender contract to Fantom. The RedemptionReceiver address from Step 1 should be recorded in `deployed.ts` prior.
+See `script/README.md` for more detail.
 
 ## Security
 
-To consult the latest security report and deployed contract addresses, please
-use our dedicated page at [docs.velodrome.finance](https://docs.velodrome.finance/security).
-
-To report a security issue, please reach out to our team on Discord.
+See `SECURITY.md` and `PERMISSIONS.md` for more detail.
