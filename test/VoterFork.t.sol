@@ -13,19 +13,14 @@ contract VoterForkTest is BaseTest {
 
         vm.expectRevert(IVoter.NotGovernor.selector);
         vm.prank(address(owner2));
-        voter.createGauge(address(vFactory), address(votingRewardsFactory), address(gaugeFactory), _pool);
+        voter.createGauge(address(vFactory), _pool);
     }
 
     function testCreateGaugeWithV1Factory() public {
         address _pool = vFactory.getPair(address(USDC), address(WETH), false);
 
         vm.prank(address(governor));
-        address _gauge = voter.createGauge(
-            address(vFactory),
-            address(votingRewardsFactory),
-            address(gaugeFactory),
-            _pool
-        );
+        address _gauge = voter.createGauge(address(vFactory), _pool);
 
         assertTrue(voter.gaugeToFees(_gauge) != address(0));
         assertTrue(voter.gaugeToBribe(_gauge) != address(0));

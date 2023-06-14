@@ -79,7 +79,7 @@ contract Router is IRouter, ERC2771Context {
     function poolFor(address tokenA, address tokenB, bool stable, address _factory) public view returns (address pool) {
         address _defaultFactory = defaultFactory;
         address factory = _factory == address(0) ? _defaultFactory : _factory;
-        if (!IFactoryRegistry(factoryRegistry).poolFactoryExists(factory)) revert PoolFactoryDoesNotExist();
+        if (!IFactoryRegistry(factoryRegistry).isPoolFactoryApproved(factory)) revert PoolFactoryDoesNotExist();
         address velo = IPoolFactory(_defaultFactory).velo();
         address veloV2 = IPoolFactory(_defaultFactory).veloV2();
         // Disable routing v2 -> v1 velo

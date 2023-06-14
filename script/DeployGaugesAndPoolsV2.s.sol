@@ -49,7 +49,7 @@ contract DeployGaugesAndPoolsV2 is Script {
 
         for (uint256 i = 0; i < pools.length; i++) {
             address newPool = factory.createPool(pools[i].tokenA, pools[i].tokenB, pools[i].stable);
-            address newGauge = voter.createGauge(address(factory), votingRewardsFactory, gaugeFactory, newPool);
+            address newGauge = voter.createGauge(address(factory), newPool);
 
             poolsV2.push(newPool);
             gauges.push(newGauge);

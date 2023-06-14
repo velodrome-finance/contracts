@@ -488,6 +488,18 @@ contract VoterTest is BaseTest {
         voter.vote(1, pools, weights);
     }
 
+    function testCannotCreateGaugeIfPoolFactoryNotApproved() public {
+        vm.expectRevert(IVoter.FactoryPathNotApproved.selector);
+        voter.createGauge(address(0), address(0));
+    }
+
+    function testCannotCreateGaugeIfGaugeAlreadyExists() public {
+        assertTrue(voter.isGauge(address(gauge)));
+        assertEq(voter.gauges(address(pool)), address(gauge));
+        vm.expectRevert(IVoter.GaugeExists.selector);
+        voter.createGauge(address(factory), address(pool));
+    }
+
     function testCannotVoteForGaugeThatDoesNotExist() public {
         skipToNextEpoch(60 minutes + 1);
 

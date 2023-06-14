@@ -196,15 +196,8 @@ interface IVoter {
     /// @dev Governor can create a new gauge for a pool with any address.
     /// @dev V1 gauges can only be created by governor.
     /// @param _poolFactory .
-    /// @param _votingRewardsFactory .
-    /// @param _gaugeFactory .
     /// @param _pool .
-    function createGauge(
-        address _poolFactory,
-        address _votingRewardsFactory,
-        address _gaugeFactory,
-        address _pool
-    ) external returns (address);
+    function createGauge(address _poolFactory, address _pool) external returns (address);
 
     /// @notice Kills a gauge. The gauge will not receive any new emissions and cannot be deposited into.
     ///         Can still withdraw from gauge.

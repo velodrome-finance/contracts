@@ -291,9 +291,9 @@ contract PoolTest is BaseTest {
         deployMinter();
 
         VELO.approve(address(gaugeFactory), 15 * TOKEN_100K);
-        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool));
-        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool2));
-        voter.createGauge(address(factory), address(votingRewardsFactory), address(gaugeFactory), address(pool3));
+        voter.createGauge(address(factory), address(pool));
+        voter.createGauge(address(factory), address(pool2));
+        voter.createGauge(address(factory), address(pool3));
         assertFalse(voter.gauges(address(pool)) == address(0));
 
         address gaugeAddress = voter.gauges(address(pool));
