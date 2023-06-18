@@ -332,4 +332,48 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(uint256(uint128(locked.amount)), TOKEN_1M); // expired nft locked balance unchanged
         assertEq(uint256(uint128(postLocked2.amount)) - uint256(uint128(locked.amount)), rebase2); // rebase accrued to normal nft
     }
+
+    function testClaimBeforeLockedEnd() public {
+        uint256 duration = WEEK * 12;
+        vm.startPrank(address(owner));
+        VELO.approve(address(escrow), TOKEN_1M);
+        uint256 tokenId = escrow.createLock(TOKEN_1M, duration);
+
+        skipToNextEpoch(1);
+        minter.updatePeriod();
+        skipToNextEpoch(1);
+        minter.updatePeriod();
+        assertGt(distributor.claimable(tokenId), 0);
+
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(tokenId);
+        vm.warp(locked.end - 1);
+        assertEq(block.timestamp, locked.end - 1);
+
+        // Rebase should deposit into veNFT one second before expiry
+        distributor.claim(tokenId);
+        locked = escrow.locked(tokenId);
+        assertGt(uint256(uint128((locked.amount))), TOKEN_1M);
+    }
+
+    function testClaimOnLockedEnd() public {
+        uint256 duration = WEEK * 12;
+        vm.startPrank(address(owner));
+        VELO.approve(address(escrow), TOKEN_1M);
+        uint256 tokenId = escrow.createLock(TOKEN_1M, duration);
+
+        skipToNextEpoch(1);
+        minter.updatePeriod();
+        skipToNextEpoch(1);
+        minter.updatePeriod();
+        assertGt(distributor.claimable(tokenId), 0);
+
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(tokenId);
+        vm.warp(locked.end);
+        assertEq(block.timestamp, locked.end);
+
+        // Rebase should deposit into veNFT one second before expiry
+        uint256 balanceBefore = VELO.balanceOf(address(owner));
+        distributor.claim(tokenId);
+        assertGt(VELO.balanceOf(address(owner)), balanceBefore);
+    }
 }

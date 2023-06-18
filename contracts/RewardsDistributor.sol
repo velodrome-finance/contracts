@@ -132,12 +132,12 @@ contract RewardsDistributor is IRewardsDistributor {
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
         uint256 amount = _claim(_tokenId, _lastTokenTime);
         if (amount != 0) {
-            IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve).locked(_tokenId);
-            if (_timestamp > _locked.end && !_locked.isPermanent) {
-                address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
+            IVotingEscrow.LockedBalance memory _locked = ve.locked(_tokenId);
+            if (_timestamp >= _locked.end && !_locked.isPermanent) {
+                address _owner = ve.ownerOf(_tokenId);
                 IERC20(token).safeTransfer(_owner, amount);
             } else {
-                IVotingEscrow(ve).depositFor(_tokenId, amount);
+                ve.depositFor(_tokenId, amount);
             }
             tokenLastBalance -= amount;
         }
@@ -157,12 +157,12 @@ contract RewardsDistributor is IRewardsDistributor {
             if (_tokenId == 0) break;
             uint256 amount = _claim(_tokenId, _lastTokenTime);
             if (amount != 0) {
-                IVotingEscrow.LockedBalance memory _locked = IVotingEscrow(ve).locked(_tokenId);
-                if (_timestamp > _locked.end && !_locked.isPermanent) {
-                    address _owner = IVotingEscrow(ve).ownerOf(_tokenId);
+                IVotingEscrow.LockedBalance memory _locked = ve.locked(_tokenId);
+                if (_timestamp >= _locked.end && !_locked.isPermanent) {
+                    address _owner = ve.ownerOf(_tokenId);
                     IERC20(token).safeTransfer(_owner, amount);
                 } else {
-                    IVotingEscrow(ve).depositFor(_tokenId, amount);
+                    ve.depositFor(_tokenId, amount);
                 }
                 total += amount;
             }
