@@ -59,6 +59,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     error ERC721TransferToNonERC721ReceiverImplementer();
     error InvalidNonce();
     error InvalidSignature();
+    error InvalidSignatureS();
     error InvalidManagedNFTId();
     error LockDurationNotInFuture();
     error LockDurationTooLong();
