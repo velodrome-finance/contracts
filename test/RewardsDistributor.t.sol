@@ -333,6 +333,99 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(uint256(uint128(postLocked2.amount)) - uint256(uint128(locked.amount)), rebase2); // rebase accrued to normal nft
     }
 
+    function testClaimRebaseWithManagedLocks() public {
+        minter.updatePeriod(); // does nothing
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1M, MAXTIME);
+        escrow.lockPermanent(tokenId);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1M, MAXTIME);
+        escrow.lockPermanent(tokenId2);
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
+
+        voter.depositManaged(tokenId2, mTokenId);
+
+        skipAndRoll(1 hours); // created at epoch 0 + 1 days + 1 hours
+        uint256 tokenId3 = escrow.createLock(TOKEN_1M, MAXTIME);
+        escrow.lockPermanent(tokenId3);
+
+        skipToNextEpoch(0); // epoch 1
+        minter.updatePeriod();
+
+        assertEq(distributor.claimable(tokenId), 0);
+        assertEq(distributor.claimable(tokenId2), 0);
+        assertEq(distributor.claimable(tokenId3), 0);
+        assertEq(distributor.claimable(mTokenId), 0);
+
+        skipAndRoll(1 days); // deposit @ epoch 1 + 1 days
+        voter.depositManaged(tokenId3, mTokenId);
+
+        skipToNextEpoch(0); // epoch 2
+        minter.updatePeriod();
+
+        // rewards for epoch 0 locks
+        assertEq(distributor.claimable(tokenId), 243313783089378132276);
+        assertEq(distributor.claimable(tokenId2), 0);
+        assertEq(distributor.claimable(tokenId3), 243313783089378132276);
+        assertEq(distributor.claimable(mTokenId), 243313783089378132276);
+        distributor.claim(mTokenId); // claim token rewards
+        assertEq(distributor.claimable(mTokenId), 0);
+
+        uint256 tokenId4 = escrow.createLock(TOKEN_1M, MAXTIME); // lock created in epoch 2
+        escrow.lockPermanent(tokenId4);
+
+        skipToNextEpoch(0); // epoch 3
+        minter.updatePeriod();
+
+        // rewards for epoch 1 locks
+        assertEq(distributor.claimable(tokenId), 551353485338580432656);
+        assertEq(distributor.claimable(tokenId2), 0);
+        assertEq(distributor.claimable(tokenId3), 243313783089378132276); // claimable unchanged
+        assertEq(distributor.claimable(tokenId4), 0); // no rebases until epoch 4
+        assertEq(distributor.claimable(mTokenId), 616079404498404600760);
+
+        skipToNextEpoch(0); // epoch 4
+        minter.updatePeriod();
+
+        // rewards for epoch 2 locks
+        assertEq(distributor.claimable(tokenId), 689102814121856657961);
+        assertEq(distributor.claimable(tokenId2), 0);
+        assertEq(distributor.claimable(tokenId3), 243313783089378132276); // claimable unchanged
+        assertEq(distributor.claimable(tokenId4), 137749328783276225305);
+        assertEq(distributor.claimable(mTokenId), 891611578375261332875);
+
+        skipAndRoll(1 hours + 1);
+        voter.withdrawManaged(tokenId3);
+        distributor.claim(tokenId3);
+        assertEq(distributor.claimable(tokenId3), 0);
+    }
+
+    function testCannotClaimRebaseWithLockedNFT() public {
+        VELO.approve(address(escrow), TOKEN_1M);
+        uint256 tokenId = escrow.createLock(TOKEN_1M, MAXTIME);
+        escrow.lockPermanent(tokenId);
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
+
+        skipToNextEpoch(1 days); // epoch 1
+        minter.updatePeriod();
+
+        assertEq(distributor.claimable(tokenId), 0);
+        assertEq(distributor.claimable(mTokenId), 0);
+
+        skipToNextEpoch(2 hours); // epoch 2
+        minter.updatePeriod();
+
+        assertEq(distributor.claimable(tokenId), 34166493984647399438);
+        assertEq(distributor.claimable(mTokenId), 0);
+
+        voter.depositManaged(tokenId, mTokenId);
+
+        skipToNextEpoch(1 days); // epoch 3
+        minter.updatePeriod();
+
+        vm.expectRevert(IRewardsDistributor.NotManagedOrNormalNFT.selector);
+        distributor.claim(tokenId);
+    }
+
     function testClaimBeforeLockedEnd() public {
         uint256 duration = WEEK * 12;
         vm.startPrank(address(owner));

@@ -105,7 +105,7 @@ contract RewardsDistributor is IRewardsDistributor {
             weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
             weekCursorStart = weekCursor;
         }
-        if (weekCursor >= lastTokenTime) return (0, weekCursorStart, weekCursor);
+        if (weekCursor >= _lastTokenTime) return (0, weekCursorStart, weekCursor);
         if (weekCursor < _startTime) weekCursor = _startTime;
 
         for (uint256 i = 0; i < 50; i++) {
@@ -127,6 +127,7 @@ contract RewardsDistributor is IRewardsDistributor {
 
     /// @inheritdoc IRewardsDistributor
     function claim(uint256 _tokenId) external returns (uint256) {
+        if (ve.escrowType(_tokenId) == IVotingEscrow.EscrowType.LOCKED) revert NotManagedOrNormalNFT();
         uint256 _timestamp = block.timestamp;
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
@@ -154,6 +155,7 @@ contract RewardsDistributor is IRewardsDistributor {
 
         for (uint256 i = 0; i < _length; i++) {
             uint256 _tokenId = _tokenIds[i];
+            if (ve.escrowType(_tokenId) == IVotingEscrow.EscrowType.LOCKED) revert NotManagedOrNormalNFT();
             if (_tokenId == 0) break;
             uint256 amount = _claim(_tokenId, _lastTokenTime);
             if (amount != 0) {

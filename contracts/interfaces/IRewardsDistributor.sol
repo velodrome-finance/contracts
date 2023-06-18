@@ -6,6 +6,7 @@ interface IRewardsDistributor {
     event Claimed(uint256 indexed tokenId, uint256 indexed epochStart, uint256 indexed epochEnd, uint256 amount);
 
     error NotDepositor();
+    error NotManagedOrNormalNFT();
 
     /// @notice Called by Minter to notify Distributor of rebases
     function checkpointToken() external;

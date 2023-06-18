@@ -15,7 +15,7 @@ import {FreeManagedReward} from "contracts/rewards/FreeManagedReward.sol";
 import {LockedManagedReward} from "contracts/rewards/LockedManagedReward.sol";
 import {IGauge, Gauge} from "contracts/gauges/Gauge.sol";
 import {PoolFees} from "contracts/PoolFees.sol";
-import {RewardsDistributor} from "contracts/RewardsDistributor.sol";
+import {RewardsDistributor, IRewardsDistributor} from "contracts/RewardsDistributor.sol";
 import {IRouter, Router} from "contracts/Router.sol";
 import {IVelo, Velo} from "contracts/Velo.sol";
 import {IVoter, Voter} from "contracts/Voter.sol";

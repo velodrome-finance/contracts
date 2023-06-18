@@ -12,6 +12,7 @@ For example, if we take "Empty State" and `createLock`, this means that given no
 - Delegating involves modifying the `delegatee` field in the latest `tokenId`'s checkpoint, as well as incrementing the `delegatee`'s `delegatedBalance` field in the `delegatee`'s latest checkpoint.
 - Dedelegating involves deleting the `delegatee` field in the latest `tokenId`'s checkpoint, as well as decrementing the prior `delegatee`'s `delegatedBalance` field in the `delegatee`'s latest checkpoint.
 - Note that for `merge`, only the `to` NFT is allowed to be of type normal permanent.
+- The last two rows refer to functions that exist in `RewardsDistributor`.
 
 | Function | Empty State | Normal | Normal Permanent | Locked | Managed Permanent |
 | --- | --- | --- | --- | --- | --- |
@@ -30,6 +31,8 @@ For example, if we take "Empty State" and `createLock`, this means that given no
 | `unlockPermanent` | | | - Dedelegates </br> - Converts to normal. | | |
 | `delegate` | | | - Dedelegates. </br> - Delegates. | | - Dedelegates. </br> - Delegates. |
 | `delegateBySig` | | | - Dedelegates. </br> - Delegates. | | - Dedelegates. </br> - Delegates. |
+| `distributor.claim` | | - Collect rebases. | - Collect rebases. | | - Collect rebases. |
+| `distributor.claimMany` | | - Collect rebases. | - Collect rebases. | | - Collect rebases. |
 
 Note that when a normal nft calls functions like `depositFor`, `increaseAmount` etc, dedelegation still occurs but is skipped as the `tokenId` has no delegatee. 
 
