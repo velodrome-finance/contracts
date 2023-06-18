@@ -117,9 +117,9 @@ library BalanceLogicLibrary {
         uint256 _t
     ) external view returns (uint256) {
         uint256 epoch_ = getPastGlobalPointIndex(_epoch, _pointHistory, _t);
-        IVotingEscrow.GlobalPoint memory _point = _pointHistory[epoch_];
         // epoch 0 is an empty point
         if (epoch_ == 0) return 0;
+        IVotingEscrow.GlobalPoint memory _point = _pointHistory[epoch_];
         int128 bias = _point.bias;
         int128 slope = _point.slope;
         uint256 ts = _point.ts;
