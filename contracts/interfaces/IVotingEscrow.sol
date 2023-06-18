@@ -377,6 +377,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     /// @notice Splits veNFT into two new veNFTS - one with oldLocked.amount - `_amount`, and the second with `_amount`
     /// @dev    This burns the tokenId of the target veNFT
     ///         Callable by approved or owner
+    ///         If this is called by approved, approved will not have permissions to manipulate the newly created veNFTs
     ///         Returns the two new split veNFTs to owner
     ///         If `from` is permanent, will automatically dedelegate.
     /// @param _from VeNFT to split.
