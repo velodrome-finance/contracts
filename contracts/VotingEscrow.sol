@@ -952,6 +952,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     ) external nonReentrant returns (uint256 _tokenId1, uint256 _tokenId2) {
         address sender = _msgSender();
         address owner = _ownerOf(_from);
+        if (owner == address(0)) revert SplitNoOwner();
         if (!canSplit[owner] && !canSplit[address(0)]) revert SplitNotAllowed();
         if (escrowType[_from] != EscrowType.NORMAL) revert NotNormalNFT();
         if (voted[_from]) revert AlreadyVoted();

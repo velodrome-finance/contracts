@@ -85,6 +85,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     error SameAddress();
     error SameNFT();
     error SameState();
+    error SplitNoOwner();
     error SplitNotAllowed();
     error SignatureExpired();
     error TooManyTokenIDs();

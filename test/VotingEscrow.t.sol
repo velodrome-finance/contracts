@@ -945,6 +945,33 @@ contract VotingEscrowTest is BaseTest {
         assertEq(post - pre, TOKEN_1);
     }
 
+    function testCannotSplitIfNoOwnerAfterSplit() public {
+        escrow.toggleSplit(address(0), true);
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.split(tokenId, TOKEN_1 / 2);
+        vm.expectRevert(IVotingEscrow.SplitNoOwner.selector);
+        escrow.split(tokenId, TOKEN_1 / 4);
+    }
+
+    function testCannotSplitIfNoOwnerAfterWithdraw() public {
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        skipAndRoll(MAXTIME + 1);
+        escrow.withdraw(tokenId);
+        vm.expectRevert(IVotingEscrow.SplitNoOwner.selector);
+        escrow.split(tokenId, TOKEN_1 / 2);
+    }
+
+    function testCannotSplitIfNoOwnerAfterMerge() public {
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.merge(tokenId, tokenId2);
+        vm.expectRevert(IVotingEscrow.SplitNoOwner.selector);
+        escrow.split(tokenId, TOKEN_1 / 4);
+    }
+
     function testCannotToggleSplitForAllIfNotTeam() public {
         vm.prank(address(owner2));
         vm.expectRevert(IVotingEscrow.NotTeam.selector);
