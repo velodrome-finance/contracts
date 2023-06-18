@@ -102,7 +102,7 @@ contract RewardsDistributor is IRewardsDistributor {
         // case where token exists but has never been claimed
         if (weekCursor == 0) {
             IVotingEscrow.UserPoint memory userPoint = ve.userPointHistory(_tokenId, 1);
-            weekCursor = ((userPoint.ts + WEEK - 1) / WEEK) * WEEK;
+            weekCursor = (userPoint.ts / WEEK) * WEEK;
             weekCursorStart = weekCursor;
         }
         if (weekCursor >= _lastTokenTime) return (0, weekCursorStart, weekCursor);
@@ -111,8 +111,8 @@ contract RewardsDistributor is IRewardsDistributor {
         for (uint256 i = 0; i < 50; i++) {
             if (weekCursor >= _lastTokenTime) break;
 
-            uint256 balance = ve.balanceOfNFTAt(_tokenId, weekCursor - 1);
-            uint256 supply = ve.totalSupplyAt(weekCursor - 1);
+            uint256 balance = ve.balanceOfNFTAt(_tokenId, weekCursor + WEEK - 1);
+            uint256 supply = ve.totalSupplyAt(weekCursor + WEEK - 1);
             supply = supply == 0 ? 1 : supply;
             toDistribute += (balance * tokensPerWeek[weekCursor]) / supply;
             weekCursor += WEEK;
@@ -180,9 +180,5 @@ contract RewardsDistributor is IRewardsDistributor {
     function setDepositor(address _depositor) external {
         if (msg.sender != depositor) revert NotDepositor();
         depositor = _depositor;
-    }
-
-    function max(int128 a, int128 b) internal pure returns (int128) {
-        return a > b ? a : b;
     }
 }

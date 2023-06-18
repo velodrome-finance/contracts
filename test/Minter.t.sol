@@ -213,7 +213,7 @@ contract MinterTest is BaseTest {
         uint256 pre = VELO.balanceOf(address(voter));
         skipToNextEpoch(1);
         minter.updatePeriod();
-        assertEq(distributor.claimable(tokenId), 0);
+        assertEq(distributor.claimable(tokenId), 57);
         // emissions decay by 1% after one epoch
         uint256 post = VELO.balanceOf(address(voter));
         assertEq(post - pre, (15 * TOKEN_1M));
@@ -226,7 +226,7 @@ contract MinterTest is BaseTest {
         post = VELO.balanceOf(address(voter));
 
         // check rebase accumulated
-        assertGt(distributor.claimable(1), 0);
+        assertEq(distributor.claimable(1), 82);
         distributor.claim(1);
         assertEq(distributor.claimable(1), 0);
 

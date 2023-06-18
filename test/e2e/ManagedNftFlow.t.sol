@@ -560,13 +560,13 @@ contract ManagedNftFlow is ExtendedBaseTest {
         vm.prank(address(owner2));
         voter.vote(tokenId2, pools, weights);
 
-        // epoch 1: minter mints rebases, but not claimable until epoch 2
+        // epoch 1: minter mints rebases for epoch 0
         skipToNextEpoch(1);
-        minter.updatePeriod(); // rebases not claimable until following week
+        minter.updatePeriod();
 
         skip(1 hours);
-        assertEq(distributor.claimable(mTokenId), 0);
-        assertEq(distributor.claimable(tokenId2), 0);
+        assertEq(distributor.claimable(mTokenId), 240000317749957776738);
+        assertEq(distributor.claimable(tokenId2), 240000317749957776738);
         assertGt(VELO.balanceOf(address(distributor)), 0);
 
         // epoch 2: claim rebases
@@ -574,7 +574,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         minter.updatePeriod();
 
         uint256 rebase = distributor.claim(mTokenId);
-        assertEq(rebase, 108145615642053075766);
+        assertEq(rebase, 348145934169769264706);
         // check locked, user points and global points update correctly on rebase claim
         locked = escrow.locked(mTokenId);
         assertEq(convert(locked.amount), TOKEN_1M + rebase);
@@ -588,8 +588,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1814401);
         assertEq(userPoint.blk, 3);
-        assertEq(userPoint.permanent, 1000108145615642053075766); // TOKEN_1M + rebase
-        assertEq(escrow.balanceOfNFT(mTokenId), 1000108145615642053075766);
+        assertEq(userPoint.permanent, 1000348145934169769264706); // TOKEN_1M + rebase
+        assertEq(escrow.balanceOfNFT(mTokenId), 1000348145934169769264706);
 
         // check global point updates correctly when rebases are claimed
         assertEq(escrow.epoch(), 6);
@@ -599,8 +599,8 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(convert(globalPoint.slope), 23782343985); // TOKEN_1 * 3 / MAXTIME
         assertEq(globalPoint.ts, 1814401);
         assertEq(globalPoint.blk, 3);
-        assertEq(globalPoint.permanentLockBalance, 2000108145615642053075766); // TOKEN_1M * 2 + rebase
-        assertEq(escrow.totalSupply(), 2000108145615642053075766 + 2963013674496024015); // TOKEN_1M * 2 + rebase + bias
+        assertEq(globalPoint.permanentLockBalance, 2000348145934169769264706); // TOKEN_1M * 2 + rebase
+        assertEq(escrow.totalSupply(), 2000348145934169769264706 + 2963013674496024015); // TOKEN_1M * 2 + rebase + bias
 
         uint256 managedRebaseTotal = rebase;
         assertGt(rebase, 0);
