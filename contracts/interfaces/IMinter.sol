@@ -9,6 +9,9 @@ interface IMinter {
     event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool indexed _tail);
     event Nudge(uint256 indexed _period, uint256 _oldRate, uint256 _newRate);
 
+    /// @notice Timestamp of start of epoch that updatePeriod was last called in
+    function activePeriod() external returns (uint256);
+
     /// @notice Allows epoch governor to modify the tail emission rate by at most 1 basis point
     ///         per epoch to a maximum of 100 basis points or to a minimum of 1 basis point.
     ///         Note: the very first nudge proposal must take place the week prior

@@ -4,6 +4,7 @@ pragma solidity 0.8.19;
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {IRewardsDistributor} from "./interfaces/IRewardsDistributor.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
+import {IMinter} from "./interfaces/IMinter.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
@@ -24,7 +25,7 @@ contract RewardsDistributor is IRewardsDistributor {
 
     IVotingEscrow public immutable ve;
     address public token;
-    address public depositor;
+    address public minter;
     uint256 public tokenLastBalance;
 
     constructor(address _ve) {
@@ -34,7 +35,7 @@ contract RewardsDistributor is IRewardsDistributor {
         ve = IVotingEscrow(_ve);
         address _token = ve.token();
         token = _token;
-        depositor = msg.sender;
+        minter = msg.sender;
         IERC20(_token).safeApprove(_ve, type(uint256).max);
     }
 
@@ -74,7 +75,7 @@ contract RewardsDistributor is IRewardsDistributor {
 
     /// @inheritdoc IRewardsDistributor
     function checkpointToken() external {
-        assert(msg.sender == depositor);
+        if (msg.sender != minter) revert NotMinter();
         _checkpointToken();
     }
 
@@ -127,6 +128,7 @@ contract RewardsDistributor is IRewardsDistributor {
 
     /// @inheritdoc IRewardsDistributor
     function claim(uint256 _tokenId) external returns (uint256) {
+        if (IMinter(minter).activePeriod() < ((block.timestamp / WEEK) * WEEK)) revert UpdatePeriod();
         if (ve.escrowType(_tokenId) == IVotingEscrow.EscrowType.LOCKED) revert NotManagedOrNormalNFT();
         uint256 _timestamp = block.timestamp;
         uint256 _lastTokenTime = lastTokenTime;
@@ -147,6 +149,7 @@ contract RewardsDistributor is IRewardsDistributor {
 
     /// @inheritdoc IRewardsDistributor
     function claimMany(uint256[] calldata _tokenIds) external returns (bool) {
+        if (IMinter(minter).activePeriod() < ((block.timestamp / WEEK) * WEEK)) revert UpdatePeriod();
         uint256 _timestamp = block.timestamp;
         uint256 _lastTokenTime = lastTokenTime;
         _lastTokenTime = (_lastTokenTime / WEEK) * WEEK;
@@ -177,8 +180,8 @@ contract RewardsDistributor is IRewardsDistributor {
     }
 
     /// @inheritdoc IRewardsDistributor
-    function setDepositor(address _depositor) external {
-        if (msg.sender != depositor) revert NotDepositor();
-        depositor = _depositor;
+    function setMinter(address _minter) external {
+        if (msg.sender != minter) revert NotMinter();
+        minter = _minter;
     }
 }

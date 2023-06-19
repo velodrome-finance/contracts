@@ -285,6 +285,7 @@ contract RewardsDistributorTest is BaseTest {
             minter.updatePeriod();
             skipToNextEpoch(1);
         }
+        minter.updatePeriod();
 
         assertGt(distributor.claimable(tokenId), 178570821996319); // accrued rebases
 
@@ -294,7 +295,7 @@ contract RewardsDistributorTest is BaseTest {
         uint256 rebase = distributor.claimable(tokenId);
         uint256 pre = VELO.balanceOf(address(owner));
         vm.expectEmit(true, true, true, true, address(distributor));
-        emit Claimed(tokenId, 604800, 3024000, 204006674754980);
+        emit Claimed(tokenId, 604800, 3628800, 204006674754980);
         distributor.claim(tokenId);
         uint256 post = VELO.balanceOf(address(owner));
 
@@ -321,6 +322,7 @@ contract RewardsDistributorTest is BaseTest {
             minter.updatePeriod();
             skipToNextEpoch(1);
         }
+        minter.updatePeriod();
 
         assertGt(distributor.claimable(tokenId), 0); // accrued rebases
         assertGt(distributor.claimable(tokenId2), 0);
@@ -500,6 +502,33 @@ contract RewardsDistributorTest is BaseTest {
         distributor.claim(tokenId);
     }
 
+    function testCannotClaimBeforeUpdatePeriod() public {
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1M, MAXTIME);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1M * 8, MAXTIME);
+
+        skipToNextEpoch(2 hours); // epoch 1
+        minter.updatePeriod();
+
+        assertEq(distributor.claimable(tokenId), 4695083555992579290349);
+        assertEq(distributor.claimable(tokenId2), 37560668447940637284081);
+
+        skipToNextEpoch(1 hours); // epoch 3
+        vm.expectRevert(IRewardsDistributor.UpdatePeriod.selector);
+        distributor.claim(tokenId);
+
+        skipAndRoll(1 hours);
+        minter.updatePeriod();
+
+        distributor.claim(tokenId);
+    }
+
+    function testCannotCheckpointTokenIfNotMinter() public {
+        vm.expectRevert(IRewardsDistributor.NotMinter.selector);
+        vm.prank(address(owner2));
+        distributor.checkpointToken();
+    }
+
     function testClaimBeforeLockedEnd() public {
         uint256 duration = WEEK * 12;
         vm.startPrank(address(owner));
@@ -508,13 +537,12 @@ contract RewardsDistributorTest is BaseTest {
 
         skipToNextEpoch(1);
         minter.updatePeriod();
-        skipToNextEpoch(1);
-        minter.updatePeriod();
         assertGt(distributor.claimable(tokenId), 0);
 
         IVotingEscrow.LockedBalance memory locked = escrow.locked(tokenId);
         vm.warp(locked.end - 1);
         assertEq(block.timestamp, locked.end - 1);
+        minter.updatePeriod();
 
         // Rebase should deposit into veNFT one second before expiry
         distributor.claim(tokenId);
@@ -530,13 +558,12 @@ contract RewardsDistributorTest is BaseTest {
 
         skipToNextEpoch(1);
         minter.updatePeriod();
-        skipToNextEpoch(1);
-        minter.updatePeriod();
         assertGt(distributor.claimable(tokenId), 0);
 
         IVotingEscrow.LockedBalance memory locked = escrow.locked(tokenId);
         vm.warp(locked.end);
         assertEq(block.timestamp, locked.end);
+        minter.updatePeriod();
 
         // Rebase should deposit into veNFT one second before expiry
         uint256 balanceBefore = VELO.balanceOf(address(owner));

@@ -127,7 +127,7 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.router().defaultFactory(), address(deployVelodromeV2.factory()));
         assertEq(deployVelodromeV2.router().voter(), address(deployVelodromeV2.voter()));
         assertEq(address(deployVelodromeV2.router().weth()), address(WETH));
-        assertEq(deployVelodromeV2.distributor().depositor(), address(deployVelodromeV2.minter()));
+        assertEq(deployVelodromeV2.distributor().minter(), address(deployVelodromeV2.minter()));
         assertEq(deployVelodromeV2.VELO().minter(), address(deployVelodromeV2.minter()));
         assertEq(deployVelodromeV2.VELO().sinkManager(), address(deployVelodromeV2.sinkManager()));
 

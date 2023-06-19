@@ -276,7 +276,7 @@ contract PoolTest is BaseTest {
         distributor = new RewardsDistributor(address(escrow));
 
         minter = new Minter(address(voter), address(escrow), address(distributor));
-        distributor.setDepositor(address(minter));
+        distributor.setMinter(address(minter));
         VELO.setMinter(address(minter));
         address[] memory tokens = new address[](5);
         tokens[0] = address(USDC);

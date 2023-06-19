@@ -366,11 +366,15 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
 
     /// @notice Withdraw all tokens for `_tokenId`
     /// @dev Only possible if the lock is both expired and not permanent
+    ///      This will burn the veNFT. Any rebases or rewards that are unclaimed
+    ///      will no longer be claimable. Claim all rebases and rewards prior to calling this.
     function withdraw(uint256 _tokenId) external;
 
     /// @notice Merges `_from` into `_to`.
     /// @dev Cannot merge `_from` locks that are permanent or have already voted this epoch.
     ///      Cannot merge `_to` locks that have already expired.
+    ///      This will burn the veNFT. Any rebases or rewards that are unclaimed
+    ///      will no longer be claimable. Claim all rebases and rewards prior to calling this.
     /// @param _from VeNFT to merge from.
     /// @param _to VeNFT to merge into.
     function merge(uint256 _from, uint256 _to) external;
@@ -381,6 +385,8 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     ///         If this is called by approved, approved will not have permissions to manipulate the newly created veNFTs
     ///         Returns the two new split veNFTs to owner
     ///         If `from` is permanent, will automatically dedelegate.
+    ///         This will burn the veNFT. Any rebases or rewards that are unclaimed
+    ///         will no longer be claimable. Claim all rebases and rewards prior to calling this.
     /// @param _from VeNFT to split.
     /// @param _amount Amount to split from veNFT.
     /// @return _tokenId1 Return tokenId of veNFT with oldLocked.amount - `_amount`.
