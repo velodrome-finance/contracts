@@ -5,6 +5,10 @@ import {IVelo} from "./interfaces/IVelo.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
+/// @title Velo
+/// @author velodrome.finance
+/// @notice The native token in the Velodrome V2 ecosystem
+/// @dev Emitted by the Minter and in conversions from v1 VELO
 contract Velo is IVelo, ERC20Permit {
     address public minter;
     address private owner;
@@ -15,7 +19,7 @@ contract Velo is IVelo, ERC20Permit {
         owner = msg.sender;
     }
 
-    // No checks as its meant to be once off to set minting rights to BaseV1 Minter
+    /// @dev No checks as its meant to be once off to set minting rights to BaseV1 Minter
     function setMinter(address _minter) external {
         if (msg.sender != minter) revert NotMinter();
         minter = _minter;

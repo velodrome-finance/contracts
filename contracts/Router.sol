@@ -16,6 +16,8 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
+/// @title Velodrome V2 Router
+/// @author velodrome.finance, @pegahcarter
 /// @notice Router allows routes through any pools created by any factory adhering to univ2 interface.
 /// @dev Zapping and swapping support both v1 and v2. Adding liquidity supports v2 only.
 contract Router is IRouter, ERC2771Context {
@@ -59,6 +61,7 @@ contract Router is IRouter, ERC2771Context {
         if (msg.sender != address(weth)) revert OnlyWETH();
     }
 
+    /// @inheritdoc IRouter
     function sortTokens(address tokenA, address tokenB) public pure returns (address token0, address token1) {
         if (tokenA == tokenB) revert SameAddresses();
         (token0, token1) = tokenA < tokenB ? (tokenA, tokenB) : (tokenB, tokenA);
@@ -125,7 +128,7 @@ contract Router is IRouter, ERC2771Context {
         amountB = (amountA * reserveB) / reserveA;
     }
 
-    // fetches and sorts the reserves for a pool
+    /// @inheritdoc IRouter
     function getReserves(
         address tokenA,
         address tokenB,
@@ -137,7 +140,7 @@ contract Router is IRouter, ERC2771Context {
         (reserveA, reserveB) = tokenA == token0 ? (reserve0, reserve1) : (reserve1, reserve0);
     }
 
-    // performs chained getAmountOut calculations on any number of pools
+    /// @inheritdoc IRouter
     function getAmountsOut(uint256 amountIn, Route[] memory routes) public view returns (uint256[] memory amounts) {
         if (routes.length < 1) revert InvalidPath();
         amounts = new uint256[](routes.length + 1);
@@ -152,6 +155,7 @@ contract Router is IRouter, ERC2771Context {
         }
     }
 
+    /// @inheritdoc IRouter
     function quoteAddLiquidity(
         address tokenA,
         address tokenB,
@@ -183,6 +187,7 @@ contract Router is IRouter, ERC2771Context {
         }
     }
 
+    /// @inheritdoc IRouter
     function quoteRemoveLiquidity(
         address tokenA,
         address tokenB,
@@ -236,6 +241,7 @@ contract Router is IRouter, ERC2771Context {
         }
     }
 
+    /// @inheritdoc IRouter
     function addLiquidity(
         address tokenA,
         address tokenB,
@@ -262,6 +268,7 @@ contract Router is IRouter, ERC2771Context {
         liquidity = IPool(pool).mint(to);
     }
 
+    /// @inheritdoc IRouter
     function addLiquidityETH(
         address token,
         bool stable,
@@ -290,6 +297,8 @@ contract Router is IRouter, ERC2771Context {
     }
 
     // **** REMOVE LIQUIDITY ****
+
+    /// @inheritdoc IRouter
     function removeLiquidity(
         address tokenA,
         address tokenB,
@@ -309,6 +318,7 @@ contract Router is IRouter, ERC2771Context {
         if (amountB < amountBMin) revert InsufficientAmountB();
     }
 
+    /// @inheritdoc IRouter
     function removeLiquidityETH(
         address token,
         bool stable,
@@ -359,7 +369,7 @@ contract Router is IRouter, ERC2771Context {
     }
 
     // **** SWAP ****
-    // requires the initial amount to have already been sent to the first pool
+    /// @dev requires the initial amount to have already been sent to the first pool
     function _swap(uint256[] memory amounts, Route[] memory routes, address _to) internal virtual {
         uint256 _length = routes.length;
         for (uint256 i = 0; i < _length; i++) {
@@ -450,7 +460,7 @@ contract Router is IRouter, ERC2771Context {
     }
 
     // **** SWAP (supporting fee-on-transfer tokens) ****
-    // requires the initial amount to have already been sent to the first pool
+    /// @dev requires the initial amount to have already been sent to the first pool
     function _swapSupportingFeeOnTransferTokens(Route[] memory routes, address _to) internal virtual {
         uint256 _length = routes.length;
         for (uint256 i; i < _length; i++) {
@@ -474,6 +484,7 @@ contract Router is IRouter, ERC2771Context {
         }
     }
 
+    /// @inheritdoc IRouter
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,
@@ -493,6 +504,7 @@ contract Router is IRouter, ERC2771Context {
         if (IERC20(routes[_length].to).balanceOf(to) - balanceBefore < amountOutMin) revert InsufficientOutputAmount();
     }
 
+    /// @inheritdoc IRouter
     function swapExactETHForTokensSupportingFeeOnTransferTokens(
         uint256 amountOutMin,
         Route[] calldata routes,
@@ -509,6 +521,7 @@ contract Router is IRouter, ERC2771Context {
         if (IERC20(routes[_length].to).balanceOf(to) - balanceBefore < amountOutMin) revert InsufficientOutputAmount();
     }
 
+    /// @inheritdoc IRouter
     function swapExactTokensForETHSupportingFeeOnTransferTokens(
         uint256 amountIn,
         uint256 amountOutMin,

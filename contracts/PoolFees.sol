@@ -4,7 +4,9 @@ pragma solidity 0.8.19;
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
-/// @notice Contract used as 1:1 pool relationship to split out fees. Ensures curve does not need to be modified for LP shares.
+/// @title PoolFees
+/// @notice Contract used as 1:1 pool relationship to split out fees.
+/// @notice Ensures curve does not need to be modified for LP shares.
 contract PoolFees {
     using SafeERC20 for IERC20;
     address internal immutable pool; // The pool it is bonded to

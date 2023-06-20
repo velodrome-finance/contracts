@@ -11,6 +11,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /*
  * @title Curve Fee Distribution modified for ve(3,3) emissions
  * @author Curve Finance, andrecronje
+ * @author velodrome.finance, @figs999, @pegahcarter
  * @license MIT
  */
 contract RewardsDistributor is IRewardsDistributor {

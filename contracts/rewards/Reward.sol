@@ -10,7 +10,9 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 
-/// @title Base reward contract for distribution of rewards
+/// @title Reward
+/// @author velodrome.finance, @figs999, @pegahcarter
+/// @notice Base reward contract for distribution of rewards
 abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
 

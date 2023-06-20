@@ -9,7 +9,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.
 
 /// @notice Fake pool used which enables routers to swap v1 VELO to v2 VELO
 /// @dev Used in voter v2
-/// @author Carter Carlson (@pegahcarter)
+/// @author velodrome.finance, @pegahcarter
 contract SinkConverter is ERC20, IPool, ReentrancyGuard {
     error SinkConverter_NotImplemented();
 

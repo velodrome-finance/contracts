@@ -9,7 +9,7 @@ import {IVeArtProxy} from "./interfaces/IVeArtProxy.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 
 /// @title Velodrome V2 ArtProxy
-/// @author @rncdrncd, @pegahcarter, @simplyoptimistic
+/// @author velodrome.finance, @rncdrncd, @pegahcarter
 /// @notice Official art proxy to generate Velodrome V2 veNFT artwork
 contract VeArtProxy is IVeArtProxy {
 

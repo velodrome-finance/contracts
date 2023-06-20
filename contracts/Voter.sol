@@ -18,6 +18,10 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {VelodromeTimeLibrary} from "./libraries/VelodromeTimeLibrary.sol";
 
+/// @title Velodrome V2 Voter
+/// @author velodrome.finance, @figs999, @pegahcarter
+/// @notice Manage votes, emission distribution, and gauge creation within the Velodrome ecosystem.
+///         Also provides support for depositing and withdrawing from managed veNFTs.
 contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
     /// @notice Store trusted forwarder address to pass into factories

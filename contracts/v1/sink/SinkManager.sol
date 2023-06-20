@@ -21,7 +21,7 @@ import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 
 /// @title Velodrome Sink Manager
 /// @notice Absorb v1 Velo and converting v1 veNFTs and VELO into v2
-/// @author Carter Carlson (@pegahcarter)
+/// @author velodrome.finance, @pegahcarter
 contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, ReentrancyGuard {
     uint256 internal constant MAXTIME = 4 * 365 days;
     uint256 internal constant WEEK = 1 weeks;

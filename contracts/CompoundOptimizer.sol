@@ -7,8 +7,8 @@ import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {ICompoundOptimizer} from "./interfaces/ICompoundOptimizer.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 
-/// @notice storage for all AutoCompounders to call to calculate optimal amountOut into VELO
-/// @author Carter Carlson (@pegahcarter)
+/// @notice Storage for all AutoCompounders to call to calculate optimal amountOut into VELO
+/// @author velodrome.finance, @pegahcarter
 contract CompoundOptimizer is ICompoundOptimizer {
     address public immutable weth;
     address public immutable velo;

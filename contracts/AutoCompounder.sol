@@ -19,7 +19,7 @@ import {Context} from "@openzeppelin/contracts/utils/Context.sol";
 import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 
 /// @title Velodrome AutoCompounder for Managed veNFTs
-/// @author Carter Carlson (@pegahcarter)
+/// @author velodrome.finance, @figs999, @pegahcarter
 /// @notice Auto-Compound voting rewards earned from a Managed veNFT back into the veNFT through call incentivization
 contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, ReentrancyGuard, AccessControl {
     using SafeERC20 for IERC20;
