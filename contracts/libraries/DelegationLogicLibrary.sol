@@ -75,7 +75,10 @@ library DelegationLogicLibrary {
         IVotingEscrow.Checkpoint storage cp = _checkpoints[_delegatee][numCheckpoint];
         cp.fromTimestamp = block.timestamp;
         cp.owner = cpOld.owner;
-        cp.delegatedBalance = _increase ? cpOld.delegatedBalance + balance_ : cpOld.delegatedBalance - balance_;
+        // do not expect balance_ > cpOld.delegatedBalance when decrementing but just in case
+        cp.delegatedBalance = _increase
+            ? cpOld.delegatedBalance + balance_
+            : (balance_ < cpOld.delegatedBalance ? cpOld.delegatedBalance - balance_ : 0);
         cp.delegatee = cpOld.delegatee;
 
         if (_isCheckpointInNewBlock(_numCheckpoints, _checkpoints, _delegatee)) {
