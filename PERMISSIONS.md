@@ -18,7 +18,7 @@
     - Earns VELO emissions
 
 ### veNFT Hodler
-- For a detailed breakdown refer to [VOTINGESCROW.md](https://github.com/velodrome-finance/contracts-private/blob/contracts-v2/VOTINGESCROW.md)
+- For a detailed breakdown refer to [VOTINGESCROW.md](https://github.com/velodrome-finance/contracts/blob/contracts-v2/VOTINGESCROW.md)
 
 #### Normal, Normal Permanent, and Managed veNFT
 - Can approve/revoke an address to modify the veNFT
@@ -51,28 +51,28 @@
 ### Who
 
 #### Velodrome Team
- Multisig at [0xb074ec6c37659525EEf2Fb44478077901F878012](https://optimistic.etherscan.io/address/0xb074ec6c37659525eef2fb44478077901f878012)
+ Multisig at [0xBA4BB89f4d1E66AA86B60696534892aE0cCf91F5](https://optimistic.etherscan.io/address/0xBA4BB89f4d1E66AA86B60696534892aE0cCf91F5)
 - Threshold: 3/7
-- TODO: is this multisig the same for v2? Who owns every address?
+- TODO: Who owns every address?
 
 #### EmergencyCouncil
-Multisig at [0xcc2d01030ec2cd187346f70bfc483f24488c32e8](https://optimistic.etherscan.io/address/0xcc2d01030ec2cd187346f70bfc483f24488c32e8)
+Multisig at [0x838352F4E3992187a33a04826273dB3992Ee2b3f](https://optimistic.etherscan.io/address/0x838352F4E3992187a33a04826273dB3992Ee2b3f)
 - Threshold: 5/6
-- TODO: is this multisig the same for v2? Who owns every address?
+- TODO: Who owns every address?
 
 #### Vetoer
-Velodrome team at deployment of VeloGovernor.  At a later date, this role will be renounced.
+Velodrome team at deployment of VeloGovernor. At a later date, this role will be renounced.
 
 #### VeloGovernor (aka. Governor)
-At first deployment, team.  At a later date, this will be set to a lightly modified [Governor](https://docs.openzeppelin.com/contracts/4.x/api/governance#governor) contract from OpenZeppelin, [VeloGovernor](https://github.com/velodrome-finance/contracts-private/blob/contracts-v2/contracts/VeloGovernor.sol).  
+At first deployment, team. At a later date, this will be set to a lightly modified [Governor](https://docs.openzeppelin.com/contracts/4.x/api/governance#governor) contract from OpenZeppelin, [VeloGovernor](https://github.com/velodrome-finance/contracts/blob/contracts-v2/contracts/VeloGovernor.sol).  
 
 #### EpochGovernor
-At first deployment, team.  Before the tail rate of emissions is reached, this will be set to [EpochGovernor](https://github.com/velodrome-finance/contracts-private/blob/contracts-v2/contracts/EpochGovernor.sol).
+At first deployment, team. Before the tail rate of emissions is reached, this will be set to [EpochGovernor](https://github.com/velodrome-finance/contracts/blob/contracts-v2/contracts/EpochGovernor.sol).
 
 #### Allowed Manager
-Velodrome team. This role will likely be given to a contract so that it can create managed nfts (e.g. for autocompounders etc)
+At first deployment, team. This role will likely be given to a contract so that it can create managed nfts (e.g. for autocompounders etc)
 
-####  Fee Manager
+#### Fee Manager
 Velodrome team
 
 #### Pauser

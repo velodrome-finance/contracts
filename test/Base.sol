@@ -173,9 +173,6 @@ abstract contract Base is Script, Test {
     function deployFactories() public {
         implementation = new Pool();
         factory = new PoolFactory(address(implementation));
-        // TODO: set correct fees
-        factory.setFee(true, 1); // set fee back to 0.01% for old tests
-        factory.setFee(false, 1);
 
         votingRewardsFactory = new VotingRewardsFactory();
         gaugeFactory = new GaugeFactory();

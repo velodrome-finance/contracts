@@ -19,6 +19,7 @@ contract DeployVelodromeV2 is Base {
     // Vars to be set in each deploy script
     address feeManager;
     address team;
+    address emergencyCouncil;
     address sinkDrainAddr;
     address gaugeSinkDrainAddr;
 
@@ -33,6 +34,7 @@ contract DeployVelodromeV2 is Base {
         allowedManager = abi.decode(vm.parseJson(jsonConstants, ".allowedManager"), (address));
         team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
         feeManager = abi.decode(vm.parseJson(jsonConstants, ".feeManager"), (address));
+        emergencyCouncil = abi.decode(vm.parseJson(jsonConstants, ".emergencyCouncil"), (address));
     }
 
     function run() public {
@@ -84,8 +86,9 @@ contract DeployVelodromeV2 is Base {
 
         // Set protocol state to team
         escrow.setTeam(team);
+        escrow.setAllowedManager(team);
         factory.setPauser(team);
-        voter.setEmergencyCouncil(team);
+        voter.setEmergencyCouncil(emergencyCouncil);
         voter.setEpochGovernor(team);
         voter.setGovernor(team);
         factoryRegistry.transferOwnership(team);

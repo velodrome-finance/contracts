@@ -43,8 +43,8 @@ contract PoolFactory is IPoolFactory {
         feeManager = msg.sender;
         sinkConverter = msg.sender;
         isPaused = false;
-        stableFee = 2; // 0.02%
-        volatileFee = 2;
+        stableFee = 5; // 0.05%
+        volatileFee = 30; // 0.3%
     }
 
     /// @inheritdoc IPoolFactory

@@ -46,6 +46,8 @@ contract ImbalanceTest is BaseTest {
     function confirmTokensForFraxUsdc() public {
         votingEscrowMerge();
         deployFactories();
+        factory.setFee(true, 1);
+        factory.setFee(false, 1);
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry), address(vFactory));
         router = new Router(
             address(forwarder),

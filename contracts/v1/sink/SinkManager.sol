@@ -251,7 +251,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
     }
 
     function _msgData() internal view override(ERC2771Context, Context) returns (bytes calldata) {
-        return super._msgData();
+        return ERC2771Context._msgData();
     }
 
     function _msgSender() internal view override(ERC2771Context, Context) returns (address) {

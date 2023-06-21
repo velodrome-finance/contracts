@@ -6,7 +6,6 @@ import "forge-std/StdJson.sol";
 import "../script/DeploySinkDrain.s.sol";
 import "../script/DeployVelodromeV2.s.sol";
 import "../script/DeployGaugesAndPoolsV2.s.sol";
-import "../script/DeployGovernors.s.sol";
 
 import "./BaseTest.sol";
 
@@ -20,6 +19,7 @@ contract TestDeploy is BaseTest {
 
     address feeManager;
     address team;
+    address emergencyCouncil;
 
     struct PoolV2 {
         bool stable;
@@ -36,7 +36,6 @@ contract TestDeploy is BaseTest {
     DeploySinkDrain deploySinkDrain;
     DeployVelodromeV2 deployVelodromeV2;
     DeployGaugesAndPoolsV2 deployGaugesAndPoolsV2;
-    DeployGovernors deployGovernors;
 
     constructor() {
         deploymentType = Deployment.CUSTOM;
@@ -49,7 +48,6 @@ contract TestDeploy is BaseTest {
         deploySinkDrain = new DeploySinkDrain();
         deployVelodromeV2 = new DeployVelodromeV2();
         deployGaugesAndPoolsV2 = new DeployGaugesAndPoolsV2();
-        deployGovernors = new DeployGovernors();
 
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/script/constants/");
@@ -58,9 +56,9 @@ contract TestDeploy is BaseTest {
         jsonConstants = vm.readFile(path);
 
         WETH = IWETH(abi.decode(vm.parseJson(jsonConstants, ".WETH"), (address)));
-        allowedManager = abi.decode(vm.parseJson(jsonConstants, ".allowedManager"), (address));
         team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
         feeManager = abi.decode(vm.parseJson(jsonConstants, ".feeManager"), (address));
+        emergencyCouncil = abi.decode(vm.parseJson(jsonConstants, ".emergencyCouncil"), (address));
     }
 
     function testLoadedState() public {
@@ -68,9 +66,9 @@ contract TestDeploy is BaseTest {
         // Refer to script/README.md
         assertTrue(deployPublicKey != address(0));
         assertTrue(address(WETH) != address(0));
-        assertTrue(allowedManager != address(0));
         assertTrue(team != address(0));
         assertTrue(feeManager != address(0));
+        assertTrue(emergencyCouncil != address(0));
     }
 
     function testDeployScript() public {
@@ -83,21 +81,9 @@ contract TestDeploy is BaseTest {
 
         deployVelodromeV2.run();
         deployGaugesAndPoolsV2.run();
-        deployGovernors.run();
 
         assertEq(deployVelodromeV2.voter().epochGovernor(), team);
         assertEq(deployVelodromeV2.voter().governor(), team);
-
-        // Simulate team setting and accepting governance roles
-        vm.startPrank(team);
-        assertTrue(address(deployGovernors.governor()) != address(0));
-        assertTrue(address(deployGovernors.epochGovernor()) != address(0));
-        assertEq(deployGovernors.governor().pendingVetoer(), deployVelodromeV2.escrow().team());
-        assertEq(deployGovernors.governor().vetoer(), deployPublicKey);
-        deployVelodromeV2.voter().setEpochGovernor(address(deployGovernors.epochGovernor()));
-        deployVelodromeV2.voter().setGovernor(address(deployGovernors.governor()));
-        deployGovernors.governor().acceptVetoer();
-        vm.stopPrank();
 
         // DeployVelodromeV2 checks
 
@@ -118,6 +104,9 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.factory().sinkConverter(), address(deployVelodromeV2.sinkConverter()));
         assertEq(deployVelodromeV2.factory().velo(), address(deployVelodromeV2.vVELO()));
         assertEq(deployVelodromeV2.factory().veloV2(), address(deployVelodromeV2.VELO()));
+        assertEq(deployVelodromeV2.factory().voter(), address(deployVelodromeV2.voter()));
+        assertEq(deployVelodromeV2.factory().stableFee(), 5);
+        assertEq(deployVelodromeV2.factory().volatileFee(), 30);
 
         // v2 core
         // From _coreSetup()
@@ -126,7 +115,6 @@ contract TestDeploy is BaseTest {
         assertEq(address(deployVelodromeV2.artProxy().ve()), address(deployVelodromeV2.escrow()));
         assertEq(deployVelodromeV2.escrow().voter(), address(deployVelodromeV2.voter()));
         assertEq(deployVelodromeV2.escrow().artProxy(), address(deployVelodromeV2.artProxy()));
-        assertEq(deployVelodromeV2.escrow().allowedManager(), allowedManager);
         assertEq(address(deployVelodromeV2.distributor().ve()), address(deployVelodromeV2.escrow()));
         assertEq(deployVelodromeV2.router().v1Factory(), address(vFactory));
         assertEq(deployVelodromeV2.router().defaultFactory(), address(deployVelodromeV2.factory()));
@@ -162,14 +150,17 @@ contract TestDeploy is BaseTest {
         assertTrue(address(deployVelodromeV2.sinkManager().gauge()) != address(0));
         assertEq(deployVelodromeV2.sinkManager().owner(), address(0));
 
-        // Additional sets from DeployVelodromeV2 script
+        // Permissions
         assertEq(deployVelodromeV2.sinkDrain().owner(), address(0));
+        assertEq(deployVelodromeV2.sinkManager().owner(), address(0));
         assertEq(deployVelodromeV2.escrow().team(), team);
+        assertEq(deployVelodromeV2.escrow().allowedManager(), team);
         assertEq(deployVelodromeV2.factory().pauser(), team);
-        assertEq(deployVelodromeV2.voter().emergencyCouncil(), team);
+        assertEq(deployVelodromeV2.voter().emergencyCouncil(), emergencyCouncil);
+        assertEq(deployVelodromeV2.voter().governor(), team);
+        assertEq(deployVelodromeV2.voter().epochGovernor(), team);
         assertEq(deployVelodromeV2.factoryRegistry().owner(), team);
         assertEq(deployVelodromeV2.factory().feeManager(), feeManager);
-        assertEq(deployVelodromeV2.factory().voter(), address(deployVelodromeV2.voter()));
 
         // DeployGaugesAndPoolsV2 checks
 
@@ -196,11 +187,5 @@ contract TestDeploy is BaseTest {
             address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
             assertTrue(gaugeAddr != address(0));
         }
-
-        // Check governors - DeployGovernor
-        assertEq(deployVelodromeV2.voter().epochGovernor(), address(deployGovernors.epochGovernor()));
-        assertEq(deployVelodromeV2.voter().governor(), address(deployGovernors.governor()));
-        assertEq(deployGovernors.governor().pendingVetoer(), address(0));
-        assertEq(deployGovernors.governor().vetoer(), deployVelodromeV2.escrow().team());
     }
 }

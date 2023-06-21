@@ -21,6 +21,8 @@ contract PoolTest is BaseTest {
         mintToken(address(VELO), owners, amounts);
         mintToken(address(LR), owners, amounts);
         deployFactories();
+        factory.setFee(true, 1);
+        factory.setFee(false, 1);
 
         escrow = new VotingEscrow(address(forwarder), address(VELO), address(factoryRegistry));
         VeArtProxy artProxy = new VeArtProxy(address(escrow));

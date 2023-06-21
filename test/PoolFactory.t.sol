@@ -82,12 +82,12 @@ contract PoolFactoryTest is BaseTest {
         assertEq(factory.getFee(address(pool), true), 100);
         assertEq(factory.getFee(address(pool), false), 100);
         // does not impact regular fee of other pool
-        assertEq(factory.getFee(address(pool2), true), 1);
-        assertEq(factory.getFee(address(pool2), false), 1);
+        assertEq(factory.getFee(address(pool2), true), 5);
+        assertEq(factory.getFee(address(pool2), false), 30);
 
         factory.setFee(true, 100);
         assertEq(factory.getFee(address(pool2), true), 100);
-        assertEq(factory.getFee(address(pool2), false), 1);
+        assertEq(factory.getFee(address(pool2), false), 30);
         factory.setFee(false, 100);
         assertEq(factory.getFee(address(pool2), false), 100);
 
