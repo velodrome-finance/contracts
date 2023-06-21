@@ -9,6 +9,10 @@ broadcast/
 node_modules/
 package-lock.json
 
+# Hardhat
+solidity-files-cache.json
+deployments/
+
 artifacts/
 
 # Coverage

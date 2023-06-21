@@ -27,6 +27,11 @@ contract TestDeploy is BaseTest {
         address tokenB;
     }
 
+    struct PoolVeloV2 {
+        bool stable;
+        address token;
+    }
+
     // Scripts to test
     DeploySinkDrain deploySinkDrain;
     DeployVelodromeV2 deployVelodromeV2;
@@ -166,11 +171,27 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.factory().feeManager(), feeManager);
         assertEq(deployVelodromeV2.factory().voter(), address(deployVelodromeV2.voter()));
 
-        // ensure all v2 pools were created with their respective gauges - DeployGaugesAndPoolsV2
+        // DeployGaugesAndPoolsV2 checks
+
+        // Validate non-VELO pools and gauges
         PoolV2[] memory poolsV2 = abi.decode(jsonConstants.parseRaw(".poolsV2"), (PoolV2[]));
         for (uint256 i = 0; i < poolsV2.length; i++) {
             PoolV2 memory p = poolsV2[i];
             address poolAddr = deployVelodromeV2.factory().getPool(p.tokenA, p.tokenB, p.stable);
+            assertTrue(poolAddr != address(0));
+            address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
+            assertTrue(gaugeAddr != address(0));
+        }
+
+        // validate VELO pools and gauges
+        PoolVeloV2[] memory poolsVeloV2 = abi.decode(jsonConstants.parseRaw(".poolsVeloV2"), (PoolVeloV2[]));
+        for (uint256 i = 0; i < poolsVeloV2.length; i++) {
+            PoolVeloV2 memory p = poolsVeloV2[i];
+            address poolAddr = deployVelodromeV2.factory().getPool(
+                address(deployVelodromeV2.VELO()),
+                p.token,
+                p.stable
+            );
             assertTrue(poolAddr != address(0));
             address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
             assertTrue(gaugeAddr != address(0));

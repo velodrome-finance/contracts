@@ -16,11 +16,17 @@ contract DeployGaugesAndPoolsV2 is Script {
 
     PoolFactory public factory;
     Voter public voter;
+    address public VELO;
 
     struct PoolV2 {
         bool stable;
         address tokenA;
         address tokenB;
+    }
+
+    struct PoolVeloV2 {
+        bool stable;
+        address token;
     }
 
     address[] poolsV2;
@@ -36,19 +42,29 @@ contract DeployGaugesAndPoolsV2 is Script {
         // load in vars
         jsonConstants = vm.readFile(path);
         PoolV2[] memory pools = abi.decode(jsonConstants.parseRaw(".poolsV2"), (PoolV2[]));
+        PoolVeloV2[] memory poolsVelo = abi.decode(jsonConstants.parseRaw(".poolsVeloV2"), (PoolVeloV2[]));
 
         path = string.concat(basePath, "output/DeployVelodromeV2-");
         path = string.concat(path, outputFilename);
         jsonOutput = vm.readFile(path);
         factory = PoolFactory(abi.decode(jsonOutput.parseRaw(".PoolFactory"), (address)));
         voter = Voter(abi.decode(jsonOutput.parseRaw(".Voter"), (address)));
-        address votingRewardsFactory = abi.decode(jsonOutput.parseRaw(".VotingRewardsFactory"), (address));
-        address gaugeFactory = abi.decode(jsonOutput.parseRaw(".GaugeFactory"), (address));
+        VELO = abi.decode(jsonOutput.parseRaw(".VELO"), (address));
 
         vm.startBroadcast(deployPrivateKey);
 
+        // Deploy all non-VELO pools & gauges
         for (uint256 i = 0; i < pools.length; i++) {
             address newPool = factory.createPool(pools[i].tokenA, pools[i].tokenB, pools[i].stable);
+            address newGauge = voter.createGauge(address(factory), newPool);
+
+            poolsV2.push(newPool);
+            gauges.push(newGauge);
+        }
+
+        // Deploy all VELO pools & gauges
+        for (uint256 i = 0; i < poolsVelo.length; i++) {
+            address newPool = factory.createPool(VELO, poolsVelo[i].token, poolsVelo[i].stable);
             address newGauge = voter.createGauge(address(factory), newPool);
 
             poolsV2.push(newPool);

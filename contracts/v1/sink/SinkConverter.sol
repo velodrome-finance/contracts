@@ -70,7 +70,7 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         uint256 amount1In;
         // Note; amountIn will only ever be velo v1 token
         (amount0In, amount1In) = token0 == address(veloV2) ? (uint256(0), amountOut) : (amountOut, uint256(0));
-        emit Swap(_msgSender(), amount0In, amount1In, amount0Out, amount1Out, to);
+        emit Swap(_msgSender(), to, amount0In, amount1In, amount0Out, amount1Out);
     }
 
     // --------------------------------------------------------------
