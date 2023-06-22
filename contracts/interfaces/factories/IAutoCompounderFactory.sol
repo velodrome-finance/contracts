@@ -8,6 +8,7 @@ interface IAutoCompounderFactory {
     error TokenIdNotApproved();
     error TokenIdNotManaged();
     error TokenIdZero();
+    error ZeroAddress();
 
     event CreateAutoCompounder(address indexed _from, address indexed _admin, address indexed _autoCompounder);
     event SetRewardAmount(uint256 _rewardAmount);

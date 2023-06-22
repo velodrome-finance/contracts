@@ -81,6 +81,37 @@ contract AutoCompounderTest is BaseTest {
         tokensToSwap.push(address(DAI));
     }
 
+    function testCannotCreateAutoCompounderWithNoAdmin() public {
+        vm.expectRevert(IAutoCompounderFactory.ZeroAddress.selector);
+        autoCompounderFactory.createAutoCompounder(address(0), 1);
+    }
+
+    function testCannotCreateAutoCompounderWithZeroTokenId() public {
+        vm.expectRevert(IAutoCompounderFactory.TokenIdZero.selector);
+        autoCompounderFactory.createAutoCompounder(address(1), 0);
+    }
+
+    function testCannotCreateAutoCompounderIfNotApprovedSender() public {
+        vm.prank(escrow.allowedManager());
+        mTokenId = escrow.createManagedLockFor(address(owner));
+        vm.expectRevert(IAutoCompounderFactory.TokenIdNotApproved.selector);
+        vm.prank(address(owner2));
+        autoCompounderFactory.createAutoCompounder(address(1), mTokenId);
+    }
+
+    function testCannotCreateAutoCompounderIfTokenNotManaged() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        vm.expectRevert(IAutoCompounderFactory.TokenIdNotManaged.selector);
+        autoCompounderFactory.createAutoCompounder(address(1), tokenId); // normal
+
+        vm.prank(escrow.allowedManager());
+        mTokenId = escrow.createManagedLockFor(address(owner));
+        voter.depositManaged(tokenId, mTokenId);
+        vm.expectRevert(IAutoCompounderFactory.TokenIdNotManaged.selector);
+        autoCompounderFactory.createAutoCompounder(address(1), tokenId); // locked
+    }
+
     function testCannotSwapIfNoRouteFound() public {
         // Create a new pool with liquidity that doesn't swap into VELO
         IERC20 tokenA = IERC20(new MockERC20("Token A", "A", 18));

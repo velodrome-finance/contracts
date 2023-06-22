@@ -32,6 +32,7 @@ contract AutoCompounderFactory is IAutoCompounderFactory {
     }
 
     function createAutoCompounder(address _admin, uint256 _tokenId) external returns (address autoCompounder) {
+        if (_admin == address(0)) revert ZeroAddress();
         if (_tokenId == 0) revert TokenIdZero();
         if (!ve.isApprovedOrOwner(msg.sender, _tokenId)) revert TokenIdNotApproved();
         if (ve.escrowType(_tokenId) != IVotingEscrow.EscrowType.MANAGED) revert TokenIdNotManaged();
