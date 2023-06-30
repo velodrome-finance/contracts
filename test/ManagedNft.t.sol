@@ -96,8 +96,6 @@ contract ManagedNftTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME); // 2
         assertEq(escrow.locked(tokenId).end, 126403200);
-        uint256 supply = escrow.supply();
-        uint256 totalSupply = escrow.totalSupply();
 
         skipToNextEpoch(0);
         vm.expectRevert(IVoter.DistributeWindow.selector);
@@ -585,8 +583,6 @@ contract ManagedNftTest is BaseTest {
         VELO.approve(address(escrow), type(uint256).max);
         uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME); // 2
         assertEq(escrow.locked(tokenId).end, 126403200);
-        uint256 supply = escrow.supply();
-        uint256 totalSupply = escrow.totalSupply();
 
         skipAndRoll(1 hours);
         voter.depositManaged(tokenId, mTokenId);
@@ -632,7 +628,6 @@ contract ManagedNftTest is BaseTest {
         skipAndRoll(1);
 
         // Same block transfer/withdrawManaged
-        uint256 preTotalWeight = voter.totalWeight();
         escrow.transferFrom(address(owner2), address(owner3), mTokenId);
         vm.stopPrank();
         voter.withdrawManaged(tokenId2);

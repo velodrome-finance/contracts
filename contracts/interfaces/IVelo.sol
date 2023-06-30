@@ -9,7 +9,14 @@ interface IVelo is IERC20 {
     error NotMinterOrSinkManager();
     error SinkManagerAlreadySet();
 
-    function mint(address, uint256) external returns (bool);
+    /// @notice Mint an amount of tokens to an account
+    ///         Only callable by Minter.sol and SinkManager.sol
+    /// @return True if success
+    function mint(address account, uint256 amount) external returns (bool);
 
-    function minter() external returns (address);
+    /// @notice Address of Minter.sol
+    function minter() external view returns (address);
+
+    /// @notice Address of SinkManager.sol
+    function sinkManager() external view returns (address);
 }

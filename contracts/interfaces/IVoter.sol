@@ -60,39 +60,77 @@ interface IVoter {
     event WhitelistToken(address indexed whitelister, address indexed token, bool indexed _bool);
     event WhitelistNFT(address indexed whitelister, uint256 indexed tokenId, bool indexed _bool);
 
-    // mappings
-    function gauges(address pool) external view returns (address);
+    /// @notice Store trusted forwarder address to pass into factories
+    function forwarder() external view returns (address);
 
-    function poolForGauge(address gauge) external view returns (address);
-
-    function gaugeToFees(address gauge) external view returns (address);
-
-    function gaugeToBribe(address gauge) external view returns (address);
-
-    function weights(address pool) external view returns (uint256);
-
-    function votes(uint256 tokenId, address pool) external view returns (uint256);
-
-    function usedWeights(uint256 tokenId) external view returns (uint256);
-
-    function lastVoted(uint256 tokenId) external view returns (uint256);
-
-    function isGauge(address) external view returns (bool);
-
-    function isWhitelistedToken(address token) external view returns (bool);
-
-    function isWhitelistedNFT(uint256 tokenId) external view returns (bool);
-
-    function isAlive(address gauge) external view returns (bool);
-
+    /// @notice The ve token that governs these contracts
     function ve() external view returns (address);
 
+    /// @notice Factory registry for valid pool / gauge / rewards factories
+    function factoryRegistry() external view returns (address);
+
+    /// @notice V1 factory
+    function v1Factory() external view returns (address);
+
+    /// @notice Address of Minter.sol
+    function minter() external view returns (address);
+
+    /// @notice Standard OZ IGovernor using ve for vote weights.
     function governor() external view returns (address);
 
+    /// @notice Custom Epoch Governor using ve for vote weights.
     function epochGovernor() external view returns (address);
 
+    /// @notice credibly neutral party similar to Curve's Emergency DAO
     function emergencyCouncil() external view returns (address);
 
+    /// @dev Total Voting Weights
+    function totalWeight() external view returns (uint256);
+
+    /// @dev Most number of pools one voter can vote for at once
+    function maxVotingNum() external view returns (uint256);
+
+    // mappings
+    /// @dev Pool => Gauge
+    function gauges(address pool) external view returns (address);
+
+    /// @dev Gauge => Pool
+    function poolForGauge(address gauge) external view returns (address);
+
+    /// @dev Gauge => Fees Voting Reward
+    function gaugeToFees(address gauge) external view returns (address);
+
+    /// @dev Gauge => Bribes Voting Reward
+    function gaugeToBribe(address gauge) external view returns (address);
+
+    /// @dev Pool => Weights
+    function weights(address pool) external view returns (uint256);
+
+    /// @dev NFT => Pool => Votes
+    function votes(uint256 tokenId, address pool) external view returns (uint256);
+
+    /// @dev NFT => Total voting weight of NFT
+    function usedWeights(uint256 tokenId) external view returns (uint256);
+
+    /// @dev Nft => Timestamp of last vote (ensures single vote per epoch)
+    function lastVoted(uint256 tokenId) external view returns (uint256);
+
+    /// @dev Address => Gauge
+    function isGauge(address) external view returns (bool);
+
+    /// @dev Token => Whitelisted status
+    function isWhitelistedToken(address token) external view returns (bool);
+
+    /// @dev TokenId => Whitelisted status
+    function isWhitelistedNFT(uint256 tokenId) external view returns (bool);
+
+    /// @dev Gauge => Liveness status
+    function isAlive(address gauge) external view returns (bool);
+
+    /// @dev Gauge => Amount claimable
+    function claimable(address gauge) external view returns (uint256);
+
+    /// @notice Number of pools with a Gauge
     function length() external view returns (uint256);
 
     /// @notice Called by Minter to distribute weekly emissions rewards for disbursement amongst gauges.
@@ -178,6 +216,13 @@ interface IVoter {
     /// @dev Throws if not called by emergency council.
     /// @param _emergencyCouncil .
     function setEmergencyCouncil(address _emergencyCouncil) external;
+
+    /// @notice Set maximum number of gauges that can be voted for.
+    /// @dev Throws if not called by governor.
+    ///      Throws if _maxVotingNum is too low.
+    ///      Throws if the values are the same.
+    /// @param _maxVotingNum .
+    function setMaxVotingNum(uint256 _maxVotingNum) external;
 
     /// @notice Whitelist (or unwhitelist) token for use in bribes.
     /// @dev Throws if not called by governor.

@@ -16,17 +16,25 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  */
 contract RewardsDistributor is IRewardsDistributor {
     using SafeERC20 for IERC20;
-    uint256 constant WEEK = 7 * 86400;
+    /// @inheritdoc IRewardsDistributor
+    uint256 public constant WEEK = 7 * 86400;
 
+    /// @inheritdoc IRewardsDistributor
     uint256 public startTime;
+    /// @inheritdoc IRewardsDistributor
     mapping(uint256 => uint256) public timeCursorOf;
 
+    /// @inheritdoc IRewardsDistributor
     uint256 public lastTokenTime;
     uint256[1000000000000000] public tokensPerWeek;
 
+    /// @inheritdoc IRewardsDistributor
     IVotingEscrow public immutable ve;
+    /// @inheritdoc IRewardsDistributor
     address public token;
+    /// @inheritdoc IRewardsDistributor
     address public minter;
+    /// @inheritdoc IRewardsDistributor
     uint256 public tokenLastBalance;
 
     constructor(address _ve) {

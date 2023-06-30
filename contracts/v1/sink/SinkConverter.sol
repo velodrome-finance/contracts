@@ -17,8 +17,9 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
     IVelo public immutable velo;
     IVelo public immutable veloV2;
 
-    /// @dev public variables found in Pool.sol
+    /// @inheritdoc IPool
     address public immutable token0;
+    /// @inheritdoc IPool
     address public immutable token1;
 
     event Swap(
@@ -145,11 +146,67 @@ contract SinkConverter is ERC20, IPool, ReentrancyGuard {
         return true;
     }
 
-    function sync() external pure returns (bool) {
+    function sync() external pure {
         revert SinkConverter_NotImplemented();
     }
 
     function tokens() external view returns (address, address) {
         return (token0, token1);
+    }
+
+    function blockTimestampLast() external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function factory() external pure returns (address) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function lastObservation() external pure returns (Observation memory) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function observationLength() external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function periodSize() external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function poolFees() external pure returns (address) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function reserve0CumulativeLast() external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function reserve1CumulativeLast() external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function setName(string calldata) external pure {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function setSymbol(string calldata) external pure {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function supplyIndex0(address) external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function supplyIndex1(address) external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function index0() external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
+    }
+
+    function index1() external pure returns (uint256) {
+        revert SinkConverter_NotImplemented();
     }
 }

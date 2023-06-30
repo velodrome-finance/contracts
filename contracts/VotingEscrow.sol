@@ -23,20 +23,27 @@ import {BalanceLogicLibrary} from "./libraries/BalanceLogicLibrary.sol";
 /// @author Modified from Curve (https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy)
 /// @author velodrome.finance, @figs999, @pegahcarter
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
-contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuard {
+contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
     /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
+    /// @inheritdoc IVotingEscrow
     address public immutable forwarder;
+    /// @inheritdoc IVotingEscrow
     address public immutable factoryRegistry;
+    /// @inheritdoc IVotingEscrow
     address public immutable token;
+    /// @inheritdoc IVotingEscrow
     address public distributor;
+    /// @inheritdoc IVotingEscrow
     address public voter;
+    /// @inheritdoc IVotingEscrow
     address public team;
+    /// @inheritdoc IVotingEscrow
     address public artProxy;
-    /// @dev address which can create managed NFTs
+    /// @inheritdoc IVotingEscrow
     address public allowedManager;
 
     mapping(uint256 => GlobalPoint) internal _pointHistory; // epoch -> unsigned global point
@@ -59,7 +66,7 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     /// @dev ERC165 interface ID of ERC6372
     bytes4 internal constant ERC6372_INTERFACE_ID = 0xda287a1d;
 
-    /// @dev Current count of token
+    /// @inheritdoc IVotingEscrow
     uint256 public tokenId;
 
     /// @param _forwarder address of trusted forwarder
@@ -540,7 +547,9 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     int128 internal constant iMAXTIME = 4 * 365 * 86400;
     uint256 internal constant MULTIPLIER = 1 ether;
 
+    /// @inheritdoc IVotingEscrow
     uint256 public epoch;
+    /// @inheritdoc IVotingEscrow
     uint256 public supply;
 
     mapping(uint256 => LockedBalance) internal _locked;
@@ -548,8 +557,9 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
     mapping(uint256 => uint256) public userPointEpoch;
     /// @inheritdoc IVotingEscrow
     mapping(uint256 => int128) public slopeChanges;
+    /// @inheritdoc IVotingEscrow
     mapping(address => bool) public canSplit;
-    /// @notice Aggregate permanent locked balances
+    /// @inheritdoc IVotingEscrow
     uint256 public permanentLockBalance;
 
     /// @inheritdoc IVotingEscrow
@@ -1221,11 +1231,17 @@ contract VotingEscrow is IVotingEscrow, IERC6372, ERC2771Context, ReentrancyGuar
         return _delegate(delegator, delegatee);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                              ERC6372 LOGIC
+    //////////////////////////////////////////////////////////////*/
+
+    /// @inheritdoc IVotingEscrow
     function clock() external view returns (uint48) {
         return uint48(block.timestamp);
     }
 
-    function CLOCK_MODE() external view returns (string memory) {
+    /// @inheritdoc IVotingEscrow
+    function CLOCK_MODE() external pure returns (string memory) {
         return "mode=timestamp";
     }
 }

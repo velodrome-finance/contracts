@@ -224,7 +224,6 @@ contract AutoCompounderTest is BaseTest {
     function testSwapTokensToVELOAndCompoundOnlyExistingVELOBalance() public {
         deal(address(VELO), address(autoCompounder), 1e18);
 
-        uint256 balanceVELOBefore = VELO.balanceOf(address(owner3));
         uint256 balanceNFTBefore = escrow.balanceOfNFT(mTokenId);
 
         // owner calls the compound- so no reward given

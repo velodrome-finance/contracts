@@ -15,32 +15,36 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 /// @notice Controls minting of emissions and rebases for Velodrome
 contract Minter is IMinter {
     using SafeERC20 for IVelo;
+    /// @inheritdoc IMinter
     IVelo public immutable velo;
+    /// @inheritdoc IMinter
     IVoter public immutable voter;
+    /// @inheritdoc IMinter
     IVotingEscrow public immutable ve;
+    /// @inheritdoc IMinter
     IRewardsDistributor public immutable rewardsDistributor;
 
-    /// @notice Duration of epoch in seconds
+    /// @inheritdoc IMinter
     uint256 public constant WEEK = 1 weeks;
-    /// @notice Decay rate of emissions as percentage of `MAX_BPS`
+    /// @inheritdoc IMinter
     uint256 public constant WEEKLY_DECAY = 9_900;
-    /// @notice Maximum tail emission rate in basis points.
+    /// @inheritdoc IMinter
     uint256 public constant MAXIMUM_TAIL_RATE = 100;
-    /// @notice Minimum tail emission rate in basis points.
+    /// @inheritdoc IMinter
     uint256 public constant MINIMUM_TAIL_RATE = 1;
-    /// @notice Denominator for emissions calculations (as basis points)
+    /// @inheritdoc IMinter
     uint256 public constant MAX_BPS = 10_000;
-    /// @notice Rate change per proposal
+    /// @inheritdoc IMinter
     uint256 public constant NUDGE = 1;
-    /// @notice When emissions fall below this amount, begin tail emissions
+    /// @inheritdoc IMinter
     uint256 public constant TAIL_START = 6_000_000 * 1e18;
-    /// @notice Tail emissions rate in basis points
+    /// @inheritdoc IMinter
     uint256 public tailEmissionRate = 30;
-    /// @notice Starting weekly emission of 15M VELO (VELO has 18 decimals)
+    /// @inheritdoc IMinter
     uint256 public weekly = 15_000_000 * 1e18;
-    /// @notice Start time of currently active epoch
+    /// @inheritdoc IMinter
     uint256 public activePeriod;
-    /// @dev activePeriod => proposal existing, used to enforce one proposal per epoch
+    /// @inheritdoc IMinter
     mapping(uint256 => bool) public proposals;
 
     constructor(

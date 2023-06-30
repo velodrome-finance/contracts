@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {IERC165, IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IVotes} from "../governance/IVotes.sol";
 
-interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
+interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     struct LockedBalance {
         int128 amount;
         uint256 end;
@@ -149,20 +150,31 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
     event SetAllowedManager(address indexed _allowedManager);
 
     // State variables
+    /// @notice Address of Meta-tx Forwarder
+    function forwarder() external view returns (address);
+
+    /// @notice Address of FactoryRegistry.sol
     function factoryRegistry() external view returns (address);
 
+    /// @notice Address of token (VELO) used to create a veNFT
     function token() external view returns (address);
 
+    /// @notice Address of RewardsDistributor.sol
     function distributor() external view returns (address);
 
+    /// @notice Address of Voter.sol
     function voter() external view returns (address);
 
+    /// @notice Address of Velodrome Team multisig
     function team() external view returns (address);
 
+    /// @notice Address of art proxy used for on-chain art generation
     function artProxy() external view returns (address);
 
+    /// @dev address which can create managed NFTs
     function allowedManager() external view returns (address);
 
+    /// @dev Current count of token
     function tokenId() external view returns (uint256);
 
     /*///////////////////////////////////////////////////////////////
@@ -299,15 +311,21 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
                               ERC165 LOGIC
     //////////////////////////////////////////////////////////////*/
 
+    /// @inheritdoc IERC165
     function supportsInterface(bytes4 _interfaceID) external view returns (bool);
 
     /*//////////////////////////////////////////////////////////////
                              ESCROW STORAGE
     //////////////////////////////////////////////////////////////*/
 
+    /// @notice Total count of epochs witnessed since contract creation
     function epoch() external view returns (uint256);
 
+    /// @notice Total amount of token() deposited
     function supply() external view returns (uint256);
+
+    /// @notice Aggregate permanent locked balances
+    function permanentLockBalance() external view returns (uint256);
 
     function userPointEpoch(uint256 _tokenId) external view returns (uint256 _epoch);
 
@@ -498,4 +516,14 @@ interface IVotingEscrow is IVotes, IERC4906, IERC721Metadata {
         bytes32 r,
         bytes32 s
     ) external;
+
+    /*//////////////////////////////////////////////////////////////
+                              ERC6372 LOGIC
+    //////////////////////////////////////////////////////////////*/
+
+    /// @inheritdoc IERC6372
+    function clock() external view returns (uint48);
+
+    /// @inheritdoc IERC6372
+    function CLOCK_MODE() external view returns (string memory);
 }

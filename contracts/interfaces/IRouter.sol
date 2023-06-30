@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IWETH} from "./IWETH.sol";
+
 interface IRouter {
     struct Route {
         address from;
@@ -30,6 +32,24 @@ interface IRouter {
     error PoolFactoryDoesNotExist();
     error SameAddresses();
     error ZeroAddress();
+
+    /// @notice Address of FactoryRegistry.sol
+    function factoryRegistry() external view returns (address);
+
+    /// @notice Address of Velodrome v1 PairFactory.sol
+    function v1Factory() external view returns (address);
+
+    /// @notice Address of Velodrome v2 PoolFactory.sol
+    function defaultFactory() external view returns (address);
+
+    /// @notice Address of Voter.sol
+    function voter() external view returns (address);
+
+    /// @notice Interface of WETH contract used for WETH => ETH wrapping/unwrapping
+    function weth() external view returns (IWETH);
+
+    /// @dev Represents Ether. Used by zapper to determine whether to return assets as ETH/WETH.
+    function ETHER() external view returns (address);
 
     /// @dev Struct containing information necessary to zap in and out of pools
     /// @param tokenA           .

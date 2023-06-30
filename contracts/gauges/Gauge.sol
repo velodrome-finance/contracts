@@ -13,31 +13,48 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 
-/// @title Gauge contract for distribution of emissions by address
+/// @title Velodrome V2 Gauge
+/// @author veldorome.finance, @figs999, @pegahcarter
+/// @notice Gauge contract for distribution of emissions by address
 contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
-    address public immutable stakingToken; // the LP token that needs to be staked for rewards
+    /// @inheritdoc IGauge
+    address public immutable stakingToken;
+    /// @inheritdoc IGauge
     address public immutable rewardToken;
+    /// @inheritdoc IGauge
     address public immutable feesVotingReward;
+    /// @inheritdoc IGauge
     address public immutable voter;
 
+    /// @inheritdoc IGauge
     bool public immutable isPool;
 
     uint256 internal constant DURATION = 7 days; // rewards are released over 7 days
     uint256 internal constant PRECISION = 10 ** 18;
 
-    // default snx staking contract implementation
+    /// @inheritdoc IGauge
     uint256 public periodFinish;
+    /// @inheritdoc IGauge
     uint256 public rewardRate;
+    /// @inheritdoc IGauge
     uint256 public lastUpdateTime;
+    /// @inheritdoc IGauge
     uint256 public rewardPerTokenStored;
+    /// @inheritdoc IGauge
     uint256 public totalSupply;
+    /// @inheritdoc IGauge
     mapping(address => uint256) public balanceOf;
+    /// @inheritdoc IGauge
     mapping(address => uint256) public userRewardPerTokenPaid;
+    /// @inheritdoc IGauge
     mapping(address => uint256) public rewards;
-    mapping(uint256 => uint256) public rewardRateByEpoch; // epochStart => rewardRate
+    /// @inheritdoc IGauge
+    mapping(uint256 => uint256) public rewardRateByEpoch;
 
+    /// @inheritdoc IGauge
     uint256 public fees0;
+    /// @inheritdoc IGauge
     uint256 public fees1;
 
     constructor(
@@ -83,6 +100,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc IGauge
     function rewardPerToken() public view returns (uint256) {
         if (totalSupply == 0) {
             return rewardPerTokenStored;
@@ -93,6 +111,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
             totalSupply;
     }
 
+    /// @inheritdoc IGauge
     function lastTimeRewardApplicable() public view returns (uint256) {
         return Math.min(block.timestamp, periodFinish);
     }
@@ -164,6 +183,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         userRewardPerTokenPaid[_account] = rewardPerTokenStored;
     }
 
+    /// @inheritdoc IGauge
     function left() external view returns (uint256) {
         if (block.timestamp >= periodFinish) return 0;
         uint256 _remaining = periodFinish - block.timestamp;

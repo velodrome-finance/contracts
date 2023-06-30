@@ -16,40 +16,36 @@ import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    /// @inheritdoc IReward
     uint256 public constant DURATION = 7 days;
 
+    /// @inheritdoc IReward
     address public immutable voter;
+    /// @inheritdoc IReward
     address public immutable ve;
-    /// @dev Address which has permission to externally call _deposit() & _withdraw()
+    /// @inheritdoc IReward
     address public authorized;
 
+    /// @inheritdoc IReward
     uint256 public totalSupply;
+    /// @inheritdoc IReward
     mapping(uint256 => uint256) public balanceOf;
+    /// @inheritdoc IReward
     mapping(address => mapping(uint256 => uint256)) public tokenRewardsPerEpoch;
+    /// @inheritdoc IReward
     mapping(address => mapping(uint256 => uint256)) public lastEarn;
 
     address[] public rewards;
+    /// @inheritdoc IReward
     mapping(address => bool) public isReward;
-
-    /// @notice A checkpoint for marking balance
-    struct Checkpoint {
-        uint256 timestamp;
-        uint256 balanceOf;
-    }
-
-    /// @notice A checkpoint for marking supply
-    struct SupplyCheckpoint {
-        uint256 timestamp;
-        uint256 supply;
-    }
 
     /// @notice A record of balance checkpoints for each account, by index
     mapping(uint256 => mapping(uint256 => Checkpoint)) public checkpoints;
-    /// @notice The number of checkpoints for each account
+    /// @inheritdoc IReward
     mapping(uint256 => uint256) public numCheckpoints;
     /// @notice A record of balance checkpoints for each token, by index
     mapping(uint256 => SupplyCheckpoint) public supplyCheckpoints;
-    /// @notice The number of checkpoints
+    /// @inheritdoc IReward
     uint256 public supplyNumCheckpoints;
 
     constructor(address _forwarder, address _voter) ERC2771Context(_forwarder) {
@@ -155,6 +151,7 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
         }
     }
 
+    /// @inheritdoc IReward
     function rewardsListLength() external view returns (uint256) {
         return rewards.length;
     }

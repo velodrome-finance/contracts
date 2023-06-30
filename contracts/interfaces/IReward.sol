@@ -16,6 +16,57 @@ interface IReward {
     event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
     event ClaimRewards(address indexed from, address indexed reward, uint256 amount);
 
+    /// @notice A checkpoint for marking balance
+    struct Checkpoint {
+        uint256 timestamp;
+        uint256 balanceOf;
+    }
+
+    /// @notice A checkpoint for marking supply
+    struct SupplyCheckpoint {
+        uint256 timestamp;
+        uint256 supply;
+    }
+
+    /// @notice Epoch duration constant (7 days)
+    function DURATION() external view returns (uint256);
+
+    /// @notice Address of Voter.sol
+    function voter() external view returns (address);
+
+    /// @notice Address of VotingEscrow.sol
+    function ve() external view returns (address);
+
+    /// @dev Address which has permission to externally call _deposit() & _withdraw()
+    function authorized() external view returns (address);
+
+    /// @notice Total amount currently deposited via _deposit()
+    function totalSupply() external view returns (uint256);
+
+    /// @notice Current amount deposited by tokenId
+    function balanceOf(uint256 tokenId) external view returns (uint256);
+
+    /// @notice Amount of tokens to reward depositors for a given epoch
+    /// @param token Address of token to reward
+    /// @param epochStart Startime of rewards epoch
+    /// @return Amount of token
+    function tokenRewardsPerEpoch(address token, uint256 epochStart) external view returns (uint256);
+
+    /// @notice Most recent timestamp a veNFT has claimed their rewards
+    /// @param  token Address of token rewarded
+    /// @param tokenId veNFT unique identifier
+    /// @return Timestamp
+    function lastEarn(address token, uint256 tokenId) external view returns (uint256);
+
+    /// @notice True if a token is or has been an active reward token, else false
+    function isReward(address token) external view returns (bool);
+
+    /// @notice The number of checkpoints for each tokenId deposited
+    function numCheckpoints(uint256 tokenId) external view returns (uint256);
+
+    /// @notice The total number of checkpoints
+    function supplyNumCheckpoints() external view returns (uint256);
+
     /// @notice Deposit an amount into the rewards contract to earn future rewards associated to a veNFT
     /// @dev Internal notation used as only callable internally by `authorized`.
     /// @param amount   Amount deposited for the veNFT
@@ -50,6 +101,9 @@ interface IReward {
     /// @param timestamp The timestamp to get the index at
     /// @return Index of supply checkpoint
     function getPriorSupplyIndex(uint256 timestamp) external view returns (uint256);
+
+    /// @notice Get number of rewards tokens
+    function rewardsListLength() external view returns (uint256);
 
     /// @notice Calculate how much in rewards are earned for a specific token and veNFT
     /// @param token Address of token to fetch rewards of

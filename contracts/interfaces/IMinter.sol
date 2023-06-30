@@ -1,6 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IVelo} from "./IVelo.sol";
+import {IVoter} from "./IVoter.sol";
+import {IVotingEscrow} from "./IVotingEscrow.sol";
+import {IRewardsDistributor} from "./IRewardsDistributor.sol";
+
 interface IMinter {
     error AlreadyNudged();
     error NotEpochGovernor();
@@ -9,8 +14,52 @@ interface IMinter {
     event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool indexed _tail);
     event Nudge(uint256 indexed _period, uint256 _oldRate, uint256 _newRate);
 
+    /// @notice Interface of Velo.sol
+    function velo() external view returns (IVelo);
+
+    /// @notice Interface of Voter.sol
+    function voter() external view returns (IVoter);
+
+    /// @notice Interface of IVotingEscrow.sol
+    function ve() external view returns (IVotingEscrow);
+
+    /// @notice Interface of RewardsDistributor.sol
+    function rewardsDistributor() external view returns (IRewardsDistributor);
+
+    /// @notice Duration of epoch in seconds
+    function WEEK() external view returns (uint256);
+
+    /// @notice Decay rate of emissions as percentage of `MAX_BPS`
+    function WEEKLY_DECAY() external view returns (uint256);
+
+    /// @notice Maximum tail emission rate in basis points.
+    function MAXIMUM_TAIL_RATE() external view returns (uint256);
+
+    /// @notice Minimum tail emission rate in basis points.
+    function MINIMUM_TAIL_RATE() external view returns (uint256);
+
+    /// @notice Denominator for emissions calculations (as basis points)
+    function MAX_BPS() external view returns (uint256);
+
+    /// @notice Rate change per proposal
+    function NUDGE() external view returns (uint256);
+
+    /// @notice When emissions fall below this amount, begin tail emissions
+    function TAIL_START() external view returns (uint256);
+
+    /// @notice Tail emissions rate in basis points
+    function tailEmissionRate() external view returns (uint256);
+
+    /// @notice Starting weekly emission of 15M VELO (VELO has 18 decimals)
+    function weekly() external view returns (uint256);
+
     /// @notice Timestamp of start of epoch that updatePeriod was last called in
     function activePeriod() external returns (uint256);
+
+    /// @dev activePeriod => proposal existing, used to enforce one proposal per epoch
+    /// @param _activePeriod Timestamp of start of epoch
+    /// @return True if proposal has been executed, else false
+    function proposals(uint256 _activePeriod) external view returns (bool);
 
     /// @notice Allows epoch governor to modify the tail emission rate by at most 1 basis point
     ///         per epoch to a maximum of 100 basis points or to a minimum of 1 basis point.

@@ -9,7 +9,6 @@ contract VotingEscrowTest is ExtendedBaseTest {
         IVotingEscrow.LockedBalance memory locked;
         IVotingEscrow.UserPoint memory userPoint;
         IVotingEscrow.GlobalPoint memory globalPoint;
-        IVotingEscrow.Checkpoint memory checkpoint;
 
         // create lock 1 and check state
         // 1: +1 user point

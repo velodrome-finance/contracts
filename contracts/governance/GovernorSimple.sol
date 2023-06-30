@@ -275,7 +275,7 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        string memory description
+        string memory /* description */
     ) public virtual override returns (uint256) {
         address proposer = _msgSender();
         uint256 currentTimepoint = clock();
@@ -609,7 +609,7 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
     /**
      * @dev Dummy quorum function to comply with IGovernor as quorum is not used.
      */
-    function quorum(uint256 blockNumber) public view override returns (uint256) {
+    function quorum(uint256 /* blockNumber */) public pure override returns (uint256) {
         return 0;
     }
 }

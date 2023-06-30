@@ -24,65 +24,66 @@ import {VelodromeTimeLibrary} from "./libraries/VelodromeTimeLibrary.sol";
 ///         Also provides support for depositing and withdrawing from managed veNFTs.
 contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
-    /// @notice Store trusted forwarder address to pass into factories
+    /// @inheritdoc IVoter
     address public immutable forwarder;
-    /// @notice The ve token that governs these contracts
+    /// @inheritdoc IVoter
     address public immutable ve;
-    /// @notice Factory registry for valid pool / gauge / rewards factories
+    /// @inheritdoc IVoter
     address public immutable factoryRegistry;
-    /// @notice V1 factory
+    /// @inheritdoc IVoter
     address public immutable v1Factory;
     /// @notice Base token of ve contract
     address internal immutable rewardToken;
     /// @notice Rewards are released over 7 days
     uint256 internal constant DURATION = 7 days;
+    /// @inheritdoc IVoter
     address public minter;
-    /// @notice Standard OZ IGovernor using ve for vote weights.
+    /// @inheritdoc IVoter
     address public governor;
-    /// @notice Custom Epoch Governor using ve for vote weights.
+    /// @inheritdoc IVoter
     address public epochGovernor;
-    /// @notice credibly neutral party similar to Curve's Emergency DAO
+    /// @inheritdoc IVoter
     address public emergencyCouncil;
 
-    /// @dev Total Voting Weights
+    /// @inheritdoc IVoter
     uint256 public totalWeight;
-    /// @dev Most number of pools one voter can vote for at once
+    /// @inheritdoc IVoter
     uint256 public maxVotingNum;
     uint256 internal constant MIN_MAXVOTINGNUM = 10;
 
     /// @dev All pools viable for incentives
     address[] public pools;
-    /// @dev Pool => Gauge
+    /// @inheritdoc IVoter
     mapping(address => address) public gauges;
-    /// @dev Gauge => Pool
+    /// @inheritdoc IVoter
     mapping(address => address) public poolForGauge;
-    /// @dev Gauge => Fees Voting Reward
+    /// @inheritdoc IVoter
     mapping(address => address) public gaugeToFees;
-    /// @dev Gauge => Bribes Voting Reward
+    /// @inheritdoc IVoter
     mapping(address => address) public gaugeToBribe;
-    /// @dev Pool => Weights
+    /// @inheritdoc IVoter
     mapping(address => uint256) public weights;
-    /// @dev NFT => Pool => Votes
+    /// @inheritdoc IVoter
     mapping(uint256 => mapping(address => uint256)) public votes;
     /// @dev NFT => List of pools voted for by NFT
     mapping(uint256 => address[]) public poolVote;
-    /// @dev NFT => Total voting weight of NFT
+    /// @inheritdoc IVoter
     mapping(uint256 => uint256) public usedWeights;
-    /// @dev Nft => Timestamp of last vote (ensures single vote per epoch)
+    /// @inheritdoc IVoter
     mapping(uint256 => uint256) public lastVoted;
-    /// @dev Address => Gauge
+    /// @inheritdoc IVoter
     mapping(address => bool) public isGauge;
-    /// @dev Token => Whitelisted status
+    /// @inheritdoc IVoter
     mapping(address => bool) public isWhitelistedToken;
-    /// @dev TokenId => Whitelisted status
+    /// @inheritdoc IVoter
     mapping(uint256 => bool) public isWhitelistedNFT;
-    /// @dev Gauge => Liveness status
+    /// @inheritdoc IVoter
     mapping(address => bool) public isAlive;
     /// @dev Accumulated distributions per vote
     uint256 internal index;
     /// @dev Gauge => Accumulated gauge distributions
     mapping(address => uint256) internal supplyIndex;
-    /// @dev Gauge => Amount claimable
+    /// @inheritdoc IVoter
     mapping(address => uint256) public claimable;
 
     constructor(
@@ -158,6 +159,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         emergencyCouncil = _council;
     }
 
+    /// @inheritdoc IVoter
     function setMaxVotingNum(uint256 _maxVotingNum) external {
         if (_msgSender() != governor) revert NotGovernor();
         if (_maxVotingNum < MIN_MAXVOTINGNUM) revert MaximumVotingNumberTooLow();
@@ -406,6 +408,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         emit GaugeRevived(_gauge);
     }
 
+    /// @inheritdoc IVoter
     function length() external view returns (uint256) {
         return pools.length;
     }

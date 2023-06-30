@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IVotingEscrow} from "./IVotingEscrow.sol";
+
 interface IRewardsDistributor {
     event CheckpointToken(uint256 time, uint256 tokens);
     event Claimed(uint256 indexed tokenId, uint256 indexed epochStart, uint256 indexed epochEnd, uint256 amount);
@@ -8,6 +10,31 @@ interface IRewardsDistributor {
     error NotMinter();
     error NotManagedOrNormalNFT();
     error UpdatePeriod();
+
+    /// @notice 7 days in seconds
+    function WEEK() external view returns (uint256);
+
+    /// @notice Timestamp of contract creation
+    function startTime() external view returns (uint256);
+
+    /// @notice Timestamp of most recent claim of tokenId
+    function timeCursorOf(uint256 tokenId) external view returns (uint256);
+
+    /// @notice The last timestamp Minter has called checkpointToken()
+    function lastTokenTime() external view returns (uint256);
+
+    /// @notice Interface of VotingEscrow.sol
+    function ve() external view returns (IVotingEscrow);
+
+    /// @notice Address of token used for distributions (VELO)
+    function token() external view returns (address);
+
+    /// @notice Address of Minter.sol
+    ///         Authorized caller of checkpointToken()
+    function minter() external view returns (address);
+
+    /// @notice Amount of token in contract when checkpointToken() was last called
+    function tokenLastBalance() external view returns (uint256);
 
     /// @notice Called by Minter to notify Distributor of rebases
     function checkpointToken() external;
