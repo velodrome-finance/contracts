@@ -34,6 +34,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
 
         bribes.push(address(bribeVotingReward));
         tokensToClaim.push(rewards);
+        slippages.push(0);
 
         // Epoch 0: DAI bribed => voted for DAI bribe
         // Epoch 1: DAI bribed => passive vote
@@ -52,7 +53,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         // Epoch 1
 
         _createBribeWithAmount(bribeVotingReward, address(DAI), bribeToken);
-        skipToNextEpoch(1 hours + 1);
+        skipToNextEpoch(6 days);
 
         // Epoch 2
 
@@ -61,7 +62,11 @@ contract AutoCompounderFlow is AutoCompounderTest {
         uint256 preCallerVELO = VELO.balanceOf(address(owner2));
 
         vm.prank(address(owner2));
-        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap);
+        tokensToSwap = new address[](1);
+        tokensToSwap[0] = address(DAI);
+        slippages = new uint256[](1);
+        slippages[0] = 500;
+        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap, slippages);
 
         assertEq(DAI.balanceOf(address(bribeVotingReward)), 0);
         assertEq(DAI.balanceOf(address(autoCompounder)), 0);
@@ -71,7 +76,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         _createBribeWithAmount(bribeVotingReward, address(FRAX), bribeToken);
         _createBribeWithAmount(bribeVotingReward, address(USDC), bribeUSDC);
         voter.poke(mTokenId);
-        skipToNextEpoch(1);
+        skipToNextEpoch(6 days);
 
         // Epoch 3
 
@@ -82,8 +87,9 @@ contract AutoCompounderFlow is AutoCompounderTest {
 
         tokensToClaim = new address[][](1);
         tokensToClaim[0] = [address(USDC)];
+        tokensToSwap[0] = address(USDC);
         vm.prank(address(owner2));
-        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap);
+        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap, slippages);
 
         assertEq(USDC.balanceOf(address(bribeVotingReward)), 0);
         assertEq(FRAX.balanceOf(address(bribeVotingReward)), bribeToken);
@@ -92,7 +98,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         assertGt(escrow.balanceOfNFT(mTokenId), preNFTBalance);
 
         _createBribeWithAmount(bribeVotingReward, address(USDC), bribeUSDC);
-        skipToNextEpoch(1 hours + 1);
+        skipToNextEpoch(6 days);
 
         // Epoch 4
 
@@ -103,8 +109,9 @@ contract AutoCompounderFlow is AutoCompounderTest {
         preCallerVELO = VELO.balanceOf(address(owner2));
 
         tokensToClaim[0] = [address(FRAX)];
+        tokensToSwap[0] = address(FRAX);
         vm.prank(address(owner2));
-        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap);
+        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap, slippages);
 
         assertEq(DAI.balanceOf(address(bribeVotingReward)), bribeToken);
         assertEq(USDC.balanceOf(address(bribeVotingReward)), bribeUSDC * 2);
@@ -114,13 +121,13 @@ contract AutoCompounderFlow is AutoCompounderTest {
         assertGt(escrow.balanceOfNFT(mTokenId), preNFTBalance);
 
         voter.poke(mTokenId);
-        skipToNextEpoch(1 hours + 1);
+        skipToNextEpoch(6 days);
 
         // Epoch 5
 
         _createBribeWithAmount(bribeVotingReward, address(FRAX), bribeToken);
         _createBribeWithAmount(bribeVotingReward, address(USDC), bribeUSDC);
-        skipToNextEpoch(1 hours + 1);
+        skipToNextEpoch(6 days);
 
         assertEq(DAI.balanceOf(address(bribeVotingReward)), bribeToken);
         assertEq(USDC.balanceOf(address(bribeVotingReward)), bribeUSDC * 3);
@@ -131,7 +138,11 @@ contract AutoCompounderFlow is AutoCompounderTest {
 
         tokensToClaim[0] = [address(DAI), address(USDC), address(FRAX)];
         vm.prank(address(owner2));
-        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap);
+        tokensToSwap = new address[](3);
+        tokensToSwap = [address(DAI), address(FRAX), address(USDC)];
+        slippages = new uint256[](3);
+        slippages = [500, 500, 500];
+        autoCompounder.claimBribesAndCompound(bribes, tokensToClaim, tokensToSwap, slippages);
 
         assertEq(DAI.balanceOf(address(bribeVotingReward)), 0);
         assertEq(USDC.balanceOf(address(bribeVotingReward)), 0);
@@ -150,12 +161,12 @@ contract AutoCompounderFlow is AutoCompounderTest {
         address[] memory rewards = new address[](3);
         pools[0] = address(pool);
         weights[0] = 10000;
-        rewards[0] = address(DAI);
-        rewards[1] = address(USDC);
-        rewards[2] = address(FRAX);
+        rewards[0] = address(USDC);
+        rewards[1] = address(FRAX);
 
         fees.push(address(feesVotingReward));
         tokensToClaim.push(rewards);
+        slippages.push(0);
 
         // Epoch 0: FRAX fees => voted for FRAX fees
         // Epoch 1: FRAX fees => passive vote
@@ -174,7 +185,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         // Epoch 1
 
         _createFeesWithAmount(feesVotingReward, address(FRAX), bribeToken);
-        skipToNextEpoch(1 hours + 1);
+        skipToNextEpoch(6 days);
 
         // Epoch 2
 
@@ -182,8 +193,12 @@ contract AutoCompounderFlow is AutoCompounderTest {
         uint256 preNFTBalance = escrow.balanceOfNFT(mTokenId);
         uint256 preCallerVELO = VELO.balanceOf(address(owner2));
 
+        tokensToSwap = new address[](1);
+        tokensToSwap[0] = address(FRAX);
+        slippages = new uint256[](1);
+        slippages[0] = 500;
         vm.prank(address(owner2));
-        autoCompounder.claimFeesAndCompound(fees, tokensToClaim, tokensToSwap);
+        autoCompounder.claimFeesAndCompound(fees, tokensToClaim, tokensToSwap, slippages);
 
         assertEq(FRAX.balanceOf(address(feesVotingReward)), 0);
         assertEq(FRAX.balanceOf(address(autoCompounder)), 0);
@@ -193,7 +208,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         _createFeesWithAmount(feesVotingReward, address(FRAX), bribeToken);
         _createFeesWithAmount(feesVotingReward, address(USDC), bribeUSDC);
         voter.poke(mTokenId);
-        skipToNextEpoch(1);
+        skipToNextEpoch(6 days);
 
         // Epoch 3
 
@@ -204,8 +219,9 @@ contract AutoCompounderFlow is AutoCompounderTest {
 
         tokensToClaim = new address[][](1);
         tokensToClaim[0] = [address(USDC)];
+        tokensToSwap[0] = address(USDC);
         vm.prank(address(owner2));
-        autoCompounder.claimFeesAndCompound(fees, tokensToClaim, tokensToSwap);
+        autoCompounder.claimFeesAndCompound(fees, tokensToClaim, tokensToSwap, slippages);
 
         assertEq(USDC.balanceOf(address(feesVotingReward)), 0);
         assertEq(FRAX.balanceOf(address(feesVotingReward)), bribeToken);
@@ -214,7 +230,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         assertGt(escrow.balanceOfNFT(mTokenId), preNFTBalance);
 
         _createFeesWithAmount(feesVotingReward, address(USDC), bribeUSDC);
-        skipToNextEpoch(1 hours + 1);
+        skipToNextEpoch(6 days);
 
         // Epoch 4
 
@@ -225,8 +241,9 @@ contract AutoCompounderFlow is AutoCompounderTest {
         preCallerVELO = VELO.balanceOf(address(owner2));
 
         tokensToClaim[0] = [address(FRAX)];
+        tokensToSwap[0] = address(FRAX);
         vm.prank(address(owner2));
-        autoCompounder.claimFeesAndCompound(fees, tokensToClaim, tokensToSwap);
+        autoCompounder.claimFeesAndCompound(fees, tokensToClaim, tokensToSwap, slippages);
 
         assertEq(FRAX.balanceOf(address(feesVotingReward)), bribeToken);
         assertEq(USDC.balanceOf(address(feesVotingReward)), bribeUSDC * 2);
@@ -235,13 +252,13 @@ contract AutoCompounderFlow is AutoCompounderTest {
         assertGt(escrow.balanceOfNFT(mTokenId), preNFTBalance);
 
         voter.poke(mTokenId);
-        skipToNextEpoch(1 hours + 1);
+        skipToNextEpoch(6 days);
 
         // Epoch 5
 
         _createFeesWithAmount(feesVotingReward, address(FRAX), bribeToken);
         _createFeesWithAmount(feesVotingReward, address(USDC), bribeUSDC);
-        skipToNextEpoch(1 hours + 1);
+        skipToNextEpoch(6 days);
 
         assertEq(FRAX.balanceOf(address(feesVotingReward)), bribeToken * 2);
         assertEq(USDC.balanceOf(address(feesVotingReward)), bribeUSDC * 3);
@@ -249,9 +266,11 @@ contract AutoCompounderFlow is AutoCompounderTest {
         preNFTBalance = escrow.balanceOfNFT(mTokenId);
         preCallerVELO = VELO.balanceOf(address(owner2));
 
-        tokensToClaim[0] = [address(FRAX), address(USDC), address(FRAX)];
         vm.prank(address(owner2));
-        autoCompounder.claimFeesAndCompound(fees, tokensToClaim, tokensToSwap);
+        tokensToClaim[0] = [address(FRAX), address(USDC)];
+        tokensToSwap.push(address(USDC));
+        slippages.push(500);
+        autoCompounder.claimFeesAndCompound(fees, tokensToClaim, tokensToSwap, slippages);
 
         assertEq(FRAX.balanceOf(address(feesVotingReward)), 0);
         assertEq(USDC.balanceOf(address(feesVotingReward)), 0);

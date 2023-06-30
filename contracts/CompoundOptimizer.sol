@@ -6,6 +6,7 @@ import {IPoolFactory} from "./interfaces/factories/IPoolFactory.sol";
 import {IVotingEscrow} from "./interfaces/IVotingEscrow.sol";
 import {ICompoundOptimizer} from "./interfaces/ICompoundOptimizer.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
+import {IPool} from "./interfaces/IPool.sol";
 
 /// @notice Storage for all AutoCompounders to call to calculate optimal amountOut into VELO
 /// @author velodrome.finance, @pegahcarter
@@ -135,5 +136,32 @@ contract CompoundOptimizer is ICompoundOptimizer {
 
         // compare output and return the best result
         return singleSwapAmountOut > optimalAmountOut ? route : routes;
+    }
+
+    /// @inheritdoc ICompoundOptimizer
+    function getOptimalAmountOutMin(
+        IRouter.Route[] calldata routes,
+        uint256 amountIn,
+        uint256 points,
+        uint256 slippage
+    ) external view returns (uint256 amountOutMin) {
+        if (points < 2) revert NotEnoughPoints();
+        uint256 length = routes.length;
+
+        for (uint256 i = 0; i < length; i++) {
+            IRouter.Route memory route = routes[i];
+            uint256 amountOut = IPool(router.pairFor(route.from, route.to, route.stable, route.factory)).quote(
+                route.from,
+                amountIn,
+                points
+            );
+
+            // Overwrite amountIn assuming we're using the TWAP for the next route swap
+            amountIn = amountOut;
+        }
+
+        // At this point, amountIn is actually amountOut as we finished the loop
+        amountOutMin = (amountIn * (10_000 - slippage)) / 10_000;
+        if (amountOutMin == 0) revert NoRouteFound();
     }
 }
