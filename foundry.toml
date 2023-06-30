@@ -19,5 +19,5 @@ goerli = "${GOERLI_RPC_URL}"
 optimism = "${OPTIMISM_RPC_URL}"
 
 [etherscan]
-es_goerli = { key = "${GOERLI_SCAN_API_KEY}", url = "${GOERLI_ETHERSCAN_VERIFIER_URL}" }
-es_optimism = { key = "${OPTIMISM_SCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}" }
+goerli = { key = "${GOERLI_SCAN_API_KEY}", url = "${GOERLI_ETHERSCAN_VERIFIER_URL}" }
+optimism = { key = "${OPTIMISM_SCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}" }

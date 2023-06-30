@@ -88,7 +88,7 @@ Renounced after deployment
 ## Permissions List
 This is an exhaustive list of all admin permissions in Velodrome V2, sorted by the contract they are stored in.
 
-#### [PoolFactory](TODO: live etherscan link)
+#### [PoolFactory](https://optimistic.etherscan.io/address/0xF1046053aa5682b4F9a81b5481394DA16BE5FF5a#code)
 - Pauser
     - Controls pause state of swaps on UniswapV2 pools created by this factory.  Users are still freely able to add/remove liquidity
     - V1 pools will be pausable by the v1 factory.
@@ -96,16 +96,16 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
 - FeeManager
     - Controls default and custom fees for stable / volatile pools.
 
-#### [SinkManager](TODO: live etherscan link)
+#### [SinkManager](https://optimistic.etherscan.io/address/0x5aeE5F0E6C2055EbD776DB25F48f6c9A68ABcdaE#code)
 - Owner
     - Used for set up only, renounced when deployment is completed.
 
-#### [FactoryRegistry](TODO: live etherscan link)
+#### [FactoryRegistry](https://optimistic.etherscan.io/address/0xF4c67CdEAaB8360370F41514d06e32CcD8aA1d7B#code)
 - Owner
     - Can approve / unapprove new pool / gauge / reward factory combinations.
     - This is used to add new pools, gauges or reward factory combinations. These new pools / gauges / rewards factories may have different code to existing implementations.
 
-#### [Minter](TODO: live etherscan link)
+#### [Minter](https://optimistic.etherscan.io/address/0x6dc9E1C04eE59ed3531d73a72256C0da46D10982#code)
 - EpochGovernor
     - Can nudge the Minter to adjust the VELO emissions rate.
 
@@ -115,7 +115,7 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
     - Can veto proposals.
     - Can renounce vetoer role.
 
-#### [Voter](TODO: live etherscan link)
+#### [Voter](https://optimistic.etherscan.io/address/0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C#code)
 - Governor
     - Can set governor in Voter.
     - Can set epochGovernor in Voter.
@@ -135,7 +135,7 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
     - Can set a custom name or symbol for a Uniswap V2 pool.
     - Can activate or deactivate managed NFTs in VotingEscrow.
 
-#### [VotingEscrow](TODO: live etherscan link)
+#### [VotingEscrow](https://optimistic.etherscan.io/address/0xFAf8FD17D9840595845582fCB047DF13f006787d#code)
 - Team
     - Can set team in VotingEscrow
     - Can set artProxy in VotingEscrow.
@@ -149,16 +149,16 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
 ## Contract Roles and Abilities
 In addition to defined admin roles, various contracts within Velodrome protocol have unique permissions in calling other contracts.  These permissions are immutable.
 
-#### [Minter](TODO: live etherscan link)
+#### [Minter](https://optimistic.etherscan.io/address/0x6dc9E1C04eE59ed3531d73a72256C0da46D10982#code)
 - Can mint VELO and distribute to Voter for gauge emissions and RewardsDistributor for claimable rebases
     - `Minter.updatePeriod()`
 
-#### [SinkManager](TODO: live etherscan link)
+#### [SinkManager](https://optimistic.etherscan.io/address/0x5aeE5F0E6C2055EbD776DB25F48f6c9A68ABcdaE#code)
 - Can mint v2 VELO from the conversion of v1 VELO or a v1 veNFT
     - `SinkManager.convertVELO()`
     - `SinkManager.convertVe()`
 
-#### [Voter](TODO: live etherscan link)
+#### [Voter](https://optimistic.etherscan.io/address/0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C#code)
 - Can distribute VELO emissions to gauges
     - `Voter.distribute()`
 - Can claim fees and rewards earned by Normal veNFTs
@@ -175,7 +175,7 @@ In addition to defined admin roles, various contracts within Velodrome protocol 
     - `Voter.vote()`
     - `Voter.reset()`
 
-#### [VotingEscrow](TODO: live etherscan link)
+#### [VotingEscrow](https://optimistic.etherscan.io/address/0xFAf8FD17D9840595845582fCB047DF13f006787d#code)
 - Can deposit balances into `LockedManagedReward`
     - `VotingEscrow.depositManaged()`
 - Can deposit balances into `FreeManagedReward`
@@ -186,6 +186,6 @@ In addition to defined admin roles, various contracts within Velodrome protocol 
     - `VotingEscrow.increaseAmount()`
     - `VotingEscrow.depositFor()`
 
-#### [Pool](TODO: live etherscan link)
+#### [Pool](https://optimistic.etherscan.io/address/0x95885af5492195f0754be71ad1545fe81364e531#code)
 - Can claim the fees accrued from trades
     - `Pool.claimFees()`

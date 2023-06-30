@@ -25,24 +25,24 @@ source .env
 
 1. Deploy SinkDrain
 ```
-forge script script/DeploySinkDrain.s.sol:DeploySinkDrain --broadcast --rpc-url optimism --verify -vvvv
+forge script script/DeploySinkDrain.s.sol:DeploySinkDrain --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
 
 2. Create a custom gauge on v1 using the address of the `SinkDrain` deployed.  The contract address of `SinkDrain` can be located within `script/constants/output/{OUTPUT_FILENAME}`.  This is done through calling the v1 `voter.createGauge()` with the function argument being the `SinkDrain` address.  This gauge needs to be created by the v1 `escrow.team()` address.
 
 3. Deploy Velodrome v2 Core
 ```
-forge script script/DeployVelodromeV2.s.sol:DeployVelodromeV2 --broadcast --rpc-url optimism --verify -vvvv
+forge script script/DeployVelodromeV2.s.sol:DeployVelodromeV2 --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
 
 4. Deploy v2 gauges and v2 pools.  These gauges are built on Velodrome v2 using newly created v2 pools.
 ```
-forge script script/DeployGaugesAndPoolsV2.s.sol:DeployGaugesAndPoolsV2 --broadcast --rpc-url optimism --verify -vvvv
+forge script script/DeployGaugesAndPoolsV2.s.sol:DeployGaugesAndPoolsV2 --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
 
 5. Deploy governor contracts
 ```
-forge script script/DeployGovernors.s.sol:DeployGovernors --broadcast --rpc-url optimism --verify -vvvv
+forge script script/DeployGovernors.s.sol:DeployGovernors --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
 6.  Update the governor addresses on v2.  This needs to be done by the v2 `escrow.team()` address.  Within v2 `voter`:
  - call `setEpochGovernor()` using the `EpochGovernor` address located in `script/constants/output/{OUTPUT_FILENAME}`

@@ -1,6 +1,6 @@
 # Velodrome
 
-This repo contains the contracts for Velodrome Finance, an AMM on Optimism inspired by Solidly.
+V2 contracts for Velodrome Finance, an AMM on Optimism inspired by Solidly.
 
 See `SPECIFICATION.md` for more detail.
 
@@ -57,30 +57,23 @@ See `SPECIFICATION.md` for more detail.
 | `VeloGovernor.sol` | OpenZeppelin's Governor contracts used in protocol-wide access control to whitelist tokens for trade  within Velodrome, update minting emissions, and create managed veNFTs. |
 | `EpochGovernor.sol` | A simple epoch-based governance contract used exclusively for adjusting emissions. |
 
+
 ## Testing
 
-This repo uses both Foundry (for Solidity testing) and Hardhat (for deployment).
+This repository uses Foundry for testing and deployment. 
 
 Foundry Setup
 
-```ml
-forge init
+```
+forge install
 forge build
 forge test
 ```
 
-Hardhat Setup
-
-```ml
-npm i
-npx hardhat compile
-```
-
 ## Optimism Mainnet Fork Tests
 
-In order to run mainnet fork tests against optimism, inherit `BaseTest` in `BaseTest.sol` in your new class and set the `deploymentType` variable to `Deployment.FORK`. See `SinkManager.t.sol` for examples. The `OPTIMISM_RPC_URL` field must be set in `.env`. Optionally, `BLOCK_NUMBER` can be set in the `.env` file or in the test file if you wish to test against a consistent fork state. 
+In order to run mainnet fork tests against optimism, inherit `BaseTest` in `BaseTest.sol` in your new class and set the `deploymentType` variable to `Deployment.FORK`. See `SinkManager.t.sol` for examples. The `OPTIMISM_RPC_URL` field must be set in `.env`. Optionally, `BLOCK_NUMBER` can be set in the `.env` file or in the test file if you wish to test against a consistent fork state (this will make tests faster).
 
-In order to write hard fork tests, extend `test/HardForkTest.sol`. The `OPTIMISM_RPC_URL` field must also be set in the `.env` file at the root level of the repository.
 
 ## Lint
 
@@ -93,5 +86,30 @@ In order to write hard fork tests, extend `test/HardForkTest.sol`. The `OPTIMISM
 See `script/README.md` for more detail.
 
 ## Security
+### Access Control
+See `PERMISSIONS.md` for more detail.
+### Bug Bounty
+Velodrome has a live bug bounty hosted on Immunefi ([link](https://immunefi.com/bounty/velodromefinance/)).
 
-See `SECURITY.md` and `PERMISSIONS.md` for more detail.
+## Deployment
+
+| Name               | Address                                                                                                                               |
+| :----------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| ArtProxy               | [0x4A9eA0dd5649eC4B6745c60d1769e2184C1782DD](https://optimistic.etherscan.io/address/0x4A9eA0dd5649eC4B6745c60d1769e2184C1782DD#code) |
+| RewardsDistributor               | [0x9D4736EC60715e71aFe72973f7885DCBC21EA99b](https://optimistic.etherscan.io/address/0x9D4736EC60715e71aFe72973f7885DCBC21EA99b#code) |
+| FactoryRegistry               | [0xF4c67CdEAaB8360370F41514d06e32CcD8aA1d7B](https://optimistic.etherscan.io/address/0xF4c67CdEAaB8360370F41514d06e32CcD8aA1d7B#code) |
+| Forwarder               | [0x06824df38D1D77eADEB6baFCB03904E27429Ab74](https://optimistic.etherscan.io/address/0x06824df38D1D77eADEB6baFCB03904E27429Ab74#code) |
+| GaugeFactory               | [0x8391fE399640E7228A059f8Fa104b8a7B4835071](https://optimistic.etherscan.io/address/0x8391fE399640E7228A059f8Fa104b8a7B4835071#code) |
+| ManagedRewardsFactory               | [0xcDd9585005095ac7447d1fDbC990C5CFB805cff0](https://optimistic.etherscan.io/address/0xcDd9585005095ac7447d1fDbC990C5CFB805cff0#code) |
+| Minter               | [0x6dc9E1C04eE59ed3531d73a72256C0da46D10982](https://optimistic.etherscan.io/address/0x6dc9E1C04eE59ed3531d73a72256C0da46D10982#code) |
+| PoolFactory               | [0xF1046053aa5682b4F9a81b5481394DA16BE5FF5a](https://optimistic.etherscan.io/address/0xF1046053aa5682b4F9a81b5481394DA16BE5FF5a#code) |
+| Router               | [0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858](https://optimistic.etherscan.io/address/0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858#code) |
+| SinkConverter               | [0x585Af0b397AC42dbeF7f18395426BF878634f18D](https://optimistic.etherscan.io/address/0x585Af0b397AC42dbeF7f18395426BF878634f18D#code) |
+| SinkManager               | [0x5aeE5F0E6C2055EbD776DB25F48f6c9A68ABcdaE](https://optimistic.etherscan.io/address/0x5aeE5F0E6C2055EbD776DB25F48f6c9A68ABcdaE#code) |
+| SinkManagerFacilitatorImplementation               | [0x45fF00822E8235b86Cb605ac8295c14628cE78a4](https://optimistic.etherscan.io/address/0x45fF00822E8235b86Cb605ac8295c14628cE78a4#code) |
+| VELO               | [0x9560e827aF36c94D2Ac33a39bCE1Fe78631088Db](https://optimistic.etherscan.io/address/0x9560e827aF36c94D2Ac33a39bCE1Fe78631088Db#code) |
+| Voter               | [0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C](https://optimistic.etherscan.io/address/0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C#code) |
+| VotingEscrow               | [0xFAf8FD17D9840595845582fCB047DF13f006787d](https://optimistic.etherscan.io/address/0xFAf8FD17D9840595845582fCB047DF13f006787d#code) |
+| VotingRewardsFactory               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec#code) |
+| Pool               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x95885af5492195f0754be71ad1545fe81364e531#code) |
+

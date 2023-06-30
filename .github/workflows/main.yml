@@ -2,7 +2,8 @@ name: CI
 
 on:
   push:
-    branches: [ contracts-v2 ]
+    branches: 
+      - main
   pull_request:
   workflow_dispatch:
 
@@ -25,12 +26,10 @@ jobs:
           forge build --sizes
 
       - name: Run tests
-        run: forge test -vvv
+        run: OUTPUT_FILENAME=ci.json CONSTANTS_FILENAME=Optimism.json forge test -vvv
         env:
           OPTIMISM_RPC_URL: ${{ secrets.OPTIMISM_RPC_URL }}
           PRIVATE_KEY_DEPLOY: ${{ secrets.PRIVATE_KEY_DEPLOY }}
-          CONSTANTS_FILENAME: ${{ secrets.CONSTANTS_FILENAME }}
-          OUTPUT_FILENAME: ${{ secrets.OUTPUT_FILENAME }}
           
       - name: slither-static-analysis
         continue-on-error: true
