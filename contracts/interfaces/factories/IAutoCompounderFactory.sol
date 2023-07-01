@@ -5,6 +5,7 @@ interface IAutoCompounderFactory {
     error AmountOutOfAcceptableRange();
     error AmountSame();
     error NotTeam();
+    error HighLiquidityTokenAlreadyExists();
     error KeeperAlreadyExists();
     error KeeperDoesNotExist();
     error TokenIdNotApproved();
@@ -12,7 +13,10 @@ interface IAutoCompounderFactory {
     error TokenIdZero();
     error ZeroAddress();
 
+    event AddKeeper(address _keeper);
+    event AddHighLiquidityToken(address _token);
     event CreateAutoCompounder(address indexed _from, address indexed _admin, address indexed _autoCompounder);
+    event RemoveKeeper(address _keeper);
     event SetRewardAmount(uint256 _rewardAmount);
 
     /// @notice Maximum fixed VELO reward rate from calling AutoCompounder.claimXAndCompound()
@@ -36,6 +40,27 @@ interface IAutoCompounderFactory {
     /// @param _rewardAmount Amount of VELO
     function setRewardAmount(uint256 _rewardAmount) external;
 
+    /// @notice Register a token address with high liquidity
+    ///         Callable by VotingEscrow.team()
+    /// @dev Once an address is added, it cannot be removed
+    /// @param _token Address of token to register
+    function addHighLiquidityToken(address _token) external;
+
+    /// @notice View if an address is registered as a high liquidity token
+    ///         This indicates a token has significant liquidity to swap route into VELO
+    ///         If a token address returns true, it cannot be swept from an AutoCompounder
+    /// @param _token Address of token to query
+    /// @return True if token is registered as a high liquidity token, else false
+    function isHighLiquidityToken(address _token) external view returns (bool);
+
+    /// @notice View for all registered high liquidity tokens
+    /// @return Array of high liquidity tokens
+    function highLiquidityTokens() external view returns (address[] memory);
+
+    /// @notice Get the count of registered high liquidity tokens
+    /// @return Count of registered high liquidity tokens
+    function highLiquidityTokensLength() external view returns (uint256);
+
     /// @notice Add an authorized keeper to call `AutoCompounder.claimXAndCompoundKeeper()`
     ///         Callable by VotingEscrow.team()
     /// @param _keeper Address of keeper to approve
@@ -46,6 +71,11 @@ interface IAutoCompounderFactory {
     /// @param _keeper Address of keeper to remove
     function removeKeeper(address _keeper) external;
 
+    /// @notice View if an address is an approved keeper
+    /// @param _keeper Address of keeper queried
+    /// @return True if keeper, else false
+    function isKeeper(address _keeper) external view returns (bool);
+
     /// @notice View for all approved keepers
     /// @return Array of keepers
     function keepers() external view returns (address[] memory);
@@ -53,11 +83,6 @@ interface IAutoCompounderFactory {
     /// @notice Get the count of approved keepers
     /// @return Count of approved keepers
     function keepersLength() external view returns (uint256);
-
-    /// @notice View if an address is an approved keeper
-    /// @param _keeper Address of keeper queried
-    /// @return True if keeper, else false
-    function isKeeper(address _keeper) external view returns (bool);
 
     // TODO: test coverage once merged
 

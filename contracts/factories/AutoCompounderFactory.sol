@@ -10,7 +10,7 @@ import {CompoundOptimizer} from "../CompoundOptimizer.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 /// @title AutoCompounderFactory
-/// @author @pegahcarter
+/// @author velodrome.finance, @pegahcarter
 /// @notice Factory contract to create AutoCompounders and manage authorized callers of the AutoCompounders
 contract AutoCompounderFactory is IAutoCompounderFactory {
     using EnumerableSet for EnumerableSet.AddressSet;
@@ -28,6 +28,7 @@ contract AutoCompounderFactory is IAutoCompounderFactory {
     address public immutable optimizer;
     IVotingEscrow public immutable ve;
 
+    EnumerableSet.AddressSet private _highLiquidityTokens;
     EnumerableSet.AddressSet private _autoCompounders;
     EnumerableSet.AddressSet private _keepers;
 
@@ -67,14 +68,37 @@ contract AutoCompounderFactory is IAutoCompounderFactory {
         emit SetRewardAmount(_rewardAmount);
     }
 
-    // TODO: unit testing
-    // TODO: natspec
+    /// @inheritdoc IAutoCompounderFactory
+    function addHighLiquidityToken(address _token) external {
+        if (msg.sender != ve.team()) revert NotTeam();
+        if (_token == address(0)) revert ZeroAddress();
+        if (isHighLiquidityToken(_token)) revert HighLiquidityTokenAlreadyExists();
+        _highLiquidityTokens.add(_token);
+        emit AddHighLiquidityToken(_token);
+    }
+
+    /// @inheritdoc IAutoCompounderFactory
+    function isHighLiquidityToken(address _token) public view returns (bool) {
+        return _highLiquidityTokens.contains(_token);
+    }
+
+    /// @inheritdoc IAutoCompounderFactory
+    function highLiquidityTokens() external view returns (address[] memory) {
+        return _highLiquidityTokens.values();
+    }
+
+    /// @inheritdoc IAutoCompounderFactory
+    function highLiquidityTokensLength() external view returns (uint256) {
+        return _highLiquidityTokens.length();
+    }
+
     /// @inheritdoc IAutoCompounderFactory
     function addKeeper(address _keeper) external {
         if (msg.sender != ve.team()) revert NotTeam();
         if (_keeper == address(0)) revert ZeroAddress();
         if (isKeeper(_keeper)) revert KeeperAlreadyExists();
         _keepers.add(_keeper);
+        emit AddKeeper(_keeper);
     }
 
     /// @inheritdoc IAutoCompounderFactory
@@ -83,6 +107,12 @@ contract AutoCompounderFactory is IAutoCompounderFactory {
         if (_keeper == address(0)) revert ZeroAddress();
         if (!isKeeper(_keeper)) revert KeeperDoesNotExist();
         _keepers.remove(_keeper);
+        emit RemoveKeeper(_keeper);
+    }
+
+    /// @inheritdoc IAutoCompounderFactory
+    function isKeeper(address _keeper) public view returns (bool) {
+        return _keepers.contains(_keeper);
     }
 
     /// @inheritdoc IAutoCompounderFactory
@@ -93,11 +123,6 @@ contract AutoCompounderFactory is IAutoCompounderFactory {
     /// @inheritdoc IAutoCompounderFactory
     function keepersLength() external view returns (uint256) {
         return _keepers.length();
-    }
-
-    /// @inheritdoc IAutoCompounderFactory
-    function isKeeper(address _keeper) public view returns (bool) {
-        return _keepers.contains(_keeper);
     }
 
     /// @inheritdoc IAutoCompounderFactory

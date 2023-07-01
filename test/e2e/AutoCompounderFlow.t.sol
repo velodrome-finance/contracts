@@ -53,7 +53,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         // Epoch 1
 
         _createBribeWithAmount(bribeVotingReward, address(DAI), bribeToken);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         // Epoch 2
 
@@ -76,7 +76,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         _createBribeWithAmount(bribeVotingReward, address(FRAX), bribeToken);
         _createBribeWithAmount(bribeVotingReward, address(USDC), bribeUSDC);
         voter.poke(mTokenId);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         // Epoch 3
 
@@ -98,7 +98,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         assertGt(escrow.balanceOfNFT(mTokenId), preNFTBalance);
 
         _createBribeWithAmount(bribeVotingReward, address(USDC), bribeUSDC);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         // Epoch 4
 
@@ -121,13 +121,13 @@ contract AutoCompounderFlow is AutoCompounderTest {
         assertGt(escrow.balanceOfNFT(mTokenId), preNFTBalance);
 
         voter.poke(mTokenId);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         // Epoch 5
 
         _createBribeWithAmount(bribeVotingReward, address(FRAX), bribeToken);
         _createBribeWithAmount(bribeVotingReward, address(USDC), bribeUSDC);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         assertEq(DAI.balanceOf(address(bribeVotingReward)), bribeToken);
         assertEq(USDC.balanceOf(address(bribeVotingReward)), bribeUSDC * 3);
@@ -185,7 +185,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         // Epoch 1
 
         _createFeesWithAmount(feesVotingReward, address(FRAX), bribeToken);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         // Epoch 2
 
@@ -208,7 +208,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         _createFeesWithAmount(feesVotingReward, address(FRAX), bribeToken);
         _createFeesWithAmount(feesVotingReward, address(USDC), bribeUSDC);
         voter.poke(mTokenId);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         // Epoch 3
 
@@ -230,7 +230,7 @@ contract AutoCompounderFlow is AutoCompounderTest {
         assertGt(escrow.balanceOfNFT(mTokenId), preNFTBalance);
 
         _createFeesWithAmount(feesVotingReward, address(USDC), bribeUSDC);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         // Epoch 4
 
@@ -252,13 +252,13 @@ contract AutoCompounderFlow is AutoCompounderTest {
         assertGt(escrow.balanceOfNFT(mTokenId), preNFTBalance);
 
         voter.poke(mTokenId);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         // Epoch 5
 
         _createFeesWithAmount(feesVotingReward, address(FRAX), bribeToken);
         _createFeesWithAmount(feesVotingReward, address(USDC), bribeUSDC);
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
 
         assertEq(FRAX.balanceOf(address(feesVotingReward)), bribeToken * 2);
         assertEq(USDC.balanceOf(address(feesVotingReward)), bribeUSDC * 3);

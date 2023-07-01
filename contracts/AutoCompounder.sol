@@ -73,15 +73,28 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
     }
 
     /// @dev Validate timestamp is within the final 24 hours before the epoch flip
-    modifier onLastDayOfEpoch(uint256 timestamp) {
+    modifier onlyLastDayOfEpoch() {
+        uint256 timestamp = block.timestamp;
         uint256 lastDayStart = timestamp - (timestamp % WEEK) + WEEK - 1 days;
         if (timestamp < lastDayStart) revert TooSoon();
         _;
     }
 
-    /// @dev Validate msg.sender is a keeper added by Velodrome team
-    modifier onlyKeeper(address sender) {
-        if (!IAutoCompounderFactory(factory).isKeeper(sender)) revert NotKeeper();
+    modifier onlyFirstDayOfEpoch(bool _yes) {
+        uint256 timestamp = block.timestamp;
+        uint256 firstDayEnd = timestamp - (timestamp % WEEK) + 1 days;
+        if (_yes) {
+            if (timestamp >= firstDayEnd) revert TooLate();
+        } else {
+            if (timestamp < firstDayEnd) revert TooSoon();
+        }
+        _;
+    }
+
+    /// @dev Validate msg.sender is a keeper added by Velodrome team.
+    ///      Can only call permissioned functions 1 day after epoch flip
+    modifier onlyKeeper(address _sender) {
+        if (!IAutoCompounderFactory(factory).isKeeper(_sender)) revert NotKeeper();
         _;
     }
 
@@ -95,7 +108,7 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
         address[][] calldata _tokens,
         address[] calldata _tokensToSwap,
         uint256[] calldata _slippages
-    ) external onLastDayOfEpoch(block.timestamp) {
+    ) external onlyLastDayOfEpoch {
         voter.claimBribes(_bribes, _tokens, tokenId);
         swapTokensToVELOAndCompound(_tokensToSwap, _slippages);
     }
@@ -106,7 +119,7 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
         address[][] calldata _tokens,
         address[] calldata _tokensToSwap,
         uint256[] calldata _slippages
-    ) external onLastDayOfEpoch(block.timestamp) {
+    ) external onlyLastDayOfEpoch {
         voter.claimFees(_fees, _tokens, tokenId);
         swapTokensToVELOAndCompound(_tokensToSwap, _slippages);
     }
@@ -115,7 +128,7 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
     function swapTokensToVELOAndCompound(
         address[] memory _tokensToSwap,
         uint256[] memory _slippages
-    ) public nonReentrant onLastDayOfEpoch(block.timestamp) {
+    ) public nonReentrant onlyLastDayOfEpoch {
         uint256 length = _tokensToSwap.length;
         if (length != _slippages.length) revert UnequalLengths();
 
@@ -146,6 +159,55 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
     }
 
     // -------------------------------------------------
+    // DEFAULT_ADMIN_ROLE functions
+    // -------------------------------------------------
+
+    /// @inheritdoc IAutoCompounder
+    function claimBribesAndSweep(
+        address[] calldata _bribes,
+        address[][] calldata _tokens,
+        address[] calldata _tokensToSweep,
+        address[] calldata _recipients
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) onlyFirstDayOfEpoch(true) nonReentrant {
+        voter.claimBribes(_bribes, _tokens, tokenId);
+        _sweep(_tokensToSweep, _recipients);
+    }
+
+    /// @inheritdoc IAutoCompounder
+    function claimFeesAndSweep(
+        address[] calldata _fees,
+        address[][] calldata _tokens,
+        address[] calldata _tokensToSweep,
+        address[] calldata _recipients
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) onlyFirstDayOfEpoch(true) nonReentrant {
+        voter.claimFees(_fees, _tokens, tokenId);
+        _sweep(_tokensToSweep, _recipients);
+    }
+
+    function sweep(
+        address[] calldata _tokensToSweep,
+        address[] calldata _recipients
+    ) external onlyRole(DEFAULT_ADMIN_ROLE) onlyFirstDayOfEpoch(true) nonReentrant {
+        _sweep(_tokensToSweep, _recipients);
+    }
+
+    function _sweep(address[] memory _tokensToSweep, address[] memory _recipients) internal {
+        uint256 length = _tokensToSweep.length;
+        if (length != _recipients.length) revert UnequalLengths();
+        for (uint256 i = 0; i < length; i++) {
+            address token = _tokensToSweep[i];
+            if (IAutoCompounderFactory(factory).isHighLiquidityToken(token)) revert HighLiquidityToken();
+            address recipient = _recipients[i];
+            if (recipient == address(0)) revert ZeroAddress();
+            uint256 balance = IERC20(token).balanceOf(address(this));
+            if (balance > 0) {
+                IERC20(token).safeTransfer(recipient, balance);
+                emit Sweep(token, msg.sender, recipient, balance);
+            }
+        }
+    }
+
+    // -------------------------------------------------
     // ALLOWED_CALLER functions
     // -------------------------------------------------
 
@@ -164,7 +226,6 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
     // Keeper functions
     // -------------------------------------------------
 
-    // TODO: events
     /// @inheritdoc IAutoCompounder
     function claimBribesAndCompoundKeeper(
         address[] calldata _bribes,
@@ -172,12 +233,11 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
         IRouter.Route[][] calldata _allRoutes,
         uint256[] calldata _amountsIn,
         uint256[] calldata _amountsOutMin
-    ) external onlyKeeper(msg.sender) nonReentrant {
+    ) external onlyKeeper(msg.sender) onlyFirstDayOfEpoch(false) nonReentrant {
         voter.claimBribes(_bribes, _tokens, tokenId);
         _swapTokensToVELOAndCompoundKeeper(_allRoutes, _amountsIn, _amountsOutMin);
     }
 
-    // TODO: events
     /// @inheritdoc IAutoCompounder
     function claimFeesAndCompoundKeeper(
         address[] calldata _fees,
@@ -185,7 +245,7 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
         IRouter.Route[][] calldata _allRoutes,
         uint256[] calldata _amountsIn,
         uint256[] calldata _amountsOutMin
-    ) external onlyKeeper(msg.sender) nonReentrant {
+    ) external onlyKeeper(msg.sender) onlyFirstDayOfEpoch(false) nonReentrant {
         voter.claimFees(_fees, _tokens, tokenId);
         _swapTokensToVELOAndCompoundKeeper(_allRoutes, _amountsIn, _amountsOutMin);
     }
@@ -195,7 +255,7 @@ contract AutoCompounder is IAutoCompounder, ERC721Holder, ERC2771Context, Reentr
         IRouter.Route[][] calldata _allRoutes,
         uint256[] calldata _amountsIn,
         uint256[] calldata _amountsOutMin
-    ) external onlyKeeper(msg.sender) nonReentrant {
+    ) external onlyKeeper(msg.sender) onlyFirstDayOfEpoch(false) nonReentrant {
         _swapTokensToVELOAndCompoundKeeper(_allRoutes, _amountsIn, _amountsOutMin);
     }
 

@@ -194,15 +194,4 @@ interface IPool {
     /// @param _token1 Address of token1
     /// @param _stable True if stable, false if volatile
     function initialize(address _token0, address _token1, bool _stable) external;
-
-    function quote(address tokenIn, uint256 amountIn, uint256 granularity) external view returns (uint256 amountOut);
-
-    function prices(address tokenIn, uint256 amountIn, uint256 points) external view returns (uint256[] memory);
-
-    function sample(
-        address tokenIn,
-        uint256 amountIn,
-        uint256 points,
-        uint256 window
-    ) external view returns (uint256[] memory);
 }

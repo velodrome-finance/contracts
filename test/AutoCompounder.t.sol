@@ -10,8 +10,6 @@ contract AutoCompounderTest is BaseTest {
     uint256 tokenId;
     uint256 mTokenId;
 
-    address manager;
-
     AutoCompounderFactory autoCompounderFactory;
     AutoCompounder autoCompounder;
     CompoundOptimizer optimizer;
@@ -23,6 +21,8 @@ contract AutoCompounderTest is BaseTest {
     address[][] tokensToClaim;
     address[] tokensToSwap;
     uint256[] slippages;
+    address[] tokensToSweep;
+    address[] recipients;
 
     constructor() {
         deploymentType = Deployment.FORK;
@@ -91,7 +91,7 @@ contract AutoCompounderTest is BaseTest {
         slippages.push(500);
 
         // skip to last day where claiming becomes public
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
     }
 
     function _createPoolAndSimulateSwaps(
@@ -116,37 +116,6 @@ contract AutoCompounderTest is BaseTest {
             IERC20(tokenIn).approve(address(router), amountSwapped);
             router.swapExactTokensForTokens(amountSwapped, 0, routes, address(owner), block.timestamp);
         }
-    }
-
-    function testCannotCreateAutoCompounderWithNoAdmin() public {
-        vm.expectRevert(IAutoCompounderFactory.ZeroAddress.selector);
-        autoCompounderFactory.createAutoCompounder(address(0), 1);
-    }
-
-    function testCannotCreateAutoCompounderWithZeroTokenId() public {
-        vm.expectRevert(IAutoCompounderFactory.TokenIdZero.selector);
-        autoCompounderFactory.createAutoCompounder(address(1), 0);
-    }
-
-    function testCannotCreateAutoCompounderIfNotApprovedSender() public {
-        vm.prank(escrow.allowedManager());
-        mTokenId = escrow.createManagedLockFor(address(owner));
-        vm.expectRevert(IAutoCompounderFactory.TokenIdNotApproved.selector);
-        vm.prank(address(owner2));
-        autoCompounderFactory.createAutoCompounder(address(1), mTokenId);
-    }
-
-    function testCannotCreateAutoCompounderIfTokenNotManaged() public {
-        VELO.approve(address(escrow), TOKEN_1);
-        tokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        vm.expectRevert(IAutoCompounderFactory.TokenIdNotManaged.selector);
-        autoCompounderFactory.createAutoCompounder(address(1), tokenId); // normal
-
-        vm.prank(escrow.allowedManager());
-        mTokenId = escrow.createManagedLockFor(address(owner));
-        voter.depositManaged(tokenId, mTokenId);
-        vm.expectRevert(IAutoCompounderFactory.TokenIdNotManaged.selector);
-        autoCompounderFactory.createAutoCompounder(address(1), tokenId); // locked
     }
 
     function testCannotSwapIfNoRouteFound() public {
@@ -254,7 +223,7 @@ contract AutoCompounderTest is BaseTest {
 
         autoCompounder.vote(pools, weights);
 
-        skipToNextEpoch(6 days);
+        skipToNextEpoch(6 days + 1);
         minter.updatePeriod();
 
         uint256 claimable = distributor.claimable(mTokenId);
@@ -407,6 +376,84 @@ contract AutoCompounderTest is BaseTest {
         assertEq(FRAX.allowance(address(autoCompounder), address(router)), 0);
     }
 
+    // TODO: order tests similar to AutoCompounder with section titles
+    function testCannotSweepAfterFirstDayOfEpoch() public {
+        skipToNextEpoch(1 days + 1);
+        vm.expectRevert(IAutoCompounder.TooLate.selector);
+        autoCompounder.claimBribesAndSweep(bribes, tokensToClaim, tokensToSweep, recipients);
+        vm.expectRevert(IAutoCompounder.TooLate.selector);
+        autoCompounder.claimFeesAndSweep(fees, tokensToClaim, tokensToSweep, recipients);
+        vm.expectRevert(IAutoCompounder.TooLate.selector);
+        autoCompounder.sweep(tokensToSweep, recipients);
+    }
+
+    function testCannotSweepIfNotAdmin() public {
+        skipToNextEpoch(1 days - 1);
+        bytes memory revertString = bytes(
+            "AccessControl: account 0x7d28001937fe8e131f76dae9e9947adedbd0abde is missing role 0x0000000000000000000000000000000000000000000000000000000000000000"
+        );
+        vm.startPrank(address(owner2));
+        vm.expectRevert(revertString);
+        autoCompounder.claimBribesAndSweep(bribes, tokensToClaim, tokensToSweep, recipients);
+        vm.expectRevert(revertString);
+        autoCompounder.claimFeesAndSweep(fees, tokensToClaim, tokensToSweep, recipients);
+        vm.expectRevert(revertString);
+        autoCompounder.sweep(tokensToSweep, recipients);
+    }
+
+    function testCannotSweepUnequalLengths() public {
+        skipToNextEpoch(1 days - 1);
+        recipients.push(address(owner2));
+        assertTrue(tokensToSweep.length != recipients.length);
+        vm.prank(escrow.team());
+        vm.expectRevert(IAutoCompounder.UnequalLengths.selector);
+        autoCompounder.sweep(tokensToSweep, recipients);
+    }
+
+    function testCannotSweepHighLiquidityToken() public {
+        skipToNextEpoch(1 days - 1);
+        tokensToSweep.push(address(USDC));
+        recipients.push(address(owner2));
+        vm.prank(escrow.team());
+        autoCompounderFactory.addHighLiquidityToken(address(USDC));
+        vm.expectRevert(IAutoCompounder.HighLiquidityToken.selector);
+        autoCompounder.sweep(tokensToSweep, recipients);
+    }
+
+    function testCannotSweepZeroAddressRecipient() public {
+        skipToNextEpoch(1 days - 1);
+        tokensToSweep.push(address(USDC));
+        recipients.push(address(0));
+        vm.prank(escrow.team());
+        vm.expectRevert(IAutoCompounder.ZeroAddress.selector);
+        autoCompounder.sweep(tokensToSweep, recipients);
+    }
+
+    function testSweep() public {
+        skipToNextEpoch(1 days - 1);
+        tokensToSweep.push(address(USDC));
+        recipients.push(address(owner2));
+        deal(address(USDC), address(autoCompounder), USDC_1);
+        uint256 balanceBefore = USDC.balanceOf(address(owner2));
+        vm.prank(escrow.team());
+        autoCompounder.sweep(tokensToSweep, recipients);
+        assertEq(USDC.balanceOf(address(owner2)), balanceBefore + USDC_1);
+    }
+
+    function testCannotSwapKeeperIfWithinFirstDayOfEpoch() public {
+        skipToNextEpoch(1 days - 1);
+        IRouter.Route[][] memory allRoutes = new IRouter.Route[][](2);
+        uint256[] memory amountsIn = new uint256[](1);
+        uint256[] memory amountsOutMin = new uint256[](1);
+
+        vm.expectRevert(IAutoCompounder.TooSoon.selector);
+        autoCompounder.claimBribesAndCompoundKeeper(bribes, tokensToClaim, allRoutes, amountsIn, amountsOutMin);
+        vm.expectRevert(IAutoCompounder.TooSoon.selector);
+        autoCompounder.claimFeesAndCompoundKeeper(fees, tokensToClaim, allRoutes, amountsIn, amountsOutMin);
+        vm.expectRevert(IAutoCompounder.TooSoon.selector);
+        autoCompounder.swapTokensToVELOAndCompoundKeeper(allRoutes, amountsIn, amountsOutMin);
+    }
+
     function testCannotSwapKeeperUnequalLengths() public {
         IRouter.Route[][] memory allRoutes = new IRouter.Route[][](2);
         uint256[] memory amountsIn = new uint256[](1);
@@ -431,7 +478,15 @@ contract AutoCompounderTest is BaseTest {
     }
 
     function testCannotSwapKeeperIfNotKeeper() public {
+        IRouter.Route[][] memory allRoutes = new IRouter.Route[][](2);
+        uint256[] memory amountsIn = new uint256[](1);
+        uint256[] memory amountsOutMin = new uint256[](1);
+
         vm.startPrank(address(owner2));
+        vm.expectRevert(IAutoCompounder.NotKeeper.selector);
+        autoCompounder.claimBribesAndCompoundKeeper(bribes, tokensToClaim, allRoutes, amountsIn, amountsOutMin);
+        vm.expectRevert(IAutoCompounder.NotKeeper.selector);
+        autoCompounder.claimFeesAndCompoundKeeper(fees, tokensToClaim, allRoutes, amountsIn, amountsOutMin);
         vm.expectRevert(IAutoCompounder.NotKeeper.selector);
         autoCompounder.swapTokensToVELOAndCompoundKeeper(new IRouter.Route[][](1), new uint256[](1), new uint256[](1));
     }
