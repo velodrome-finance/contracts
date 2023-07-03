@@ -2,8 +2,12 @@
 pragma solidity 0.8.19;
 
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+import {SafeCastLibrary} from "./SafeCastLibrary.sol";
 
 library BalanceLogicLibrary {
+    using SafeCastLibrary for uint256;
+    using SafeCastLibrary for int128;
+
     uint256 internal constant WEEK = 1 weeks;
 
     /// @notice Binary search to get the user point index for a token id at or prior to a given timestamp
@@ -96,11 +100,11 @@ library BalanceLogicLibrary {
         if (lastPoint.permanent != 0) {
             return lastPoint.permanent;
         } else {
-            lastPoint.bias -= lastPoint.slope * int128(int256(_t) - int256(lastPoint.ts));
+            lastPoint.bias -= lastPoint.slope * (_t - lastPoint.ts).toInt128();
             if (lastPoint.bias < 0) {
                 lastPoint.bias = 0;
             }
-            return uint256(int256(lastPoint.bias));
+            return lastPoint.bias.toUint256();
         }
     }
 
@@ -132,7 +136,7 @@ library BalanceLogicLibrary {
             } else {
                 dSlope = _slopeChanges[t_i];
             }
-            bias -= slope * int128(int256(t_i - ts));
+            bias -= slope * (t_i - ts).toInt128();
             if (t_i == _t) {
                 break;
             }
@@ -143,6 +147,6 @@ library BalanceLogicLibrary {
         if (bias < 0) {
             bias = 0;
         }
-        return uint256(uint128(bias)) + _point.permanentLockBalance;
+        return bias.toUint256() + _point.permanentLockBalance;
     }
 }

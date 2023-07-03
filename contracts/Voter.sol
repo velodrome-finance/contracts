@@ -186,8 +186,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 _updateFor(gauges[_pool]);
                 weights[_pool] -= _votes;
                 delete votes[_tokenId][_pool];
-                IReward(gaugeToFees[gauges[_pool]])._withdraw(uint256(_votes), _tokenId);
-                IReward(gaugeToBribe[gauges[_pool]])._withdraw(uint256(_votes), _tokenId);
+                IReward(gaugeToFees[gauges[_pool]])._withdraw(_votes, _tokenId);
+                IReward(gaugeToBribe[gauges[_pool]])._withdraw(_votes, _tokenId);
                 _totalWeight += _votes;
                 emit Abstained(_msgSender(), _pool, _tokenId, _votes, weights[_pool], block.timestamp);
             }
@@ -243,16 +243,16 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
 
                 weights[_pool] += _poolWeight;
                 votes[_tokenId][_pool] += _poolWeight;
-                IReward(gaugeToFees[_gauge])._deposit(uint256(_poolWeight), _tokenId);
-                IReward(gaugeToBribe[_gauge])._deposit(uint256(_poolWeight), _tokenId);
+                IReward(gaugeToFees[_gauge])._deposit(_poolWeight, _tokenId);
+                IReward(gaugeToBribe[_gauge])._deposit(_poolWeight, _tokenId);
                 _usedWeight += _poolWeight;
                 _totalWeight += _poolWeight;
                 emit Voted(_msgSender(), _pool, _tokenId, _poolWeight, weights[_pool], block.timestamp);
             }
         }
         if (_usedWeight > 0) IVotingEscrow(ve).voting(_tokenId, true);
-        totalWeight += uint256(_totalWeight);
-        usedWeights[_tokenId] = uint256(_usedWeight);
+        totalWeight += _totalWeight;
+        usedWeights[_tokenId] = _usedWeight;
     }
 
     /// @inheritdoc IVoter
@@ -454,7 +454,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
             supplyIndex[_gauge] = _index; // update _gauge current position to global position
             uint256 _delta = _index - _supplyIndex; // see if there is any difference that need to be accrued
             if (_delta > 0) {
-                uint256 _share = (uint256(_supplied) * _delta) / 1e18; // add accrued difference for each supplied token
+                uint256 _share = (_supplied * _delta) / 1e18; // add accrued difference for each supplied token
                 if (isAlive[_gauge]) {
                     claimable[_gauge] += _share;
                 } else {

@@ -18,11 +18,13 @@ import {ERC721Holder} from "@openzeppelin/contracts/token/ERC721/utils/ERC721Hol
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
+import {SafeCastLibrary} from "../../libraries/SafeCastLibrary.sol";
 
 /// @title Velodrome Sink Manager
 /// @notice Absorb v1 Velo and converting v1 veNFTs and VELO into v2
 /// @author velodrome.finance, @pegahcarter
 contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, ReentrancyGuard {
+    using SafeCastLibrary for int128;
     uint256 internal constant MAXTIME = 4 * 365 days;
     uint256 internal constant WEEK = 1 weeks;
     // @dev Additional salt for contract creation
@@ -146,7 +148,7 @@ contract SinkManager is ISinkManager, ERC2771Context, Ownable, ERC721Holder, Ree
 
         // Fetch lock information of v1 veNFT
         (int128 _lockAmount, uint256 lockEnd) = ve.locked(tokenId); // amount of v1 VELO locked, unlock timestamp
-        uint256 lockAmount = uint256(int256(_lockAmount));
+        uint256 lockAmount = _lockAmount.toUint256();
         // determine lockDuration based on current epoch start - see unlockTime in ve._createLock()
         uint256 lockDuration = lockEnd - (block.timestamp / WEEK) * WEEK;
 

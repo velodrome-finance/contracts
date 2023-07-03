@@ -23,6 +23,7 @@ import {VeArtProxy} from "contracts/VeArtProxy.sol";
 import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
 import {VeloGovernor} from "contracts/VeloGovernor.sol";
 import {EpochGovernor} from "contracts/EpochGovernor.sol";
+import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
 import {SinkManagerFacilitator} from "contracts/v1/sink/SinkManagerFacilitator.sol";
 import {ISinkManager, SinkManager} from "contracts/v1/sink/SinkManager.sol";
 import {SinkDrain} from "contracts/v1/sink/SinkDrain.sol";

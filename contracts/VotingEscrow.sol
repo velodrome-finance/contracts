@@ -15,6 +15,7 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {DelegationLogicLibrary} from "./libraries/DelegationLogicLibrary.sol";
 import {BalanceLogicLibrary} from "./libraries/BalanceLogicLibrary.sol";
+import {SafeCastLibrary} from "./libraries/SafeCastLibrary.sol";
 
 /// @title Voting Escrow V2
 /// @notice veNFT implementation that escrows ERC-20 tokens in the form of an ERC-721 NFT
@@ -25,6 +26,8 @@ import {BalanceLogicLibrary} from "./libraries/BalanceLogicLibrary.sol";
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
 contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
+    using SafeCastLibrary for uint256;
+    using SafeCastLibrary for int128;
     /*//////////////////////////////////////////////////////////////
                                CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
@@ -147,18 +150,18 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         // adjust user nft
         int128 _amount = _locked[_tokenId].amount;
         if (_locked[_tokenId].isPermanent) {
-            permanentLockBalance -= uint256(uint128(_amount));
+            permanentLockBalance -= _amount.toUint256();
             _delegate(_tokenId, 0);
         }
         _checkpoint(_tokenId, _locked[_tokenId], LockedBalance(0, 0, false));
         _locked[_tokenId] = LockedBalance(0, 0, false);
 
         // adjust managed nft
-        uint256 _weight = uint256(uint128(_amount));
+        uint256 _weight = _amount.toUint256();
         permanentLockBalance += _weight;
         LockedBalance memory newLocked = _locked[_mTokenId];
         newLocked.amount += _amount;
-        _checkpointDelegatee(_delegates[_mTokenId], uint256(uint128(_amount)), true);
+        _checkpointDelegatee(_delegates[_mTokenId], _weight, true);
         _checkpoint(_mTokenId, _locked[_mTokenId], newLocked);
         _locked[_mTokenId] = newLocked;
 
@@ -167,9 +170,9 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         escrowType[_tokenId] = EscrowType.LOCKED;
 
         address _lockedManagedReward = managedToLocked[_mTokenId];
-        IReward(_lockedManagedReward)._deposit(uint256(uint128(_amount)), _tokenId);
+        IReward(_lockedManagedReward)._deposit(_weight, _tokenId);
         address _freeManagedReward = managedToFree[_mTokenId];
-        IReward(_freeManagedReward)._deposit(uint256(uint128(_amount)), _tokenId);
+        IReward(_freeManagedReward)._deposit(_weight, _tokenId);
 
         emit DepositManaged(_ownerOf(_tokenId), _tokenId, _mTokenId, _weight, block.timestamp);
         emit MetadataUpdate(_tokenId);
@@ -196,7 +199,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         IReward(_lockedManagedReward).getReward(_tokenId, rewards);
 
         // adjust user nft
-        LockedBalance memory newLockedNormal = LockedBalance(int128(int256(_total)), _unlockTime, false);
+        LockedBalance memory newLockedNormal = LockedBalance(_total.toInt128(), _unlockTime, false);
         _checkpoint(_tokenId, _locked[_tokenId], newLockedNormal);
         _locked[_tokenId] = newLockedNormal;
 
@@ -204,15 +207,15 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         LockedBalance memory newLockedManaged = _locked[_mTokenId];
         // do not expect _total > locked.amount / permanentLockBalance but just in case
         newLockedManaged.amount -= (
-            int128(int256(_total)) < newLockedManaged.amount ? int128(int256(_total)) : newLockedManaged.amount
+            _total.toInt128() < newLockedManaged.amount ? _total.toInt128() : newLockedManaged.amount
         );
         permanentLockBalance -= (_total < permanentLockBalance ? _total : permanentLockBalance);
         _checkpointDelegatee(_delegates[_mTokenId], _total, false);
         _checkpoint(_mTokenId, _locked[_mTokenId], newLockedManaged);
         _locked[_mTokenId] = newLockedManaged;
 
-        IReward(_lockedManagedReward)._withdraw(uint256(uint128(_weight)), _tokenId);
-        IReward(_freeManagedReward)._withdraw(uint256(uint128(_weight)), _tokenId);
+        IReward(_lockedManagedReward)._withdraw(_weight, _tokenId);
+        IReward(_freeManagedReward)._withdraw(_weight, _tokenId);
 
         delete idToManaged[_tokenId];
         delete weights[_tokenId][_mTokenId];
@@ -593,16 +596,16 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         uint256 _epoch = epoch;
 
         if (_tokenId != 0) {
-            uNew.permanent = _newLocked.isPermanent ? uint256(int256(_newLocked.amount)) : 0;
+            uNew.permanent = _newLocked.isPermanent ? _newLocked.amount.toUint256() : 0;
             // Calculate slopes and biases
             // Kept at zero when they have to
             if (_oldLocked.end > block.timestamp && _oldLocked.amount > 0) {
                 uOld.slope = _oldLocked.amount / iMAXTIME;
-                uOld.bias = uOld.slope * int128(int256(_oldLocked.end - block.timestamp));
+                uOld.bias = uOld.slope * (_oldLocked.end - block.timestamp).toInt128();
             }
             if (_newLocked.end > block.timestamp && _newLocked.amount > 0) {
                 uNew.slope = _newLocked.amount / iMAXTIME;
-                uNew.bias = uNew.slope * int128(int256(_newLocked.end - block.timestamp));
+                uNew.bias = uNew.slope * (_newLocked.end - block.timestamp).toInt128();
             }
 
             // Read values of scheduled changes in the slope
@@ -659,7 +662,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
                 } else {
                     d_slope = slopeChanges[t_i];
                 }
-                lastPoint.bias -= lastPoint.slope * int128(int256(t_i - lastCheckpoint));
+                lastPoint.bias -= lastPoint.slope * (t_i - lastCheckpoint).toInt128();
                 lastPoint.slope += d_slope;
                 if (lastPoint.bias < 0) {
                     // This can happen
@@ -773,7 +776,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         );
 
         // Adding to existing lock, or if a lock is expired - creating a new one
-        newLocked.amount += int128(int256(_value));
+        newLocked.amount += _value.toInt128();
         if (_unlockTime != 0) {
             newLocked.end = _unlockTime;
         }
@@ -895,7 +898,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         LockedBalance memory oldLocked = _locked[_tokenId];
         if (oldLocked.isPermanent) revert PermanentLock();
         if (block.timestamp < oldLocked.end) revert LockNotExpired();
-        uint256 value = uint256(int256(oldLocked.amount));
+        uint256 value = oldLocked.amount.toUint256();
 
         // Burn the NFT
         _burn(_tokenId);
@@ -938,11 +941,11 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         newLockedTo.amount = oldLockedTo.amount + oldLockedFrom.amount;
         newLockedTo.isPermanent = oldLockedTo.isPermanent;
         if (newLockedTo.isPermanent) {
-            permanentLockBalance += uint256(int256(oldLockedFrom.amount));
+            permanentLockBalance += oldLockedFrom.amount.toUint256();
         } else {
             newLockedTo.end = end;
         }
-        _checkpointDelegatee(_delegates[_to], uint256(int256(oldLockedFrom.amount)), true);
+        _checkpointDelegatee(_delegates[_to], oldLockedFrom.amount.toUint256(), true);
         _checkpoint(_to, oldLockedTo, newLockedTo);
         _locked[_to] = newLockedTo;
 
@@ -950,10 +953,10 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
             sender,
             _from,
             _to,
-            uint256(uint128(oldLockedFrom.amount)),
-            uint256(uint128(oldLockedTo.amount)),
-            uint256(uint128(newLockedTo.amount)),
-            uint256(uint128(newLockedTo.end)),
+            oldLockedFrom.amount.toUint256(),
+            oldLockedTo.amount.toUint256(),
+            newLockedTo.amount.toUint256(),
+            newLockedTo.end,
             block.timestamp
         );
         emit MetadataUpdate(_to);
@@ -973,7 +976,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         if (!_isApprovedOrOwner(sender, _from)) revert NotApprovedOrOwner();
         LockedBalance memory newLocked = _locked[_from];
         if (newLocked.end <= block.timestamp && !newLocked.isPermanent) revert LockExpired();
-        int128 _splitAmount = int128(int256(_amount));
+        int128 _splitAmount = _amount.toInt128();
         if (_splitAmount == 0) revert ZeroAmount();
         if (newLocked.amount <= _splitAmount) revert AmountTooBig();
 
@@ -995,9 +998,9 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
             _tokenId1,
             _tokenId2,
             sender,
-            uint256(uint128(_locked[_tokenId1].amount)),
-            uint256(uint128(_splitAmount)),
-            uint256(uint128(newLocked.end)),
+            _locked[_tokenId1].amount.toUint256(),
+            _splitAmount.toUint256(),
+            newLocked.end,
             block.timestamp
         );
     }
@@ -1025,7 +1028,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         if (_newLocked.end <= block.timestamp) revert LockExpired();
         if (_newLocked.amount <= 0) revert NoLockFound();
 
-        uint256 _amount = uint256(int256(_newLocked.amount));
+        uint256 _amount = _newLocked.amount.toUint256();
         permanentLockBalance += _amount;
         _newLocked.end = 0;
         _newLocked.isPermanent = true;
@@ -1045,7 +1048,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         LockedBalance memory _newLocked = _locked[_tokenId];
         if (!_newLocked.isPermanent) revert NotPermanentLock();
 
-        uint256 _amount = uint256(int256(_newLocked.amount));
+        uint256 _amount = _newLocked.amount.toUint256();
         permanentLockBalance -= _amount;
         _newLocked.end = ((block.timestamp + MAXTIME) / WEEK) * WEEK;
         _newLocked.isPermanent = false;
@@ -1185,7 +1188,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
         uint256 currentDelegate = _delegates[_delegator];
         if (currentDelegate == _delegatee) return;
 
-        uint256 delegatedBalance = uint256(uint128(delegateLocked.amount));
+        uint256 delegatedBalance = delegateLocked.amount.toUint256();
         _checkpointDelegator(_delegator, _delegatee, _ownerOf(_delegator));
         _checkpointDelegatee(_delegatee, delegatedBalance, true);
 

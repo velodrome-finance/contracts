@@ -2,8 +2,11 @@
 pragma solidity 0.8.19;
 
 import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+import {SafeCastLibrary} from "./SafeCastLibrary.sol";
 
 library DelegationLogicLibrary {
+    using SafeCastLibrary for int128;
+
     /// @notice Used by `_mint`, `_transferFrom`, `_burn` and `delegate`
     ///         to update delegator voting checkpoints.
     ///         Automatically dedelegates, then updates checkpoint.
@@ -25,7 +28,7 @@ library DelegationLogicLibrary {
         uint256 _delegatee,
         address _owner
     ) external {
-        uint256 delegatedBalance = uint256(uint128(_locked[_delegator].amount));
+        uint256 delegatedBalance = _locked[_delegator].amount.toUint256();
         uint48 numCheckpoint = _numCheckpoints[_delegator];
         IVotingEscrow.Checkpoint storage cpOld = numCheckpoint > 0
             ? _checkpoints[_delegator][numCheckpoint - 1]

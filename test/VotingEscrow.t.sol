@@ -972,6 +972,24 @@ contract VotingEscrowTest is BaseTest {
         escrow.split(tokenId, TOKEN_1 / 4);
     }
 
+    function testCannotSplitOverflow() public {
+        escrow.toggleSplit(address(0), true);
+
+        VELO.approve(address(escrow), type(uint256).max);
+        escrow.createLock(TOKEN_1, MAXTIME);
+
+        vm.startPrank(address(owner2));
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId2 = escrow.createLock(1e6, MAXTIME);
+        // Creates the create overflow amount
+        uint256 escrowBalance = VELO.balanceOf(address(escrow));
+        uint256 overflowAmount = uint256(int256(int128(-(int256(escrowBalance)))));
+        assertGt(overflowAmount, uint256(uint128(type(int128).max)));
+
+        vm.expectRevert(SafeCastLibrary.SafeCastOverflow.selector);
+        escrow.split(tokenId2, overflowAmount);
+    }
+
     function testCannotToggleSplitForAllIfNotTeam() public {
         vm.prank(address(owner2));
         vm.expectRevert(IVotingEscrow.NotTeam.selector);
