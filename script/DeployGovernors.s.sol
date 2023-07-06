@@ -16,6 +16,7 @@ contract DeployGovernors is Script {
     address team;
 
     VotingEscrow public escrow;
+    FactoryRegistry public factoryRegistry;
     Forwarder public forwarder;
     Minter public minter;
     VeloGovernor public governor;
@@ -35,6 +36,7 @@ contract DeployGovernors is Script {
         path = string.concat(path, outputFilename);
         jsonOutput = vm.readFile(path);
         escrow = VotingEscrow(abi.decode(vm.parseJson(jsonOutput, ".VotingEscrow"), (address)));
+        factoryRegistry = FactoryRegistry(abi.decode(vm.parseJson(jsonOutput, ".FactoryRegistry"), (address)));
         forwarder = Forwarder(abi.decode(vm.parseJson(jsonOutput, ".Forwarder"), (address)));
         minter = Minter(abi.decode(vm.parseJson(jsonOutput, ".Minter"), (address)));
 
@@ -43,7 +45,8 @@ contract DeployGovernors is Script {
         governor = new VeloGovernor(escrow);
         epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));
 
-        governor.setVetoer(escrow.team());
+        governor.setVetoer(factoryRegistry.owner());
+        // factoryRegistry.owner() must call `acceptVetoer()`
 
         vm.stopBroadcast();
 

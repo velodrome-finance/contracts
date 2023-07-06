@@ -21,3 +21,6 @@ optimism = "${OPTIMISM_RPC_URL}"
 [etherscan]
 goerli = { key = "${GOERLI_SCAN_API_KEY}", url = "${GOERLI_ETHERSCAN_VERIFIER_URL}" }
 optimism = { key = "${OPTIMISM_SCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}" }
+
+[fuzz]
+runs = 2500

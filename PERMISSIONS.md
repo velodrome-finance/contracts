@@ -104,6 +104,9 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
 - Owner
     - Can approve / unapprove new pool / gauge / reward factory combinations.
     - This is used to add new pools, gauges or reward factory combinations. These new pools / gauges / rewards factories may have different code to existing implementations.
+    - Can enable split functionality on the `Splitter` contract for a single address.
+    - Can enable split functionality on the `Splitter` contract for all addresses.
+    - Can set artProxy in VotingEscrow via the `RestrictedTeam` contract. 
 
 #### [Minter](https://optimistic.etherscan.io/address/0x6dc9E1C04eE59ed3531d73a72256C0da46D10982#code)
 - EpochGovernor
@@ -137,10 +140,6 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
 
 #### [VotingEscrow](https://optimistic.etherscan.io/address/0xFAf8FD17D9840595845582fCB047DF13f006787d#code)
 - Team
-    - Can set team in VotingEscrow
-    - Can set artProxy in VotingEscrow.
-    - Can enable split functionality for a single address.
-    - Can enable split functionality for all addresses.
     - Can set proposalNumerator in VeloGovernor.
 - AllowedManager
     - Can create managed NFTs in VotingEscrow.

@@ -93,6 +93,8 @@ Velodrome has a live bug bounty hosted on Immunefi ([link](https://immunefi.com/
 
 ## Deployment
 
+This is for the deployment on Optimism. For other changes to the Optimism deployment, see the README in `contracts/v2/README.md`. 
+
 | Name               | Address                                                                                                                               |
 | :----------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
 | ArtProxy               | [0x4A9eA0dd5649eC4B6745c60d1769e2184C1782DD](https://optimistic.etherscan.io/address/0x4A9eA0dd5649eC4B6745c60d1769e2184C1782DD#code) |
@@ -112,4 +114,3 @@ Velodrome has a live bug bounty hosted on Immunefi ([link](https://immunefi.com/
 | VotingEscrow               | [0xFAf8FD17D9840595845582fCB047DF13f006787d](https://optimistic.etherscan.io/address/0xFAf8FD17D9840595845582fCB047DF13f006787d#code) |
 | VotingRewardsFactory               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec#code) |
 | Pool               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x95885af5492195f0754be71ad1545fe81364e531#code) |
-

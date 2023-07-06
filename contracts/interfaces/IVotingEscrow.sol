@@ -411,7 +411,7 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     /// @return _tokenId2 Return tokenId of veNFT with `_amount`.
     function split(uint256 _from, uint256 _amount) external returns (uint256 _tokenId1, uint256 _tokenId2);
 
-    /// @notice Toggle split for a specific veNFT.
+    /// @notice Toggle split for a specific address.
     /// @dev Toggle split for address(0) to enable or disable for all.
     /// @param _account Address to toggle split permissions
     /// @param _bool True to allow, false to disallow

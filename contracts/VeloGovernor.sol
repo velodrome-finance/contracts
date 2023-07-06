@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {IVotes} from "./governance/IVotes.sol";
 import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 import {IVetoGovernor} from "./governance/IVetoGovernor.sol";
 import {VetoGovernor} from "./governance/VetoGovernor.sol";
@@ -49,7 +50,7 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     }
 
     function setProposalNumerator(uint256 numerator) external {
-        if (msg.sender != IVotingEscrow(ve).team()) revert NotTeam();
+        if (msg.sender != Ownable(IVotingEscrow(ve).factoryRegistry()).owner()) revert NotTeam();
         if (numerator > MAX_PROPOSAL_NUMERATOR) revert ProposalNumeratorTooHigh();
         proposalNumerator = numerator;
     }
