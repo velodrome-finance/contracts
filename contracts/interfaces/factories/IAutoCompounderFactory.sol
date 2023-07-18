@@ -13,10 +13,10 @@ interface IAutoCompounderFactory {
     error TokenIdZero();
     error ZeroAddress();
 
-    event AddKeeper(address _keeper);
-    event AddHighLiquidityToken(address _token);
+    event AddKeeper(address indexed _keeper);
+    event AddHighLiquidityToken(address indexed _token);
     event CreateAutoCompounder(address indexed _from, address indexed _admin, address indexed _autoCompounder);
-    event RemoveKeeper(address _keeper);
+    event RemoveKeeper(address indexed _keeper);
     event SetRewardAmount(uint256 _rewardAmount);
 
     /// @notice Maximum fixed VELO reward rate from calling AutoCompounder.claimXAndCompound()
@@ -36,12 +36,12 @@ interface IAutoCompounderFactory {
     function createAutoCompounder(address _admin, uint256 _tokenId) external returns (address autoCompounder);
 
     /// @notice Set the amount of VELO to reward a public caller of `AutoCompounder.claimXAndCompound()`
-    ///         Callable by VotingEscrow.team()
+    ///         Callable by FactoryRegistry.owner()
     /// @param _rewardAmount Amount of VELO
     function setRewardAmount(uint256 _rewardAmount) external;
 
     /// @notice Register a token address with high liquidity
-    ///         Callable by VotingEscrow.team()
+    ///         Callable by FactoryRegistry.owner()
     /// @dev Once an address is added, it cannot be removed
     /// @param _token Address of token to register
     function addHighLiquidityToken(address _token) external;
@@ -62,12 +62,12 @@ interface IAutoCompounderFactory {
     function highLiquidityTokensLength() external view returns (uint256);
 
     /// @notice Add an authorized keeper to call `AutoCompounder.claimXAndCompoundKeeper()`
-    ///         Callable by VotingEscrow.team()
+    ///         Callable by FactoryRegistry.owner()
     /// @param _keeper Address of keeper to approve
     function addKeeper(address _keeper) external;
 
     /// @notice Remove an authorized keeper from calling `AutoCompounder.claimXAndCompoundKeeper()`
-    ///         Callable by VotingEscrow.team()
+    ///         Callable by FactoryRegistry.owner()
     /// @param _keeper Address of keeper to remove
     function removeKeeper(address _keeper) external;
 
@@ -83,8 +83,6 @@ interface IAutoCompounderFactory {
     /// @notice Get the count of approved keepers
     /// @return Count of approved keepers
     function keepersLength() external view returns (uint256);
-
-    // TODO: test coverage once merged
 
     /// @notice View for all created AutoCompounders
     /// @return Array of AutoCompounders

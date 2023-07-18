@@ -5,18 +5,19 @@ import {IRouter} from "./IRouter.sol";
 
 interface ICompoundOptimizer {
     error NotEnoughPoints();
-    error NoRouteFound();
+    error RouteDoesNotExist();
 
-    /// @notice Given a token and the amountIn, return the route to return the most VELO given 10 potential routes
-    ///             of v1 and v2 Velodrome pools
+    /// @notice Given a token and the amountIn, return the route to return the most VELO given 5 potential routes
+    ///             of v2 Velodrome pools
+    ///         If all potential routes return an amountOut of 0, returns 0
     /// @dev The potential routes are stored in the CompoundOptimizer
     /// @param token    Address of token to swap from
     /// @param amountIn Amount of token to swap
     /// @return IRouter.Route[] Array of optimal route path to swap
     function getOptimalTokenToVeloRoute(address token, uint256 amountIn) external view returns (IRouter.Route[] memory);
 
-    /// @notice Get the minimum amount out allowed in a swap given the TWAP for each swap path, ignoring the most
-    ///         recent price observation
+    /// @notice Get the minimum amount out allowed in a swap given the TWAP for each swap path
+    ///         Returns 0 if the route path does not exist
     /// @param routes Swap route path
     /// @param amountIn amount of token swapped in
     /// @param points Number of points used in TWAP

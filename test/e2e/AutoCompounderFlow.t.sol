@@ -6,8 +6,8 @@ import "../AutoCompounder.t.sol";
 contract AutoCompounderFlow is AutoCompounderTest {
     uint256 public immutable PRECISION = 1e12;
     uint256 public immutable MAX_TIME = 4 * 365 * 86400;
-    uint256 bribeToken = TOKEN_1 / 1000;
-    uint256 bribeUSDC = USDC_1 / 1000; // low enough for liq testing
+    uint256 bribeToken = 1e6;
+    uint256 bribeUSDC = 1e3; // low enough for liq testing
 
     function _createBribeWithAmount(BribeVotingReward _bribeVotingReward, address _token, uint256 _amount) internal {
         IERC20(_token).approve(address(_bribeVotingReward), _amount);
