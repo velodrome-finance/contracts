@@ -93,7 +93,7 @@ Velodrome has a live bug bounty hosted on Immunefi ([link](https://immunefi.com/
 
 ## Deployment
 
-This is for the deployment on Optimism. For other changes to the Optimism deployment, see the README in `contracts/v2/README.md`. 
+This is for the deployment on Optimism. For more information about the `Splitter` and `RestrictedTeam` contracts, see the README in `contracts/v2/README.md`. 
 
 | Name               | Address                                                                                                                               |
 | :----------------- | :------------------------------------------------------------------------------------------------------------------------------------ |
@@ -113,4 +113,6 @@ This is for the deployment on Optimism. For other changes to the Optimism deploy
 | Voter               | [0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C](https://optimistic.etherscan.io/address/0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C#code) |
 | VotingEscrow               | [0xFAf8FD17D9840595845582fCB047DF13f006787d](https://optimistic.etherscan.io/address/0xFAf8FD17D9840595845582fCB047DF13f006787d#code) |
 | VotingRewardsFactory               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec#code) |
-| Pool               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x95885af5492195f0754be71ad1545fe81364e531#code) |
+| Pool               | [0x95885af5492195f0754be71ad1545fe81364e531](https://optimistic.etherscan.io/address/0x95885af5492195f0754be71ad1545fe81364e531#code) |
+| RestrictedTeam               | [0x0a16cB36b553ba2bB2339f3B206A965E9841d305](https://optimistic.etherscan.io/address/0x0a16cB36b553ba2bB2339f3B206A965E9841d305#code) |
+| Splitter               | [0x6666B2dF7A328Cf775778Ebad368F5f13e39eC4C](https://optimistic.etherscan.io/address/0x6666B2dF7A328Cf775778Ebad368F5f13e39eC4C#code) |
