@@ -11,15 +11,15 @@ import "./BaseTest.sol";
 
 contract TestDeploy is BaseTest {
     using stdJson for string;
+    using stdStorage for StdStorage;
 
-    uint256 deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    address deployPublicKey = vm.addr(deployPrivateKey);
-    string constantsFilename = vm.envString("CONSTANTS_FILENAME");
-    string jsonConstants;
+    string public constantsFilename = vm.envString("CONSTANTS_FILENAME");
+    string public jsonConstants;
 
-    address feeManager;
-    address team;
-    address emergencyCouncil;
+    address public feeManager;
+    address public team;
+    address public emergencyCouncil;
+    address public constant testDeployer = address(1);
 
     struct PoolV2 {
         bool stable;
@@ -43,7 +43,6 @@ contract TestDeploy is BaseTest {
 
     function _setUp() public override {
         _forkSetupBefore(constantsFilename);
-        deal(address(vVELO), deployPublicKey, 1e18);
 
         deploySinkDrain = new DeploySinkDrain();
         deployVelodromeV2 = new DeployVelodromeV2();
@@ -59,12 +58,18 @@ contract TestDeploy is BaseTest {
         team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
         feeManager = abi.decode(vm.parseJson(jsonConstants, ".feeManager"), (address));
         emergencyCouncil = abi.decode(vm.parseJson(jsonConstants, ".emergencyCouncil"), (address));
+
+        // Use test account for deployment
+        stdstore.target(address(deploySinkDrain)).sig("deployerAddress()").checked_write(testDeployer);
+        stdstore.target(address(deployVelodromeV2)).sig("deployerAddress()").checked_write(testDeployer);
+        stdstore.target(address(deployGaugesAndPoolsV2)).sig("deployerAddress()").checked_write(testDeployer);
+        vm.deal(testDeployer, TOKEN_10K);
+        deal(address(vVELO), testDeployer, TOKEN_1);
     }
 
     function testLoadedState() public {
         // If tests fail at this point- you need to set the .env and the constants used for deployment.
         // Refer to script/README.md
-        assertTrue(deployPublicKey != address(0));
         assertTrue(address(WETH) != address(0));
         assertTrue(team != address(0));
         assertTrue(feeManager != address(0));

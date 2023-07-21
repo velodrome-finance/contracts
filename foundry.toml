@@ -1,16 +1,6 @@
 [profile.default]
 src = 'contracts'
-out = 'artifacts'
-gas_reports = [
-    "VeArtProxy",
-    "VotingEscrow",
-    "Voter",
-    "Gauge",
-    "Minter",
-    "Pool",
-    "RewardsDistributor",
-    "Router"
-]
+out = 'out'
 
 fs_permissions = [{ access = "read-write", path = "./"}]
 

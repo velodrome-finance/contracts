@@ -7,11 +7,12 @@ import "../test/Base.sol";
 contract DeployGovernors is Script {
     using stdJson for string;
 
-    uint256 deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    string constantsFilename = vm.envString("CONSTANTS_FILENAME");
-    string outputFilename = vm.envString("OUTPUT_FILENAME");
-    string jsonConstants;
-    string jsonOutput;
+    uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
+    address public deployAddress = vm.addr(deployPrivateKey);
+    string public constantsFilename = vm.envString("CONSTANTS_FILENAME");
+    string public outputFilename = vm.envString("OUTPUT_FILENAME");
+    string public jsonConstants;
+    string public jsonOutput;
 
     address team;
 
@@ -38,7 +39,7 @@ contract DeployGovernors is Script {
         forwarder = Forwarder(abi.decode(vm.parseJson(jsonOutput, ".Forwarder"), (address)));
         minter = Minter(abi.decode(vm.parseJson(jsonOutput, ".Minter"), (address)));
 
-        vm.startBroadcast(deployPrivateKey);
+        vm.startBroadcast(deployAddress);
 
         governor = new VeloGovernor(escrow);
         epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));

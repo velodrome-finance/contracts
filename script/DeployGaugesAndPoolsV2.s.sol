@@ -8,11 +8,12 @@ import "../test/Base.sol";
 contract DeployGaugesAndPoolsV2 is Script {
     using stdJson for string;
 
-    uint256 deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    string constantsFilename = vm.envString("CONSTANTS_FILENAME");
-    string outputFilename = vm.envString("OUTPUT_FILENAME");
-    string jsonConstants;
-    string jsonOutput;
+    uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
+    address public deployerAddress = vm.addr(deployPrivateKey);
+    string public constantsFilename = vm.envString("CONSTANTS_FILENAME");
+    string public outputFilename = vm.envString("OUTPUT_FILENAME");
+    string public jsonConstants;
+    string public jsonOutput;
 
     PoolFactory public factory;
     Voter public voter;
@@ -51,7 +52,7 @@ contract DeployGaugesAndPoolsV2 is Script {
         voter = Voter(abi.decode(jsonOutput.parseRaw(".Voter"), (address)));
         VELO = abi.decode(jsonOutput.parseRaw(".VELO"), (address));
 
-        vm.startBroadcast(deployPrivateKey);
+        vm.startBroadcast(deployerAddress);
 
         // Deploy all non-VELO pools & gauges
         for (uint256 i = 0; i < pools.length; i++) {

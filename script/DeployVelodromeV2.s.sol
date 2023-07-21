@@ -6,22 +6,22 @@ import "../test/Base.sol";
 
 contract DeployVelodromeV2 is Base {
     using stdJson for string;
-    string basePath;
-    string path;
+    string public basePath;
+    string public path;
 
-    uint256 deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    address deployPublicKey = vm.addr(deployPrivateKey);
-    string constantsFilename = vm.envString("CONSTANTS_FILENAME");
-    string outputFilename = vm.envString("OUTPUT_FILENAME");
-    string jsonConstants;
-    string jsonOutput;
+    uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
+    address public deployerAddress = vm.addr(deployPrivateKey);
+    string public constantsFilename = vm.envString("CONSTANTS_FILENAME");
+    string public outputFilename = vm.envString("OUTPUT_FILENAME");
+    string public jsonConstants;
+    string public jsonOutput;
 
     // Vars to be set in each deploy script
-    address feeManager;
-    address team;
-    address emergencyCouncil;
-    address sinkDrainAddr;
-    address gaugeSinkDrainAddr;
+    address public feeManager;
+    address public team;
+    address public emergencyCouncil;
+    address public sinkDrainAddr;
+    address public gaugeSinkDrainAddr;
 
     constructor() {
         string memory root = vm.projectRoot();
@@ -64,10 +64,10 @@ contract DeployVelodromeV2 is Base {
         assertTrue(gaugeSinkDrainAddr != address(0));
 
         // block script if deployer does not have enough VELO to create a lock for sinkManager
-        assertGt(vVELO.balanceOf(deployPublicKey), 1e18 - 1);
+        assertGt(vVELO.balanceOf(deployerAddress), 1e18 - 1);
 
         // start broadcasting transactions
-        vm.startBroadcast(deployPrivateKey);
+        vm.startBroadcast(deployerAddress);
 
         // deploy VELO
         VELO = new Velo();

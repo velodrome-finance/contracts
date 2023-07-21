@@ -8,13 +8,14 @@ import "../test/Base.sol";
 
 /// @notice setup the sinkDrain contract in advance so that v1 governance can create the gauge
 contract DeploySinkDrain is Script {
-    uint256 deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    string outputFilename = vm.envString("OUTPUT_FILENAME");
+    uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
+    address public deployerAddress = vm.addr(deployPrivateKey);
+    string public outputFilename = vm.envString("OUTPUT_FILENAME");
 
     SinkDrain public sinkDrain;
 
     function run() public {
-        vm.startBroadcast(deployPrivateKey);
+        vm.startBroadcast(deployerAddress);
         sinkDrain = new SinkDrain();
         vm.stopBroadcast();
 

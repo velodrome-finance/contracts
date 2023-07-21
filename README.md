@@ -86,10 +86,13 @@ In order to run mainnet fork tests against optimism, inherit `BaseTest` in `Base
 See `script/README.md` for more detail.
 
 ## Security
+
+For general information about security include audits, bug bounty and deployed contracts, go [here](https://velodrome.finance/security).
+
 ### Access Control
 See `PERMISSIONS.md` for more detail.
 ### Bug Bounty
-Velodrome has a live bug bounty hosted on Immunefi ([link](https://immunefi.com/bounty/velodromefinance/)).
+Velodrome has a live bug bounty hosted on ([Immunefi](https://immunefi.com/bounty/velodromefinance/)).
 
 ## Deployment
 
@@ -111,5 +114,5 @@ Velodrome has a live bug bounty hosted on Immunefi ([link](https://immunefi.com/
 | Voter               | [0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C](https://optimistic.etherscan.io/address/0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C#code) |
 | VotingEscrow               | [0xFAf8FD17D9840595845582fCB047DF13f006787d](https://optimistic.etherscan.io/address/0xFAf8FD17D9840595845582fCB047DF13f006787d#code) |
 | VotingRewardsFactory               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec#code) |
-| Pool               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x95885af5492195f0754be71ad1545fe81364e531#code) |
+| Pool               | [0x95885af5492195f0754be71ad1545fe81364e531](https://optimistic.etherscan.io/address/0x95885af5492195f0754be71ad1545fe81364e531#code) |
 

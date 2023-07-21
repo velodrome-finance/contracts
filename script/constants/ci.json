@@ -1,0 +1,72 @@
+{
+    "feeManager": "0xBA4BB89f4d1E66AA86B60696534892aE0cCf91F5",
+    "emergencyCouncil": "0x838352F4E3992187a33a04826273dB3992Ee2b3f",
+    "team": "0xBA4BB89f4d1E66AA86B60696534892aE0cCf91F5",
+    "WETH": "0x4200000000000000000000000000000000000006",
+    "whitelistTokens": [
+        "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+        "0x4200000000000000000000000000000000000006",
+        "0x8aE125E8653821E851F12A49F7765db9a9ce7384",
+        "0x8c6f28f2F1A3C87F0f938b96d27520d9751ec8d9",
+        "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb"
+    ],
+    "poolsV2": [
+        {
+            "stable": true,
+            "tokenA": "0x3E29D3A9316dAB217754d13b28646B76607c5f04",
+            "tokenB": "0x6806411765Af15Bddd26f8f544A34cC40cb9838B"
+        },
+        {
+            "stable": false,
+            "tokenA": "0x1F32b1c2345538c0c6f582fCB022739c4A194Ebb",
+            "tokenB": "0xFdb794692724153d1488CcdBE0C56c252596735F"
+        },
+        {
+            "stable": false,
+            "tokenA": "0x340fE1D898ECCAad394e2ba0fC1F93d27c7b717A",
+            "tokenB": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607"
+        },
+        {
+            "stable": true,
+            "tokenA": "0xc40F949F8a4e094D1b49a23ea9241D289B7b2819",
+            "tokenB": "0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1"
+        },
+        {
+            "stable": true,
+            "tokenA": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607",
+            "tokenB": "0xc5b001DC33727F8F26880B184090D3E252470D45"
+        }
+    ],
+    "poolsVeloV2": [
+        {
+            "stable": true,
+            "tokenB": "0x46f21fDa29F1339e0aB543763FF683D399e393eC"
+        },
+        {
+            "stable": false,
+            "tokenA": "0x3417E54A51924C225330f8770514aD5560B9098D"
+        },
+        {
+            "stable": false,
+            "tokenB": "0x7F5c764cBc14f9669B88837ca1490cCa17c31607"
+        },
+        {
+            "stable": false,
+            "tokenB": "0x7aE97042a4A0eB4D1eB370C34BfEC71042a056B7"
+        },
+        {
+            "stable": false,
+            "token": "0x4200000000000000000000000000000000000006"
+        }
+    ],
+    "v1": {
+        "VELO": "0x3c8B650257cFb5f272f799F5e2b4e65093a11a05",
+        "VotingEscrow": "0x9c7305eb78a432ced5C4D14Cac27E8Ed569A2e26",
+        "Voter": "0x09236cfF45047DBee6B921e00704bed6D6B8Cf7e",
+        "Factory": "0x25CbdDb98b35ab1FF77413456B31EC81A6B6B746",
+        "Router": "0x9c12939390052919aF3155f41Bf4160Fd3666A6f",
+        "Gov": "0x64DD805aa894dc001f8505e000c7535179D96C9E",
+        "Distributor": "0x5d5Bea9f0Fc13d967511668a60a3369fD53F784F",
+        "Minter": "0x3460Dc71A8863710D1C907B8d9D5DBC053a4102d"
+    }
+}
