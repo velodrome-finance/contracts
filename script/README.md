@@ -40,11 +40,24 @@ forge script script/DeployVelodromeV2.s.sol:DeployVelodromeV2 --broadcast --slow
 forge script script/DeployGaugesAndPoolsV2.s.sol:DeployGaugesAndPoolsV2 --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
 
-5. Deploy governor contracts
+5. Deploy governor contracts. From the above output of 4, copy the forwarder, minter and voting escrow addresses into your constants file under the key "current":
+
+e.g. 
+```
+    "current": {
+        "Forwarder": "0x...",
+        "Minter": "0x...",
+        "VotingEscrow": "0x..."
+    }
+```
+
+This is done as a sanity check in the event that the governor is not deployed alongside the rest of the contracts so that the governor will always be pointing to valid contracts. 
+
 ```
 forge script script/DeployGovernors.s.sol:DeployGovernors --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
-6.  Update the governor addresses on v2.  This needs to be done by the v2 `escrow.team()` address.  Within v2 `voter`:
+
+6.  Update the governor addresses on v2.  This needs to be done by the v2 `Voter.governor()` address.  Within v2 `voter`:
  - call `setEpochGovernor()` using the `EpochGovernor` address located in `script/constants/output/{OUTPUT_FILENAME}`
  - call `setGovernor()` using the `Governor` address located in the same file.
 

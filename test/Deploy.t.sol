@@ -6,6 +6,7 @@ import "forge-std/StdJson.sol";
 import "../script/DeploySinkDrain.s.sol";
 import "../script/DeployVelodromeV2.s.sol";
 import "../script/DeployGaugesAndPoolsV2.s.sol";
+import "../script/DeployGovernors.s.sol";
 
 import "./BaseTest.sol";
 
@@ -36,6 +37,7 @@ contract TestDeploy is BaseTest {
     DeploySinkDrain deploySinkDrain;
     DeployVelodromeV2 deployVelodromeV2;
     DeployGaugesAndPoolsV2 deployGaugesAndPoolsV2;
+    DeployGovernors deployGovernors;
 
     constructor() {
         deploymentType = Deployment.CUSTOM;
@@ -47,6 +49,7 @@ contract TestDeploy is BaseTest {
         deploySinkDrain = new DeploySinkDrain();
         deployVelodromeV2 = new DeployVelodromeV2();
         deployGaugesAndPoolsV2 = new DeployGaugesAndPoolsV2();
+        deployGovernors = new DeployGovernors();
 
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/script/constants/");
@@ -63,6 +66,7 @@ contract TestDeploy is BaseTest {
         stdstore.target(address(deploySinkDrain)).sig("deployerAddress()").checked_write(testDeployer);
         stdstore.target(address(deployVelodromeV2)).sig("deployerAddress()").checked_write(testDeployer);
         stdstore.target(address(deployGaugesAndPoolsV2)).sig("deployerAddress()").checked_write(testDeployer);
+        stdstore.target(address(deployGovernors)).sig("deployerAddress()").checked_write(testDeployer);
         vm.deal(testDeployer, TOKEN_10K);
         deal(address(vVELO), testDeployer, TOKEN_1);
     }
@@ -192,5 +196,21 @@ contract TestDeploy is BaseTest {
             address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
             assertTrue(gaugeAddr != address(0));
         }
+    }
+
+    function testDeployGovernors() public {
+        deployGovernors.run();
+
+        governor = deployGovernors.governor();
+        epochGovernor = deployGovernors.epochGovernor();
+
+        assertEq(governor.ve(), address(deployGovernors.escrow()));
+        assertEq(address(governor.token()), address(deployGovernors.escrow()));
+        assertEq(governor.vetoer(), address(testDeployer));
+        assertEq(governor.pendingVetoer(), address(deployGovernors.vetoer()));
+
+        assertEq(address(epochGovernor.token()), address(deployGovernors.escrow()));
+        assertEq(epochGovernor.minter(), address(deployGovernors.minter()));
+        assertTrue(epochGovernor.isTrustedForwarder(address(deployGovernors.forwarder())));
     }
 }

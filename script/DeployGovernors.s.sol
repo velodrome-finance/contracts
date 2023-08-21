@@ -8,13 +8,12 @@ contract DeployGovernors is Script {
     using stdJson for string;
 
     uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    address public deployAddress = vm.addr(deployPrivateKey);
+    address public deployerAddress = vm.addr(deployPrivateKey);
     string public constantsFilename = vm.envString("CONSTANTS_FILENAME");
     string public outputFilename = vm.envString("OUTPUT_FILENAME");
     string public jsonConstants;
-    string public jsonOutput;
 
-    address team;
+    address public vetoer;
 
     VotingEscrow public escrow;
     Forwarder public forwarder;
@@ -22,29 +21,25 @@ contract DeployGovernors is Script {
     VeloGovernor public governor;
     EpochGovernor public epochGovernor;
 
-    constructor() {}
-
     function run() public {
         string memory root = vm.projectRoot();
         string memory basePath = string.concat(root, "/script/constants/");
 
         string memory path = string.concat(basePath, constantsFilename);
         jsonConstants = vm.readFile(path);
-        team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
+        vetoer = abi.decode(vm.parseJson(jsonConstants, ".vetoer"), (address));
+        escrow = VotingEscrow(abi.decode(vm.parseJson(jsonConstants, ".current.VotingEscrow"), (address)));
+        forwarder = Forwarder(abi.decode(vm.parseJson(jsonConstants, ".current.Forwarder"), (address)));
+        minter = Minter(abi.decode(vm.parseJson(jsonConstants, ".current.Minter"), (address)));
 
-        path = string.concat(basePath, "output/DeployVelodromeV2-");
-        path = string.concat(path, outputFilename);
-        jsonOutput = vm.readFile(path);
-        escrow = VotingEscrow(abi.decode(vm.parseJson(jsonOutput, ".VotingEscrow"), (address)));
-        forwarder = Forwarder(abi.decode(vm.parseJson(jsonOutput, ".Forwarder"), (address)));
-        minter = Minter(abi.decode(vm.parseJson(jsonOutput, ".Minter"), (address)));
+        require(address(escrow) != address(0)); // sanity check for constants file fillled out correctly
 
-        vm.startBroadcast(deployAddress);
+        vm.startBroadcast(deployerAddress);
 
         governor = new VeloGovernor(escrow);
         epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));
 
-        governor.setVetoer(escrow.team());
+        governor.setVetoer(vetoer);
 
         vm.stopBroadcast();
 

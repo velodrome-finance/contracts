@@ -1,23 +1,24 @@
-import { getContractAt, deploy } from "./utils/helpers";
+import { deploy } from "./utils/helpers";
 import { VeloGovernor, EpochGovernor } from "../../artifacts/types";
 import jsonConstants from "../constants/Optimism.json";
-import deployedContracts from "../constants/output/VelodromeV2Output.json";
 
 async function main() {
   const governor = await deploy<VeloGovernor>(
     "VeloGovernor",
     undefined,
-    deployedContracts.votingEscrow
+    jsonConstants.current.VotingEscrow
   );
   const epochGovernor = await deploy<EpochGovernor>(
     "EpochGovernor",
     undefined,
-    deployedContracts.forwarder,
-    deployedContracts.votingEscrow,
-    deployedContracts.minter
+    jsonConstants.current.Forwarder,
+    jsonConstants.current.VotingEscrow,
+    jsonConstants.current.Minter
   );
 
   await governor.setVetoer(jsonConstants.team);
+  console.log(`Governor deployed to: ${governor.address}`);
+  console.log(`EpochGovernor deployed to: ${epochGovernor.address}`);
 }
 
 main().catch((error) => {
