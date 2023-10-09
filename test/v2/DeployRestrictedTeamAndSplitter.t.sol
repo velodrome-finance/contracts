@@ -16,7 +16,7 @@ contract DeployRestrictedTeamAndSplitterTest is Test {
 
     uint256 optimismFork;
     string OPTIMISM_RPC_URL = vm.envString("OPTIMISM_RPC_URL");
-    uint256 BLOCK_NUMBER = vm.envOr("FORK_BLOCK_NUMBER", uint256(0));
+    uint256 BLOCK_NUMBER = 106378138;
 
     function setUp() public {
         assertFalse(bytes(OPTIMISM_RPC_URL).length == 0);
