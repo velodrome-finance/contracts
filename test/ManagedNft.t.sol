@@ -113,6 +113,37 @@ contract ManagedNftTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
     }
 
+    function testDepositManagedWithVotedNFT() public {
+        skip(1 hours + 1);
+        uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
+
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        // vote
+        address[] memory pools = new address[](1);
+        pools[0] = address(pool);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 1;
+
+        voter.vote(tokenId, pools, weights);
+
+        assertEq(voter.usedWeights(tokenId), 997231719186530010);
+        assertEq(bribeVotingReward.totalSupply(), 997231719186530010);
+        assertEq(feesVotingReward.totalSupply(), 997231719186530010);
+
+        skipToNextEpoch(1 hours + 1);
+
+        voter.depositManaged(tokenId, mTokenId);
+        vm.prank(address(owner2));
+        voter.vote(mTokenId, pools, weights);
+
+        assertEq(voter.usedWeights(tokenId), 0);
+        assertEq(voter.usedWeights(mTokenId), TOKEN_1);
+        assertEq(bribeVotingReward.totalSupply(), TOKEN_1);
+        assertEq(feesVotingReward.totalSupply(), TOKEN_1);
+    }
+
     function testDepositManagedWithNormalNFT() public {
         uint256 mTokenId = escrow.createManagedLockFor(address(owner2));
 
