@@ -16,7 +16,6 @@ import {VetoGovernorVotesQuorumFraction} from "./governance/VetoGovernorVotesQuo
 ///         Supports vetoing of proposals as mitigation for 51% attacks
 ///         Votes are cast and counted on a per tokenId basis
 contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorVotes, VetoGovernorVotesQuorumFraction {
-    address public immutable ve;
     address public team;
     address public pendingTeam;
     address public vetoer;
@@ -44,7 +43,6 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
         VetoGovernorVotes(_ve)
         VetoGovernorVotesQuorumFraction(4) // 4%
     {
-        ve = address(_ve);
         vetoer = msg.sender;
         team = msg.sender;
     }

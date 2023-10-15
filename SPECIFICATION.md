@@ -280,6 +280,16 @@ proposals as mitigation against 51% attacks. `proposalHash` has also been modifi
 include the `proposer` to prevent griefing attacks from proposal frontrunning. Votes
 are cast and counted on a per `tokenId` basis.
 
+The votes contract, which has `getPastVotes` has been modified to provide better support
+for managed veNFTs (mveNFTs). This is achieved by implementing the following features:
+- mveNFTs are unable to vote directly (i.e. calls to `castVote` will revert).
+- mveNFTs are able to vote indirectly by vote delegation.
+- locked nfts (i.e. nfts that deposited into a mveNFT) are able to vote if the mveNFT is not delegating.
+    - The voting balance of the locked nft is equal to its initial contribution + the 
+    proportion of all unclaimed locked rewards (both rebases and compounded rewards) + any balances delegated to it.
+    - Note that this uses a custom `earned` function as it requires the "lag" from rewards to be removed.
+- normal nfts can vote as normal
+
 ### EpochGovernor
 
 An epoch based governance contract modified lightly from OpenZeppelin's Governor
@@ -300,3 +310,13 @@ Notable changes:
 - A proposal created in epoch `n` will be executable in epoch `n+1` once the proposal voting period has gone through.
 - Has three options (similar to Governor Bravo). The winner is selected based on which option has the most absolute votes at the end of the voting period. 
 - The proposer of a proposal cannot cancel the proposal.
+
+The votes contract, which has `getPastVotes` has been modified to provide better support
+for managed veNFTs (mveNFTs). This is achieved by implementing the following features:
+- mveNFTs are unable to vote directly (i.e. calls to `castVote` will revert).
+- mveNFTs are able to vote indirectly by vote delegation.
+- locked nfts (i.e. nfts that deposited into a mveNFT) are able to vote if the mveNFT is not delegating.
+    - The voting balance of the locked nft is equal to its initial contribution + the 
+    proportion of all unclaimed locked rewards (both rebases and compounded rewards) + any balances delegated to it.
+    - Note that this uses a custom `earned` function as it requires the "lag" from rewards to be removed.
+- normal nfts can vote as normal

@@ -7,15 +7,21 @@ import {VetoGovernor} from "./VetoGovernor.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IVotes} from "./IVotes.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
+import {DelegationHelperLibrary} from "contracts/libraries/DelegationHelperLibrary.sol";
 
 /**
  * @dev OpenZeppelin's GovernorVotes using VetoGovernor
  */
 abstract contract VetoGovernorVotes is VetoGovernor {
-    IVotes public immutable token;
+    using DelegationHelperLibrary for IVotingEscrow;
 
-    constructor(IVotes tokenAddress) {
-        token = IVotes(address(tokenAddress));
+    IVotes public immutable token;
+    IVotingEscrow public immutable ve;
+
+    constructor(IVotes votes) {
+        token = votes;
+        ve = IVotingEscrow(address(votes));
     }
 
     /**
@@ -51,6 +57,33 @@ abstract contract VetoGovernorVotes is VetoGovernor {
         uint256 timepoint,
         bytes memory /*params*/
     ) internal view virtual override returns (uint256) {
+        IVotingEscrow.EscrowType escrowType = ve.escrowType(tokenId);
+        require(escrowType != IVotingEscrow.EscrowType.MANAGED, "Governor: managed nft cannot vote");
+
+        if (escrowType == IVotingEscrow.EscrowType.NORMAL) {
+            return token.getPastVotes(account, tokenId, timepoint);
+        }
+
+        // only allow locked veNFT voting if underlying nft not delegating at timepoint
+        uint256 mTokenId = ve.idToManaged(tokenId);
+        uint48 index = ve.getPastCheckpointIndex(mTokenId, timepoint);
+        uint256 delegatee = ve.checkpoints(mTokenId, index).delegatee;
+        if (delegatee == 0) {
+            // if mveNFT not delegating, voting balance = delegated balance +
+            // initial contribution to mveNFT + accrued locked rewards
+            uint256 delegatedBalance = token.getPastVotes(account, tokenId, timepoint);
+            uint256 weight = ve.weights(tokenId, mTokenId); // initial deposit weight
+            uint256 _earned = ve.earned(mTokenId, tokenId, timepoint); // accrued rewards
+            return weight + _earned + delegatedBalance;
+        }
+
+        // nft locked and underlying nft delegating
+        // balance will only be delegated balance
         return token.getPastVotes(account, tokenId, timepoint);
+    }
+
+    function getVotes(uint256 tokenId, uint256 timepoint) external view returns (uint256) {
+        address account = ve.ownerOf(tokenId);
+        return _getVotes(account, tokenId, timepoint, "");
     }
 }

@@ -110,4 +110,8 @@ interface IReward {
     /// @param tokenId Unique identifier of the veNFT
     /// @return Amount of token earned in rewards
     function earned(address token, uint256 tokenId) external view returns (uint256);
+
+    function checkpoints(uint256 tokenId, uint256 index) external view returns (uint256 timestamp, uint256 balanceOf);
+
+    function supplyCheckpoints(uint256 index) external view returns (uint256 timestamp, uint256 supply);
 }

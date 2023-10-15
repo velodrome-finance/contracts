@@ -204,7 +204,7 @@ contract TestDeploy is BaseTest {
         governor = deployGovernors.governor();
         epochGovernor = deployGovernors.epochGovernor();
 
-        assertEq(governor.ve(), address(deployGovernors.escrow()));
+        assertEq(address(governor.ve()), address(deployGovernors.escrow()));
         assertEq(address(governor.token()), address(deployGovernors.escrow()));
         assertEq(governor.vetoer(), address(testDeployer));
         assertEq(governor.pendingVetoer(), address(deployGovernors.vetoer()));
