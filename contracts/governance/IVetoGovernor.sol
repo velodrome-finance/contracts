@@ -15,8 +15,8 @@ abstract contract IVetoGovernor is IERC165, IERC6372 {
         Canceled,
         Defeated,
         Succeeded,
-        Queued,
         Expired,
+        Queued, // unused, required for backwards compatibility
         Executed,
         Vetoed
     }

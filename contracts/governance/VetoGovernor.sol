@@ -13,7 +13,7 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {Context} from "@openzeppelin/contracts/utils/Context.sol";
-import "./IVetoGovernor.sol";
+import {IVetoGovernor} from "./IVetoGovernor.sol";
 
 /**
  * @dev Modified lightly from OpenZeppelin's Governor contract to support vetoing.
@@ -41,7 +41,6 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
         bool vetoed;
     }
     // solhint-enable var-name-mixedcase
-
     string private _name;
 
     /// @custom:oz-retyped-from mapping(uint256 => Governor.ProposalCore)
@@ -209,13 +208,6 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     }
 
     /**
-     * @dev Address of the proposer
-     */
-    function _proposalProposer(uint256 proposalId) internal view virtual returns (address) {
-        return _proposals[proposalId].proposer;
-    }
-
-    /**
      * @dev Amount of votes already cast passes the threshold limit.
      */
     function _quorumReached(uint256 proposalId) internal view virtual returns (bool);
@@ -325,10 +317,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
         uint256 proposalId = hashProposal(targets, values, calldatas, descriptionHash, proposer);
 
         ProposalState status = state(proposalId);
-        require(
-            status == ProposalState.Succeeded || status == ProposalState.Queued,
-            "Governor: proposal not successful"
-        );
+        require(status == ProposalState.Succeeded, "Governor: proposal not successful");
         _proposals[proposalId].executed = true;
 
         emit ProposalExecuted(proposalId);
@@ -413,7 +402,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
 
     /**
      * @dev Internal veto mechanism: locks up the proposal timer, preventing it from being re-submitted. Marks it as
-     * veto to allow distinguishing it from executed and canceled proposals.
+     * vetoed to allow distinguishing it from executed and canceled proposals.
      *
      * Emits a {IVetoGovernor-ProposalVetoed} event.
      */

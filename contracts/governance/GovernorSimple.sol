@@ -227,13 +227,6 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
     }
 
     /**
-     * @dev Address of the proposer
-     */
-    function _proposalProposer(uint256 proposalId) internal view virtual returns (address) {
-        return _proposals[proposalId].proposer;
-    }
-
-    /**
      * @dev Get the voting weight of `tokenId`, owned by `account` at a specific `timepoint`, for a vote as described by `params`.
      */
     function _getVotes(
@@ -604,12 +597,5 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         bytes memory
     ) public virtual override returns (bytes4) {
         return this.onERC1155BatchReceived.selector;
-    }
-
-    /**
-     * @dev Dummy quorum function to comply with IGovernor as quorum is not used.
-     */
-    function quorum(uint256 /* blockNumber */) public pure override returns (uint256) {
-        return 0;
     }
 }

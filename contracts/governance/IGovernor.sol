@@ -5,7 +5,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 /**
- * @dev Taken from OpenZeppelin's IGovernor. Excludes `cancel`.
+ * @dev Taken from OpenZeppelin's IGovernor. Excludes `cancel` and `quorum`.
  */
 abstract contract IGovernor is IERC165, IERC6372 {
     enum ProposalState {
@@ -14,7 +14,7 @@ abstract contract IGovernor is IERC165, IERC6372 {
         Canceled,
         Defeated,
         Succeeded,
-        Queued,
+        Queued, // unused, required for backwards compatibility
         Expired,
         Executed
     }
@@ -175,15 +175,6 @@ abstract contract IGovernor is IERC165, IERC6372 {
      * duration compared to the voting delay.
      */
     function votingPeriod() public view virtual returns (uint256);
-
-    /**
-     * @notice module:user-config
-     * @dev Minimum number of cast voted required for a proposal to be successful.
-     *
-     * NOTE: The `timepoint` parameter corresponds to the snapshot used for counting vote. This allows to scale the
-     * quorum depending on values such as the totalSupply of a token at this timepoint (see {ERC20Votes}).
-     */
-    function quorum(uint256 timepoint) public view virtual returns (uint256);
 
     /**
      * @notice module:reputation
