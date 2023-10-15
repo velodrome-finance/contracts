@@ -110,6 +110,8 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
     - Can nudge the Minter to adjust the VELO emissions rate.
 
 #### [VeloGovernor](TODO: live etherscan link)
+- Team
+    - Can set proposal numerator.
 - Vetoer
     - Can set vetoer in VeloGovernor.
     - Can veto proposals.

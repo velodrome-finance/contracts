@@ -3,9 +3,14 @@ pragma solidity 0.8.19;
 
 import "./BaseTest.sol";
 import {IVetoGovernor} from "contracts/governance/IVetoGovernor.sol";
+import {VeloGovernor} from "contracts/VeloGovernor.sol";
 
 contract VeloGovernorTest is BaseTest {
     event ProposalVetoed(uint256 proposalId);
+    event AcceptTeam(address indexed newTeam);
+    event AcceptVetoer(address indexed vetoer);
+    event SetProposalNumerator(uint256 indexed proposalNumerator);
+    event RenounceVetoer();
 
     function _setUp() public override {
         VELO.approve(address(escrow), 97 * TOKEN_1);
@@ -17,6 +22,42 @@ contract VeloGovernorTest is BaseTest {
         escrow.createLock(3 * TOKEN_1, MAXTIME); // 2
         vm.stopPrank();
         skipAndRoll(1);
+    }
+
+    function testCannotSetTeamToZeroAddress() public {
+        vm.expectRevert(VeloGovernor.ZeroAddress.selector);
+        governor.setTeam(address(0));
+    }
+
+    function testCannotSetTeamIfNotTeam() public {
+        vm.prank(address(owner2));
+        vm.expectRevert(VeloGovernor.NotTeam.selector);
+        governor.setTeam(address(owner2));
+    }
+
+    function testSetTeam() public {
+        governor.setTeam(address(owner2));
+
+        assertEq(governor.pendingTeam(), address(owner2));
+    }
+
+    function testCannotAcceptTeamIfNotPendingTeam() public {
+        governor.setTeam(address(owner2));
+
+        vm.prank(address(owner3));
+        vm.expectRevert(VeloGovernor.NotPendingTeam.selector);
+        governor.acceptTeam();
+    }
+
+    function testAcceptTeam() public {
+        governor.setTeam(address(owner2));
+
+        vm.prank(address(owner2));
+        vm.expectEmit(true, false, false, false);
+        emit AcceptTeam(address(owner2));
+        governor.acceptTeam();
+
+        assertEq(governor.team(), address(owner2));
     }
 
     function testCannotSetVetoerToZeroAddress() public {
@@ -44,6 +85,8 @@ contract VeloGovernorTest is BaseTest {
     }
 
     function testRenounceVetoer() public {
+        vm.expectEmit(false, false, false, false);
+        emit RenounceVetoer();
         governor.renounceVetoer();
 
         assertEq(governor.vetoer(), address(0));
@@ -61,6 +104,8 @@ contract VeloGovernorTest is BaseTest {
         governor.setVetoer(address(owner2));
 
         vm.prank(address(owner2));
+        vm.expectEmit(true, false, false, false);
+        emit AcceptVetoer(address(owner2));
         governor.acceptVetoer();
 
         assertEq(governor.vetoer(), address(owner2));
@@ -128,6 +173,8 @@ contract VeloGovernorTest is BaseTest {
     }
 
     function testSetProposalNumerator() public {
+        vm.expectEmit(true, false, false, false);
+        emit SetProposalNumerator(50);
         governor.setProposalNumerator(50);
         assertEq(governor.proposalNumerator(), 50);
     }

@@ -14,6 +14,7 @@ contract DeployGovernors is Script {
     string public jsonConstants;
 
     address public vetoer;
+    address public team;
 
     VotingEscrow public escrow;
     Forwarder public forwarder;
@@ -28,6 +29,7 @@ contract DeployGovernors is Script {
         string memory path = string.concat(basePath, constantsFilename);
         jsonConstants = vm.readFile(path);
         vetoer = abi.decode(vm.parseJson(jsonConstants, ".vetoer"), (address));
+        team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
         escrow = VotingEscrow(abi.decode(vm.parseJson(jsonConstants, ".current.VotingEscrow"), (address)));
         forwarder = Forwarder(abi.decode(vm.parseJson(jsonConstants, ".current.Forwarder"), (address)));
         minter = Minter(abi.decode(vm.parseJson(jsonConstants, ".current.Minter"), (address)));
@@ -40,6 +42,7 @@ contract DeployGovernors is Script {
         epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));
 
         governor.setVetoer(vetoer);
+        governor.setTeam(team);
 
         vm.stopBroadcast();
 
