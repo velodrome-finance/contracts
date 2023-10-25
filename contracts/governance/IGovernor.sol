@@ -45,6 +45,11 @@ abstract contract IGovernor is IERC165, IERC6372 {
     event ProposalExecuted(uint256 proposalId);
 
     /**
+     * @dev Emitted when a comment is cast on a certain proposal.
+     */
+    event Comment(uint256 indexed proposalId, address indexed account, uint256 indexed tokenId, string comment);
+
+    /**
      * @dev Emitted when a vote is cast without params.
      *
      * Note: `support` values should be seen as buckets. Their interpretation depends on the voting module used.
@@ -230,6 +235,13 @@ abstract contract IGovernor is IERC165, IERC6372 {
         bytes[] memory calldatas,
         bytes32 descriptionHash
     ) public payable virtual returns (uint256 proposalId);
+
+    /**
+     * @dev Add a comment to a proposal
+     *
+     * Emits a {Comment} event.
+     */
+    function comment(uint256 proposalId, uint256 tokenId, string calldata message) external virtual;
 
     /**
      * @dev Cast a vote

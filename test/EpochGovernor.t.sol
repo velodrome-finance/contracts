@@ -10,6 +10,8 @@ import {IGovernor} from "contracts/governance/IGovernor.sol";
 contract EpochGovernorTest is BaseTest {
     using stdStorage for StdStorage;
 
+    event Comment(uint256 indexed proposalId, address indexed account, uint256 indexed tokenId, string comment);
+
     function _setUp() public override {
         VELO.approve(address(escrow), 2 * TOKEN_1);
         escrow.createLock(2 * TOKEN_1, MAXTIME); // 1
@@ -34,6 +36,13 @@ contract EpochGovernorTest is BaseTest {
         vm.roll(block.number + 1);
 
         stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
+    }
+
+    function testInitialState() public {
+        assertEq(governor.votingDelay(), 15 minutes);
+        assertEq(governor.votingPeriod(), 1 weeks);
+        assertEq(governor.commentWeighting(), 4_000);
+        assertEq(governor.COMMENT_DENOMINATOR(), 1_000_000_000);
     }
 
     function testSupportInterfacesExcludesCancel() public {
@@ -851,6 +860,38 @@ contract EpochGovernorTest is BaseTest {
         epochGovernor.castVote(pid, mTokenId, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
         assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
+    }
+
+    function testCannotCommentIfInsufficientVotingPower() public {
+        uint256 pid = createProposal();
+
+        // owner3 owns less than required
+        vm.startPrank(address(owner3));
+        VELO.approve(address(escrow), 1);
+        uint256 tokenId = escrow.createLock(1, MAXTIME);
+
+        vm.expectRevert("EpochGovernor: insufficient voting power");
+        epochGovernor.comment(pid, tokenId, "test");
+    }
+
+    function testCannotCommentIfProposalNotActiveOrPending() public {
+        uint256 pid = createProposal();
+
+        // skipped 15 when creating proposal
+        // skip 1 week to end of period
+        // skip 1 to exit active state
+        skipAndRoll(1 weeks + 1);
+
+        vm.expectRevert("EpochGovernor: not active or pending");
+        epochGovernor.comment(pid, 1, "test");
+    }
+
+    function testComment() public {
+        uint256 pid = createProposal();
+
+        vm.expectEmit(true, true, true, true, address(epochGovernor));
+        emit Comment(pid, address(this), 1, "test");
+        epochGovernor.comment(pid, 1, "test");
     }
 
     // creates a proposal so we can vote on it for testing and skip to snapshot time

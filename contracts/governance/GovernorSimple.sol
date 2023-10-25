@@ -16,6 +16,9 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IGovernor} from "./IGovernor.sol";
 import {IMinter} from "../interfaces/IMinter.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
+import {IVoter} from "contracts/interfaces/IVoter.sol";
+import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
+import {IVetoGovernor} from "contracts/governance/IVetoGovernor.sol";
 
 /**
  * @dev Modified lightly from OpenZeppelin's Governor contract to support three option voting via callback.
@@ -55,6 +58,9 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
 
     string private _name;
     address public minter;
+    uint256 public constant COMMENT_DENOMINATOR = 1_000_000_000;
+    IVoter public immutable _voter;
+    IVotingEscrow public immutable escrow;
 
     mapping(uint256 => ProposalCore) private _proposals;
 
@@ -94,10 +100,13 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
     constructor(
         address forwarder_,
         string memory name_,
-        address minter_
+        address minter_,
+        IVoter voter_
     ) ERC2771Context(forwarder_) EIP712(name_, version()) {
         _name = name_;
         minter = minter_;
+        _voter = voter_;
+        escrow = IVotingEscrow(voter_.ve());
     }
 
     /**
@@ -556,6 +565,30 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         }
 
         return weight;
+    }
+
+    /**
+     * @dev Comment mechanism for active or pending proposals. Requires a certain amount of votes. Emits a comment
+     *      containing the message.
+     *
+     * Emits a {IVetoGovernor-Comment} event.
+     */
+    function comment(uint256 proposalId, uint256 tokenId, string calldata message) external virtual override {
+        bytes memory params;
+        ProposalCore storage proposal = _proposals[proposalId];
+        ProposalState status = state(proposalId);
+        require(
+            status == ProposalState.Active || status == ProposalState.Pending,
+            "EpochGovernor: not active or pending"
+        );
+        uint256 startTime = proposal.voteStart;
+        address account = _msgSender();
+        uint256 weight = _getVotes(account, tokenId, startTime, params);
+        uint256 commentWeighting = IVetoGovernor(_voter.governor()).commentWeighting();
+        uint256 minimumWeight = (escrow.getPastTotalSupply(startTime) * commentWeighting) / 10_000;
+        require(weight > minimumWeight, "EpochGovernor: insufficient voting power");
+
+        emit Comment(proposalId, account, tokenId, message);
     }
 
     /**

@@ -3,6 +3,7 @@ pragma solidity 0.8.19;
 
 import {IVotes} from "./governance/IVotes.sol";
 import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
+import {IVoter} from "contracts/interfaces/IVoter.sol";
 
 import {IVetoGovernor} from "./governance/IVetoGovernor.sol";
 import {VetoGovernor} from "./governance/VetoGovernor.sol";
@@ -16,6 +17,7 @@ import {VetoGovernorVotesQuorumFraction} from "./governance/VetoGovernorVotesQuo
 ///         Supports vetoing of proposals as mitigation for 51% attacks
 ///         Votes are cast and counted on a per tokenId basis
 contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorVotes, VetoGovernorVotesQuorumFraction {
+    IVoter public immutable voter;
     address public team;
     address public pendingTeam;
     address public vetoer;
@@ -24,6 +26,8 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     uint256 public constant PROPOSAL_DENOMINATOR = 10_000;
     uint256 public proposalNumerator = 2; // start at 0.02%
 
+    error CommentWeightingTooHigh();
+    error NotGovernor();
     error NotPendingTeam();
     error NotTeam();
     error NotPendingVetoer();
@@ -34,17 +38,20 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     event AcceptTeam(address indexed newTeam);
     event AcceptVetoer(address indexed vetoer);
     event RenounceVetoer();
+    event SetCommentWeighting(uint256 commentWeighting);
     event SetProposalNumerator(uint256 indexed proposalNumerator);
 
     constructor(
-        IVotes _ve
+        IVotes _ve,
+        IVoter _voter
     )
-        VetoGovernor("Velodrome Governor")
+        VetoGovernor("Velodrome Governor", IVotingEscrow(address(_ve)))
         VetoGovernorVotes(_ve)
         VetoGovernorVotesQuorumFraction(4) // 4%
     {
         vetoer = msg.sender;
         team = msg.sender;
+        voter = _voter;
     }
 
     function votingDelay() public pure override(IVetoGovernor) returns (uint256) {
@@ -105,5 +112,16 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
         if (msg.sender != vetoer) revert NotVetoer();
         delete vetoer;
         emit RenounceVetoer();
+    }
+
+    /// @notice Set minimum % of total supply required to comment
+    /// @dev Callable only by voter.governor() (i.e. this contract)
+    /// @param _commentWeighting Weighting required for comment (note the denominator value).
+    function setCommentWeighting(uint256 _commentWeighting) external {
+        if (_commentWeighting > COMMENT_DENOMINATOR) revert CommentWeightingTooHigh();
+        if (msg.sender != voter.governor()) revert NotGovernor();
+        commentWeighting = _commentWeighting;
+
+        emit SetCommentWeighting(_commentWeighting);
     }
 }

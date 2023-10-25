@@ -127,8 +127,8 @@ abstract contract BaseTest is Base, TestOwner {
 
     function _testSetupAfter() public {
         // Setup governors
-        governor = new VeloGovernor(escrow);
-        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));
+        governor = new VeloGovernor(escrow, IVoter(voter));
+        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter), IVoter(voter));
         voter.setEpochGovernor(address(epochGovernor));
         voter.setGovernor(address(governor));
 

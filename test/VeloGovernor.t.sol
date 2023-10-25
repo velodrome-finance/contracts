@@ -9,8 +9,10 @@ contract VeloGovernorTest is BaseTest {
     event ProposalVetoed(uint256 proposalId);
     event AcceptTeam(address indexed newTeam);
     event AcceptVetoer(address indexed vetoer);
+    event SetCommentWeighting(uint256 commentWeighting);
     event SetProposalNumerator(uint256 indexed proposalNumerator);
     event RenounceVetoer();
+    event Comment(uint256 indexed proposalId, address indexed account, uint256 indexed tokenId, string comment);
 
     address public token;
 
@@ -26,6 +28,13 @@ contract VeloGovernorTest is BaseTest {
         skipAndRoll(1);
 
         token = address(new MockERC20("TEST", "TEST", 18));
+    }
+
+    function testInitialState() public {
+        assertEq(governor.votingDelay(), 15 minutes);
+        assertEq(governor.votingPeriod(), 1 weeks);
+        assertEq(governor.commentWeighting(), 4_000);
+        assertEq(governor.COMMENT_DENOMINATOR(), 1_000_000_000);
     }
 
     function testCannotSetTeamToZeroAddress() public {
@@ -863,6 +872,72 @@ contract VeloGovernorTest is BaseTest {
         governor.castVote(pid, mTokenId, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
         assertEq(governor.hasVoted(pid, mTokenId), false);
+    }
+
+    function testCannotSetCommentWeightingTooHigh() public {
+        vm.prank(voter.governor());
+        vm.expectRevert(VeloGovernor.CommentWeightingTooHigh.selector);
+        governor.setCommentWeighting(1_000_000_000 + 1);
+    }
+
+    function testCannotSetCommentWeightingIfNotGovernor() public {
+        vm.prank(address(owner2));
+        vm.expectRevert(VeloGovernor.NotGovernor.selector);
+        governor.setCommentWeighting(0);
+    }
+
+    function testSetCommentWeighting() public {
+        // test as if being triggered by governor
+        address[] memory targets = new address[](1);
+        targets[0] = address(governor);
+        uint256[] memory values = new uint256[](1);
+        values[0] = 0;
+        bytes[] memory calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(governor.setCommentWeighting.selector, 0);
+        string memory description = "Set Comment Weighting to 0.";
+
+        uint256 pid = governor.propose(1, targets, values, calldatas, description);
+        skipAndRoll(15 minutes + 1);
+
+        governor.castVote(pid, 1, 1);
+        skipAndRoll(1 weeks);
+
+        vm.expectEmit(false, false, false, true, address(governor));
+        emit SetCommentWeighting(0);
+        governor.execute(targets, values, calldatas, keccak256(bytes(description)), address(owner));
+        assertEq(governor.commentWeighting(), 0);
+    }
+
+    function testCannotCommentIfInsufficientVotingPower() public {
+        uint256 pid = createProposal();
+
+        // owner3 owns less than required
+        vm.startPrank(address(owner3));
+        VELO.approve(address(escrow), 1);
+        uint256 tokenId = escrow.createLock(1, MAXTIME);
+
+        vm.expectRevert("Governor: insufficient voting power");
+        governor.comment(pid, tokenId, "test");
+    }
+
+    function testCannotCommentIfProposalNotActiveOrPending() public {
+        uint256 pid = createProposal();
+
+        // skipped 15 when creating proposal
+        // skip 1 week to end of period
+        // skip 1 to exit active state
+        skipAndRoll(1 weeks + 1);
+
+        vm.expectRevert("Governor: not active or pending");
+        governor.comment(pid, 1, "test");
+    }
+
+    function testComment() public {
+        uint256 pid = createProposal();
+
+        vm.expectEmit(true, true, true, true, address(governor));
+        emit Comment(pid, address(this), 1, "test");
+        governor.comment(pid, 1, "test");
     }
 
     // creates a proposal so we can vote on it for testing and skip to snapshot time

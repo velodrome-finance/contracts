@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
+import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
 
 /**
  * @dev Taken from OpenZeppelin's IGovernor.
@@ -50,6 +51,11 @@ abstract contract IVetoGovernor is IERC165, IERC6372 {
      * @dev Emitted when a proposal is executed.
      */
     event ProposalExecuted(uint256 proposalId);
+
+    /**
+     * @dev Emitted when a comment is cast on a certain proposal.
+     */
+    event Comment(uint256 indexed proposalId, address indexed account, uint256 indexed tokenId, string comment);
 
     /**
      * @dev Emitted when a vote is cast without params.
@@ -105,6 +111,15 @@ abstract contract IVetoGovernor is IERC165, IERC6372 {
      */
     // solhint-disable-next-line func-name-mixedcase
     function CLOCK_MODE() public view virtual override returns (string memory);
+
+    /// @notice Numerator used to calculate minimum voting power required to comment.
+    function commentWeighting() external view virtual returns (uint256);
+
+    /// @notice Denominator used to calculate minimum voting power required to comment.
+    function COMMENT_DENOMINATOR() external view virtual returns (uint256);
+
+    /// @notice Contract whose total supply / voting power is being used.
+    function escrow() external view virtual returns (IVotingEscrow);
 
     /**
      * @notice module:voting
@@ -261,6 +276,13 @@ abstract contract IVetoGovernor is IERC165, IERC6372 {
         bytes[] memory calldatas,
         bytes32 descriptionHash
     ) public virtual returns (uint256 proposalId);
+
+    /**
+     * @dev Add a comment to a proposal
+     *
+     * Emits a {Comment} event.
+     */
+    function comment(uint256 proposalId, uint256 tokenId, string calldata message) external virtual;
 
     /**
      * @dev Cast a vote

@@ -16,6 +16,7 @@ contract DeployGovernors is Script {
     address public vetoer;
     address public team;
 
+    IVoter public voter;
     VotingEscrow public escrow;
     Forwarder public forwarder;
     Minter public minter;
@@ -31,6 +32,7 @@ contract DeployGovernors is Script {
         vetoer = abi.decode(vm.parseJson(jsonConstants, ".vetoer"), (address));
         team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
         escrow = VotingEscrow(abi.decode(vm.parseJson(jsonConstants, ".current.VotingEscrow"), (address)));
+        voter = IVoter(abi.decode(vm.parseJson(jsonConstants, ".current.Voter"), (address)));
         forwarder = Forwarder(abi.decode(vm.parseJson(jsonConstants, ".current.Forwarder"), (address)));
         minter = Minter(abi.decode(vm.parseJson(jsonConstants, ".current.Minter"), (address)));
 
@@ -38,8 +40,8 @@ contract DeployGovernors is Script {
 
         vm.startBroadcast(deployerAddress);
 
-        governor = new VeloGovernor(escrow);
-        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter));
+        governor = new VeloGovernor(escrow, IVoter(voter));
+        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter), IVoter(voter));
 
         governor.setVetoer(vetoer);
         governor.setTeam(team);
