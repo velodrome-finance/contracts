@@ -20,19 +20,29 @@ contract VeloGovernorTest is BaseTest {
         VELO.approve(address(escrow), 97 * TOKEN_1);
         escrow.createLock(97 * TOKEN_1, MAXTIME); // 1
 
-        // owner2 owns less than quorum, 3%
+        // owner2 owns less than quorum, 2%
         vm.startPrank(address(owner2));
-        VELO.approve(address(escrow), 3 * TOKEN_1);
-        escrow.createLock(3 * TOKEN_1, MAXTIME); // 2
+        VELO.approve(address(escrow), 2 * TOKEN_1);
+        escrow.createLock(2 * TOKEN_1, MAXTIME); // 2
         vm.stopPrank();
+
+        // owner3 owns exactly 1% (threshold)
+        // but due to decay, cannot propose
+        vm.startPrank(address(owner3));
+        VELO.approve(address(escrow), TOKEN_1 - 1);
+        escrow.createLock(TOKEN_1 - 1, MAXTIME); // 3
+        vm.stopPrank();
+
         skipAndRoll(1);
 
         token = address(new MockERC20("TEST", "TEST", 18));
     }
 
     function testInitialState() public {
-        assertEq(governor.votingDelay(), 15 minutes);
-        assertEq(governor.votingPeriod(), 1 weeks);
+        assertEq(governor.votingDelay(), 2 days);
+        assertEq(governor.votingPeriod(), 5 days);
+        assertEq(governor.quorumNumerator(), 25);
+        assertEq(governor.proposalNumerator(), 100);
         assertEq(governor.commentWeighting(), 4_000);
         assertEq(governor.COMMENT_DENOMINATOR(), 1_000_000_000);
     }
@@ -151,7 +161,7 @@ contract VeloGovernorTest is BaseTest {
 
         uint256 pid = governor.propose(1, targets, values, calldatas, description);
 
-        skipAndRoll(15 minutes + 1);
+        skipAndRoll(2 days + 1);
 
         governor.castVote(pid, 1, 1);
         uint256 proposalStart = governor.proposalSnapshot(pid);
@@ -201,9 +211,9 @@ contract VeloGovernorTest is BaseTest {
         calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, address(USDC), true);
         string memory description = "Whitelist USDC";
 
-        vm.prank(address(owner2));
+        vm.prank(address(owner3));
         vm.expectRevert("Governor: proposer votes below proposal threshold");
-        governor.propose(1, targets, values, calldatas, description);
+        governor.propose(3, targets, values, calldatas, description);
     }
 
     function testCannotExecuteWithoutQuorum() public {
@@ -220,7 +230,7 @@ contract VeloGovernorTest is BaseTest {
         // propose
         uint256 pid = governor.propose(1, targets, values, calldatas, description);
 
-        skipAndRoll(15 minutes);
+        skipAndRoll(2 days);
         vm.expectRevert("Governor: vote not currently active");
         governor.castVote(pid, 1, 1);
         assertEq(uint256(governor.state(pid)), uint256(IVetoGovernor.ProposalState.Pending));
@@ -230,7 +240,7 @@ contract VeloGovernorTest is BaseTest {
         vm.prank(address(owner2));
         governor.castVote(pid, 2, 1);
 
-        skip(1 weeks);
+        skipAndRoll(5 days);
 
         // execute
         vm.prank(address(owner));
@@ -252,9 +262,9 @@ contract VeloGovernorTest is BaseTest {
         // propose
         uint256 pid = governor.propose(1, targets, values, calldatas, description);
 
-        skipAndRoll(15 minutes);
-        assertEq(escrow.balanceOfNFT(1), 96733552971170873788); // voting power at proposal start
-        assertEq(escrow.getPastVotes(address(owner), 1, block.timestamp), 96733552971170873788);
+        skipAndRoll(2 days);
+        assertEq(escrow.balanceOfNFT(1), 96601368325052202388); // voting power at proposal start
+        assertEq(escrow.getPastVotes(address(owner), 1, block.timestamp), 96601368325052202388);
         vm.expectRevert("Governor: vote not currently active");
         governor.castVote(pid, 1, 1);
         assertEq(uint256(governor.state(pid)), uint256(IVetoGovernor.ProposalState.Pending));
@@ -267,7 +277,7 @@ contract VeloGovernorTest is BaseTest {
         assertEq(governor.hasVoted(pid, 1), true);
         (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = governor.proposalVotes(pid);
         assertEq(againstVotes, 0);
-        assertEq(forVotes, 96733552971170873788);
+        assertEq(forVotes, 96601368325052202388);
         assertEq(abstainVotes, 0);
         assertEq(uint256(governor.state(pid)), uint256(IVetoGovernor.ProposalState.Active));
 
@@ -281,7 +291,7 @@ contract VeloGovernorTest is BaseTest {
         vm.expectRevert("GovernorVotingSimple: zero voting weight");
         governor.castVote(pid, 2, 1);
 
-        skipAndRoll(1 weeks);
+        skipAndRoll(5 days);
         assertEq(uint256(governor.state(pid)), uint256(IVetoGovernor.ProposalState.Succeeded));
 
         // execute
@@ -291,8 +301,6 @@ contract VeloGovernorTest is BaseTest {
     }
 
     function testProposalHasQuorumWithDelegatedVotes() public {
-        VELO.approve(address(escrow), TOKEN_1);
-        escrow.createLock(TOKEN_1, MAXTIME); // 3
         vm.startPrank(address(owner3));
         VELO.approve(address(escrow), TOKEN_1 * 100);
         escrow.createLock(TOKEN_1 * 100, MAXTIME); // 4
@@ -314,9 +322,9 @@ contract VeloGovernorTest is BaseTest {
         // propose
         uint256 pid = governor.propose(1, targets, values, calldatas, description);
 
-        skipAndRoll(15 minutes);
-        assertEq(escrow.balanceOfNFT(3), 997253115368668515); // voting power at proposal start
-        assertEq(escrow.getPastVotes(address(owner), 3, block.timestamp), 997253115368668515 + TOKEN_1 * 100);
+        skipAndRoll(2 days);
+        assertEq(escrow.balanceOfNFT(3), 995890387058328015); // voting power at proposal start
+        assertEq(escrow.getPastVotes(address(owner3), 3, block.timestamp), 995890387058328015 + TOKEN_1 * 100);
         assertEq(escrow.balanceOfNFT(4), TOKEN_1 * 100);
         assertEq(escrow.getPastVotes(address(owner3), 4, block.timestamp), 0);
         vm.expectRevert("Governor: vote not currently active");
@@ -327,17 +335,19 @@ contract VeloGovernorTest is BaseTest {
         assertEq(uint256(governor.state(pid)), uint256(IVetoGovernor.ProposalState.Active));
 
         // vote
+        vm.prank(address(owner3));
         governor.castVote(pid, 3, 1);
         assertEq(governor.hasVoted(pid, 3), true);
         assertEq(governor.hasVoted(pid, 4), false);
         (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = governor.proposalVotes(pid);
         assertEq(againstVotes, 0);
-        assertEq(forVotes, 997253115368668515 + TOKEN_1 * 100);
+        assertEq(forVotes, 995890387058328015 + TOKEN_1 * 100);
         assertEq(abstainVotes, 0);
         assertEq(uint256(governor.state(pid)), uint256(IVetoGovernor.ProposalState.Active));
 
         skipAndRoll(1);
         // cannot vote twice
+        vm.prank(address(owner3));
         vm.expectRevert("GovernorVotingSimple: vote already cast");
         governor.castVote(pid, 3, 2);
 
@@ -346,7 +356,7 @@ contract VeloGovernorTest is BaseTest {
         vm.expectRevert("GovernorVotingSimple: zero voting weight");
         governor.castVote(pid, 4, 1);
 
-        skipAndRoll(1 weeks);
+        skipAndRoll(5 days);
         assertEq(uint256(governor.state(pid)), uint256(IVetoGovernor.ProposalState.Succeeded));
 
         // execute
@@ -438,7 +448,7 @@ contract VeloGovernorTest is BaseTest {
         VELO.approve(address(escrow), TOKEN_1);
         escrow.increaseAmount(mTokenId, TOKEN_1);
         skipToNextEpoch(0);
-        rewind(15 minutes); // trigger proposal snapshot exactly on epoch flip
+        rewind(2 days); // trigger proposal snapshot exactly on epoch flip
 
         uint256 pid = createProposal();
         skip(1); // allow voting
@@ -477,7 +487,7 @@ contract VeloGovernorTest is BaseTest {
         VELO.approve(address(escrow), TOKEN_1);
         escrow.increaseAmount(mTokenId, TOKEN_1);
         skipToNextEpoch(0);
-        rewind(15 minutes + 1);
+        rewind(2 days + 1);
         // as it is not a new epoch, locked rewards do not contribute to votes
 
         uint256 pid = createProposal();
@@ -604,7 +614,7 @@ contract VeloGovernorTest is BaseTest {
         escrow.increaseAmount(mTokenId, TOKEN_1);
 
         skipToNextEpoch(0);
-        rewind(15 minutes); // trigger proposal snapshot exactly on epoch flip
+        rewind(2 days); // trigger proposal snapshot exactly on epoch flip
 
         uint256 pid = createProposal();
         escrow.delegate(mTokenId, delegateTokenId); // delegate on snapshot boundary
@@ -637,7 +647,7 @@ contract VeloGovernorTest is BaseTest {
         escrow.increaseAmount(mTokenId, TOKEN_1);
 
         skipToNextEpoch(0);
-        rewind(15 minutes); // trigger proposal snapshot exactly on epoch flip
+        rewind(2 days); // trigger proposal snapshot exactly on epoch flip
 
         uint256 pid = createProposal();
         skip(1); // allow voting
@@ -897,7 +907,7 @@ contract VeloGovernorTest is BaseTest {
         string memory description = "Set Comment Weighting to 0.";
 
         uint256 pid = governor.propose(1, targets, values, calldatas, description);
-        skipAndRoll(15 minutes + 1);
+        skipAndRoll(2 days + 1);
 
         governor.castVote(pid, 1, 1);
         skipAndRoll(1 weeks);
@@ -923,10 +933,10 @@ contract VeloGovernorTest is BaseTest {
     function testCannotCommentIfProposalNotActiveOrPending() public {
         uint256 pid = createProposal();
 
-        // skipped 15 when creating proposal
-        // skip 1 week to end of period
+        // skipped 2 days when creating proposal
+        // skip 5 days to end of period
         // skip 1 to exit active state
-        skipAndRoll(1 weeks + 1);
+        skipAndRoll(5 days + 1);
 
         vm.expectRevert("Governor: not active or pending");
         governor.comment(pid, 1, "test");
@@ -955,7 +965,7 @@ contract VeloGovernorTest is BaseTest {
         // propose
         pid = governor.propose(1, targets, values, calldatas, description);
 
-        skipAndRoll(15 minutes);
+        skipAndRoll(2 days);
     }
 
     function assertProposalVotes(uint256 pid, uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) internal {

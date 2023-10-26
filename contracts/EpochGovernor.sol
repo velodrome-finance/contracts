@@ -27,7 +27,7 @@ contract EpochGovernor is GovernorSimple, GovernorCountingMajority, GovernorSimp
     ) GovernorSimple(_forwarder, "Epoch Governor", _minter, _voter) GovernorSimpleVotes(_ve) {}
 
     function votingDelay() public pure override(IGovernor) returns (uint256) {
-        return (15 minutes);
+        return 1;
     }
 
     function votingPeriod() public pure override(IGovernor) returns (uint256) {

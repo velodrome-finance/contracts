@@ -80,6 +80,6 @@ contract GovernorInvariants is BaseTest {
         // propose
         pid = governor.propose(1, targets, values, calldatas, description);
 
-        skipAndRoll(15 minutes + 1);
+        skipAndRoll(2 days + 1);
     }
 }

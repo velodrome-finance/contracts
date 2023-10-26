@@ -24,7 +24,7 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     address public pendingVetoer;
     uint256 public constant MAX_PROPOSAL_NUMERATOR = 500; // max 5%
     uint256 public constant PROPOSAL_DENOMINATOR = 10_000;
-    uint256 public proposalNumerator = 2; // start at 0.02%
+    uint256 public proposalNumerator = 100; // 1%
 
     error CommentWeightingTooHigh();
     error NotGovernor();
@@ -47,7 +47,7 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     )
         VetoGovernor("Velodrome Governor", IVotingEscrow(address(_ve)))
         VetoGovernorVotes(_ve)
-        VetoGovernorVotesQuorumFraction(4) // 4%
+        VetoGovernorVotesQuorumFraction(25)
     {
         vetoer = msg.sender;
         team = msg.sender;
@@ -55,11 +55,11 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
     }
 
     function votingDelay() public pure override(IVetoGovernor) returns (uint256) {
-        return (15 minutes);
+        return (2 days);
     }
 
     function votingPeriod() public pure override(IVetoGovernor) returns (uint256) {
-        return (1 weeks);
+        return (5 days);
     }
 
     function setProposalNumerator(uint256 numerator) external {

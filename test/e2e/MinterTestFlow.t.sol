@@ -127,17 +127,17 @@ contract MinterTestFlow is ExtendedBaseTest {
 
         uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
 
-        skipAndRoll(15 minutes); // epoch + 15 minutes + 1
+        skipAndRoll(1); // epoch + 1 + 1
         vm.expectRevert("GovernorSimple: vote not currently active");
         epochGovernor.castVote(pid, 1, 1);
-        skipAndRoll(1); // epoch + 15 minutes + 2
+        skipAndRoll(1); // epoch + 2 + 2
 
         /// expect 1 (for vote) to pass
         epochGovernor.castVote(pid, 1, 1);
         vm.prank(address(owner2));
         epochGovernor.castVote(pid, 2, 0);
 
-        skipAndRoll(1 weeks); // epoch + 15 minutes + 2
+        skipAndRoll(1 weeks); // epoch + 2 + 2
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
         assertEq(minter.tailEmissionRate(), 31);
 
@@ -148,7 +148,7 @@ contract MinterTestFlow is ExtendedBaseTest {
 
         description = Strings.toString(block.timestamp);
         pid = epochGovernor.propose(1, targets, values, calldatas, description);
-        skipAndRoll(15 minutes + 1); // epoch + 30 minutes + 3
+        skipAndRoll(2); // epoch + 2 + 2
 
         /// expect 2 (no change vote) to pass
         epochGovernor.castVote(pid, 1, 2);
@@ -160,7 +160,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         string memory description2 = Strings.toString(block.timestamp);
         uint256 pid2 = epochGovernor.propose(1, targets, values, calldatas, description2);
 
-        skipAndRoll(30 minutes + 3); // epoch + 30 minutes + 3
+        skipAndRoll(5 minutes); // epoch + 5 minutes
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
         assertEq(minter.tailEmissionRate(), 31);
 
