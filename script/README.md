@@ -23,25 +23,18 @@ source .env
 ### Deployment
 - Note that if deploying to a chain other than Optimism/Optimism Goerli, if you have a different .env variable name used for `RPC_URL`, `SCAN_API_KEY` and `ETHERSCAN_VERIFIER_URL`, you will need to use the corresponding chain name by also updating `foundry.toml`.  For this example we're deploying onto Optimism.
 
-1. Deploy SinkDrain
-```
-forge script script/DeploySinkDrain.s.sol:DeploySinkDrain --broadcast --slow --rpc-url optimism --verify -vvvv
-```
-
-2. Create a custom gauge on v1 using the address of the `SinkDrain` deployed.  The contract address of `SinkDrain` can be located within `script/constants/output/{OUTPUT_FILENAME}`.  This is done through calling the v1 `voter.createGauge()` with the function argument being the `SinkDrain` address.  This gauge needs to be created by the v1 `escrow.team()` address.
-
-3. Deploy Velodrome v2 Core
+1. Deploy Velodrome v2 Core
 ```
 forge script script/DeployVelodromeV2.s.sol:DeployVelodromeV2 --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
-4. Accept pending team as team. This needs to be done by the `minter.pendingTeam()` address. Within the deployed `Minter` contract call `acceptTeam()`.
+2. Accept pending team as team. This needs to be done by the `minter.pendingTeam()` address. Within the deployed `Minter` contract call `acceptTeam()`.
 
-5. Deploy v2 gauges and v2 pools.  These gauges are built on Velodrome v2 using newly created v2 pools.
+3. Deploy v2 gauges and v2 pools.  These gauges are built on Velodrome v2 using newly created v2 pools.
 ```
 forge script script/DeployGaugesAndPoolsV2.s.sol:DeployGaugesAndPoolsV2 --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
 
-6. Deploy governor contracts. From the above output of 4, copy the forwarder, minter and voting escrow addresses into your constants file under the key "current":
+4. Deploy governor contracts. From the above output of 1, copy the forwarder, minter and voting escrow addresses into your constants file under the key "current":
 
 e.g. 
 ```
@@ -58,8 +51,8 @@ This is done as a sanity check in the event that the governor is not deployed al
 forge script script/DeployGovernors.s.sol:DeployGovernors --broadcast --slow --rpc-url optimism --verify -vvvv
 ```
 
-7.  Update the governor addresses on v2.  This needs to be done by the v2 `Voter.governor()` address.  Within v2 `voter`:
+5.  Update the governor addresses on v2.  This needs to be done by the v2 `Voter.governor()` address.  Within v2 `voter`:
  - call `setEpochGovernor()` using the `EpochGovernor` address located in `script/constants/output/{OUTPUT_FILENAME}`
  - call `setGovernor()` using the `Governor` address located in the same file.
 
-8. Accept governor vetoer status.  This also needs to be done by the v2 `escrow.team()` address.  Within the deployed `Governor` contract call `acceptVetoer()`.
+6. Accept governor vetoer status.  This also needs to be done by the v2 `escrow.team()` address.  Within the deployed `Governor` contract call `acceptVetoer()`.
