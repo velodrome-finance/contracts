@@ -162,6 +162,7 @@ contract TestDeploy is BaseTest {
         // Permissions
         assertEq(deployVelodromeV2.sinkDrain().owner(), address(0));
         assertEq(deployVelodromeV2.sinkManager().owner(), address(0));
+        assertEq(address(deployVelodromeV2.minter().pendingTeam()), team);
         assertEq(deployVelodromeV2.escrow().team(), team);
         assertEq(deployVelodromeV2.escrow().allowedManager(), team);
         assertEq(deployVelodromeV2.factory().pauser(), team);

@@ -227,6 +227,7 @@ async function main() {
   await sinkManager.renounceOwnership({ gasLimit: 5000000 });
 
   await escrow.setTeam(jsonConstants.team);
+  await minter.setTeam(jsonConstants.team);
   await poolFactory.setPauser(jsonConstants.team);
   await voter.setEmergencyCouncil(jsonConstants.team);
   await voter.setEpochGovernor(jsonConstants.team);

@@ -127,7 +127,9 @@ In addition, Velodrome supports "managed NFTs" (also known as an "(m)veNFT") whi
 The minting contract handles emissions for the Velodrome protocol. Emissions
 start at 15m per epoch, decaying at a rate of 1% per epoch. Rebases (which are
 sent to `RewardsDistributor`) are added on top of the base emissions to produce
-the total emission. 
+the total emission. An additional percentage of the total emission is then
+distributed to the `team`. This rate is initially set to 5% and can be
+further updated by the `team` itself.
 
 The minter has a modified emissions schedule that turns on once emissions fall
 below 6m per epoch (~92 epochs). After it turns on, weekly emissions will become
