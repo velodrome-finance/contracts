@@ -202,7 +202,8 @@ Standard Operations:
 - Can deposit LP tokens for another receipient. 
 - Can withdraw LP tokens. 
 - Can get emission rewards for an account. 
-- Can deposit emissions into gauge (requires `Voter`).
+- Can deposit emissions from Minter into Gauge (requires `Voter`).
+- Can deposit additional emissions into the Gauge (requires `team`).
 
 ### Reward
 

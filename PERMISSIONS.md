@@ -121,6 +121,10 @@ This is an exhaustive list of all admin permissions in Velodrome V2, sorted by t
     - Can veto proposals.
     - Can renounce vetoer role.
 
+#### [Gauge](https://optimistic.etherscan.io/address/0xfc0b9a9c2b63e6acaca91a77a80bfa83c615e6c5#code)
+- Team
+    - Can deposit additional emissions into a gauge.
+
 #### [Voter](https://optimistic.etherscan.io/address/0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C#code)
 - Governor
     - Can set governor in Voter.

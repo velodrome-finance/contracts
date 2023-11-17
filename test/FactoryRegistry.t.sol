@@ -263,6 +263,7 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(newFeesVotingReward, Gauge(newGauge).feesVotingReward());
         assertEq(address(VELO), Gauge(newGauge).rewardToken());
         assertEq(address(voter), Gauge(newGauge).voter());
+        assertEq(Gauge(newGauge).team(), escrow.team());
         assertTrue(Gauge(newGauge).isPool());
 
         // gauge checks within voter
@@ -302,6 +303,7 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(newFeesVotingReward, Gauge(newGauge).feesVotingReward());
         assertEq(address(VELO), Gauge(newGauge).rewardToken());
         assertEq(address(voter), Gauge(newGauge).voter());
+        assertEq(Gauge(newGauge).team(), escrow.team());
         assertTrue(Gauge(newGauge).isPool());
 
         // gauge checks within voter
@@ -341,6 +343,7 @@ contract FactoryRegistryTest is BaseTest {
         assertEq(newFeesVotingReward, Gauge(newGauge).feesVotingReward());
         assertEq(address(VELO), Gauge(newGauge).rewardToken());
         assertEq(address(voter), Gauge(newGauge).voter());
+        assertEq(Gauge(newGauge).team(), escrow.team());
         assertTrue(Gauge(newGauge).isPool());
 
         // gauge checks within voter
