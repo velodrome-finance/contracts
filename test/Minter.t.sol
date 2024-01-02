@@ -56,9 +56,9 @@ contract MinterTest is BaseTest {
 
         skipToNextEpoch(1);
         // totalSupply ~= 56_323_436 * 1e18
-        // expected mint = totalSupply * .3% ~= 168_970
+        // expected mint = totalSupply * .3% ~= 168_932
         minter.updatePeriod();
-        assertApproxEqAbs(VELO.balanceOf(address(voter)), 168_970 * 1e18, TOKEN_1);
+        assertApproxEqAbs(VELO.balanceOf(address(voter)), 168_932 * 1e18, TOKEN_1);
         assertLt(minter.weekly(), 6_000_000 * 1e18);
     }
 

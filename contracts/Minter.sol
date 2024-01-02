@@ -142,7 +142,7 @@ contract Minter is IMinter {
             uint256 _growth = calculateGrowth(_emission);
 
             uint256 _rate = teamRate;
-            uint256 _teamEmissions = (_rate * (_growth + _weekly)) / (MAX_BPS - _rate);
+            uint256 _teamEmissions = (_rate * (_growth + _emission)) / (MAX_BPS);
 
             uint256 _required = _growth + _emission + _teamEmissions;
             uint256 _balanceOf = velo.balanceOf(address(this));
