@@ -43,6 +43,7 @@ contract VeloGovernorTest is BaseTest {
         assertEq(governor.votingPeriod(), 5 days);
         assertEq(governor.quorumNumerator(), 25);
         assertEq(governor.proposalNumerator(), 100);
+        assertEq(governor.lateQuorumVoteExtension(), 2 days);
         assertEq(governor.commentWeighting(), 4_000);
         assertEq(governor.COMMENT_DENOMINATOR(), 1_000_000_000);
     }
@@ -384,6 +385,52 @@ contract VeloGovernorTest is BaseTest {
         uint256 pid2 = governor.propose(2, targets, values, calldatas, description); // will revert if pids not unique
 
         assertFalse(pid == pid2);
+    }
+
+    function testCastVoteWithLateQuorumExtendsDeadline() public {
+        assertFalse(voter.isWhitelistedToken(token));
+
+        address[] memory targets = new address[](1);
+        targets[0] = address(voter);
+        uint256[] memory values = new uint256[](1);
+        values[0] = 0;
+        bytes[] memory calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, token, true);
+        string memory description = "Whitelist Token";
+
+        // propose
+        uint256 pid = governor.propose(1, targets, values, calldatas, description);
+        assertEq(governor.proposalDeadline(pid), block.timestamp + 7 days);
+
+        skip(5 days + 1);
+
+        governor.castVote(pid, 1, 1);
+        uint256 newDeadline = governor.proposalDeadline(pid);
+
+        assertEq(newDeadline, block.timestamp + 2 days);
+    }
+
+    function testCastVoteWithLateQuorumDoesNotExtendDeadline() public {
+        assertFalse(voter.isWhitelistedToken(token));
+
+        address[] memory targets = new address[](1);
+        targets[0] = address(voter);
+        uint256[] memory values = new uint256[](1);
+        values[0] = 0;
+        bytes[] memory calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(voter.whitelistToken.selector, token, true);
+        string memory description = "Whitelist Token";
+
+        // propose
+        uint256 pid = governor.propose(1, targets, values, calldatas, description);
+
+        skip(5 days);
+
+        uint256 deadline = governor.proposalDeadline(pid);
+        governor.castVote(pid, 1, 1);
+        uint256 newDeadline = governor.proposalDeadline(pid);
+
+        assertEq(newDeadline, deadline);
     }
 
     function testCannotCastVoteIfManagedVeNFT() public {

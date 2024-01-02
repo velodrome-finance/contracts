@@ -10,13 +10,20 @@ import {VetoGovernor} from "./governance/VetoGovernor.sol";
 import {VetoGovernorCountingSimple} from "./governance/VetoGovernorCountingSimple.sol";
 import {VetoGovernorVotes} from "./governance/VetoGovernorVotes.sol";
 import {VetoGovernorVotesQuorumFraction} from "./governance/VetoGovernorVotesQuorumFraction.sol";
+import {VetoGovernorPreventLateQuorum} from "./governance/VetoGovernorPreventLateQuorum.sol";
 
 /// @title VeloGovernor
 /// @author velodrome.finance, @figs999, @pegahcarter
 /// @notice Velodrome V2 governance with timestamp-based voting power from VotingEscrow NFTs
 ///         Supports vetoing of proposals as mitigation for 51% attacks
 ///         Votes are cast and counted on a per tokenId basis
-contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorVotes, VetoGovernorVotesQuorumFraction {
+contract VeloGovernor is
+    VetoGovernor,
+    VetoGovernorCountingSimple,
+    VetoGovernorVotes,
+    VetoGovernorVotesQuorumFraction,
+    VetoGovernorPreventLateQuorum
+{
     IVoter public immutable voter;
     address public team;
     address public pendingTeam;
@@ -48,6 +55,7 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
         VetoGovernor("Velodrome Governor", IVotingEscrow(address(_ve)))
         VetoGovernorVotes(_ve)
         VetoGovernorVotesQuorumFraction(25)
+        VetoGovernorPreventLateQuorum(2 days)
     {
         vetoer = msg.sender;
         team = msg.sender;
@@ -123,5 +131,22 @@ contract VeloGovernor is VetoGovernor, VetoGovernorCountingSimple, VetoGovernorV
         commentWeighting = _commentWeighting;
 
         emit SetCommentWeighting(_commentWeighting);
+    }
+
+    function proposalDeadline(
+        uint256 proposalId
+    ) public view override(VetoGovernor, VetoGovernorPreventLateQuorum) returns (uint256) {
+        return super.proposalDeadline(proposalId);
+    }
+
+    function _castVote(
+        uint256 proposalId,
+        address account,
+        uint256 tokenId,
+        uint8 support,
+        string memory reason,
+        bytes memory params
+    ) internal override(VetoGovernor, VetoGovernorPreventLateQuorum) returns (uint256) {
+        return super._castVote(proposalId, account, tokenId, support, reason, params);
     }
 }
