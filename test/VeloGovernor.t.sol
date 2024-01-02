@@ -977,6 +977,39 @@ contract VeloGovernorTest is BaseTest {
         governor.comment(pid, tokenId, "test");
     }
 
+    function testMinimumWeightIsAcceptable() public {
+        uint256 pid = createProposal();
+
+        vm.startPrank(address(owner3));
+        VELO.approve(address(escrow), 1);
+        escrow.increaseAmount(3, 1);
+        vm.stopPrank();
+
+        //total supply of locked tokens is now 100
+        vm.prank(escrow.team());
+        escrow.toggleSplit(address(this), true);
+        (, uint256 tokenId) = escrow.split(1, 4e14 + 11e7);
+
+        governor.comment(pid, tokenId, "test");
+    }
+
+    function testBelowMinimumAcceptableWeight() public {
+        uint256 pid = createProposal();
+
+        vm.startPrank(address(owner3));
+        VELO.approve(address(escrow), 1);
+        escrow.increaseAmount(3, 1);
+        vm.stopPrank();
+
+        //total supply of locked tokens is now 100
+        vm.prank(escrow.team());
+        escrow.toggleSplit(address(this), true);
+        (, uint256 tokenId) = escrow.split(1, 4e14);
+
+        vm.expectRevert("Governor: insufficient voting power");
+        governor.comment(pid, tokenId, "test");
+    }
+
     function testCannotCommentIfProposalNotActiveOrPending() public {
         uint256 pid = createProposal();
 

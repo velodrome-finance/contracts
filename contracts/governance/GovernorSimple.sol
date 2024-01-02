@@ -585,7 +585,7 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         address account = _msgSender();
         uint256 weight = _getVotes(account, tokenId, startTime, params);
         uint256 commentWeighting = IVetoGovernor(_voter.governor()).commentWeighting();
-        uint256 minimumWeight = (escrow.getPastTotalSupply(startTime) * commentWeighting) / 10_000;
+        uint256 minimumWeight = (escrow.getPastTotalSupply(startTime) * commentWeighting) / COMMENT_DENOMINATOR;
         require(weight > minimumWeight, "EpochGovernor: insufficient voting power");
 
         emit Comment(proposalId, account, tokenId, message);

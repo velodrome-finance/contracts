@@ -630,7 +630,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
         uint256 startTime = proposal.voteStart;
         address account = _msgSender();
         uint256 weight = _getVotes(account, tokenId, startTime, params);
-        uint256 minimumWeight = (escrow.getPastTotalSupply(startTime) * commentWeighting) / 10_000;
+        uint256 minimumWeight = (escrow.getPastTotalSupply(startTime) * commentWeighting) / COMMENT_DENOMINATOR;
         require(weight > minimumWeight, "Governor: insufficient voting power");
 
         emit Comment(proposalId, account, tokenId, message);
