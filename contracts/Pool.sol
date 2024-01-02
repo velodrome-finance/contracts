@@ -59,9 +59,9 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     uint256 public reserve1CumulativeLast;
 
     /// @inheritdoc IPool
-    uint256 public index0 = 0;
+    uint256 public index0;
     /// @inheritdoc IPool
-    uint256 public index1 = 0;
+    uint256 public index1;
 
     /// @inheritdoc IPool
     mapping(address => uint256) public supplyIndex0;
@@ -78,7 +78,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     /// @inheritdoc IPool
     function initialize(address _token0, address _token1, bool _stable) external {
         if (factory != address(0)) revert FactoryAlreadySet();
-        factory = _msgSender();
+        factory = msg.sender;
         _voter = IPoolFactory(factory).voter();
         (token0, token1, stable) = (_token0, _token1, _stable);
         poolFees = address(new PoolFees(_token0, _token1));
@@ -136,19 +136,18 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     /// @inheritdoc IPool
     function claimFees() external returns (uint256 claimed0, uint256 claimed1) {
-        address sender = _msgSender();
-        _updateFor(sender);
+        _updateFor(msg.sender);
 
-        claimed0 = claimable0[sender];
-        claimed1 = claimable1[sender];
+        claimed0 = claimable0[msg.sender];
+        claimed1 = claimable1[msg.sender];
 
         if (claimed0 > 0 || claimed1 > 0) {
-            claimable0[sender] = 0;
-            claimable1[sender] = 0;
+            claimable0[msg.sender] = 0;
+            claimable1[msg.sender] = 0;
 
-            PoolFees(poolFees).claimFeesFor(sender, claimed0, claimed1);
+            PoolFees(poolFees).claimFeesFor(msg.sender, claimed0, claimed1);
 
-            emit Claim(sender, sender, claimed0, claimed1);
+            emit Claim(msg.sender, msg.sender, claimed0, claimed1);
         }
     }
 
@@ -161,7 +160,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         if (_ratio > 0) {
             index0 += _ratio;
         }
-        emit Fees(_msgSender(), amount, 0);
+        emit Fees(msg.sender, amount, 0);
     }
 
     /// @dev Accrue fees on token1
@@ -173,7 +172,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         if (_ratio > 0) {
             index1 += _ratio;
         }
-        emit Fees(_msgSender(), 0, amount);
+        emit Fees(msg.sender, 0, amount);
     }
 
     /// @dev This function MUST be called on any balance changes, otherwise can be used to infinitely claim fees
@@ -315,11 +314,11 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         } else {
             liquidity = Math.min((_amount0 * _totalSupply) / _reserve0, (_amount1 * _totalSupply) / _reserve1);
         }
-        if (liquidity == 0) revert InsufficientLiquidityMinted();
+        if (liquidity < MINIMUM_LIQUIDITY) revert InsufficientLiquidityMinted();
         _mint(to, liquidity);
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
-        emit Mint(_msgSender(), _amount0, _amount1);
+        emit Mint(msg.sender, _amount0, _amount1);
     }
 
     /// @inheritdoc IPool
@@ -341,7 +340,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         _balance1 = IERC20(_token1).balanceOf(address(this));
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
-        emit Burn(_msgSender(), to, amount0, amount1);
+        emit Burn(msg.sender, to, amount0, amount1);
     }
 
     /// @inheritdoc IPool
@@ -359,7 +358,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
             if (to == _token0 || to == _token1) revert InvalidTo();
             if (amount0Out > 0) IERC20(_token0).safeTransfer(to, amount0Out); // optimistically transfer tokens
             if (amount1Out > 0) IERC20(_token1).safeTransfer(to, amount1Out); // optimistically transfer tokens
-            if (data.length > 0) IPoolCallee(to).hook(_msgSender(), amount0Out, amount1Out, data); // callback, used for flash loans
+            if (data.length > 0) IPoolCallee(to).hook(msg.sender, amount0Out, amount1Out, data); // callback, used for flash loans
             _balance0 = IERC20(_token0).balanceOf(address(this));
             _balance1 = IERC20(_token1).balanceOf(address(this));
         }
@@ -378,7 +377,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
 
         _update(_balance0, _balance1, _reserve0, _reserve1);
-        emit Swap(_msgSender(), to, amount0In, amount1In, amount0Out, amount1Out);
+        emit Swap(msg.sender, to, amount0In, amount1In, amount0Out, amount1Out);
     }
 
     /// @inheritdoc IPool
@@ -390,6 +389,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     /// @inheritdoc IPool
     function sync() external nonReentrant {
+        if (totalSupply() == 0) revert InsufficientLiquidity();
         _update(IERC20(token0).balanceOf(address(this)), IERC20(token1).balanceOf(address(this)), reserve0, reserve1);
     }
 
