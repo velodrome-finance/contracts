@@ -56,7 +56,7 @@ contract Router is IRouter, ERC2771Context {
     }
 
     receive() external payable {
-        if (msg.sender != address(weth)) revert OnlyWETH();
+        if (_msgSender() != address(weth)) revert OnlyWETH();
     }
 
     /// @inheritdoc IRouter
@@ -669,7 +669,7 @@ contract Router is IRouter, ERC2771Context {
         address tokenA = zapOutPool.tokenA;
         address tokenB = zapOutPool.tokenB;
         address pool = poolFor(tokenA, tokenB, zapOutPool.stable, zapOutPool.factory);
-        IERC20(pool).safeTransferFrom(msg.sender, pool, liquidity);
+        IERC20(pool).safeTransferFrom(_msgSender(), pool, liquidity);
         (address token0, ) = sortTokens(tokenA, tokenB);
         (uint256 amount0, uint256 amount1) = IPool(pool).burn(address(this));
         (uint256 amountA, uint256 amountB) = tokenA == token0 ? (amount0, amount1) : (amount1, amount0);
