@@ -102,7 +102,7 @@ This is for the deployment on Optimism. For more information about the `Splitter
 | FactoryRegistry               | [0xF4c67CdEAaB8360370F41514d06e32CcD8aA1d7B](https://optimistic.etherscan.io/address/0xF4c67CdEAaB8360370F41514d06e32CcD8aA1d7B#code) |
 | Forwarder               | [0x06824df38D1D77eADEB6baFCB03904E27429Ab74](https://optimistic.etherscan.io/address/0x06824df38D1D77eADEB6baFCB03904E27429Ab74#code) |
 | GaugeFactory               | [0x8391fE399640E7228A059f8Fa104b8a7B4835071](https://optimistic.etherscan.io/address/0x8391fE399640E7228A059f8Fa104b8a7B4835071#code) |
-| ManagedRewardsFactory               | [0xcDd9585005095ac7447d1fDbC990C5CFB805cff0](https://optimistic.etherscan.io/address/0xcDd9585005095ac7447d1fDbC990C5CFB805cff0#code) |
+| ManagedRewardsFactory               | [0x3F468e35f5c262a6E796bfe3be831Bf8b9142e9c](https://optimistic.etherscan.io/address/0x3F468e35f5c262a6E796bfe3be831Bf8b9142e9c#code) |
 | Minter               | [0x6dc9E1C04eE59ed3531d73a72256C0da46D10982](https://optimistic.etherscan.io/address/0x6dc9E1C04eE59ed3531d73a72256C0da46D10982#code) |
 | PoolFactory               | [0xF1046053aa5682b4F9a81b5481394DA16BE5FF5a](https://optimistic.etherscan.io/address/0xF1046053aa5682b4F9a81b5481394DA16BE5FF5a#code) |
 | Router               | [0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858](https://optimistic.etherscan.io/address/0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858#code) |
