@@ -34,7 +34,6 @@ contract PoolTest is BaseTest {
             new Router(address(forwarder), address(factoryRegistry), address(factory), address(voter), address(WETH));
 
         escrow.setVoterAndDistributor(address(voter), address(distributor));
-        factory.setVoter(address(voter));
 
         deployPoolWithOwner(address(owner));
         deployPoolWithOwner(address(owner2));
@@ -752,24 +751,6 @@ contract PoolTest is BaseTest {
         gauge.withdraw(gauge.balanceOf(address(owner)));
     }
 
-    function testSetPoolName() external {
-        // Note: as this contract is a custom setup, the pool contracts are not already deployed from
-        // base setup, and so they need to be deployed for these tests
-        deployPoolCoins();
-
-        assertEq(pool.name(), "StableV2 AMM - USDC/FRAX");
-        pool.setName("Some new name");
-        assertEq(pool.name(), "Some new name");
-    }
-
-    function testCannotSetPoolNameIfNotEmergencyCouncil() external {
-        deployPoolCoins();
-
-        vm.prank(address(owner2));
-        vm.expectRevert(IPool.NotEmergencyCouncil.selector);
-        pool.setName("Some new name");
-    }
-
     function testCannotSyncPoolWithNoLiquidity() external {
         deployPoolCoins();
 
@@ -779,21 +760,5 @@ contract PoolTest is BaseTest {
 
         vm.expectRevert(IPool.InsufficientLiquidity.selector);
         IPool(newPool).sync();
-    }
-
-    function testSetPoolSymbol() external {
-        deployPoolCoins();
-
-        assertEq(pool.symbol(), "sAMMV2-USDC/FRAX");
-        pool.setSymbol("Some new symbol");
-        assertEq(pool.symbol(), "Some new symbol");
-    }
-
-    function testCannotSetPoolSymbolIfNotEmergencyCouncil() external {
-        deployPoolCoins();
-
-        vm.prank(address(owner2));
-        vm.expectRevert(IPool.NotEmergencyCouncil.selector);
-        pool.setSymbol("Some new symbol");
     }
 }

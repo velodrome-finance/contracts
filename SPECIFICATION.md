@@ -24,7 +24,7 @@ AMM constant-product implementation similar to Uniswap V2 liquidity pools.
 Lightly modified to allow for the following:
 - Support for both stable and volatile pools. Stable pools use a different formula which assumes little to no volatility. The formula used for pricing the assets allows for low slippage even on large traded volumes. Volatile pools use the standard constant product formula. 
 - Custom fees per pool.
-- Modifying a pool's name and symbol (requires `emergencyCouncil` permissions).
+- Modifying a pool's name and symbol (requires `poolFactory.poolAdmin()` permissions).
 
 Stable pools use the `x^3 * y + y^3 * x` curve, which may have a larger
 rounding error when calculating the invariant `K` when compared to Uniswap
@@ -45,6 +45,7 @@ Pool helper contract that stores pool trading fees to keep them separate from th
 Responsible for pool creation and management. It facilitates creating and fetching liquidity pools for pairs of tokens, specifying whether they're stable or volatile. It additionally provides pool configuration using 3 roles:
 - Pauser: Switch the pool's pause state (enabling/disabling pool swaps)
 - FeeManager: Can set a custom fee per pool, with a maximum fee of 3%
+- PoolAdmin: Can modify the name or symbol of a pool created by this factory
 
 ### Router
 

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 interface IPoolFactory {
-    event SetFeeManager(address feeManager);
-    event SetPauser(address pauser);
-    event SetPauseState(bool state);
-    event SetVoter(address voter);
+    event SetFeeManager(address indexed feeManager);
+    event SetPauser(address indexed pauser);
+    event SetPauseState(bool indexed state);
+    event SetPoolAdmin(address indexed poolAdmin);
     event PoolCreated(address indexed token0, address indexed token1, bool indexed stable, address pool, uint256);
     event SetCustomFee(address indexed pool, uint256 fee);
 
@@ -14,11 +14,14 @@ interface IPoolFactory {
     error InvalidPool();
     error NotFeeManager();
     error NotPauser();
-    error NotVoter();
+    error NotPoolAdmin();
     error PoolAlreadyExists();
     error SameAddress();
     error ZeroFee();
     error ZeroAddress();
+
+    /// @notice Returns the pool administrator
+    function poolAdmin() external view returns (address);
 
     /// @notice returns the number of pools created from this factory
     function allPoolsLength() external view returns (uint256);
@@ -40,11 +43,10 @@ interface IPoolFactory {
     /// @param fee  1 if stable, 0 if volatile, else returns address(0)
     function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address);
 
-    /// @dev Only called once to set to Voter.sol - Voter does not have a function
-    ///      to call this contract method, so once set it's immutable.
-    ///      This also follows convention of setVoterAndDistributor() in VotingEscrow.sol
-    /// @param _voter .
-    function setVoter(address _voter) external;
+    /// @notice Set pool administrator
+    /// @dev Allowed to change the name and symbol of any pool created by this factory
+    /// @param _poolAdmin Address of the pool administrator
+    function setPoolAdmin(address _poolAdmin) external;
 
     function setPauser(address _pauser) external;
 
@@ -82,8 +84,6 @@ interface IPoolFactory {
     function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool);
 
     function isPaused() external view returns (bool);
-
-    function voter() external view returns (address);
 
     function implementation() external view returns (address);
 }

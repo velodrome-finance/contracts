@@ -78,6 +78,9 @@ Velodrome team
 #### Pauser
 Velodrome team
 
+### Pool Admin
+Velodrome team
+
 #### Factory Registry Owner
 Velodrome team
 

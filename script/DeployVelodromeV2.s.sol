@@ -68,6 +68,7 @@ contract DeployVelodromeV2 is Base {
         escrow.setTeam(team);
         minter.setTeam(team);
         factory.setPauser(team);
+        factory.setPoolAdmin(team);
         voter.setEmergencyCouncil(emergencyCouncil);
         voter.setEpochGovernor(team);
         voter.setGovernor(team);
@@ -75,7 +76,6 @@ contract DeployVelodromeV2 is Base {
 
         // Set contract vars
         factory.setFeeManager(feeManager);
-        factory.setVoter(address(voter));
 
         // finish broadcasting transactions
         vm.stopBroadcast();

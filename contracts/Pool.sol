@@ -21,7 +21,6 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     string private _name;
     string private _symbol;
-    address private _voter;
 
     /// @inheritdoc IPool
     bool public stable;
@@ -79,7 +78,6 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
     function initialize(address _token0, address _token1, bool _stable) external {
         if (factory != address(0)) revert FactoryAlreadySet();
         factory = msg.sender;
-        _voter = IPoolFactory(factory).voter();
         (token0, token1, stable) = (_token0, _token1, _stable);
         poolFees = address(new PoolFees(_token0, _token1));
         string memory symbol0 = ERC20(_token0).symbol();
@@ -100,13 +98,13 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
 
     /// @inheritdoc IPool
     function setName(string calldata __name) external {
-        if (msg.sender != IVoter(_voter).emergencyCouncil()) revert NotEmergencyCouncil();
+        if (msg.sender != IPoolFactory(factory).poolAdmin()) revert IPoolFactory.NotPoolAdmin();
         _name = __name;
     }
 
     /// @inheritdoc IPool
     function setSymbol(string calldata __symbol) external {
-        if (msg.sender != IVoter(_voter).emergencyCouncil()) revert NotEmergencyCouncil();
+        if (msg.sender != IPoolFactory(factory).poolAdmin()) revert IPoolFactory.NotPoolAdmin();
         _symbol = __symbol;
     }
 

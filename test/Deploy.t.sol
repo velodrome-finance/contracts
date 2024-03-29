@@ -95,7 +95,6 @@ contract TestDeploy is BaseTest {
         assertTrue(address(deployVelodromeV2.WETH()) == address(WETH));
 
         // PoolFactory
-        assertEq(deployVelodromeV2.factory().voter(), address(deployVelodromeV2.voter()));
         assertEq(deployVelodromeV2.factory().stableFee(), 5);
         assertEq(deployVelodromeV2.factory().volatileFee(), 30);
 
@@ -127,6 +126,7 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.voter().governor(), team);
         assertEq(deployVelodromeV2.voter().epochGovernor(), team);
         assertEq(deployVelodromeV2.factoryRegistry().owner(), team);
+        assertEq(deployVelodromeV2.factory().poolAdmin(), team);
         assertEq(deployVelodromeV2.factory().feeManager(), feeManager);
 
         // DeployGaugesAndPoolsV2 checks

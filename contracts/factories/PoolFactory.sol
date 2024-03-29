@@ -18,9 +18,7 @@ contract PoolFactory is IPoolFactory {
     // that no custom fee rate has been set
     uint256 public constant ZERO_FEE_INDICATOR = 420;
     address public feeManager;
-
-    /// @dev used to change the name/symbol of the pool by calling emergencyCouncil
-    address public voter;
+    address public poolAdmin;
 
     mapping(address => mapping(address => mapping(bool => address))) private _getPool;
     address[] public allPools;
@@ -33,7 +31,7 @@ contract PoolFactory is IPoolFactory {
 
     constructor(address _implementation) {
         implementation = _implementation;
-        voter = msg.sender;
+        poolAdmin = msg.sender;
         pauser = msg.sender;
         feeManager = msg.sender;
         isPaused = false;
@@ -62,10 +60,11 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
-    function setVoter(address _voter) external {
-        if (msg.sender != voter) revert NotVoter();
-        voter = _voter;
-        emit SetVoter(_voter);
+    function setPoolAdmin(address _poolAdmin) external {
+        if (msg.sender != poolAdmin) revert NotPoolAdmin();
+        if (_poolAdmin == address(0)) revert ZeroAddress();
+        poolAdmin = _poolAdmin;
+        emit SetPoolAdmin(_poolAdmin);
     }
 
     function setPauser(address _pauser) external {
