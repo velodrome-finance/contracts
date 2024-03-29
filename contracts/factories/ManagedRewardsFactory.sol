@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.19;
+pragma solidity >=0.8.19 <0.9.0;
 
 import {IManagedRewardsFactory} from "../interfaces/factories/IManagedRewardsFactory.sol";
 import {FreeManagedReward} from "../rewards/FreeManagedReward.sol";

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.19;
+pragma solidity >=0.8.19 <0.9.0;
 
 import {ManagedRewardsFactory} from "contracts/factories/ManagedRewardsFactory.sol";
 import {VotingRewardsFactory} from "contracts/factories/VotingRewardsFactory.sol";

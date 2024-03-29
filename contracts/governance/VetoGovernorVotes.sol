@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: BUSL-1.1
 // OpenZeppelin Contracts (last updated v4.6.0) (governance/extensions/GovernorVotes.sol)
-
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.19 <0.9.0;
 
 import {VetoGovernor} from "./VetoGovernor.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";

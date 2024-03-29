@@ -1,6 +1,7 @@
 [profile.default]
 src = 'contracts'
 out = 'out'
+solc_version = '0.8.19'
 
 fs_permissions = [{ access = "read-write", path = "./"}]
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: BUSL-1.1
-pragma solidity 0.8.19;
+pragma solidity >=0.8.19 <0.9.0;
 
 import {IVoter} from "../interfaces/IVoter.sol";
 import {VotingReward} from "./VotingReward.sol";

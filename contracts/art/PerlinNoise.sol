@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity 0.8.19;
+pragma solidity >=0.8.19 <0.9.0;
 
 // Library by https://github.com/0x10f/solidity-perlin-noise
 

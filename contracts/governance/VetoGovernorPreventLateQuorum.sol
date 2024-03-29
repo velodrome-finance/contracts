@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: MIT
 // OpenZeppelin Contracts (last updated v4.6.0) (governance/extensions/GovernorPreventLateQuorum.sol)
-
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.19 <0.9.0;
 
 import {VetoGovernor} from "./VetoGovernor.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
