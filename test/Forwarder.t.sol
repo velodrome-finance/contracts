@@ -28,11 +28,8 @@ contract ForwarderTest is BaseTest {
 
     function testForwarderCreateLock() public {
         bytes memory payload = abi.encodeWithSelector(escrow.createLock.selector, TOKEN_1, MAXTIME);
-        bytes32 requestType = erc2771Helper.registerRequestType(
-            forwarder,
-            "createLock",
-            "uint256 _value,uint256 _lockDuration"
-        );
+        bytes32 requestType =
+            erc2771Helper.registerRequestType(forwarder, "createLock", "uint256 _value,uint256 _lockDuration");
 
         handleRequest(address(escrow), payload, requestType);
         assertEq(escrow.ownerOf(1), sender);
@@ -49,9 +46,7 @@ contract ForwarderTest is BaseTest {
         // build request
         bytes memory payload = abi.encodeWithSelector(voter.vote.selector, 1, pools, weights);
         bytes32 requestType = erc2771Helper.registerRequestType(
-            forwarder,
-            "vote",
-            "uint256 _tokenId,address[] _poolVote,uint256[] _weights"
+            forwarder, "vote", "uint256 _tokenId,address[] _poolVote,uint256[] _weights"
         );
 
         handleRequest(address(voter), payload, requestType);
@@ -70,18 +65,13 @@ contract ForwarderTest is BaseTest {
         });
 
         // TODO: move this to Base.sol once working
-        bytes32 domainSeparator = erc2771Helper.registerDomain(
-            forwarder,
-            Strings.toHexString(uint256(uint160(_to)), 20),
-            "1"
-        );
+        bytes32 domainSeparator =
+            erc2771Helper.registerDomain(forwarder, Strings.toHexString(uint256(uint160(_to)), 20), "1");
 
         bytes memory suffixData = "0";
         bytes32 digest = keccak256(
             abi.encodePacked(
-                "\x19\x01",
-                domainSeparator,
-                keccak256(forwarder._getEncoded(request, requestType, suffixData))
+                "\x19\x01", domainSeparator, keccak256(forwarder._getEncoded(request, requestType, suffixData))
             )
         );
 

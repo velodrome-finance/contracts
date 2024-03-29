@@ -322,15 +322,7 @@ abstract contract BaseTest is Base, TestOwner {
         IERC20(_token0).approve(address(_router), _amount0);
         IERC20(_token1).approve(address(_router), _amount1);
         Router(payable(_router)).addLiquidity(
-            _token0,
-            _token1,
-            _stable,
-            _amount0,
-            _amount1,
-            0,
-            0,
-            address(_owner),
-            block.timestamp
+            _token0, _token1, _stable, _amount0, _amount1, 0, 0, address(_owner), block.timestamp
         );
         vm.stopPrank();
     }

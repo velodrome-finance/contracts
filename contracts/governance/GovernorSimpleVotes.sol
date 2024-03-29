@@ -49,12 +49,13 @@ abstract contract GovernorSimpleVotes is GovernorSimple {
     /**
      * Read the voting weight from the token's built in snapshot mechanism (see {Governor-_getVotes}).
      */
-    function _getVotes(
-        address account,
-        uint256 tokenId,
-        uint256 timepoint,
-        bytes memory /*params*/
-    ) internal view virtual override returns (uint256) {
+    function _getVotes(address account, uint256 tokenId, uint256 timepoint, bytes memory /*params*/ )
+        internal
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         IVotingEscrow.EscrowType escrowType = ve.escrowType(tokenId);
         require(escrowType != IVotingEscrow.EscrowType.MANAGED, "EpochGovernor: managed nft cannot vote");
 

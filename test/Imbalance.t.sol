@@ -49,13 +49,8 @@ contract ImbalanceTest is BaseTest {
         factory.setFee(true, 1);
         factory.setFee(false, 1);
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
-        router = new Router(
-            address(forwarder),
-            address(factoryRegistry),
-            address(factory),
-            address(voter),
-            address(WETH)
-        );
+        router =
+            new Router(address(forwarder), address(factoryRegistry), address(factory), address(voter), address(WETH));
         deployPoolWithOwner(address(owner));
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));
@@ -104,15 +99,7 @@ contract ImbalanceTest is BaseTest {
         DAI.approve(address(router), TOKEN_100M);
         FRAX.approve(address(router), TOKEN_100M);
         router.addLiquidity(
-            address(FRAX),
-            address(DAI),
-            true,
-            TOKEN_100M,
-            TOKEN_100M,
-            0,
-            0,
-            address(owner),
-            block.timestamp
+            address(FRAX), address(DAI), true, TOKEN_100M, TOKEN_100M, 0, 0, address(owner), block.timestamp
         );
     }
 
@@ -172,15 +159,7 @@ contract ImbalanceTest is BaseTest {
         FRAX.approve(address(router), TOKEN_10B);
         uint256 poolBefore = pool3.balanceOf(address(owner));
         router.addLiquidity(
-            address(FRAX),
-            address(DAI),
-            true,
-            TOKEN_10B,
-            TOKEN_10B,
-            0,
-            0,
-            address(owner),
-            block.timestamp
+            address(FRAX), address(DAI), true, TOKEN_10B, TOKEN_10B, 0, 0, address(owner), block.timestamp
         );
         uint256 poolAfter = pool3.balanceOf(address(owner));
         uint256 LPBal = poolAfter - poolBefore;

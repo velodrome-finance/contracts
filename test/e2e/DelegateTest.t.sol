@@ -355,9 +355,8 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(escrow.totalSupply(), escrow.balanceOfNFT(1) + escrow.balanceOfNFT(2) + escrow.balanceOfNFT(3));
         assertEq(
             escrow.totalSupply(),
-            escrow.getPastVotes(address(owner), 1, 691201) +
-                escrow.getPastVotes(address(owner2), 2, 691201) +
-                escrow.getPastVotes(address(owner3), 3, 691201)
+            escrow.getPastVotes(address(owner), 1, 691201) + escrow.getPastVotes(address(owner2), 2, 691201)
+                + escrow.getPastVotes(address(owner3), 3, 691201)
         );
 
         // permanent lock 2
@@ -405,9 +404,8 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(escrow.totalSupply(), escrow.balanceOfNFT(1) + escrow.balanceOfNFT(2) + escrow.balanceOfNFT(3));
         assertEq(
             escrow.totalSupply(),
-            escrow.getPastVotes(address(owner), 1, 691201) +
-                escrow.getPastVotes(address(owner2), 2, 691201) +
-                escrow.getPastVotes(address(owner3), 3, 691201)
+            escrow.getPastVotes(address(owner), 1, 691201) + escrow.getPastVotes(address(owner2), 2, 691201)
+                + escrow.getPastVotes(address(owner3), 3, 691201)
         );
 
         skipAndRoll(1);
@@ -448,9 +446,8 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(escrow.totalSupply(), escrow.balanceOfNFT(1) + escrow.balanceOfNFT(2) + escrow.balanceOfNFT(3));
         assertEq(
             escrow.totalSupply(),
-            escrow.getPastVotes(address(owner), 1, 691202) +
-                escrow.getPastVotes(address(owner2), 2, 691202) +
-                escrow.getPastVotes(address(owner3), 3, 691202)
+            escrow.getPastVotes(address(owner), 1, 691202) + escrow.getPastVotes(address(owner2), 2, 691202)
+                + escrow.getPastVotes(address(owner3), 3, 691202)
         );
 
         skipAndRoll(1 hours);
@@ -510,9 +507,8 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(escrow.totalSupply(), escrow.balanceOfNFT(1) + escrow.balanceOfNFT(2) + escrow.balanceOfNFT(3));
         assertEq(
             escrow.totalSupply(),
-            escrow.getPastVotes(address(owner), 1, 694802) +
-                escrow.getPastVotes(address(owner2), 2, 694802) +
-                escrow.getPastVotes(address(owner3), 3, 694802)
+            escrow.getPastVotes(address(owner), 1, 694802) + escrow.getPastVotes(address(owner2), 2, 694802)
+                + escrow.getPastVotes(address(owner3), 3, 694802)
         );
 
         skipAndRoll(1 weeks);
@@ -558,9 +554,8 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(escrow.totalSupply(), escrow.balanceOfNFT(1) + escrow.balanceOfNFT(2) + escrow.balanceOfNFT(3));
         assertEq(
             escrow.totalSupply(),
-            escrow.getPastVotes(address(owner), 1, 1299602) +
-                escrow.getPastVotes(address(owner2), 2, 1299602) +
-                escrow.getPastVotes(address(owner3), 3, 1299602)
+            escrow.getPastVotes(address(owner), 1, 1299602) + escrow.getPastVotes(address(owner2), 2, 1299602)
+                + escrow.getPastVotes(address(owner3), 3, 1299602)
         );
 
         // 1 unlocks permanent lock in same block as delegate
@@ -620,9 +615,8 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(escrow.totalSupply(), escrow.balanceOfNFT(1) + escrow.balanceOfNFT(2) + escrow.balanceOfNFT(3));
         assertEq(
             escrow.totalSupply(),
-            escrow.getPastVotes(address(owner), 1, 1299602) +
-                escrow.getPastVotes(address(owner2), 2, 1299602) +
-                escrow.getPastVotes(address(owner3), 3, 1299602)
+            escrow.getPastVotes(address(owner), 1, 1299602) + escrow.getPastVotes(address(owner2), 2, 1299602)
+                + escrow.getPastVotes(address(owner3), 3, 1299602)
         );
 
         for (uint256 i = 0; i < 208; i++) {
@@ -630,9 +624,9 @@ contract DelegateTest is ExtendedBaseTest {
             assertEq(escrow.totalSupply(), escrow.balanceOfNFT(1) + escrow.balanceOfNFT(2) + escrow.balanceOfNFT(3));
             assertEq(
                 escrow.totalSupply(),
-                escrow.getPastVotes(address(owner), 1, block.timestamp) +
-                    escrow.getPastVotes(address(owner2), 2, block.timestamp) +
-                    escrow.getPastVotes(address(owner3), 3, block.timestamp)
+                escrow.getPastVotes(address(owner), 1, block.timestamp)
+                    + escrow.getPastVotes(address(owner2), 2, block.timestamp)
+                    + escrow.getPastVotes(address(owner3), 3, block.timestamp)
             );
         }
         // 1 & 3 have expired

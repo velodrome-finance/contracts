@@ -18,6 +18,7 @@ import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 /// @notice Gauge contract for distribution of emissions by address
 contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
     /// @inheritdoc IGauge
     address public immutable stakingToken;
     /// @inheritdoc IGauge
@@ -108,10 +109,8 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         if (totalSupply == 0) {
             return rewardPerTokenStored;
         }
-        return
-            rewardPerTokenStored +
-            ((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * PRECISION) /
-            totalSupply;
+        return rewardPerTokenStored
+            + ((lastTimeRewardApplicable() - lastUpdateTime) * rewardRate * PRECISION) / totalSupply;
     }
 
     /// @inheritdoc IGauge
@@ -136,10 +135,8 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
 
     /// @inheritdoc IGauge
     function earned(address _account) public view returns (uint256) {
-        return
-            (balanceOf[_account] * (rewardPerToken() - userRewardPerTokenPaid[_account])) /
-            PRECISION +
-            rewards[_account];
+        return (balanceOf[_account] * (rewardPerToken() - userRewardPerTokenPaid[_account])) / PRECISION
+            + rewards[_account];
     }
 
     /// @inheritdoc IGauge

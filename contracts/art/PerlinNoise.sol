@@ -7,9 +7,7 @@ pragma solidity 0.8.19;
  * @notice An implementation of Perlin Noise that uses 16 bit fixed point arithmetic.
  * @notice Updated solidity version from 0.5.0 to 0.8.12.
  */
-
 library PerlinNoise {
-
     /**
      * @notice Computes the noise value for a 2D point.
      *
@@ -21,18 +19,18 @@ library PerlinNoise {
      *      and `ptable` were written.
      */
     function noise2d(int256 x, int256 y) public pure returns (int256) {
-        int256 temp = ptable(x >> 16 & 0xff /* Unit square X */);
+        int256 temp = ptable(x >> 16 & 0xff /* Unit square X */ );
 
-        int256 a = ptable((temp >> 8  ) + (y >> 16 & 0xff /* Unit square Y */));
-        int256 b = ptable((temp & 0xff) + (y >> 16 & 0xff                    ));
+        int256 a = ptable((temp >> 8) + (y >> 16 & 0xff) /* Unit square Y */ );
+        int256 b = ptable((temp & 0xff) + (y >> 16 & 0xff));
 
         x &= 0xffff; // Square relative X
         y &= 0xffff; // Square relative Y
 
         int256 u = fade(x);
 
-        int256 c = lerp(u, grad2(a >> 8  , x, y        ), grad2(b >> 8  , x-0x10000, y        ));
-        int256 d = lerp(u, grad2(a & 0xff, x, y-0x10000), grad2(b & 0xff, x-0x10000, y-0x10000));
+        int256 c = lerp(u, grad2(a >> 8, x, y), grad2(b >> 8, x - 0x10000, y));
+        int256 d = lerp(u, grad2(a & 0xff, x, y - 0x10000), grad2(b & 0xff, x - 0x10000, y - 0x10000));
 
         return lerp(fade(y), c, d);
     }
@@ -50,10 +48,13 @@ library PerlinNoise {
      */
     function noise3d(int256 x, int256 y, int256 z) public pure returns (int256) {
         int256[7] memory scratch = [
-            x >> 16 & 0xff,  // Unit cube X
-            y >> 16 & 0xff,  // Unit cube Y
-            z >> 16 & 0xff,  // Unit cube Z
-            0, 0, 0, 0
+            x >> 16 & 0xff, // Unit cube X
+            y >> 16 & 0xff, // Unit cube Y
+            z >> 16 & 0xff, // Unit cube Z
+            0,
+            0,
+            0,
+            0
         ];
 
         x &= 0xffff; // Cube relative X
@@ -66,12 +67,12 @@ library PerlinNoise {
 
         v = ptable(scratch[0]);
 
-        u = ptable((v >> 8  ) + scratch[1]);
+        u = ptable((v >> 8) + scratch[1]);
         v = ptable((v & 0xff) + scratch[1]);
 
-        scratch[3] = ptable((u >> 8  ) + scratch[2]);
+        scratch[3] = ptable((u >> 8) + scratch[2]);
         scratch[4] = ptable((u & 0xff) + scratch[2]);
-        scratch[5] = ptable((v >> 8  ) + scratch[2]);
+        scratch[5] = ptable((v >> 8) + scratch[2]);
         scratch[6] = ptable((v & 0xff) + scratch[2]);
 
         int256 a;
@@ -81,12 +82,16 @@ library PerlinNoise {
         u = fade(x);
         v = fade(y);
 
-        a = lerp(u, grad3(scratch[3] >> 8, x, y        , z), grad3(scratch[5] >> 8, x-0x10000, y        , z));
-        b = lerp(u, grad3(scratch[4] >> 8, x, y-0x10000, z), grad3(scratch[6] >> 8, x-0x10000, y-0x10000, z));
+        a = lerp(u, grad3(scratch[3] >> 8, x, y, z), grad3(scratch[5] >> 8, x - 0x10000, y, z));
+        b = lerp(u, grad3(scratch[4] >> 8, x, y - 0x10000, z), grad3(scratch[6] >> 8, x - 0x10000, y - 0x10000, z));
         c = lerp(v, a, b);
 
-        a = lerp(u, grad3(scratch[3] & 0xff, x, y        , z-0x10000), grad3(scratch[5] & 0xff, x-0x10000, y        , z-0x10000));
-        b = lerp(u, grad3(scratch[4] & 0xff, x, y-0x10000, z-0x10000), grad3(scratch[6] & 0xff, x-0x10000, y-0x10000, z-0x10000));
+        a = lerp(u, grad3(scratch[3] & 0xff, x, y, z - 0x10000), grad3(scratch[5] & 0xff, x - 0x10000, y, z - 0x10000));
+        b = lerp(
+            u,
+            grad3(scratch[4] & 0xff, x, y - 0x10000, z - 0x10000),
+            grad3(scratch[6] & 0xff, x - 0x10000, y - 0x10000, z - 0x10000)
+        );
 
         return lerp(fade(z), c, lerp(v, a, b));
     }
@@ -118,12 +123,12 @@ library PerlinNoise {
     }
 
     /**
-      * @notice Computes the gradient value for a 2D point.
-      *
-      * @param h the hash value to use for picking the vector.
-      * @param x the x coordinate of the point.
-      * @param y the y coordinate of the point.
-      */
+     * @notice Computes the gradient value for a 2D point.
+     *
+     * @param h the hash value to use for picking the vector.
+     * @param x the x coordinate of the point.
+     * @param y the y coordinate of the point.
+     */
     function grad2(int256 h, int256 x, int256 y) internal pure returns (int256) {
         h &= 3;
 
@@ -205,29 +210,37 @@ library PerlinNoise {
                         if (i <= 7) {
                             if (i <= 3) {
                                 if (i <= 1) {
-                                    if (i == 0) { return 38816; } else { return 41097; }
+                                    if (i == 0) return 38816;
+                                    else return 41097;
                                 } else {
-                                    if (i == 2) { return 35163; } else { return 23386; }
+                                    if (i == 2) return 35163;
+                                    else return 23386;
                                 }
                             } else {
                                 if (i <= 5) {
-                                    if (i == 4) { return 23055; } else { return 3971; }
+                                    if (i == 4) return 23055;
+                                    else return 3971;
                                 } else {
-                                    if (i == 6) { return 33549; } else { return 3529; }
+                                    if (i == 6) return 33549;
+                                    else return 3529;
                                 }
                             }
                         } else {
                             if (i <= 11) {
                                 if (i <= 9) {
-                                    if (i == 8) { return 51551; } else { return 24416; }
+                                    if (i == 8) return 51551;
+                                    else return 24416;
                                 } else {
-                                    if (i == 10) { return 24629; } else { return 13762; }
+                                    if (i == 10) return 24629;
+                                    else return 13762;
                                 }
                             } else {
                                 if (i <= 13) {
-                                    if (i == 12) { return 49897; } else { return 59655; }
+                                    if (i == 12) return 49897;
+                                    else return 59655;
                                 } else {
-                                    if (i == 14) { return 2017; } else { return 57740; }
+                                    if (i == 14) return 2017;
+                                    else return 57740;
                                 }
                             }
                         }
@@ -235,29 +248,37 @@ library PerlinNoise {
                         if (i <= 23) {
                             if (i <= 19) {
                                 if (i <= 17) {
-                                    if (i == 16) { return 35876; } else { return 9319; }
+                                    if (i == 16) return 35876;
+                                    else return 9319;
                                 } else {
-                                    if (i == 18) { return 26398; } else { return 7749; }
+                                    if (i == 18) return 26398;
+                                    else return 7749;
                                 }
                             } else {
                                 if (i <= 21) {
-                                    if (i == 20) { return 17806; } else { return 36360; }
+                                    if (i == 20) return 17806;
+                                    else return 36360;
                                 } else {
-                                    if (i == 22) { return 2147; } else { return 25381; }
+                                    if (i == 22) return 2147;
+                                    else return 25381;
                                 }
                             }
                         } else {
                             if (i <= 27) {
                                 if (i <= 25) {
-                                    if (i == 24) { return 9712; } else { return 61461; }
+                                    if (i == 24) return 9712;
+                                    else return 61461;
                                 } else {
-                                    if (i == 26) { return 5386; } else { return 2583; }
+                                    if (i == 26) return 5386;
+                                    else return 2583;
                                 }
                             } else {
                                 if (i <= 29) {
-                                    if (i == 28) { return 6078; } else { return 48646; }
+                                    if (i == 28) return 6078;
+                                    else return 48646;
                                 } else {
-                                    if (i == 30) { return 1684; } else { return 38135; }
+                                    if (i == 30) return 1684;
+                                    else return 38135;
                                 }
                             }
                         }
@@ -267,29 +288,37 @@ library PerlinNoise {
                         if (i <= 39) {
                             if (i <= 35) {
                                 if (i <= 33) {
-                                    if (i == 32) { return 63352; } else { return 30954; }
+                                    if (i == 32) return 63352;
+                                    else return 30954;
                                 } else {
-                                    if (i == 34) { return 59979; } else { return 19200; }
+                                    if (i == 34) return 59979;
+                                    else return 19200;
                                 }
                             } else {
                                 if (i <= 37) {
-                                    if (i == 36) { return 26; } else { return 6853; }
+                                    if (i == 36) return 26;
+                                    else return 6853;
                                 } else {
-                                    if (i == 38) { return 50494; } else { return 15966; }
+                                    if (i == 38) return 50494;
+                                    else return 15966;
                                 }
                             }
                         } else {
                             if (i <= 43) {
                                 if (i <= 41) {
-                                    if (i == 40) { return 24316; } else { return 64731; }
+                                    if (i == 40) return 24316;
+                                    else return 64731;
                                 } else {
-                                    if (i == 42) { return 56267; } else { return 52085; }
+                                    if (i == 42) return 56267;
+                                    else return 52085;
                                 }
                             } else {
                                 if (i <= 45) {
-                                    if (i == 44) { return 29987; } else { return 8971; }
+                                    if (i == 44) return 29987;
+                                    else return 8971;
                                 } else {
-                                    if (i == 46) { return 2848; } else { return 8249; }
+                                    if (i == 46) return 2848;
+                                    else return 8249;
                                 }
                             }
                         }
@@ -297,29 +326,37 @@ library PerlinNoise {
                         if (i <= 55) {
                             if (i <= 51) {
                                 if (i <= 49) {
-                                    if (i == 48) { return 14769; } else { return 45345; }
+                                    if (i == 48) return 14769;
+                                    else return 45345;
                                 } else {
-                                    if (i == 50) { return 8536; } else { return 22765; }
+                                    if (i == 50) return 8536;
+                                    else return 22765;
                                 }
                             } else {
                                 if (i <= 53) {
-                                    if (i == 52) { return 60821; } else { return 38200; }
+                                    if (i == 52) return 60821;
+                                    else return 38200;
                                 } else {
-                                    if (i == 54) { return 14423; } else { return 22446; }
+                                    if (i == 54) return 14423;
+                                    else return 22446;
                                 }
                             }
                         } else {
                             if (i <= 59) {
                                 if (i <= 57) {
-                                    if (i == 56) { return 44564; } else { return 5245; }
+                                    if (i == 56) return 44564;
+                                    else return 5245;
                                 } else {
-                                    if (i == 58) { return 32136; } else { return 34987; }
+                                    if (i == 58) return 32136;
+                                    else return 34987;
                                 }
                             } else {
                                 if (i <= 61) {
-                                    if (i == 60) { return 43944; } else { return 43076; }
+                                    if (i == 60) return 43944;
+                                    else return 43076;
                                 } else {
-                                    if (i == 62) { return 17583; } else { return 44874; }
+                                    if (i == 62) return 17583;
+                                    else return 44874;
                                 }
                             }
                         }
@@ -331,29 +368,37 @@ library PerlinNoise {
                         if (i <= 71) {
                             if (i <= 67) {
                                 if (i <= 65) {
-                                    if (i == 64) { return 19109; } else { return 42311; }
+                                    if (i == 64) return 19109;
+                                    else return 42311;
                                 } else {
-                                    if (i == 66) { return 18310; } else { return 34443; }
+                                    if (i == 66) return 18310;
+                                    else return 34443;
                                 }
                             } else {
                                 if (i <= 69) {
-                                    if (i == 68) { return 35632; } else { return 12315; }
+                                    if (i == 68) return 35632;
+                                    else return 12315;
                                 } else {
-                                    if (i == 70) { return 7078; } else { return 42573; }
+                                    if (i == 70) return 7078;
+                                    else return 42573;
                                 }
                             }
                         } else {
                             if (i <= 75) {
                                 if (i <= 73) {
-                                    if (i == 72) { return 19858; } else { return 37534; }
+                                    if (i == 72) return 19858;
+                                    else return 37534;
                                 } else {
-                                    if (i == 74) { return 40679; } else { return 59219; }
+                                    if (i == 74) return 40679;
+                                    else return 59219;
                                 }
                             } else {
                                 if (i <= 77) {
-                                    if (i == 76) { return 21359; } else { return 28645; }
+                                    if (i == 76) return 21359;
+                                    else return 28645;
                                 } else {
-                                    if (i == 78) { return 58746; } else { return 31292; }
+                                    if (i == 78) return 58746;
+                                    else return 31292;
                                 }
                             }
                         }
@@ -361,29 +406,37 @@ library PerlinNoise {
                         if (i <= 87) {
                             if (i <= 83) {
                                 if (i <= 81) {
-                                    if (i == 80) { return 15571; } else { return 54149; }
+                                    if (i == 80) return 15571;
+                                    else return 54149;
                                 } else {
-                                    if (i == 82) { return 34278; } else { return 59100; }
+                                    if (i == 82) return 34278;
+                                    else return 59100;
                                 }
                             } else {
                                 if (i <= 85) {
-                                    if (i == 84) { return 56425; } else { return 26972; }
+                                    if (i == 84) return 56425;
+                                    else return 26972;
                                 } else {
-                                    if (i == 86) { return 23593; } else { return 10551; }
+                                    if (i == 86) return 23593;
+                                    else return 10551;
                                 }
                             }
                         } else {
                             if (i <= 91) {
                                 if (i <= 89) {
-                                    if (i == 88) { return 14126; } else { return 12021; }
+                                    if (i == 88) return 14126;
+                                    else return 12021;
                                 } else {
-                                    if (i == 90) { return 62760; } else { return 10484; }
+                                    if (i == 90) return 62760;
+                                    else return 10484;
                                 }
                             } else {
                                 if (i <= 93) {
-                                    if (i == 92) { return 62566; } else { return 26255; }
+                                    if (i == 92) return 62566;
+                                    else return 26255;
                                 } else {
-                                    if (i == 94) { return 36662; } else { return 13889; }
+                                    if (i == 94) return 36662;
+                                    else return 13889;
                                 }
                             }
                         }
@@ -393,29 +446,37 @@ library PerlinNoise {
                         if (i <= 103) {
                             if (i <= 99) {
                                 if (i <= 97) {
-                                    if (i == 96) { return 16665; } else { return 6463; }
+                                    if (i == 96) return 16665;
+                                    else return 6463;
                                 } else {
-                                    if (i == 98) { return 16289; } else { return 41217; }
+                                    if (i == 98) return 16289;
+                                    else return 41217;
                                 }
                             } else {
                                 if (i <= 101) {
-                                    if (i == 100) { return 472; } else { return 55376; }
+                                    if (i == 100) return 472;
+                                    else return 55376;
                                 } else {
-                                    if (i == 102) { return 20553; } else { return 18897; }
+                                    if (i == 102) return 20553;
+                                    else return 18897;
                                 }
                             }
                         } else {
                             if (i <= 107) {
                                 if (i <= 105) {
-                                    if (i == 104) { return 53580; } else { return 19588; }
+                                    if (i == 104) return 53580;
+                                    else return 19588;
                                 } else {
-                                    if (i == 106) { return 33979; } else { return 48080; }
+                                    if (i == 106) return 33979;
+                                    else return 48080;
                                 }
                             } else {
                                 if (i <= 109) {
-                                    if (i == 108) { return 53337; } else { return 22802; }
+                                    if (i == 108) return 53337;
+                                    else return 22802;
                                 } else {
-                                    if (i == 110) { return 4777; } else { return 43464; }
+                                    if (i == 110) return 4777;
+                                    else return 43464;
                                 }
                             }
                         }
@@ -423,29 +484,37 @@ library PerlinNoise {
                         if (i <= 119) {
                             if (i <= 115) {
                                 if (i <= 113) {
-                                    if (i == 112) { return 51396; } else { return 50311; }
+                                    if (i == 112) return 51396;
+                                    else return 50311;
                                 } else {
-                                    if (i == 114) { return 34690; } else { return 33396; }
+                                    if (i == 114) return 34690;
+                                    else return 33396;
                                 }
                             } else {
                                 if (i <= 117) {
-                                    if (i == 116) { return 29884; } else { return 48287; }
+                                    if (i == 116) return 29884;
+                                    else return 48287;
                                 } else {
-                                    if (i == 118) { return 40790; } else { return 22180; }
+                                    if (i == 118) return 40790;
+                                    else return 22180;
                                 }
                             }
                         } else {
                             if (i <= 123) {
                                 if (i <= 121) {
-                                    if (i == 120) { return 42084; } else { return 25709; }
+                                    if (i == 120) return 42084;
+                                    else return 25709;
                                 } else {
-                                    if (i == 122) { return 28102; } else { return 50861; }
+                                    if (i == 122) return 28102;
+                                    else return 50861;
                                 }
                             } else {
                                 if (i <= 125) {
-                                    if (i == 124) { return 44474; } else { return 47619; }
+                                    if (i == 124) return 44474;
+                                    else return 47619;
                                 } else {
-                                    if (i == 126) { return 832; } else { return 16436; }
+                                    if (i == 126) return 832;
+                                    else return 16436;
                                 }
                             }
                         }
@@ -459,29 +528,37 @@ library PerlinNoise {
                         if (i <= 135) {
                             if (i <= 131) {
                                 if (i <= 129) {
-                                    if (i == 128) { return 13529; } else { return 55778; }
+                                    if (i == 128) return 13529;
+                                    else return 55778;
                                 } else {
-                                    if (i == 130) { return 58106; } else { return 64124; }
+                                    if (i == 130) return 58106;
+                                    else return 64124;
                                 }
                             } else {
                                 if (i <= 133) {
-                                    if (i == 132) { return 31867; } else { return 31493; }
+                                    if (i == 132) return 31867;
+                                    else return 31493;
                                 } else {
-                                    if (i == 134) { return 1482; } else { return 51750; }
+                                    if (i == 134) return 1482;
+                                    else return 51750;
                                 }
                             }
                         } else {
                             if (i <= 139) {
                                 if (i <= 137) {
-                                    if (i == 136) { return 9875; } else { return 37750; }
+                                    if (i == 136) return 9875;
+                                    else return 37750;
                                 } else {
-                                    if (i == 138) { return 30334; } else { return 32511; }
+                                    if (i == 138) return 30334;
+                                    else return 32511;
                                 }
                             } else {
                                 if (i <= 141) {
-                                    if (i == 140) { return 65362; } else { return 21077; }
+                                    if (i == 140) return 65362;
+                                    else return 21077;
                                 } else {
-                                    if (i == 142) { return 21972; } else { return 54479; }
+                                    if (i == 142) return 21972;
+                                    else return 54479;
                                 }
                             }
                         }
@@ -489,29 +566,37 @@ library PerlinNoise {
                         if (i <= 151) {
                             if (i <= 147) {
                                 if (i <= 145) {
-                                    if (i == 144) { return 53198; } else { return 52795; }
+                                    if (i == 144) return 53198;
+                                    else return 52795;
                                 } else {
-                                    if (i == 146) { return 15331; } else { return 58159; }
+                                    if (i == 146) return 15331;
+                                    else return 58159;
                                 }
                             } else {
                                 if (i <= 149) {
-                                    if (i == 148) { return 12048; } else { return 4154; }
+                                    if (i == 148) return 12048;
+                                    else return 4154;
                                 } else {
-                                    if (i == 150) { return 14865; } else { return 4534; }
+                                    if (i == 150) return 14865;
+                                    else return 4534;
                                 }
                             }
                         } else {
                             if (i <= 155) {
                                 if (i <= 153) {
-                                    if (i == 152) { return 46781; } else { return 48412; }
+                                    if (i == 152) return 46781;
+                                    else return 48412;
                                 } else {
-                                    if (i == 154) { return 7210; } else { return 10975; }
+                                    if (i == 154) return 7210;
+                                    else return 10975;
                                 }
                             } else {
                                 if (i <= 157) {
-                                    if (i == 156) { return 57271; } else { return 47018; }
+                                    if (i == 156) return 57271;
+                                    else return 47018;
                                 } else {
-                                    if (i == 158) { return 43733; } else { return 54647; }
+                                    if (i == 158) return 43733;
+                                    else return 54647;
                                 }
                             }
                         }
@@ -521,29 +606,37 @@ library PerlinNoise {
                         if (i <= 167) {
                             if (i <= 163) {
                                 if (i <= 161) {
-                                    if (i == 160) { return 30712; } else { return 63640; }
+                                    if (i == 160) return 30712;
+                                    else return 63640;
                                 } else {
-                                    if (i == 162) { return 38914; } else { return 556; }
+                                    if (i == 162) return 38914;
+                                    else return 556;
                                 }
                             } else {
                                 if (i <= 165) {
-                                    if (i == 164) { return 11418; } else { return 39587; }
+                                    if (i == 164) return 11418;
+                                    else return 39587;
                                 } else {
-                                    if (i == 166) { return 41798; } else { return 18141; }
+                                    if (i == 166) return 41798;
+                                    else return 18141;
                                 }
                             }
                         } else {
                             if (i <= 171) {
                                 if (i <= 169) {
-                                    if (i == 168) { return 56729; } else { return 39269; }
+                                    if (i == 168) return 56729;
+                                    else return 39269;
                                 } else {
-                                    if (i == 170) { return 26011; } else { return 39847; }
+                                    if (i == 170) return 26011;
+                                    else return 39847;
                                 }
                             } else {
                                 if (i <= 173) {
-                                    if (i == 172) { return 42795; } else { return 11180; }
+                                    if (i == 172) return 42795;
+                                    else return 11180;
                                 } else {
-                                    if (i == 174) { return 44041; } else { return 2433; }
+                                    if (i == 174) return 44041;
+                                    else return 2433;
                                 }
                             }
                         }
@@ -551,29 +644,37 @@ library PerlinNoise {
                         if (i <= 183) {
                             if (i <= 179) {
                                 if (i <= 177) {
-                                    if (i == 176) { return 33046; } else { return 5671; }
+                                    if (i == 176) return 33046;
+                                    else return 5671;
                                 } else {
-                                    if (i == 178) { return 10237; } else { return 64787; }
+                                    if (i == 178) return 10237;
+                                    else return 64787;
                                 }
                             } else {
                                 if (i <= 181) {
-                                    if (i == 180) { return 4962; } else { return 25196; }
+                                    if (i == 180) return 4962;
+                                    else return 25196;
                                 } else {
-                                    if (i == 182) { return 27758; } else { return 28239; }
+                                    if (i == 182) return 27758;
+                                    else return 28239;
                                 }
                             }
                         } else {
                             if (i <= 187) {
                                 if (i <= 185) {
-                                    if (i == 184) { return 20337; } else { return 29152; }
+                                    if (i == 184) return 20337;
+                                    else return 29152;
                                 } else {
-                                    if (i == 186) { return 57576; } else { return 59570; }
+                                    if (i == 186) return 57576;
+                                    else return 59570;
                                 }
                             } else {
                                 if (i <= 189) {
-                                    if (i == 188) { return 45753; } else { return 47472; }
+                                    if (i == 188) return 45753;
+                                    else return 47472;
                                 } else {
-                                    if (i == 190) { return 28776; } else { return 26842; }
+                                    if (i == 190) return 28776;
+                                    else return 26842;
                                 }
                             }
                         }
@@ -585,29 +686,37 @@ library PerlinNoise {
                         if (i <= 199) {
                             if (i <= 195) {
                                 if (i <= 193) {
-                                    if (i == 192) { return 56054; } else { return 63073; }
+                                    if (i == 192) return 56054;
+                                    else return 63073;
                                 } else {
-                                    if (i == 194) { return 25060; } else { return 58619; }
+                                    if (i == 194) return 25060;
+                                    else return 58619;
                                 }
                             } else {
                                 if (i <= 197) {
-                                    if (i == 196) { return 64290; } else { return 8946; }
+                                    if (i == 196) return 64290;
+                                    else return 8946;
                                 } else {
-                                    if (i == 198) { return 62145; } else { return 49646; }
+                                    if (i == 198) return 62145;
+                                    else return 49646;
                                 }
                             }
                         } else {
                             if (i <= 203) {
                                 if (i <= 201) {
-                                    if (i == 200) { return 61138; } else { return 53904; }
+                                    if (i == 200) return 61138;
+                                    else return 53904;
                                 } else {
-                                    if (i == 202) { return 36876; } else { return 3263; }
+                                    if (i == 202) return 36876;
+                                    else return 3263;
                                 }
                             } else {
                                 if (i <= 205) {
-                                    if (i == 204) { return 49075; } else { return 45986; }
+                                    if (i == 204) return 49075;
+                                    else return 45986;
                                 } else {
-                                    if (i == 206) { return 41713; } else { return 61777; }
+                                    if (i == 206) return 41713;
+                                    else return 61777;
                                 }
                             }
                         }
@@ -615,29 +724,37 @@ library PerlinNoise {
                         if (i <= 215) {
                             if (i <= 211) {
                                 if (i <= 209) {
-                                    if (i == 208) { return 20787; } else { return 13201; }
+                                    if (i == 208) return 20787;
+                                    else return 13201;
                                 } else {
-                                    if (i == 210) { return 37355; } else { return 60409; }
+                                    if (i == 210) return 37355;
+                                    else return 60409;
                                 }
                             } else {
                                 if (i <= 213) {
-                                    if (i == 212) { return 63758; } else { return 3823; }
+                                    if (i == 212) return 63758;
+                                    else return 3823;
                                 } else {
-                                    if (i == 214) { return 61291; } else { return 27441; }
+                                    if (i == 214) return 61291;
+                                    else return 27441;
                                 }
                             }
                         } else {
                             if (i <= 219) {
                                 if (i <= 217) {
-                                    if (i == 216) { return 12736; } else { return 49366; }
+                                    if (i == 216) return 12736;
+                                    else return 49366;
                                 } else {
-                                    if (i == 218) { return 54815; } else { return 8117; }
+                                    if (i == 218) return 54815;
+                                    else return 8117;
                                 }
                             } else {
                                 if (i <= 221) {
-                                    if (i == 220) { return 46535; } else { return 51050; }
+                                    if (i == 220) return 46535;
+                                    else return 51050;
                                 } else {
-                                    if (i == 222) { return 27293; } else { return 40376; }
+                                    if (i == 222) return 27293;
+                                    else return 40376;
                                 }
                             }
                         }
@@ -647,29 +764,37 @@ library PerlinNoise {
                         if (i <= 231) {
                             if (i <= 227) {
                                 if (i <= 225) {
-                                    if (i == 224) { return 47188; } else { return 21708; }
+                                    if (i == 224) return 47188;
+                                    else return 21708;
                                 } else {
-                                    if (i == 226) { return 52400; } else { return 45171; }
+                                    if (i == 226) return 52400;
+                                    else return 45171;
                                 }
                             } else {
                                 if (i <= 229) {
-                                    if (i == 228) { return 29561; } else { return 31026; }
+                                    if (i == 228) return 29561;
+                                    else return 31026;
                                 } else {
-                                    if (i == 230) { return 12845; } else { return 11647; }
+                                    if (i == 230) return 12845;
+                                    else return 11647;
                                 }
                             }
                         } else {
                             if (i <= 235) {
                                 if (i <= 233) {
-                                    if (i == 232) { return 32516; } else { return 1174; }
+                                    if (i == 232) return 32516;
+                                    else return 1174;
                                 } else {
-                                    if (i == 234) { return 38654; } else { return 65162; }
+                                    if (i == 234) return 38654;
+                                    else return 65162;
                                 }
                             } else {
                                 if (i <= 237) {
-                                    if (i == 236) { return 35564; } else { return 60621; }
+                                    if (i == 236) return 35564;
+                                    else return 60621;
                                 } else {
-                                    if (i == 238) { return 52573; } else { return 24030; }
+                                    if (i == 238) return 52573;
+                                    else return 24030;
                                 }
                             }
                         }
@@ -677,29 +802,37 @@ library PerlinNoise {
                         if (i <= 247) {
                             if (i <= 243) {
                                 if (i <= 241) {
-                                    if (i == 240) { return 56946; } else { return 29251; }
+                                    if (i == 240) return 56946;
+                                    else return 29251;
                                 } else {
-                                    if (i == 242) { return 17181; } else { return 7448; }
+                                    if (i == 242) return 17181;
+                                    else return 7448;
                                 }
                             } else {
                                 if (i <= 245) {
-                                    if (i == 244) { return 6216; } else { return 18675; }
+                                    if (i == 244) return 6216;
+                                    else return 18675;
                                 } else {
-                                    if (i == 246) { return 62349; } else { return 36224; }
+                                    if (i == 246) return 62349;
+                                    else return 36224;
                                 }
                             }
                         } else {
                             if (i <= 251) {
                                 if (i <= 249) {
-                                    if (i == 248) { return 32963; } else { return 49998; }
+                                    if (i == 248) return 32963;
+                                    else return 49998;
                                 } else {
-                                    if (i == 250) { return 20034; } else { return 17111; }
+                                    if (i == 250) return 20034;
+                                    else return 17111;
                                 }
                             } else {
                                 if (i <= 253) {
-                                    if (i == 252) { return 55101; } else { return 15772; }
+                                    if (i == 252) return 55101;
+                                    else return 15772;
                                 } else {
-                                    if (i == 254) { return 40116; } else { return 46231; }
+                                    if (i == 254) return 40116;
+                                    else return 46231;
                                 }
                             }
                         }
@@ -707,7 +840,6 @@ library PerlinNoise {
                 }
             }
         }
-
     }
 
     /**
@@ -731,29 +863,37 @@ library PerlinNoise {
                         if (i <= 7) {
                             if (i <= 3) {
                                 if (i <= 1) {
-                                    if (i == 0) { return 0; } else { return 0; }
+                                    if (i == 0) return 0;
+                                    else return 0;
                                 } else {
-                                    if (i == 2) { return 0; } else { return 0; }
+                                    if (i == 2) return 0;
+                                    else return 0;
                                 }
                             } else {
                                 if (i <= 5) {
-                                    if (i == 4) { return 0; } else { return 0; }
+                                    if (i == 4) return 0;
+                                    else return 0;
                                 } else {
-                                    if (i == 6) { return 0; } else { return 1; }
+                                    if (i == 6) return 0;
+                                    else return 1;
                                 }
                             }
                         } else {
                             if (i <= 11) {
                                 if (i <= 9) {
-                                    if (i == 8) { return 4097; } else { return 4098; }
+                                    if (i == 8) return 4097;
+                                    else return 4098;
                                 } else {
-                                    if (i == 10) { return 8195; } else { return 12291; }
+                                    if (i == 10) return 8195;
+                                    else return 12291;
                                 }
                             } else {
                                 if (i <= 13) {
-                                    if (i == 12) { return 12292; } else { return 16390; }
+                                    if (i == 12) return 12292;
+                                    else return 16390;
                                 } else {
-                                    if (i == 14) { return 24583; } else { return 28681; }
+                                    if (i == 14) return 24583;
+                                    else return 28681;
                                 }
                             }
                         }
@@ -761,29 +901,37 @@ library PerlinNoise {
                         if (i <= 23) {
                             if (i <= 19) {
                                 if (i <= 17) {
-                                    if (i == 16) { return 36874; } else { return 40972; }
+                                    if (i == 16) return 36874;
+                                    else return 40972;
                                 } else {
-                                    if (i == 18) { return 49166; } else { return 57361; }
+                                    if (i == 18) return 49166;
+                                    else return 57361;
                                 }
                             } else {
                                 if (i <= 21) {
-                                    if (i == 20) { return 69651; } else { return 77846; }
+                                    if (i == 20) return 69651;
+                                    else return 77846;
                                 } else {
-                                    if (i == 22) { return 90137; } else { return 102429; }
+                                    if (i == 22) return 90137;
+                                    else return 102429;
                                 }
                             }
                         } else {
                             if (i <= 27) {
                                 if (i <= 25) {
-                                    if (i == 24) { return 118816; } else { return 131108; }
+                                    if (i == 24) return 118816;
+                                    else return 131108;
                                 } else {
-                                    if (i == 26) { return 147496; } else { return 163885; }
+                                    if (i == 26) return 147496;
+                                    else return 163885;
                                 }
                             } else {
                                 if (i <= 29) {
-                                    if (i == 28) { return 184369; } else { return 200758; }
+                                    if (i == 28) return 184369;
+                                    else return 200758;
                                 } else {
-                                    if (i == 30) { return 221244; } else { return 245825; }
+                                    if (i == 30) return 221244;
+                                    else return 245825;
                                 }
                             }
                         }
@@ -793,29 +941,37 @@ library PerlinNoise {
                         if (i <= 39) {
                             if (i <= 35) {
                                 if (i <= 33) {
-                                    if (i == 32) { return 266311; } else { return 290893; }
+                                    if (i == 32) return 266311;
+                                    else return 290893;
                                 } else {
-                                    if (i == 34) { return 315476; } else { return 344155; }
+                                    if (i == 34) return 315476;
+                                    else return 344155;
                                 }
                             } else {
                                 if (i <= 37) {
-                                    if (i == 36) { return 372834; } else { return 401513; }
+                                    if (i == 36) return 372834;
+                                    else return 401513;
                                 } else {
-                                    if (i == 38) { return 430193; } else { return 462969; }
+                                    if (i == 38) return 430193;
+                                    else return 462969;
                                 }
                             }
                         } else {
                             if (i <= 43) {
                                 if (i <= 41) {
-                                    if (i == 40) { return 495746; } else { return 532619; }
+                                    if (i == 40) return 495746;
+                                    else return 532619;
                                 } else {
-                                    if (i == 42) { return 569492; } else { return 606366; }
+                                    if (i == 42) return 569492;
+                                    else return 606366;
                                 }
                             } else {
                                 if (i <= 45) {
-                                    if (i == 44) { return 647335; } else { return 684210; }
+                                    if (i == 44) return 647335;
+                                    else return 684210;
                                 } else {
-                                    if (i == 46) { return 729276; } else { return 770247; }
+                                    if (i == 46) return 729276;
+                                    else return 770247;
                                 }
                             }
                         }
@@ -823,29 +979,37 @@ library PerlinNoise {
                         if (i <= 55) {
                             if (i <= 51) {
                                 if (i <= 49) {
-                                    if (i == 48) { return 815315; } else { return 864478; }
+                                    if (i == 48) return 815315;
+                                    else return 864478;
                                 } else {
-                                    if (i == 50) { return 909546; } else { return 958711; }
+                                    if (i == 50) return 909546;
+                                    else return 958711;
                                 }
                             } else {
                                 if (i <= 53) {
-                                    if (i == 52) { return 1011971; } else { return 1061137; }
+                                    if (i == 52) return 1011971;
+                                    else return 1061137;
                                 } else {
-                                    if (i == 54) { return 1118494; } else { return 1171756; }
+                                    if (i == 54) return 1118494;
+                                    else return 1171756;
                                 }
                             }
                         } else {
                             if (i <= 59) {
                                 if (i <= 57) {
-                                    if (i == 56) { return 1229114; } else { return 1286473; }
+                                    if (i == 56) return 1229114;
+                                    else return 1286473;
                                 } else {
-                                    if (i == 58) { return 1347928; } else { return 1409383; }
+                                    if (i == 58) return 1347928;
+                                    else return 1409383;
                                 }
                             } else {
                                 if (i <= 61) {
-                                    if (i == 60) { return 1470838; } else { return 1532294; }
+                                    if (i == 60) return 1470838;
+                                    else return 1532294;
                                 } else {
-                                    if (i == 62) { return 1597847; } else { return 1667496; }
+                                    if (i == 62) return 1597847;
+                                    else return 1667496;
                                 }
                             }
                         }
@@ -857,29 +1021,37 @@ library PerlinNoise {
                         if (i <= 71) {
                             if (i <= 67) {
                                 if (i <= 65) {
-                                    if (i == 64) { return 1737145; } else { return 1806794; }
+                                    if (i == 64) return 1737145;
+                                    else return 1806794;
                                 } else {
-                                    if (i == 66) { return 1876444; } else { return 1950190; }
+                                    if (i == 66) return 1876444;
+                                    else return 1950190;
                                 }
                             } else {
                                 if (i <= 69) {
-                                    if (i == 68) { return 2023936; } else { return 2097683; }
+                                    if (i == 68) return 2023936;
+                                    else return 2097683;
                                 } else {
-                                    if (i == 70) { return 2175526; } else { return 2253370; }
+                                    if (i == 70) return 2175526;
+                                    else return 2253370;
                                 }
                             }
                         } else {
                             if (i <= 75) {
                                 if (i <= 73) {
-                                    if (i == 72) { return 2335309; } else { return 2413153; }
+                                    if (i == 72) return 2335309;
+                                    else return 2413153;
                                 } else {
-                                    if (i == 74) { return 2495094; } else { return 2581131; }
+                                    if (i == 74) return 2495094;
+                                    else return 2581131;
                                 }
                             } else {
                                 if (i <= 77) {
-                                    if (i == 76) { return 2667168; } else { return 2753205; }
+                                    if (i == 76) return 2667168;
+                                    else return 2753205;
                                 } else {
-                                    if (i == 78) { return 2839243; } else { return 2929377; }
+                                    if (i == 78) return 2839243;
+                                    else return 2929377;
                                 }
                             }
                         }
@@ -887,29 +1059,37 @@ library PerlinNoise {
                         if (i <= 87) {
                             if (i <= 83) {
                                 if (i <= 81) {
-                                    if (i == 80) { return 3019511; } else { return 3109646; }
+                                    if (i == 80) return 3019511;
+                                    else return 3109646;
                                 } else {
-                                    if (i == 82) { return 3203877; } else { return 3298108; }
+                                    if (i == 82) return 3203877;
+                                    else return 3298108;
                                 }
                             } else {
                                 if (i <= 85) {
-                                    if (i == 84) { return 3392339; } else { return 3486571; }
+                                    if (i == 84) return 3392339;
+                                    else return 3486571;
                                 } else {
-                                    if (i == 86) { return 3584899; } else { return 3683227; }
+                                    if (i == 86) return 3584899;
+                                    else return 3683227;
                                 }
                             }
                         } else {
                             if (i <= 91) {
                                 if (i <= 89) {
-                                    if (i == 88) { return 3781556; } else { return 3883981; }
+                                    if (i == 88) return 3781556;
+                                    else return 3883981;
                                 } else {
-                                    if (i == 90) { return 3986406; } else { return 4088831; }
+                                    if (i == 90) return 3986406;
+                                    else return 4088831;
                                 }
                             } else {
                                 if (i <= 93) {
-                                    if (i == 92) { return 4191257; } else { return 4297778; }
+                                    if (i == 92) return 4191257;
+                                    else return 4297778;
                                 } else {
-                                    if (i == 94) { return 4400204; } else { return 4506727; }
+                                    if (i == 94) return 4400204;
+                                    else return 4506727;
                                 }
                             }
                         }
@@ -919,29 +1099,37 @@ library PerlinNoise {
                         if (i <= 103) {
                             if (i <= 99) {
                                 if (i <= 97) {
-                                    if (i == 96) { return 4617345; } else { return 4723868; }
+                                    if (i == 96) return 4617345;
+                                    else return 4723868;
                                 } else {
-                                    if (i == 98) { return 4834487; } else { return 4945106; }
+                                    if (i == 98) return 4834487;
+                                    else return 4945106;
                                 }
                             } else {
                                 if (i <= 101) {
-                                    if (i == 100) { return 5055725; } else { return 5166345; }
+                                    if (i == 100) return 5055725;
+                                    else return 5166345;
                                 } else {
-                                    if (i == 102) { return 5281060; } else { return 5391680; }
+                                    if (i == 102) return 5281060;
+                                    else return 5391680;
                                 }
                             }
                         } else {
                             if (i <= 107) {
                                 if (i <= 105) {
-                                    if (i == 104) { return 5506396; } else { return 5621112; }
+                                    if (i == 104) return 5506396;
+                                    else return 5621112;
                                 } else {
-                                    if (i == 106) { return 5735829; } else { return 5854641; }
+                                    if (i == 106) return 5735829;
+                                    else return 5854641;
                                 }
                             } else {
                                 if (i <= 109) {
-                                    if (i == 108) { return 5969358; } else { return 6088171; }
+                                    if (i == 108) return 5969358;
+                                    else return 6088171;
                                 } else {
-                                    if (i == 110) { return 6206983; } else { return 6321700; }
+                                    if (i == 110) return 6206983;
+                                    else return 6321700;
                                 }
                             }
                         }
@@ -949,29 +1137,37 @@ library PerlinNoise {
                         if (i <= 119) {
                             if (i <= 115) {
                                 if (i <= 113) {
-                                    if (i == 112) { return 6440514; } else { return 6563423; }
+                                    if (i == 112) return 6440514;
+                                    else return 6563423;
                                 } else {
-                                    if (i == 114) { return 6682236; } else { return 6801050; }
+                                    if (i == 114) return 6682236;
+                                    else return 6801050;
                                 }
                             } else {
                                 if (i <= 117) {
-                                    if (i == 116) { return 6923959; } else { return 7042773; }
+                                    if (i == 116) return 6923959;
+                                    else return 7042773;
                                 } else {
-                                    if (i == 118) { return 7165682; } else { return 7284496; }
+                                    if (i == 118) return 7165682;
+                                    else return 7284496;
                                 }
                             }
                         } else {
                             if (i <= 123) {
                                 if (i <= 121) {
-                                    if (i == 120) { return 7407406; } else { return 7530316; }
+                                    if (i == 120) return 7407406;
+                                    else return 7530316;
                                 } else {
-                                    if (i == 122) { return 7653226; } else { return 7776136; }
+                                    if (i == 122) return 7653226;
+                                    else return 7776136;
                                 }
                             } else {
                                 if (i <= 125) {
-                                    if (i == 124) { return 7899046; } else { return 8021956; }
+                                    if (i == 124) return 7899046;
+                                    else return 8021956;
                                 } else {
-                                    if (i == 126) { return 8144866; } else { return 8267776; }
+                                    if (i == 126) return 8144866;
+                                    else return 8267776;
                                 }
                             }
                         }
@@ -985,29 +1181,37 @@ library PerlinNoise {
                         if (i <= 135) {
                             if (i <= 131) {
                                 if (i <= 129) {
-                                    if (i == 128) { return 8390685; } else { return 8509499; }
+                                    if (i == 128) return 8390685;
+                                    else return 8509499;
                                 } else {
-                                    if (i == 130) { return 8632409; } else { return 8755319; }
+                                    if (i == 130) return 8632409;
+                                    else return 8755319;
                                 }
                             } else {
                                 if (i <= 133) {
-                                    if (i == 132) { return 8878229; } else { return 9001139; }
+                                    if (i == 132) return 8878229;
+                                    else return 9001139;
                                 } else {
-                                    if (i == 134) { return 9124049; } else { return 9246959; }
+                                    if (i == 134) return 9124049;
+                                    else return 9246959;
                                 }
                             }
                         } else {
                             if (i <= 139) {
                                 if (i <= 137) {
-                                    if (i == 136) { return 9369869; } else { return 9492778; }
+                                    if (i == 136) return 9369869;
+                                    else return 9492778;
                                 } else {
-                                    if (i == 138) { return 9611592; } else { return 9734501; }
+                                    if (i == 138) return 9611592;
+                                    else return 9734501;
                                 }
                             } else {
                                 if (i <= 141) {
-                                    if (i == 140) { return 9853315; } else { return 9976224; }
+                                    if (i == 140) return 9853315;
+                                    else return 9976224;
                                 } else {
-                                    if (i == 142) { return 10095037; } else { return 10213851; }
+                                    if (i == 142) return 10095037;
+                                    else return 10213851;
                                 }
                             }
                         }
@@ -1015,29 +1219,37 @@ library PerlinNoise {
                         if (i <= 151) {
                             if (i <= 147) {
                                 if (i <= 145) {
-                                    if (i == 144) { return 10336760; } else { return 10455572; }
+                                    if (i == 144) return 10336760;
+                                    else return 10455572;
                                 } else {
-                                    if (i == 146) { return 10570289; } else { return 10689102; }
+                                    if (i == 146) return 10570289;
+                                    else return 10689102;
                                 }
                             } else {
                                 if (i <= 149) {
-                                    if (i == 148) { return 10807914; } else { return 10922631; }
+                                    if (i == 148) return 10807914;
+                                    else return 10922631;
                                 } else {
-                                    if (i == 150) { return 11041443; } else { return 11156159; }
+                                    if (i == 150) return 11041443;
+                                    else return 11156159;
                                 }
                             }
                         } else {
                             if (i <= 155) {
                                 if (i <= 153) {
-                                    if (i == 152) { return 11270875; } else { return 11385590; }
+                                    if (i == 152) return 11270875;
+                                    else return 11385590;
                                 } else {
-                                    if (i == 154) { return 11496210; } else { return 11610925; }
+                                    if (i == 154) return 11496210;
+                                    else return 11610925;
                                 }
                             } else {
                                 if (i <= 157) {
-                                    if (i == 156) { return 11721544; } else { return 11832163; }
+                                    if (i == 156) return 11721544;
+                                    else return 11832163;
                                 } else {
-                                    if (i == 158) { return 11942782; } else { return 12053400; }
+                                    if (i == 158) return 11942782;
+                                    else return 12053400;
                                 }
                             }
                         }
@@ -1047,29 +1259,37 @@ library PerlinNoise {
                         if (i <= 167) {
                             if (i <= 163) {
                                 if (i <= 161) {
-                                    if (i == 160) { return 12159923; } else { return 12270541; }
+                                    if (i == 160) return 12159923;
+                                    else return 12270541;
                                 } else {
-                                    if (i == 162) { return 12377062; } else { return 12479488; }
+                                    if (i == 162) return 12377062;
+                                    else return 12479488;
                                 }
                             } else {
                                 if (i <= 165) {
-                                    if (i == 164) { return 12586009; } else { return 12688434; }
+                                    if (i == 164) return 12586009;
+                                    else return 12688434;
                                 } else {
-                                    if (i == 166) { return 12790859; } else { return 12893284; }
+                                    if (i == 166) return 12790859;
+                                    else return 12893284;
                                 }
                             }
                         } else {
                             if (i <= 171) {
                                 if (i <= 169) {
-                                    if (i == 168) { return 12995708; } else { return 13094036; }
+                                    if (i == 168) return 12995708;
+                                    else return 13094036;
                                 } else {
-                                    if (i == 170) { return 13192364; } else { return 13290691; }
+                                    if (i == 170) return 13192364;
+                                    else return 13290691;
                                 }
                             } else {
                                 if (i <= 173) {
-                                    if (i == 172) { return 13384922; } else { return 13479153; }
+                                    if (i == 172) return 13384922;
+                                    else return 13479153;
                                 } else {
-                                    if (i == 174) { return 13573384; } else { return 13667614; }
+                                    if (i == 174) return 13573384;
+                                    else return 13667614;
                                 }
                             }
                         }
@@ -1077,29 +1297,37 @@ library PerlinNoise {
                         if (i <= 183) {
                             if (i <= 179) {
                                 if (i <= 177) {
-                                    if (i == 176) { return 13757748; } else { return 13847882; }
+                                    if (i == 176) return 13757748;
+                                    else return 13847882;
                                 } else {
-                                    if (i == 178) { return 13938015; } else { return 14024052; }
+                                    if (i == 178) return 13938015;
+                                    else return 14024052;
                                 }
                             } else {
                                 if (i <= 181) {
-                                    if (i == 180) { return 14110089; } else { return 14196126; }
+                                    if (i == 180) return 14110089;
+                                    else return 14196126;
                                 } else {
-                                    if (i == 182) { return 14282162; } else { return 14364101; }
+                                    if (i == 182) return 14282162;
+                                    else return 14364101;
                                 }
                             }
                         } else {
                             if (i <= 187) {
                                 if (i <= 185) {
-                                    if (i == 184) { return 14441945; } else { return 14523884; }
+                                    if (i == 184) return 14441945;
+                                    else return 14523884;
                                 } else {
-                                    if (i == 186) { return 14601727; } else { return 14679569; }
+                                    if (i == 186) return 14601727;
+                                    else return 14679569;
                                 }
                             } else {
                                 if (i <= 189) {
-                                    if (i == 188) { return 14753315; } else { return 14827061; }
+                                    if (i == 188) return 14753315;
+                                    else return 14827061;
                                 } else {
-                                    if (i == 190) { return 14900806; } else { return 14970456; }
+                                    if (i == 190) return 14900806;
+                                    else return 14970456;
                                 }
                             }
                         }
@@ -1111,29 +1339,37 @@ library PerlinNoise {
                         if (i <= 199) {
                             if (i <= 195) {
                                 if (i <= 193) {
-                                    if (i == 192) { return 15044200; } else { return 15109753; }
+                                    if (i == 192) return 15044200;
+                                    else return 15109753;
                                 } else {
-                                    if (i == 194) { return 15179401; } else { return 15244952; }
+                                    if (i == 194) return 15179401;
+                                    else return 15244952;
                                 }
                             } else {
                                 if (i <= 197) {
-                                    if (i == 196) { return 15306407; } else { return 15367862; }
+                                    if (i == 196) return 15306407;
+                                    else return 15367862;
                                 } else {
-                                    if (i == 198) { return 15429317; } else { return 15490771; }
+                                    if (i == 198) return 15429317;
+                                    else return 15490771;
                                 }
                             }
                         } else {
                             if (i <= 203) {
                                 if (i <= 201) {
-                                    if (i == 200) { return 15548129; } else { return 15605486; }
+                                    if (i == 200) return 15548129;
+                                    else return 15605486;
                                 } else {
-                                    if (i == 202) { return 15658748; } else { return 15716104; }
+                                    if (i == 202) return 15658748;
+                                    else return 15716104;
                                 }
                             } else {
                                 if (i <= 205) {
-                                    if (i == 204) { return 15765269; } else { return 15818529; }
+                                    if (i == 204) return 15765269;
+                                    else return 15818529;
                                 } else {
-                                    if (i == 206) { return 15867692; } else { return 15912760; }
+                                    if (i == 206) return 15867692;
+                                    else return 15912760;
                                 }
                             }
                         }
@@ -1141,29 +1377,37 @@ library PerlinNoise {
                         if (i <= 215) {
                             if (i <= 211) {
                                 if (i <= 209) {
-                                    if (i == 208) { return 15961923; } else { return 16006989; }
+                                    if (i == 208) return 15961923;
+                                    else return 16006989;
                                 } else {
-                                    if (i == 210) { return 16047960; } else { return 16093025; }
+                                    if (i == 210) return 16047960;
+                                    else return 16093025;
                                 }
                             } else {
                                 if (i <= 213) {
-                                    if (i == 212) { return 16129899; } else { return 16170868; }
+                                    if (i == 212) return 16129899;
+                                    else return 16170868;
                                 } else {
-                                    if (i == 214) { return 16207741; } else { return 16244614; }
+                                    if (i == 214) return 16207741;
+                                    else return 16244614;
                                 }
                             }
                         } else {
                             if (i <= 219) {
                                 if (i <= 217) {
-                                    if (i == 216) { return 16281486; } else { return 16314262; }
+                                    if (i == 216) return 16281486;
+                                    else return 16314262;
                                 } else {
-                                    if (i == 218) { return 16347037; } else { return 16375716; }
+                                    if (i == 218) return 16347037;
+                                    else return 16375716;
                                 }
                             } else {
                                 if (i <= 221) {
-                                    if (i == 220) { return 16404395; } else { return 16433074; }
+                                    if (i == 220) return 16404395;
+                                    else return 16433074;
                                 } else {
-                                    if (i == 222) { return 16461752; } else { return 16486334; }
+                                    if (i == 222) return 16461752;
+                                    else return 16486334;
                                 }
                             }
                         }
@@ -1173,29 +1417,37 @@ library PerlinNoise {
                         if (i <= 231) {
                             if (i <= 227) {
                                 if (i <= 225) {
-                                    if (i == 224) { return 16510915; } else { return 16531401; }
+                                    if (i == 224) return 16510915;
+                                    else return 16531401;
                                 } else {
-                                    if (i == 226) { return 16555982; } else { return 16576466; }
+                                    if (i == 226) return 16555982;
+                                    else return 16576466;
                                 }
                             } else {
                                 if (i <= 229) {
-                                    if (i == 228) { return 16592855; } else { return 16613339; }
+                                    if (i == 228) return 16592855;
+                                    else return 16613339;
                                 } else {
-                                    if (i == 230) { return 16629727; } else { return 16646114; }
+                                    if (i == 230) return 16629727;
+                                    else return 16646114;
                                 }
                             }
                         } else {
                             if (i <= 235) {
                                 if (i <= 233) {
-                                    if (i == 232) { return 16658406; } else { return 16674793; }
+                                    if (i == 232) return 16658406;
+                                    else return 16674793;
                                 } else {
-                                    if (i == 234) { return 16687084; } else { return 16699374; }
+                                    if (i == 234) return 16687084;
+                                    else return 16699374;
                                 }
                             } else {
                                 if (i <= 237) {
-                                    if (i == 236) { return 16707569; } else { return 16719859; }
+                                    if (i == 236) return 16707569;
+                                    else return 16719859;
                                 } else {
-                                    if (i == 238) { return 16728053; } else { return 16736246; }
+                                    if (i == 238) return 16728053;
+                                    else return 16736246;
                                 }
                             }
                         }
@@ -1203,29 +1455,37 @@ library PerlinNoise {
                         if (i <= 247) {
                             if (i <= 243) {
                                 if (i <= 241) {
-                                    if (i == 240) { return 16740344; } else { return 16748537; }
+                                    if (i == 240) return 16740344;
+                                    else return 16748537;
                                 } else {
-                                    if (i == 242) { return 16752635; } else { return 16760828; }
+                                    if (i == 242) return 16752635;
+                                    else return 16760828;
                                 }
                             } else {
                                 if (i <= 245) {
-                                    if (i == 244) { return 16764924; } else { return 16764925; }
+                                    if (i == 244) return 16764924;
+                                    else return 16764925;
                                 } else {
-                                    if (i == 246) { return 16769022; } else { return 16773118; }
+                                    if (i == 246) return 16769022;
+                                    else return 16773118;
                                 }
                             }
                         } else {
                             if (i <= 251) {
                                 if (i <= 249) {
-                                    if (i == 248) { return 16773119; } else { return 16777215; }
+                                    if (i == 248) return 16773119;
+                                    else return 16777215;
                                 } else {
-                                    if (i == 250) { return 16777215; } else { return 16777215; }
+                                    if (i == 250) return 16777215;
+                                    else return 16777215;
                                 }
                             } else {
                                 if (i <= 253) {
-                                    if (i == 252) { return 16777215; } else { return 16777215; }
+                                    if (i == 252) return 16777215;
+                                    else return 16777215;
                                 } else {
-                                    if (i == 254) { return 16777215; } else { return 16777215; }
+                                    if (i == 254) return 16777215;
+                                    else return 16777215;
                                 }
                             }
                         }

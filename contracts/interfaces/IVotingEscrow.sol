@@ -134,18 +134,10 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
         address _freeManagedReward
     );
     event DepositManaged(
-        address indexed _owner,
-        uint256 indexed _tokenId,
-        uint256 indexed _mTokenId,
-        uint256 _weight,
-        uint256 _ts
+        address indexed _owner, uint256 indexed _tokenId, uint256 indexed _mTokenId, uint256 _weight, uint256 _ts
     );
     event WithdrawManaged(
-        address indexed _owner,
-        uint256 indexed _tokenId,
-        uint256 indexed _mTokenId,
-        uint256 _weight,
-        uint256 _ts
+        address indexed _owner, uint256 indexed _tokenId, uint256 indexed _mTokenId, uint256 _weight, uint256 _ts
     );
     event SetAllowedManager(address indexed _allowedManager);
 

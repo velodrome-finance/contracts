@@ -98,18 +98,15 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
         // In addition to the current interfaceId, also support previous version of the interfaceId that did not
         // include the castVoteWithReasonAndParams() function as standard
-        return
-            interfaceId ==
-            (type(IVetoGovernor).interfaceId ^
-                type(IERC6372).interfaceId ^
-                this.cancel.selector ^
-                this.castVoteWithReasonAndParams.selector ^
-                this.castVoteWithReasonAndParamsBySig.selector ^
-                this.getVotesWithParams.selector) ||
-            // Previous interface for backwards compatibility
-            interfaceId == (type(IVetoGovernor).interfaceId ^ type(IERC6372).interfaceId ^ this.cancel.selector) ||
-            interfaceId == type(IERC1155Receiver).interfaceId ||
-            super.supportsInterface(interfaceId);
+        return interfaceId
+            == (
+                type(IVetoGovernor).interfaceId ^ type(IERC6372).interfaceId ^ this.cancel.selector
+                    ^ this.castVoteWithReasonAndParams.selector ^ this.castVoteWithReasonAndParamsBySig.selector
+                    ^ this.getVotesWithParams.selector
+            )
+        // Previous interface for backwards compatibility
+        || interfaceId == (type(IVetoGovernor).interfaceId ^ type(IERC6372).interfaceId ^ this.cancel.selector)
+            || interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
@@ -226,25 +223,20 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     /**
      * @dev Get the voting weight of `tokenId`, owned by `account` at a specific `timepoint`, for a vote as described by `params`.
      */
-    function _getVotes(
-        address account,
-        uint256 tokenId,
-        uint256 timepoint,
-        bytes memory params
-    ) internal view virtual returns (uint256);
+    function _getVotes(address account, uint256 tokenId, uint256 timepoint, bytes memory params)
+        internal
+        view
+        virtual
+        returns (uint256);
 
     /**
      * @dev Register a vote for `proposalId` by `tokenId` with a given `support`, voting `weight` and voting `params`.
      *
      * Note: Support is generic and can represent various things depending on the voting system used.
      */
-    function _countVote(
-        uint256 proposalId,
-        uint256 tokenId,
-        uint8 support,
-        uint256 weight,
-        bytes memory params
-    ) internal virtual;
+    function _countVote(uint256 proposalId, uint256 tokenId, uint8 support, uint256 weight, bytes memory params)
+        internal
+        virtual;
 
     /**
      * @dev Default additional encoded parameters used by castVote methods that don't include them
@@ -355,7 +347,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      * @dev Internal execution mechanism. Can be overridden to implement different execution mechanism
      */
     function _execute(
-        uint256 /* proposalId */,
+        uint256, /* proposalId */
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
@@ -373,9 +365,9 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      * @dev Hook before execution is triggered.
      */
     function _beforeExecute(
-        uint256 /* proposalId */,
+        uint256, /* proposalId */
         address[] memory targets,
-        uint256[] memory /* values */,
+        uint256[] memory, /* values */
         bytes[] memory calldatas,
         bytes32 /*descriptionHash*/
     ) internal virtual {
@@ -393,10 +385,10 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      * @dev Hook after execution is triggered.
      */
     function _afterExecute(
-        uint256 /* proposalId */,
-        address[] memory /* targets */,
-        uint256[] memory /* values */,
-        bytes[] memory /* calldatas */,
+        uint256, /* proposalId */
+        address[] memory, /* targets */
+        uint256[] memory, /* values */
+        bytes[] memory, /* calldatas */
         bytes32 /*descriptionHash*/
     ) internal virtual {
         if (_executor() != address(this)) {
@@ -416,10 +408,8 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
         ProposalState status = state(proposalId);
 
         require(
-            status != ProposalState.Vetoed &&
-                status != ProposalState.Canceled &&
-                status != ProposalState.Expired &&
-                status != ProposalState.Executed,
+            status != ProposalState.Vetoed && status != ProposalState.Canceled && status != ProposalState.Expired
+                && status != ProposalState.Executed,
             "Governor: proposal not active"
         );
         _proposals[proposalId].vetoed = true;
@@ -447,10 +437,8 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
         ProposalState status = state(proposalId);
 
         require(
-            status != ProposalState.Vetoed &&
-                status != ProposalState.Canceled &&
-                status != ProposalState.Expired &&
-                status != ProposalState.Executed,
+            status != ProposalState.Vetoed && status != ProposalState.Canceled && status != ProposalState.Expired
+                && status != ProposalState.Executed,
             "Governor: proposal not active"
         );
         _proposals[proposalId].canceled = true;
@@ -463,23 +451,26 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     /**
      * @dev See {IVetoGovernor-getVotes}.
      */
-    function getVotes(
-        address account,
-        uint256 tokenId,
-        uint256 timepoint
-    ) public view virtual override returns (uint256) {
+    function getVotes(address account, uint256 tokenId, uint256 timepoint)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _getVotes(account, tokenId, timepoint, _defaultParams());
     }
 
     /**
      * @dev See {IVetoGovernor-getVotesWithParams}.
      */
-    function getVotesWithParams(
-        address account,
-        uint256 tokenId,
-        uint256 timepoint,
-        bytes memory params
-    ) public view virtual override returns (uint256) {
+    function getVotesWithParams(address account, uint256 tokenId, uint256 timepoint, bytes memory params)
+        public
+        view
+        virtual
+        override
+        returns (uint256)
+    {
         return _getVotes(account, tokenId, timepoint, params);
     }
 
@@ -494,12 +485,12 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     /**
      * @dev See {IVetoGovernor-castVoteWithReason}.
      */
-    function castVoteWithReason(
-        uint256 proposalId,
-        uint256 tokenId,
-        uint8 support,
-        string calldata reason
-    ) public virtual override returns (uint256) {
+    function castVoteWithReason(uint256 proposalId, uint256 tokenId, uint8 support, string calldata reason)
+        public
+        virtual
+        override
+        returns (uint256)
+    {
         address voter = _msgSender();
         return _castVote(proposalId, voter, tokenId, support, reason);
     }
@@ -521,20 +512,14 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     /**
      * @dev See {IVetoGovernor-castVoteBySig}.
      */
-    function castVoteBySig(
-        uint256 proposalId,
-        uint256 tokenId,
-        uint8 support,
-        uint8 v,
-        bytes32 r,
-        bytes32 s
-    ) public virtual override returns (uint256) {
-        address voter = ECDSA.recover(
-            _hashTypedDataV4(keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, support))),
-            v,
-            r,
-            s
-        );
+    function castVoteBySig(uint256 proposalId, uint256 tokenId, uint8 support, uint8 v, bytes32 r, bytes32 s)
+        public
+        virtual
+        override
+        returns (uint256)
+    {
+        address voter =
+            ECDSA.recover(_hashTypedDataV4(keccak256(abi.encode(BALLOT_TYPEHASH, proposalId, support))), v, r, s);
         return _castVote(proposalId, voter, tokenId, support, "");
     }
 
@@ -555,11 +540,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
             _hashTypedDataV4(
                 keccak256(
                     abi.encode(
-                        EXTENDED_BALLOT_TYPEHASH,
-                        proposalId,
-                        support,
-                        keccak256(bytes(reason)),
-                        keccak256(params)
+                        EXTENDED_BALLOT_TYPEHASH, proposalId, support, keccak256(bytes(reason)), keccak256(params)
                     )
                 )
             ),
@@ -577,13 +558,11 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      *
      * Emits a {IVetoGovernor-VoteCast} event.
      */
-    function _castVote(
-        uint256 proposalId,
-        address account,
-        uint256 tokenId,
-        uint8 support,
-        string memory reason
-    ) internal virtual returns (uint256) {
+    function _castVote(uint256 proposalId, address account, uint256 tokenId, uint8 support, string memory reason)
+        internal
+        virtual
+        returns (uint256)
+    {
         return _castVote(proposalId, account, tokenId, support, reason, _defaultParams());
     }
 
@@ -665,26 +644,24 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
     /**
      * @dev See {IERC1155Receiver-onERC1155Received}.
      */
-    function onERC1155Received(
-        address,
-        address,
-        uint256,
-        uint256,
-        bytes memory
-    ) public virtual override returns (bytes4) {
+    function onERC1155Received(address, address, uint256, uint256, bytes memory)
+        public
+        virtual
+        override
+        returns (bytes4)
+    {
         return this.onERC1155Received.selector;
     }
 
     /**
      * @dev See {IERC1155Receiver-onERC1155BatchReceived}.
      */
-    function onERC1155BatchReceived(
-        address,
-        address,
-        uint256[] memory,
-        uint256[] memory,
-        bytes memory
-    ) public virtual override returns (bytes4) {
+    function onERC1155BatchReceived(address, address, uint256[] memory, uint256[] memory, bytes memory)
+        public
+        virtual
+        override
+        returns (bytes4)
+    {
         return this.onERC1155BatchReceived.selector;
     }
 }

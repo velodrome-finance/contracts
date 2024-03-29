@@ -48,10 +48,7 @@ contract VeloGovernor is
     event SetCommentWeighting(uint256 commentWeighting);
     event SetProposalNumerator(uint256 indexed proposalNumerator);
 
-    constructor(
-        IVotes _ve,
-        IVoter _voter
-    )
+    constructor(IVotes _ve, IVoter _voter)
         VetoGovernor("Velodrome Governor", IVotingEscrow(address(_ve)))
         VetoGovernorVotes(_ve)
         VetoGovernorVotesQuorumFraction(25)
@@ -133,9 +130,12 @@ contract VeloGovernor is
         emit SetCommentWeighting(_commentWeighting);
     }
 
-    function proposalDeadline(
-        uint256 proposalId
-    ) public view override(VetoGovernor, VetoGovernorPreventLateQuorum) returns (uint256) {
+    function proposalDeadline(uint256 proposalId)
+        public
+        view
+        override(VetoGovernor, VetoGovernorPreventLateQuorum)
+        returns (uint256)
+    {
         return super.proposalDeadline(proposalId);
     }
 

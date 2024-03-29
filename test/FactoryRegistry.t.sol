@@ -26,20 +26,12 @@ contract FactoryRegistryTest is BaseTest {
         votingRewardsFactory2 = new VotingRewardsFactory();
         gaugeFactory2 = new GaugeFactory();
         factoryRegistry2 = new FactoryRegistry(
-            address(factory2),
-            address(votingRewardsFactory),
-            address(gaugeFactory),
-            address(managedRewardsFactory)
+            address(factory2), address(votingRewardsFactory), address(gaugeFactory), address(managedRewardsFactory)
         );
         managedRewardsFactory2 = new ManagedRewardsFactory();
 
-        router2 = new Router(
-            address(forwarder),
-            address(factoryRegistry2),
-            address(factory2),
-            address(voter),
-            address(WETH)
-        );
+        router2 =
+            new Router(address(forwarder), address(factoryRegistry2), address(factory2), address(voter), address(WETH));
         assertEq(address(router2.defaultFactory()), address(factory2));
 
         // we need to create a new pool with the old factory to create the gauge

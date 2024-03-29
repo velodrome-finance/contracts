@@ -7,10 +7,10 @@ import {LockedManagedReward} from "../rewards/LockedManagedReward.sol";
 
 contract ManagedRewardsFactory is IManagedRewardsFactory {
     /// @inheritdoc IManagedRewardsFactory
-    function createRewards(
-        address _forwarder,
-        address _voter
-    ) external returns (address lockedManagedReward, address freeManagedReward) {
+    function createRewards(address _forwarder, address _voter)
+        external
+        returns (address lockedManagedReward, address freeManagedReward)
+    {
         lockedManagedReward = address(new LockedManagedReward(_forwarder, _voter));
         freeManagedReward = address(new FreeManagedReward(_forwarder, _voter));
         emit ManagedRewardCreated(_voter, lockedManagedReward, freeManagedReward);

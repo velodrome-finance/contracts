@@ -30,13 +30,8 @@ contract PoolTest is BaseTest {
 
         distributor = new RewardsDistributor(address(escrow));
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
-        router = new Router(
-            address(forwarder),
-            address(factoryRegistry),
-            address(factory),
-            address(voter),
-            address(WETH)
-        );
+        router =
+            new Router(address(forwarder), address(factoryRegistry), address(factory), address(voter), address(WETH));
 
         escrow.setVoterAndDistributor(address(voter), address(distributor));
         factory.setVoter(address(voter));
@@ -151,15 +146,7 @@ contract PoolTest is BaseTest {
         mintAndBurnTokensForPoolFraxUsdcOwner2();
 
         _addLiquidityToPool(address(owner), address(router), address(USDC), address(FRAX), true, USDC_100K, TOKEN_100K);
-        _addLiquidityToPool(
-            address(owner),
-            address(router),
-            address(USDC),
-            address(FRAX),
-            false,
-            USDC_100K,
-            TOKEN_100K
-        );
+        _addLiquidityToPool(address(owner), address(router), address(USDC), address(FRAX), false, USDC_100K, TOKEN_100K);
         _addLiquidityToPool(address(owner), address(router), address(DAI), address(FRAX), true, TOKEN_100M, TOKEN_100M);
     }
 
@@ -175,33 +162,11 @@ contract PoolTest is BaseTest {
     function routerAddLiquidityOwner2() public {
         routerRemoveLiquidity();
 
+        _addLiquidityToPool(address(owner2), address(router), address(USDC), address(FRAX), true, USDC_100K, TOKEN_100K);
         _addLiquidityToPool(
-            address(owner2),
-            address(router),
-            address(USDC),
-            address(FRAX),
-            true,
-            USDC_100K,
-            TOKEN_100K
+            address(owner2), address(router), address(USDC), address(FRAX), false, USDC_100K, TOKEN_100K
         );
-        _addLiquidityToPool(
-            address(owner2),
-            address(router),
-            address(USDC),
-            address(FRAX),
-            false,
-            USDC_100K,
-            TOKEN_100K
-        );
-        _addLiquidityToPool(
-            address(owner2),
-            address(router),
-            address(DAI),
-            address(FRAX),
-            true,
-            TOKEN_100M,
-            TOKEN_100M
-        );
+        _addLiquidityToPool(address(owner2), address(router), address(DAI), address(FRAX), true, TOKEN_100M, TOKEN_100M);
     }
 
     function routerPool1GetAmountsOutAndSwapExactTokensForTokens() public {

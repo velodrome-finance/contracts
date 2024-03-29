@@ -82,12 +82,10 @@ interface IRouter {
     /// @param tokenB   Address of token to query
     /// @param stable   True if pool is stable, false if volatile
     /// @param _factory Address of factory which created the pool
-    function poolFor(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        address _factory
-    ) external view returns (address pool);
+    function poolFor(address tokenA, address tokenB, bool stable, address _factory)
+        external
+        view
+        returns (address pool);
 
     /// @notice Fetch and sort the reserves for a pool
     /// @param tokenA       .
@@ -96,12 +94,10 @@ interface IRouter {
     /// @param _factory     Address of PoolFactory for tokenA and tokenB
     /// @return reserveA    Amount of reserves of the sorted token A
     /// @return reserveB    Amount of reserves of the sorted token B
-    function getReserves(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        address _factory
-    ) external view returns (uint256 reserveA, uint256 reserveB);
+    function getReserves(address tokenA, address tokenB, bool stable, address _factory)
+        external
+        view
+        returns (uint256 reserveA, uint256 reserveB);
 
     /// @notice Perform chained getAmountOut calculations on any number of pools
     function getAmountsOut(uint256 amountIn, Route[] memory routes) external view returns (uint256[] memory amounts);
@@ -135,13 +131,10 @@ interface IRouter {
     /// @param liquidity    Amount of liquidity to remove
     /// @return amountA     Amount of tokenA received
     /// @return amountB     Amount of tokenB received
-    function quoteRemoveLiquidity(
-        address tokenA,
-        address tokenB,
-        bool stable,
-        address _factory,
-        uint256 liquidity
-    ) external view returns (uint256 amountA, uint256 amountB);
+    function quoteRemoveLiquidity(address tokenA, address tokenB, bool stable, address _factory, uint256 liquidity)
+        external
+        view
+        returns (uint256 amountA, uint256 amountB);
 
     /// @notice Add liquidity of two tokens to a Pool
     /// @param tokenA           .
@@ -275,12 +268,10 @@ interface IRouter {
     /// @param to           Recipient of the tokens received
     /// @param deadline     Deadline to receive tokens
     /// @return amounts     Array of amounts returned per route
-    function swapExactETHForTokens(
-        uint256 amountOutMin,
-        Route[] calldata routes,
-        address to,
-        uint256 deadline
-    ) external payable returns (uint256[] memory amounts);
+    function swapExactETHForTokens(uint256 amountOutMin, Route[] calldata routes, address to, uint256 deadline)
+        external
+        payable
+        returns (uint256[] memory amounts);
 
     /// @notice Swap a token for WETH (returned as ETH)
     /// @param amountIn     Amount of token in
@@ -454,9 +445,8 @@ interface IRouter {
     /// @param tokenB   tokenB of stable pool you are zapping into.
     /// @param factory  Factory that created stable pool.
     /// @return ratio   Ratio of token0 to token1 required to deposit into zap.
-    function quoteStableLiquidityRatio(
-        address tokenA,
-        address tokenB,
-        address factory
-    ) external view returns (uint256 ratio);
+    function quoteStableLiquidityRatio(address tokenA, address tokenB, address factory)
+        external
+        view
+        returns (uint256 ratio);
 }

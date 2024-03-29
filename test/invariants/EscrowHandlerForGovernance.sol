@@ -96,11 +96,11 @@ contract EscrowHandlerForGovernance is Test {
     }
 
     // increase amount randomly
-    function increaseAmount(
-        uint256 amount,
-        uint256 actorIndexSeed,
-        uint256 timeJumpSeed
-    ) public increaseTimestamp(timeJumpSeed) useActorNormal(actorIndexSeed) {
+    function increaseAmount(uint256 amount, uint256 actorIndexSeed, uint256 timeJumpSeed)
+        public
+        increaseTimestamp(timeJumpSeed)
+        useActorNormal(actorIndexSeed)
+    {
         uint256 balanceOf = VELO.balanceOf(currentActor);
         amount = bound(amount, 1, balanceOf / 2);
         VELO.approve(address(escrow), amount);
@@ -108,11 +108,11 @@ contract EscrowHandlerForGovernance is Test {
     }
 
     // delegate randomly, includes dedelegation
-    function delegate(
-        uint256 delegatee,
-        uint256 actorIndexSeed,
-        uint256 timeJumpSeed
-    ) public increaseTimestamp(timeJumpSeed) useActorPermanent(actorIndexSeed) {
+    function delegate(uint256 delegatee, uint256 actorIndexSeed, uint256 timeJumpSeed)
+        public
+        increaseTimestamp(timeJumpSeed)
+        useActorPermanent(actorIndexSeed)
+    {
         delegatee = bound(delegatee, 0, numActors - 2);
         uint256 currentTokenId = ownerToId[currentActor];
         uint256 delegateeTokenId = ownerToId[actors[delegatee]];

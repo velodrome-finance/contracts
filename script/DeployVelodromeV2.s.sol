@@ -6,6 +6,7 @@ import "../test/Base.sol";
 
 contract DeployVelodromeV2 is Base {
     using stdJson for string;
+
     string public basePath;
     string public path;
 

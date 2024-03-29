@@ -30,9 +30,8 @@ library DelegationLogicLibrary {
     ) external {
         uint256 delegatedBalance = _locked[_delegator].amount.toUint256();
         uint48 numCheckpoint = _numCheckpoints[_delegator];
-        IVotingEscrow.Checkpoint storage cpOld = numCheckpoint > 0
-            ? _checkpoints[_delegator][numCheckpoint - 1]
-            : _checkpoints[_delegator][0];
+        IVotingEscrow.Checkpoint storage cpOld =
+            numCheckpoint > 0 ? _checkpoints[_delegator][numCheckpoint - 1] : _checkpoints[_delegator][0];
         // Dedelegate from delegatee if delegated
         checkpointDelegatee(_numCheckpoints, _checkpoints, cpOld.delegatee, delegatedBalance, false);
         IVotingEscrow.Checkpoint storage cp = _checkpoints[_delegator][numCheckpoint];
@@ -72,9 +71,8 @@ library DelegationLogicLibrary {
     ) public {
         if (_delegatee == 0) return;
         uint48 numCheckpoint = _numCheckpoints[_delegatee];
-        IVotingEscrow.Checkpoint storage cpOld = numCheckpoint > 0
-            ? _checkpoints[_delegatee][numCheckpoint - 1]
-            : _checkpoints[_delegatee][0];
+        IVotingEscrow.Checkpoint storage cpOld =
+            numCheckpoint > 0 ? _checkpoints[_delegatee][numCheckpoint - 1] : _checkpoints[_delegatee][0];
         IVotingEscrow.Checkpoint storage cp = _checkpoints[_delegatee][numCheckpoint];
         cp.fromTimestamp = block.timestamp;
         cp.owner = cpOld.owner;
@@ -165,9 +163,8 @@ library DelegationLogicLibrary {
         // Check ownership
         if (_account != lastCheckpoint.owner) return 0;
         uint256 votes = lastCheckpoint.delegatedBalance;
-        return
-            lastCheckpoint.delegatee == 0
-                ? votes + IVotingEscrow(address(this)).balanceOfNFTAt(_tokenId, _timestamp)
-                : votes;
+        return lastCheckpoint.delegatee == 0
+            ? votes + IVotingEscrow(address(this)).balanceOfNFTAt(_tokenId, _timestamp)
+            : votes;
     }
 }

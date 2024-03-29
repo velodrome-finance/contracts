@@ -2072,12 +2072,8 @@ contract VotingEscrowTest is BaseTest {
         vm.stopPrank();
         skipAndRoll(1);
 
-        SigUtils.Delegation memory delegation = SigUtils.Delegation({
-            delegator: 1,
-            delegatee: 2,
-            nonce: 0,
-            deadline: 604801
-        });
+        SigUtils.Delegation memory delegation =
+            SigUtils.Delegation({delegator: 1, delegatee: 2, nonce: 0, deadline: 604801});
         bytes32 digest = sigUtils.getTypedDataHash(delegation);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digest);
 

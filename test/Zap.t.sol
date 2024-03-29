@@ -31,23 +31,11 @@ contract ZapTest is BaseTest {
         ownerAddr[0] = address(owner);
         mintToken(address(WETH), ownerAddr, amounts);
         _addLiquidityToPool(
-            address(owner),
-            address(router),
-            address(WETH),
-            address(USDC),
-            false,
-            TOKEN_1 * 763,
-            USDC_10K * 125
+            address(owner), address(router), address(WETH), address(USDC), false, TOKEN_1 * 763, USDC_10K * 125
         );
 
         _addLiquidityToPool(
-            address(owner),
-            address(router),
-            address(FRAX),
-            address(USDC),
-            true,
-            TOKEN_100K * 10,
-            USDC_100K * 10
+            address(owner), address(router), address(FRAX), address(USDC), true, TOKEN_100K * 10, USDC_100K * 10
         );
 
         // Current State:
@@ -62,13 +50,8 @@ contract ZapTest is BaseTest {
         deal(address(USDC), address(owner2), USDC_1 * 1e6);
         vm.deal(address(owner2), TOKEN_100K);
 
-        _router = new Router(
-            address(forwarder),
-            address(factoryRegistry),
-            address(factory),
-            address(voter),
-            address(WETH)
-        );
+        _router =
+            new Router(address(forwarder), address(factoryRegistry), address(factory), address(voter), address(WETH));
         vm.startPrank(address(governor));
         vGauge = Gauge(voter.createGauge(address(factory), address(vPool)));
         sGauge = Gauge(voter.gauges(address(sPool)));
@@ -195,27 +178,13 @@ contract ZapTest is BaseTest {
         // tokenIn != WETH
         vm.expectRevert(IRouter.InvalidTokenInForETHDeposit.selector);
         _router.zapIn{value: TOKEN_1}(
-            address(0),
-            TOKEN_1 / 2,
-            TOKEN_1 / 2,
-            zapInPool,
-            routesA,
-            routesB,
-            address(owner2),
-            true
+            address(0), TOKEN_1 / 2, TOKEN_1 / 2, zapInPool, routesA, routesB, address(owner2), true
         );
 
         // msg.value != zapAmount
         vm.expectRevert(IRouter.InvalidAmountInForETHDeposit.selector);
         _router.zapIn{value: TOKEN_1}(
-            ETHER,
-            TOKEN_1 / 2,
-            TOKEN_1 / 4,
-            zapInPool,
-            routesA,
-            routesB,
-            address(owner2),
-            true
+            ETHER, TOKEN_1 / 2, TOKEN_1 / 4, zapInPool, routesA, routesB, address(owner2), true
         );
 
         vm.stopPrank();
@@ -237,14 +206,7 @@ contract ZapTest is BaseTest {
         routesA[0] = IRouter.Route(address(USDC), address(WETH), false, address(factory));
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
         IRouter.Zap memory zapInPool = _createZapInParams(
-            address(WETH),
-            address(USDC),
-            false,
-            address(factory),
-            USDC_10K / 2,
-            USDC_10K / 2,
-            routesA,
-            routesB
+            address(WETH), address(USDC), false, address(factory), USDC_10K / 2, USDC_10K / 2, routesA, routesB
         );
 
         _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zapInPool, routesA, routesB, address(owner3), false);
@@ -280,25 +242,11 @@ contract ZapTest is BaseTest {
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
         routesB[0] = IRouter.Route(address(WETH), address(USDC), false, address(factory));
         IRouter.Zap memory zapInPool = _createZapInParams(
-            address(WETH),
-            address(USDC),
-            false,
-            address(factory),
-            zapAmount / 2,
-            zapAmount / 2,
-            routesA,
-            routesB
+            address(WETH), address(USDC), false, address(factory), zapAmount / 2, zapAmount / 2, routesA, routesB
         );
 
         _router.zapIn{value: zapAmount}(
-            ETHER,
-            zapAmount / 2,
-            zapAmount / 2,
-            zapInPool,
-            routesA,
-            routesB,
-            address(owner2),
-            false
+            ETHER, zapAmount / 2, zapAmount / 2, zapInPool, routesA, routesB, address(owner2), false
         );
 
         uint256 fee = ((zapAmount / 2) * feeRate) / MAX_BPS;
@@ -332,14 +280,7 @@ contract ZapTest is BaseTest {
         routesA[0] = IRouter.Route(address(USDC), address(WETH), false, address(factory));
         IRouter.Route[] memory routesB = new IRouter.Route[](0);
         IRouter.Zap memory zapInPool = _createZapInParams(
-            address(WETH),
-            address(USDC),
-            false,
-            address(factory),
-            USDC_10K / 2,
-            USDC_10K / 2,
-            routesA,
-            routesB
+            address(WETH), address(USDC), false, address(factory), USDC_10K / 2, USDC_10K / 2, routesA, routesB
         );
 
         _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zapInPool, routesA, routesB, address(owner2), true);
@@ -379,25 +320,11 @@ contract ZapTest is BaseTest {
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
         routesB[0] = IRouter.Route(address(WETH), address(USDC), false, address(factory));
         IRouter.Zap memory zapInPool = _createZapInParams(
-            address(WETH),
-            address(USDC),
-            false,
-            address(factory),
-            zapAmount / 2,
-            zapAmount / 2,
-            routesA,
-            routesB
+            address(WETH), address(USDC), false, address(factory), zapAmount / 2, zapAmount / 2, routesA, routesB
         );
 
         _router.zapIn{value: zapAmount}(
-            ETHER,
-            zapAmount / 2,
-            zapAmount / 2,
-            zapInPool,
-            routesA,
-            routesB,
-            address(owner2),
-            true
+            ETHER, zapAmount / 2, zapAmount / 2, zapInPool, routesA, routesB, address(owner2), true
         );
 
         uint256 fee = ((zapAmount / 2) * feeRate) / MAX_BPS;
@@ -426,14 +353,7 @@ contract ZapTest is BaseTest {
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
         routesB[0] = IRouter.Route(address(USDC), address(WETH), false, address(factory));
         IRouter.Zap memory zap = _createZapInParams(
-            address(USDC),
-            address(WETH),
-            false,
-            address(factory),
-            USDC_10K / 2,
-            USDC_10K / 2,
-            routesA,
-            routesB
+            address(USDC), address(WETH), false, address(factory), USDC_10K / 2, USDC_10K / 2, routesA, routesB
         );
 
         _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zap, routesA, routesB, address(owner2), false);
@@ -475,14 +395,7 @@ contract ZapTest is BaseTest {
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
         routesB[0] = IRouter.Route(address(USDC), address(WETH), false, address(factory));
         IRouter.Zap memory zap = _createZapInParams(
-            address(USDC),
-            address(WETH),
-            false,
-            address(factory),
-            USDC_10K / 2,
-            USDC_10K / 2,
-            routesA,
-            routesB
+            address(USDC), address(WETH), false, address(factory), USDC_10K / 2, USDC_10K / 2, routesA, routesB
         );
 
         _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zap, routesA, routesB, address(owner2), false);
@@ -530,14 +443,7 @@ contract ZapTest is BaseTest {
         IRouter.Route[] memory routesB = new IRouter.Route[](1);
         routesB[0] = IRouter.Route(address(USDC), address(WETH), false, address(factory));
         IRouter.Zap memory zap = _createZapInParams(
-            address(USDC),
-            address(WETH),
-            false,
-            address(factory),
-            USDC_10K / 2,
-            USDC_10K / 2,
-            routesA,
-            routesB
+            address(USDC), address(WETH), false, address(factory), USDC_10K / 2, USDC_10K / 2, routesA, routesB
         );
 
         _router.zapIn(address(USDC), USDC_10K / 2, USDC_10K / 2, zap, routesA, routesB, address(owner2), false);
@@ -587,8 +493,8 @@ contract ZapTest is BaseTest {
     ) internal view returns (IRouter.Zap memory zap) {
         // use 300 bps slippage for the smaller stable pool
         uint256 slippage = (stable == true) ? 300 : 50;
-        (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin) = _router
-            .generateZapInParams(tokenA, tokenB, stable, _factory, amountInA, amountInB, routesA, routesB);
+        (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin) =
+            _router.generateZapInParams(tokenA, tokenB, stable, _factory, amountInA, amountInB, routesA, routesB);
 
         amountAMin = (amountAMin * (MAX_BPS - slippage)) / MAX_BPS;
         amountBMin = (amountBMin * (MAX_BPS - slippage)) / MAX_BPS;
@@ -606,8 +512,8 @@ contract ZapTest is BaseTest {
     ) internal view returns (IRouter.Zap memory zap) {
         // use 300 bps slippage for the smaller stable pool
         uint256 slippage = (stable == true) ? 300 : 50;
-        (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin) = _router
-            .generateZapOutParams(tokenA, tokenB, stable, _factory, liquidity, routesA, routesB);
+        (uint256 amountOutMinA, uint256 amountOutMinB, uint256 amountAMin, uint256 amountBMin) =
+            _router.generateZapOutParams(tokenA, tokenB, stable, _factory, liquidity, routesA, routesB);
         amountOutMinA = (amountOutMinA * (MAX_BPS - slippage)) / MAX_BPS;
         amountOutMinB = (amountOutMinB * (MAX_BPS - slippage)) / MAX_BPS;
         return IRouter.Zap(tokenA, tokenB, stable, _factory, amountOutMinA, amountOutMinB, amountAMin, amountBMin);

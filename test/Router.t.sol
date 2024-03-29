@@ -31,37 +31,19 @@ contract RouterTest is BaseTest {
     function _seedPoolsWithLiquidity() internal {
         USDC.approve(address(router), USDC_100K);
         router.addLiquidityETH{value: TOKEN_100K}(
-            address(USDC),
-            false,
-            USDC_100K,
-            USDC_100K,
-            TOKEN_100K,
-            address(owner),
-            block.timestamp
+            address(USDC), false, USDC_100K, USDC_100K, TOKEN_100K, address(owner), block.timestamp
         );
         vm.startPrank(address(owner2));
         USDC.approve(address(router), USDC_100K);
         router.addLiquidityETH{value: TOKEN_100K}(
-            address(USDC),
-            false,
-            USDC_100K,
-            USDC_100K,
-            TOKEN_100K,
-            address(owner),
-            block.timestamp
+            address(USDC), false, USDC_100K, USDC_100K, TOKEN_100K, address(owner), block.timestamp
         );
         vm.stopPrank();
 
         // create pool for transfer fee token
         erc20Fee.approve(address(router), TOKEN_100K);
         router.addLiquidityETH{value: TOKEN_100K}(
-            address(erc20Fee),
-            false,
-            TOKEN_100K,
-            TOKEN_100K,
-            TOKEN_100K,
-            address(owner),
-            block.timestamp
+            address(erc20Fee), false, TOKEN_100K, TOKEN_100K, TOKEN_100K, address(owner), block.timestamp
         );
         poolFee = Pool(factory.getPool(address(erc20Fee), address(WETH), false));
     }
@@ -95,36 +77,19 @@ contract RouterTest is BaseTest {
         // add liquidity to pool
         USDC.approve(address(router), USDC_100K);
         WETH.approve(address(router), TOKEN_100K);
-        (, , uint256 liquidity) = router.addLiquidityETH{value: TOKEN_100K}(
-            address(USDC),
-            false,
-            USDC_100K,
-            USDC_100K,
-            TOKEN_100K,
-            address(owner),
-            block.timestamp
+        (,, uint256 liquidity) = router.addLiquidityETH{value: TOKEN_100K}(
+            address(USDC), false, USDC_100K, USDC_100K, TOKEN_100K, address(owner), block.timestamp
         );
 
         assertEq(address(this).balance, initialEth - TOKEN_100K);
         assertEq(USDC.balanceOf(address(this)), initialUsdc - USDC_100K);
 
-        (uint256 amountUSDC, uint256 amountETH) = router.quoteRemoveLiquidity(
-            address(USDC),
-            address(WETH),
-            false,
-            address(factory),
-            liquidity
-        );
+        (uint256 amountUSDC, uint256 amountETH) =
+            router.quoteRemoveLiquidity(address(USDC), address(WETH), false, address(factory), liquidity);
 
         Pool(_pool).approve(address(router), liquidity);
         router.removeLiquidityETH(
-            address(USDC),
-            false,
-            liquidity,
-            amountUSDC,
-            amountETH,
-            address(owner),
-            block.timestamp
+            address(USDC), false, liquidity, amountUSDC, amountETH, address(owner), block.timestamp
         );
 
         assertEq(address(this).balance, initialEth);
@@ -167,13 +132,7 @@ contract RouterTest is BaseTest {
 
         poolFee.approve(address(router), type(uint256).max);
         router.removeLiquidityETHSupportingFeeOnTransferTokens(
-            address(erc20Fee),
-            false,
-            liquidity,
-            0,
-            0,
-            address(owner),
-            block.timestamp
+            address(erc20Fee), false, liquidity, 0, 0, address(owner), block.timestamp
         );
 
         assertEq(erc20Fee.balanceOf(address(owner)), expectedBalanceAfterRemove);
@@ -190,10 +149,7 @@ contract RouterTest is BaseTest {
         uint256 actualExpectedOutput = expectedOutput - erc20Fee.fee();
 
         router.swapExactETHForTokensSupportingFeeOnTransferTokens{value: TOKEN_1}(
-            0,
-            routes,
-            address(owner),
-            block.timestamp
+            0, routes, address(owner), block.timestamp
         );
 
         assertEq(erc20Fee.balanceOf(address(owner)), actualExpectedOutput);

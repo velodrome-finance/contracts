@@ -7,12 +7,11 @@ contract VeArtProxyTest is BaseTest {
     uint256 tokenId;
 
     /**
-    Assumptions
+     * Assumptions
      * 1 <= seed <= 1000
      * 4 <= lineCount <= 32 (8 digits or 10M velo) - must be multiple of 4
      * viewbox is (0, 0) to (4000, 4000)
      */
-
     function _setUp() public override {
         // create tokenId
         skipAndRoll(1 hours);
@@ -20,12 +19,11 @@ contract VeArtProxyTest is BaseTest {
         tokenId = escrow.createLock(TOKEN_1, MAXTIME);
     }
 
-    function _setupFuzz(
-        uint256 lineCount,
-        uint256 seed1,
-        uint256 seed2,
-        uint256 seed3
-    ) internal view returns (VeArtProxy.Config memory cfg) {
+    function _setupFuzz(uint256 lineCount, uint256 seed1, uint256 seed2, uint256 seed3)
+        internal
+        view
+        returns (VeArtProxy.Config memory cfg)
+    {
         lineCount = bound(lineCount, 4, 32);
         vm.assume(lineCount % 4 == 0);
 

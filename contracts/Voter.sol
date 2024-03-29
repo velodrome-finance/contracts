@@ -24,6 +24,7 @@ import {VelodromeTimeLibrary} from "./libraries/VelodromeTimeLibrary.sol";
 ///         Also provides support for depositing and withdrawing from managed veNFTs.
 contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     using SafeERC20 for IERC20;
+
     /// @inheritdoc IVoter
     address public immutable forwarder;
     /// @inheritdoc IVoter
@@ -248,19 +249,20 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVoter
-    function vote(
-        uint256 _tokenId,
-        address[] calldata _poolVote,
-        uint256[] calldata _weights
-    ) external onlyNewEpoch(_tokenId) nonReentrant {
+    function vote(uint256 _tokenId, address[] calldata _poolVote, uint256[] calldata _weights)
+        external
+        onlyNewEpoch(_tokenId)
+        nonReentrant
+    {
         address _sender = _msgSender();
         if (!IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId)) revert NotApprovedOrOwner();
         if (_poolVote.length != _weights.length) revert UnequalLengths();
         if (_poolVote.length > maxVotingNum) revert TooManyPools();
         if (IVotingEscrow(ve).deactivated(_tokenId)) revert InactiveManagedNFT();
         uint256 _timestamp = block.timestamp;
-        if ((_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) && !isWhitelistedNFT[_tokenId])
+        if ((_timestamp > VelodromeTimeLibrary.epochVoteEnd(_timestamp)) && !isWhitelistedNFT[_tokenId]) {
             revert NotWhitelistedNFT();
+        }
         lastVoted[_tokenId] = _timestamp;
         uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
         _vote(_tokenId, _weight, _poolVote, _weights);
@@ -323,9 +325,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
         if (!IFactoryRegistry(factoryRegistry).isPoolFactoryApproved(_poolFactory)) revert FactoryPathNotApproved();
         if (gauges[_pool] != address(0)) revert GaugeExists();
 
-        (address votingRewardsFactory, address gaugeFactory) = IFactoryRegistry(factoryRegistry).factoriesToPoolFactory(
-            _poolFactory
-        );
+        (address votingRewardsFactory, address gaugeFactory) =
+            IFactoryRegistry(factoryRegistry).factoriesToPoolFactory(_poolFactory);
         address[] memory rewards = new address[](2);
         bool isPool = IPoolFactory(_poolFactory).isPool(_pool);
         {
@@ -345,16 +346,11 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
             }
         }
 
-        (address _feeVotingReward, address _bribeVotingReward) = IVotingRewardsFactory(votingRewardsFactory)
-            .createRewards(forwarder, rewards);
+        (address _feeVotingReward, address _bribeVotingReward) =
+            IVotingRewardsFactory(votingRewardsFactory).createRewards(forwarder, rewards);
 
-        address _gauge = IGaugeFactory(gaugeFactory).createGauge(
-            forwarder,
-            _pool,
-            _feeVotingReward,
-            rewardToken,
-            isPool
-        );
+        address _gauge =
+            IGaugeFactory(gaugeFactory).createGauge(forwarder, _pool, _feeVotingReward, rewardToken, isPool);
 
         gaugeToFees[_gauge] = _feeVotingReward;
         gaugeToBribe[_gauge] = _bribeVotingReward;

@@ -28,13 +28,8 @@ contract OracleTest is BaseTest {
         VeArtProxy artProxy = new VeArtProxy(address(escrow));
         escrow.setArtProxy(address(artProxy));
         voter = new Voter(address(forwarder), address(escrow), address(factoryRegistry));
-        router = new Router(
-            address(forwarder),
-            address(factoryRegistry),
-            address(factory),
-            address(voter),
-            address(WETH)
-        );
+        router =
+            new Router(address(forwarder), address(factoryRegistry), address(factory), address(voter), address(WETH));
         deployPoolWithOwner(address(owner));
 
         (address token0, address token1) = router.sortTokens(address(USDC), address(FRAX));
@@ -83,15 +78,7 @@ contract OracleTest is BaseTest {
         DAI.approve(address(router), TOKEN_100M);
         FRAX.approve(address(router), TOKEN_100M);
         router.addLiquidity(
-            address(FRAX),
-            address(DAI),
-            true,
-            TOKEN_100M,
-            TOKEN_100M,
-            0,
-            0,
-            address(owner),
-            block.timestamp
+            address(FRAX), address(DAI), true, TOKEN_100M, TOKEN_100M, 0, 0, address(owner), block.timestamp
         );
     }
 

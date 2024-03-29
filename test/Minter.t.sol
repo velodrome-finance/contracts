@@ -5,6 +5,7 @@ import "./BaseTest.sol";
 
 contract MinterTest is BaseTest {
     using stdStorage for StdStorage;
+
     uint256 tokenId;
 
     event AcceptTeam(address indexed _newTeam);

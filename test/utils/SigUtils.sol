@@ -20,16 +20,15 @@ contract SigUtils {
 
     /// @dev Computes the hash of a permit
     function getStructHash(Delegation memory _delegation) internal pure returns (bytes32) {
-        return
-            keccak256(
-                abi.encode(
-                    DELEGATION_TYPEHASH,
-                    _delegation.delegator,
-                    _delegation.delegatee,
-                    _delegation.nonce,
-                    _delegation.deadline
-                )
-            );
+        return keccak256(
+            abi.encode(
+                DELEGATION_TYPEHASH,
+                _delegation.delegator,
+                _delegation.delegatee,
+                _delegation.nonce,
+                _delegation.deadline
+            )
+        );
     }
 
     /// @dev Computes the hash of the fully encoded EIP-712 message for the domain,

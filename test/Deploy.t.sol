@@ -145,11 +145,7 @@ contract TestDeploy is BaseTest {
         PoolVeloV2[] memory poolsVeloV2 = abi.decode(jsonConstants.parseRaw(".poolsVeloV2"), (PoolVeloV2[]));
         for (uint256 i = 0; i < poolsVeloV2.length; i++) {
             PoolVeloV2 memory p = poolsVeloV2[i];
-            address poolAddr = deployVelodromeV2.factory().getPool(
-                address(deployVelodromeV2.VELO()),
-                p.token,
-                p.stable
-            );
+            address poolAddr = deployVelodromeV2.factory().getPool(address(deployVelodromeV2.VELO()), p.token, p.stable);
             assertTrue(poolAddr != address(0));
             address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
             assertTrue(gaugeAddr != address(0));

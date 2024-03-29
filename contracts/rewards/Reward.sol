@@ -124,9 +124,9 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
         uint256 _timestamp = block.timestamp;
 
         if (
-            _nCheckPoints > 0 &&
-            VelodromeTimeLibrary.epochStart(checkpoints[tokenId][_nCheckPoints - 1].timestamp) ==
-            VelodromeTimeLibrary.epochStart(_timestamp)
+            _nCheckPoints > 0
+                && VelodromeTimeLibrary.epochStart(checkpoints[tokenId][_nCheckPoints - 1].timestamp)
+                    == VelodromeTimeLibrary.epochStart(_timestamp)
         ) {
             checkpoints[tokenId][_nCheckPoints - 1] = Checkpoint(_timestamp, balance);
         } else {
@@ -140,9 +140,9 @@ abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
         uint256 _timestamp = block.timestamp;
 
         if (
-            _nCheckPoints > 0 &&
-            VelodromeTimeLibrary.epochStart(supplyCheckpoints[_nCheckPoints - 1].timestamp) ==
-            VelodromeTimeLibrary.epochStart(_timestamp)
+            _nCheckPoints > 0
+                && VelodromeTimeLibrary.epochStart(supplyCheckpoints[_nCheckPoints - 1].timestamp)
+                    == VelodromeTimeLibrary.epochStart(_timestamp)
         ) {
             supplyCheckpoints[_nCheckPoints - 1] = SupplyCheckpoint(_timestamp, totalSupply);
         } else {

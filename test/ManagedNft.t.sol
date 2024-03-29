@@ -8,18 +8,10 @@ contract ManagedNftTest is BaseTest {
     FreeManagedReward freeManagedReward;
 
     event DepositManaged(
-        address indexed _owner,
-        uint256 indexed _tokenId,
-        uint256 indexed _mTokenId,
-        uint256 _weight,
-        uint256 _ts
+        address indexed _owner, uint256 indexed _tokenId, uint256 indexed _mTokenId, uint256 _weight, uint256 _ts
     );
     event WithdrawManaged(
-        address indexed _owner,
-        uint256 indexed _tokenId,
-        uint256 indexed _mTokenId,
-        uint256 _weight,
-        uint256 _ts
+        address indexed _owner, uint256 indexed _tokenId, uint256 indexed _mTokenId, uint256 _weight, uint256 _ts
     );
     event MetadataUpdate(uint256 _tokenId);
 

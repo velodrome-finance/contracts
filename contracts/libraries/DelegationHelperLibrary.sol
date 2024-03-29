@@ -12,11 +12,11 @@ library DelegationHelperLibrary {
 
     /// Helper function to fetch the checkpoint for the last voting checkpoint prior to a timepoint
     /// Adapted from DelegationLogicLibrary.sol:getPastVotesIndex(uint256 tokenId, uint256 timestamp)
-    function getPastCheckpointIndex(
-        IVotingEscrow ve,
-        uint256 mTokenId,
-        uint256 timepoint
-    ) internal view returns (uint48) {
+    function getPastCheckpointIndex(IVotingEscrow ve, uint256 mTokenId, uint256 timepoint)
+        internal
+        view
+        returns (uint48)
+    {
         uint48 nCheckpoints = ve.numCheckpoints(mTokenId);
         if (nCheckpoints == 0) return 0;
         // First check most recent balance
@@ -46,12 +46,11 @@ library DelegationHelperLibrary {
     /// This means it includes rewards that the user is projected to get in the following epoch.
     /// These rewards are not immediately claimable, but the user can vote as if they claimed it.
     /// Adapted from Reward.sol:earned(address token, uint256 tokenId)
-    function earned(
-        IVotingEscrow ve,
-        uint256 mTokenId,
-        uint256 tokenId,
-        uint256 timepoint
-    ) internal view returns (uint256) {
+    function earned(IVotingEscrow ve, uint256 mTokenId, uint256 tokenId, uint256 timepoint)
+        internal
+        view
+        returns (uint256)
+    {
         IReward lmr = IReward(ve.managedToLocked(mTokenId));
         if (lmr.numCheckpoints(tokenId) == 0) {
             return 0;

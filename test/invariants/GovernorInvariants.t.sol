@@ -37,7 +37,8 @@ contract GovernorInvariants is BaseTest {
             currentOwner = escrow.ownerOf(i);
             // try to vote regardless (note 0 balances will revert in practice)
             vm.startPrank(currentOwner);
-            try governor.castVote(pid, i, 1) {} catch (bytes memory) {
+            try governor.castVote(pid, i, 1) {}
+            catch (bytes memory) {
                 // ignore reverts, assumed to be due to zero voting weight, or managed veNFT unable to vote
                 continue;
             }
