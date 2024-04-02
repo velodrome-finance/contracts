@@ -2,6 +2,7 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "./BaseTest.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 /// @dev Tests factory registry functionality.
 contract FactoryRegistryTest is BaseTest {
@@ -49,7 +50,7 @@ contract FactoryRegistryTest is BaseTest {
     }
 
     function testCannotSetManagedRewardsFactoryIfNotOwner() public {
-        vm.expectRevert("Ownable: caller is not the owner");
+        vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(owner2)));
         vm.prank(address(owner2));
         factoryRegistry.setManagedRewardsFactory(address(managedRewardsFactory2));
     }

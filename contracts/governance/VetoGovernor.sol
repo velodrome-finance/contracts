@@ -352,11 +352,10 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
         bytes[] memory calldatas,
         bytes32 /*descriptionHash*/
     ) internal virtual {
-        string memory errorMessage = "Governor: call reverted without message";
         uint256 _length = targets.length;
         for (uint256 i = 0; i < _length; ++i) {
             (bool success, bytes memory returndata) = targets[i].call{value: values[i]}(calldatas[i]);
-            Address.verifyCallResult(success, returndata, errorMessage);
+            Address.verifyCallResult(success, returndata);
         }
     }
 
@@ -622,7 +621,7 @@ abstract contract VetoGovernor is Context, ERC165, EIP712, IVetoGovernor, IERC72
      */
     function relay(address target, uint256 value, bytes calldata data) external payable virtual onlyGovernance {
         (bool success, bytes memory returndata) = target.call{value: value}(data);
-        Address.verifyCallResult(success, returndata, "Governor: relay reverted without message");
+        Address.verifyCallResult(success, returndata);
     }
 
     /**

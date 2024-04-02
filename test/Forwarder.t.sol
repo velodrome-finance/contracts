@@ -3,6 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "./BaseTest.sol";
 import "./utils/ERC2771Helper.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract ForwarderTest is BaseTest {
     using ECDSA for bytes32;
@@ -37,7 +38,10 @@ contract ForwarderTest is BaseTest {
 
     function testForwarderVote() public {
         skip(1 hours + 1);
-        escrow.createLockFor(TOKEN_1, MAXTIME, sender);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        escrow.approve(address(escrow), tokenId);
+        escrow.transferFrom(address(this), sender, tokenId);
+        skipAndRoll(1);
         address[] memory pools = new address[](1);
         pools[0] = address(pool);
         uint256[] memory weights = new uint256[](1);

@@ -6,9 +6,9 @@ import "forge-std/console2.sol";
 
 import "./Base.sol";
 import {IPool, Pool} from "contracts/Pool.sol";
-import {TestOwner} from "utils/TestOwner.sol";
-import {MockERC20} from "utils/MockERC20.sol";
-import {MockWETH} from "utils/MockWETH.sol";
+import {TestOwner} from "test/utils/TestOwner.sol";
+import {MockERC20} from "test/utils/MockERC20.sol";
+import {MockWETH} from "test/utils/MockWETH.sol";
 
 abstract contract BaseTest is Base, TestOwner {
     uint256 constant USDC_1 = 1e6;

@@ -17,7 +17,6 @@ For example, if we take "Empty State" and `createLock`, this means that given no
 | Function | Empty State | Normal | Normal Permanent | Locked | Managed Permanent |
 | --- | --- | --- | --- | --- | --- |
 | `createLock` | - Mints normal. | | | | |
-| `createLockFor` | - Mints normal. | | | | |
 | `createManagedLockFor` | - Mints managed permanent.|  | | | |
 | `depositManaged`  | | - Converts to locked. </br> - Increases managed amount. </br> - Increases (managed) delegatee balance. | - Dedelegates. </br> - Converts to locked. </br> - Increases managed amount. </br> - Increases (managed) delegatee balance. | | |
 | `withdrawManaged` | | | | - Converts to normal. </br> - May increase amount (locked rewards). </br> - Extends locktime to maximum. </br> - Decreases managed balance. </br> - Decreases (managed) delegatee balance. | |

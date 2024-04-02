@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {IERC165, IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {IERC165} from "@openzeppelin/contracts/interfaces/IERC165.sol";
+import {IERC721, IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IERC4906} from "@openzeppelin/contracts/interfaces/IERC4906.sol";
 import {IVotes} from "../governance/IVotes.sol";
@@ -357,13 +358,6 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
     /// @param _lockDuration Number of seconds to lock tokens for (rounded down to nearest week)
     /// @return TokenId of created veNFT
     function createLock(uint256 _value, uint256 _lockDuration) external returns (uint256);
-
-    /// @notice Deposit `_value` tokens for `_to` and lock for `_lockDuration`
-    /// @param _value Amount to deposit
-    /// @param _lockDuration Number of seconds to lock tokens for (rounded down to nearest week)
-    /// @param _to Address to deposit
-    /// @return TokenId of created veNFT
-    function createLockFor(uint256 _value, uint256 _lockDuration, address _to) external returns (uint256);
 
     /// @notice Deposit `_value` additional tokens for `_tokenId` without modifying the unlock time
     /// @param _value Amount of tokens to deposit and add to the lock

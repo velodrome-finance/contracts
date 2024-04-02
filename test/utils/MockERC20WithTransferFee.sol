@@ -16,7 +16,8 @@ contract MockERC20WithTransferFee is ERC20 {
         return _decimals;
     }
 
-    function _afterTokenTransfer(address from, address to, uint256 amount) internal override {
+    function _update(address from, address to, uint256 amount) internal override {
+        super._update(from, to, amount);
         // only do fees if not in a _mint or _burn
         if (from == address(0) || to == address(0)) return;
 

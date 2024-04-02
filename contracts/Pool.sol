@@ -11,7 +11,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /// @title Pool
 /// @author velodrome.finance, @figs999, @pegahcarter
@@ -493,8 +493,9 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return _symbol;
     }
 
-    function _beforeTokenTransfer(address from, address to, uint256) internal override {
+    function _update(address from, address to, uint256 amount) internal override {
         _updateFor(from);
         _updateFor(to);
+        super._update(from, to, amount);
     }
 }

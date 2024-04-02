@@ -11,7 +11,6 @@ import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {Timers} from "@openzeppelin/contracts/utils/Timers.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {IGovernor} from "./IGovernor.sol";
 import {IMinter} from "../interfaces/IMinter.sol";
@@ -356,11 +355,10 @@ abstract contract GovernorSimple is ERC2771Context, ERC165, EIP712, IGovernor, I
         bytes[] memory calldatas,
         bytes32 /*descriptionHash*/
     ) internal virtual {
-        string memory errorMessage = "Governor: call reverted without message";
         uint256 _length = targets.length;
         for (uint256 i = 0; i < _length; ++i) {
             (bool success, bytes memory returndata) = targets[i].call{value: values[i]}(calldatas[i]);
-            Address.verifyCallResult(success, returndata, errorMessage);
+            Address.verifyCallResult(success, returndata);
         }
     }
 

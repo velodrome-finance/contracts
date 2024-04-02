@@ -155,7 +155,7 @@ contract Minter is IMinter {
             velo.safeTransfer(address(rewardsDistributor), _growth);
             rewardsDistributor.checkpointToken(); // checkpoint token balance that was just minted in rewards distributor
 
-            velo.safeApprove(address(voter), _emission);
+            velo.safeIncreaseAllowance(address(voter), _emission);
             voter.notifyRewardAmount(_emission);
 
             emit Mint(msg.sender, _emission, velo.totalSupply(), _tail);

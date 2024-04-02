@@ -34,7 +34,7 @@ contract FactoryRegistry is IFactoryRegistry, Ownable {
         address _fallbackVotingRewardsFactory,
         address _fallbackGaugeFactory,
         address _newManagedRewardsFactory
-    ) {
+    ) Ownable(msg.sender) {
         fallbackPoolFactory = _fallbackPoolFactory;
 
         approve(_fallbackPoolFactory, _fallbackVotingRewardsFactory, _fallbackGaugeFactory);

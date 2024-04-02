@@ -219,8 +219,8 @@ contract GaugeTest is BaseTest {
 
         skip(1 weeks / 2);
 
-        assertApproxEqRel(gauge.earned(address(owner)), reward / 4, 1e6);
-        assertApproxEqRel(gauge.earned(address(owner2)), reward / 4, 1e6);
+        assertApproxEqAbs(gauge.earned(address(owner)), reward / 4, 1e6);
+        assertApproxEqAbs(gauge.earned(address(owner2)), reward / 4, 1e6);
 
         uint256 pre = VELO.balanceOf(address(owner));
         gauge.getReward(address(owner));
@@ -230,8 +230,8 @@ contract GaugeTest is BaseTest {
 
         skip(1 weeks / 2);
 
-        assertApproxEqRel(gauge.earned(address(owner)), reward / 4, 1e6);
-        assertApproxEqRel(gauge.earned(address(owner2)), reward / 2, 1e6);
+        assertApproxEqAbs(gauge.earned(address(owner)), reward / 4, 1e6);
+        assertApproxEqAbs(gauge.earned(address(owner2)), reward / 2, 1e6);
 
         pre = VELO.balanceOf(address(owner));
         gauge.getReward(address(owner));

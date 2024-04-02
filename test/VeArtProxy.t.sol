@@ -21,7 +21,7 @@ contract VeArtProxyTest is BaseTest {
 
     function _setupFuzz(uint256 lineCount, uint256 seed1, uint256 seed2, uint256 seed3)
         internal
-        view
+        pure
         returns (VeArtProxy.Config memory cfg)
     {
         lineCount = bound(lineCount, 4, 32);

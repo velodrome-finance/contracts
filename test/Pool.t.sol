@@ -754,8 +754,8 @@ contract PoolTest is BaseTest {
     function testCannotSyncPoolWithNoLiquidity() external {
         deployPoolCoins();
 
-        address token1 = address(new ERC20("", ""));
-        address token2 = address(new ERC20("", ""));
+        address token1 = address(new MockERC20("", "", 18));
+        address token2 = address(new MockERC20("", "", 18));
         address newPool = factory.createPool(token1, token2, true);
 
         vm.expectRevert(IPool.InsufficientLiquidity.selector);
