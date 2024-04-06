@@ -400,6 +400,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         return (3 * x0 * ((y * y) / 1e18)) / 1e18 + ((((x0 * x0) / 1e18) * x0) / 1e18);
     }
 
+    /// @dev Use newton raphson method to approximate solution to x3y+y3x >= k
     function _get_y(uint256 x0, uint256 xy, uint256 y) internal view returns (uint256) {
         for (uint256 i = 0; i < 255; i++) {
             uint256 k = _f(x0, y);
@@ -468,6 +469,7 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
+    /// @dev Handles support for stable and volatile amms
     function _k(uint256 x, uint256 y) internal view returns (uint256) {
         if (stable) {
             uint256 _x = (x * 1e18) / decimals0;
@@ -480,11 +482,9 @@ contract Pool is IPool, ERC20Permit, ReentrancyGuard {
         }
     }
 
-    /*
-    @dev OZ inheritance overrides
-    These are needed as _name and _symbol are set privately before
-    logic is executed within the constructor to set _name and _symbol.
-    */
+    /// @dev OZ inheritance overrides
+    /// @dev These are needed as _name and _symbol are set privately before
+    /// @dev logic is executed within the constructor to set _name and _symbol.
     function name() public view override returns (string memory) {
         return _name;
     }

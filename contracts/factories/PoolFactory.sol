@@ -6,23 +6,32 @@ import {IPool} from "../interfaces/IPool.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract PoolFactory is IPoolFactory {
+    /// @inheritdoc IPoolFactory
     address public immutable implementation;
 
+    /// @inheritdoc IPoolFactory
     bool public isPaused;
+    /// @inheritdoc IPoolFactory
     address public pauser;
 
+    /// @inheritdoc IPoolFactory
     uint256 public stableFee;
+    /// @inheritdoc IPoolFactory
     uint256 public volatileFee;
+    /// @inheritdoc IPoolFactory
     uint256 public constant MAX_FEE = 300; // 3%
-    // Override to indicate there is custom 0% fee - as a 0 value in the customFee mapping indicates
-    // that no custom fee rate has been set
+    /// @inheritdoc IPoolFactory
     uint256 public constant ZERO_FEE_INDICATOR = 420;
+    /// @inheritdoc IPoolFactory
     address public feeManager;
+    /// @inheritdoc IPoolFactory
     address public poolAdmin;
 
     mapping(address => mapping(address => mapping(bool => address))) private _getPool;
-    address[] public allPools;
-    mapping(address => bool) private _isPool; // simplified check if its a pool, given that `stable` flag might not be available in peripherals
+    address[] internal _allPools;
+    /// @dev simplified check if its a pool, given that `stable` flag might not be available in peripherals
+    mapping(address => bool) private _isPool;
+    /// @inheritdoc IPoolFactory
     mapping(address => uint256) public customFee; // override for custom fees
 
     address internal _temp0;
@@ -40,8 +49,13 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
+    function allPools() external view returns (address[] memory) {
+        return _allPools;
+    }
+
+    /// @inheritdoc IPoolFactory
     function allPoolsLength() external view returns (uint256) {
-        return allPools.length;
+        return _allPools.length;
     }
 
     /// @inheritdoc IPoolFactory
@@ -67,6 +81,7 @@ contract PoolFactory is IPoolFactory {
         emit SetPoolAdmin(_poolAdmin);
     }
 
+    /// @inheritdoc IPoolFactory
     function setPauser(address _pauser) external {
         if (msg.sender != pauser) revert NotPauser();
         if (_pauser == address(0)) revert ZeroAddress();
@@ -74,12 +89,14 @@ contract PoolFactory is IPoolFactory {
         emit SetPauser(_pauser);
     }
 
+    /// @inheritdoc IPoolFactory
     function setPauseState(bool _state) external {
         if (msg.sender != pauser) revert NotPauser();
         isPaused = _state;
         emit SetPauseState(_state);
     }
 
+    /// @inheritdoc IPoolFactory
     function setFeeManager(address _feeManager) external {
         if (msg.sender != feeManager) revert NotFeeManager();
         if (_feeManager == address(0)) revert ZeroAddress();
@@ -133,8 +150,8 @@ contract PoolFactory is IPoolFactory {
         IPool(pool).initialize(token0, token1, stable);
         _getPool[token0][token1][stable] = pool;
         _getPool[token1][token0][stable] = pool; // populate mapping in the reverse direction
-        allPools.push(pool);
+        _allPools.push(pool);
         _isPool[pool] = true;
-        emit PoolCreated(token0, token1, stable, pool, allPools.length);
+        emit PoolCreated(token0, token1, stable, pool, _allPools.length);
     }
 }

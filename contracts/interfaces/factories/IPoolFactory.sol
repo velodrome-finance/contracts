@@ -20,8 +20,9 @@ interface IPoolFactory {
     error ZeroFee();
     error ZeroAddress();
 
-    /// @notice Returns the pool administrator
-    function poolAdmin() external view returns (address);
+    /// @notice Returns all pools created by this factory
+    /// @return Array of pool addresses
+    function allPools() external view returns (address[] memory);
 
     /// @notice returns the number of pools created from this factory
     function allPoolsLength() external view returns (uint256);
@@ -48,10 +49,20 @@ interface IPoolFactory {
     /// @param _poolAdmin Address of the pool administrator
     function setPoolAdmin(address _poolAdmin) external;
 
+    /// @notice Set the pauser for the factory contract
+    /// @dev The pauser can pause swaps on pools associated with the factory. Liquidity will always be withdrawable.
+    /// @dev Must be called by the pauser
+    /// @param _pauser Address of the pauser
     function setPauser(address _pauser) external;
 
+    /// @notice Pause or unpause swaps on pools associated with the factory
+    /// @param _state True to pause, false to unpause
     function setPauseState(bool _state) external;
 
+    /// @notice Set the fee manager for the factory contract
+    /// @dev The fee manager can set fees on pools associated with the factory.
+    /// @dev Must be called by the fee manager
+    /// @param _feeManager Address of the fee manager
     function setFeeManager(address _feeManager) external;
 
     /// @notice Set default fee for stable and volatile pools.
@@ -83,7 +94,45 @@ interface IPoolFactory {
     /// @param fee 1 if stable, 0 if volatile, else revert
     function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool);
 
+    /// @notice The pool implementation used to create pools
+    /// @return Address of pool implementation
+    function implementation() external view returns (address);
+
+    /// @notice Whether the pools associated with the factory are paused or not.
+    /// @dev Pause only pauses swaps, liquidity will always be withdrawable.
     function isPaused() external view returns (bool);
 
-    function implementation() external view returns (address);
+    /// @notice The address of the pauser, can pause swaps on pools associated with factory.
+    /// @return Address of the pauser
+    function pauser() external view returns (address);
+
+    /// @notice The default fee for all stable pools
+    /// @return Default stable fee
+    function stableFee() external view returns (uint256);
+
+    /// @notice The default fee for all volatile pools
+    /// @return Default volatile fee
+    function volatileFee() external view returns (uint256);
+
+    /// @notice Maximum possible fee for default stable or volatile fee
+    /// @return 3%
+    function MAX_FEE() external view returns (uint256);
+
+    /// @dev Override to indicate there is custom 0% fee - as a 0 value in the
+    /// @dev customFee mapping indicates that no custom fee rate has been set
+    function ZERO_FEE_INDICATOR() external view returns (uint256);
+
+    /// @notice Address of the fee manager, can set fees on pools associated with factory.
+    /// @notice This overrides the default fee for that pool.
+    /// @return Address of the fee manager
+    function feeManager() external view returns (address);
+
+    /// @notice Address of the pool administrator, can change the name and symbol of pools created by factory.
+    /// @return Address of the pool administrator
+    function poolAdmin() external view returns (address);
+
+    /// @notice Returns the custom fee for a pool
+    /// @param _pool Address of the pool
+    /// @return Custom fee for the pool
+    function customFee(address _pool) external view returns (uint256);
 }
