@@ -34,10 +34,6 @@ contract PoolFactory is IPoolFactory {
     /// @inheritdoc IPoolFactory
     mapping(address => uint256) public customFee; // override for custom fees
 
-    address internal _temp0;
-    address internal _temp1;
-    bool internal _temp;
-
     constructor(address _implementation) {
         implementation = _implementation;
         poolAdmin = msg.sender;
