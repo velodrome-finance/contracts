@@ -45,6 +45,11 @@ contract PoolFactory is IPoolFactory {
     }
 
     /// @inheritdoc IPoolFactory
+    function allPools(uint256 index) external view returns (address) {
+        return _allPools[index];
+    }
+
+    /// @inheritdoc IPoolFactory
     function allPools() external view returns (address[] memory) {
         return _allPools;
     }

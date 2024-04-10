@@ -20,6 +20,10 @@ interface IPoolFactory {
     error ZeroFee();
     error ZeroAddress();
 
+    /// @notice Return a single pool created by this factory
+    /// @return Address of pool
+    function allPools(uint256 index) external view returns (address);
+
     /// @notice Returns all pools created by this factory
     /// @return Array of pool addresses
     function allPools() external view returns (address[] memory);
