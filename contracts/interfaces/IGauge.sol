@@ -28,8 +28,8 @@ interface IGauge {
     /// @notice Address of Velodrome v2 Voter
     function voter() external view returns (address);
 
-    /// @notice Address of Velodrome v2 Team
-    function team() external view returns (address);
+    /// @notice Address of the factory that created this gauge
+    function gaugeFactory() external view returns (address);
 
     /// @notice Returns if gauge is linked to a legitimate Velodrome pool
     function isPool() external view returns (bool);

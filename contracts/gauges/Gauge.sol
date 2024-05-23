@@ -12,6 +12,7 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
+import {IGaugeFactory} from "../interfaces/factories/IGaugeFactory.sol";
 
 /// @title Velodrome V2 Gauge
 /// @author veldorome.finance, @figs999, @pegahcarter
@@ -28,7 +29,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IGauge
     address public immutable voter;
     /// @inheritdoc IGauge
-    address public immutable team;
+    address public immutable gaugeFactory;
 
     /// @inheritdoc IGauge
     bool public immutable isPool;
@@ -73,7 +74,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
         rewardToken = _rewardToken;
         voter = _voter;
         isPool = _isPool;
-        team = IVotingEscrow(IVoter(voter).ve()).team();
+        gaugeFactory = msg.sender;
     }
 
     function _claimFees() internal returns (uint256 claimed0, uint256 claimed1) {
@@ -202,7 +203,7 @@ contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IGauge
     function notifyRewardWithoutClaim(uint256 _amount) external nonReentrant {
         address sender = _msgSender();
-        if (sender != team) revert NotTeam();
+        if (sender != IGaugeFactory(gaugeFactory).notifyAdmin()) revert NotAuthorized();
         if (_amount == 0) revert ZeroAmount();
         _notifyRewardAmount(sender, _amount);
     }

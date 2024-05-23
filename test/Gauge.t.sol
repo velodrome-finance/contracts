@@ -4,7 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "./BaseTest.sol";
 
 contract GaugeTest is BaseTest {
-    address public team;
+    address public notifyAdmin;
 
     function _setUp() public override {
         // ve
@@ -21,7 +21,7 @@ contract GaugeTest is BaseTest {
         vm.warp(block.timestamp + 1);
 
         skipToNextEpoch(0);
-        team = escrow.team();
+        notifyAdmin = gaugeFactory.notifyAdmin();
     }
 
     event Deposit(address indexed from, address indexed to, uint256 amount);
@@ -548,7 +548,7 @@ contract GaugeTest is BaseTest {
 
         skipAndRoll(1 days);
 
-        vm.startPrank(team);
+        vm.startPrank(notifyAdmin);
         VELO.approve(address(gauge), reward);
         vm.expectCall(Gauge(gauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 0);
         Gauge(gauge).notifyRewardWithoutClaim(reward);
@@ -567,7 +567,7 @@ contract GaugeTest is BaseTest {
 
     function testNotifyRewardWithoutClaimNonZeroAmount() public {
         uint256 reward = TOKEN_1;
-        vm.startPrank(team);
+        vm.startPrank(notifyAdmin);
         VELO.approve(address(gauge), reward);
         vm.expectCall(Gauge(gauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 0);
         Gauge(gauge).notifyRewardWithoutClaim(reward);
@@ -585,7 +585,7 @@ contract GaugeTest is BaseTest {
         skipAndRoll(1 days);
 
         uint256 reward = TOKEN_1;
-        vm.startPrank(team);
+        vm.startPrank(notifyAdmin);
         VELO.approve(address(gauge), reward);
         vm.expectCall(Gauge(gauge).stakingToken(), abi.encodeCall(IPool.claimFees, ()), 0);
         Gauge(gauge).notifyRewardWithoutClaim(reward);
@@ -599,14 +599,14 @@ contract GaugeTest is BaseTest {
         assertEq(gauge.periodFinish(), _getEpochStart(block.timestamp) + DURATION);
     }
 
-    function testCannotNotifyRewardWithoutClaimIfNotTeam() public {
+    function testCannotNotifyRewardWithoutClaimIfNotNotifyAdmin() public {
         vm.prank(address(voter));
-        vm.expectRevert(IGauge.NotTeam.selector);
+        vm.expectRevert(IGauge.NotAuthorized.selector);
         gauge.notifyRewardWithoutClaim(TOKEN_1);
     }
 
     function testCannotNotifyRewardWithoutClaimIfZeroAmount() public {
-        vm.prank(team);
+        vm.prank(notifyAdmin);
         vm.expectRevert(IGauge.ZeroAmount.selector);
         gauge.notifyRewardWithoutClaim(0);
     }

@@ -21,6 +21,7 @@ contract DeployVelodromeV2 is Base {
     address feeManager;
     address team;
     address emergencyCouncil;
+    address notifyAdmin;
 
     constructor() {
         string memory root = vm.projectRoot();
@@ -32,6 +33,7 @@ contract DeployVelodromeV2 is Base {
         WETH = IWETH(abi.decode(vm.parseJson(jsonConstants, ".WETH"), (address)));
         allowedManager = abi.decode(vm.parseJson(jsonConstants, ".allowedManager"), (address));
         team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
+        notifyAdmin = abi.decode(vm.parseJson(jsonConstants, ".notifyAdmin"), (address));
         feeManager = abi.decode(vm.parseJson(jsonConstants, ".feeManager"), (address));
         emergencyCouncil = abi.decode(vm.parseJson(jsonConstants, ".emergencyCouncil"), (address));
     }
@@ -73,6 +75,9 @@ contract DeployVelodromeV2 is Base {
         voter.setEpochGovernor(team);
         voter.setGovernor(team);
         factoryRegistry.transferOwnership(team);
+
+        // Set notifyAdmin in gauge factory
+        gaugeFactory.setNotifyAdmin(notifyAdmin);
 
         // Set contract vars
         factory.setFeeManager(feeManager);

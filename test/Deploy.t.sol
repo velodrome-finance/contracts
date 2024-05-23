@@ -18,6 +18,7 @@ contract TestDeploy is BaseTest {
 
     address public feeManager;
     address public team;
+    address public notifyAdmin;
     address public emergencyCouncil;
     address public constant testDeployer = address(1);
 
@@ -56,6 +57,7 @@ contract TestDeploy is BaseTest {
 
         WETH = IWETH(abi.decode(vm.parseJson(jsonConstants, ".WETH"), (address)));
         team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
+        notifyAdmin = abi.decode(vm.parseJson(jsonConstants, ".notifyAdmin"), (address));
         feeManager = abi.decode(vm.parseJson(jsonConstants, ".feeManager"), (address));
         emergencyCouncil = abi.decode(vm.parseJson(jsonConstants, ".emergencyCouncil"), (address));
 
@@ -71,6 +73,7 @@ contract TestDeploy is BaseTest {
         // Refer to script/README.md
         assertTrue(address(WETH) != address(0));
         assertTrue(team != address(0));
+        assertTrue(notifyAdmin != address(0));
         assertTrue(feeManager != address(0));
         assertTrue(emergencyCouncil != address(0));
     }
@@ -128,6 +131,7 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.factoryRegistry().owner(), team);
         assertEq(deployVelodromeV2.factory().poolAdmin(), team);
         assertEq(deployVelodromeV2.factory().feeManager(), feeManager);
+        assertEq(deployVelodromeV2.gaugeFactory().notifyAdmin(), notifyAdmin);
 
         // DeployGaugesAndPoolsV2 checks
 

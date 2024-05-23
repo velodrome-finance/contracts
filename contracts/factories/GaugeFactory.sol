@@ -5,6 +5,21 @@ import {IGaugeFactory} from "../interfaces/factories/IGaugeFactory.sol";
 import {Gauge} from "../gauges/Gauge.sol";
 
 contract GaugeFactory is IGaugeFactory {
+    /// @inheritdoc IGaugeFactory
+    address public notifyAdmin;
+
+    constructor() {
+        notifyAdmin = msg.sender;
+    }
+
+    /// @inheritdoc IGaugeFactory
+    function setNotifyAdmin(address _admin) external {
+        if (notifyAdmin != msg.sender) revert NotAuthorized();
+        if (_admin == address(0)) revert ZeroAddress();
+        notifyAdmin = _admin;
+        emit SetNotifyAdmin(_admin);
+    }
+
     function createGauge(
         address _forwarder,
         address _pool,
