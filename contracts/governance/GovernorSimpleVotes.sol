@@ -59,21 +59,29 @@ abstract contract GovernorSimpleVotes is GovernorSimple {
         IVotingEscrow.EscrowType escrowType = ve.escrowType(tokenId);
         require(escrowType != IVotingEscrow.EscrowType.MANAGED, "EpochGovernor: managed nft cannot vote");
 
+        // If veNFT is not Managed or Locked, voting weight should be its balance at given `timepoint`
         if (escrowType == IVotingEscrow.EscrowType.NORMAL) {
             return token.getPastVotes(account, tokenId, timepoint);
         }
 
-        // only allow locked veNFT voting if underlying nft not delegating at timepoint
+        // only allow locked veNFT voting if underlying nft not delegating at `timepoint`
         uint256 mTokenId = ve.idToManaged(tokenId);
         uint48 index = ve.getPastCheckpointIndex(mTokenId, timepoint);
         uint256 delegatee = ve.checkpoints(mTokenId, index).delegatee;
-        if (delegatee == 0) {
-            // if mveNFT not delegating, voting balance = delegated balance +
-            // initial contribution to mveNFT + accrued locked rewards
-            uint256 delegatedBalance = token.getPastVotes(account, tokenId, timepoint);
+        if (delegatee == 0 && ve.userPointHistory(tokenId, ve.userPointEpoch(tokenId)).ts <= timepoint) {
+            index = ve.getPastCheckpointIndex(tokenId, timepoint);
+            IVotingEscrow.Checkpoint memory lastCheckpoint = ve.checkpoints(tokenId, index);
+            // If `account` does not own veNFT with given `tokenId`
+            if (account != lastCheckpoint.owner) return 0;
+            // veNFT will always have at least 1 checkpoint before `timepoint` as
+            // lock creation generates a delegation checkpoint
+
+            // else: mveNFT not delegating and deposit was before `timepoint`,
+            // voting balance = initial contribution to mveNFT + accrued locked rewards + delegated balance
             uint256 weight = ve.weights(tokenId, mTokenId); // initial deposit weight
             uint256 _earned = ve.earned(mTokenId, tokenId, timepoint); // accrued rewards
-            return weight + _earned + delegatedBalance;
+
+            return weight + _earned + lastCheckpoint.delegatedBalance;
         }
 
         // nft locked and underlying nft delegating

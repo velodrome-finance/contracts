@@ -5,7 +5,7 @@ import "../BaseTest.sol";
 
 contract SetNameTest is BaseTest {
     function test_InitialState() public {
-        assertEq(pool.name(), "StableV2 AMM - USDC/FRAX");
+        assertEq(pool.name(), "StableV2 AMM - FRAX/USDC");
     }
 
     function test_SetName() public {

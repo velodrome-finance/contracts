@@ -1,0 +1,16 @@
+GetVotesTest
+├── Given veNFT is Managed escrow type
+│   └── It should revert with "Governor: managed nft cannot vote"
+├── Given veNFT is Normal escrow type
+│   └── It should return Voting Weight at Proposal Snapshot
+└── Given veNFT is Locked escrow type
+    ├── Given the underlying mveNFT is delegating
+    │   └── It should return Voting Weight at Proposal Snapshot
+    └── Given the underlying mveNFT is not delegating
+        ├── Given deposit into managed after snapshot timestamp
+        │   └── It should return Voting Weight at Proposal Snapshot
+        └── Given deposit into managed before or at snapshot timestamp
+            ├── When account is not owner in last checkpoint
+            │   └── It should return 0
+            └── When account is owner in last checkpoint
+                └── It should return the initial contribution to mveNFT + accrued locked rewards + delegated balance

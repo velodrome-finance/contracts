@@ -5,7 +5,7 @@ import "../BaseTest.sol";
 
 contract SetSymbolTest is BaseTest {
     function test_InitialState() public {
-        assertEq(pool.symbol(), "sAMMV2-USDC/FRAX");
+        assertEq(pool.symbol(), "sAMMV2-FRAX/USDC");
     }
 
     function test_SetSymbol() public {
