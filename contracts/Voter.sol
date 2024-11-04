@@ -19,7 +19,7 @@ import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol
 import {VelodromeTimeLibrary} from "./libraries/VelodromeTimeLibrary.sol";
 
 /// @title Velodrome V2 Voter
-/// @author velodrome.finance, @figs999, @pegahcarter
+/// @author velodrome.finance, Solidly, @figs999, @pegahcarter
 /// @notice Manage votes, emission distribution, and gauge creation within the Velodrome ecosystem.
 ///         Also provides support for depositing and withdrawing from managed veNFTs.
 contract Voter is IVoter, ERC2771Context, ReentrancyGuard {

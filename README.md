@@ -85,6 +85,11 @@ See `PERMISSIONS.md` for more detail.
 ### Bug Bounty
 Velodrome has a live bug bounty hosted on ([Immunefi](https://immunefi.com/bounty/velodromefinance/)).
 
+## Licensing
+
+This project follows the [Apache Foundation](https://infra.apache.org/licensing-howto.html)
+guideline for licensing. See LICENSE and NOTICE files.
+
 ## Deployment
 
 | Name               | Address                                                                                                                               |

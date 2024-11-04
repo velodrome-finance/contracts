@@ -6,7 +6,7 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
 /// @title Velo
-/// @author velodrome.finance
+/// @author velodrome.finance, Solidly
 /// @notice The native token in the Velodrome V2 ecosystem
 /// @dev Emitted by the Minter
 contract Velo is IVelo, ERC20Permit {

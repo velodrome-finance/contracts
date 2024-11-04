@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19 <0.9.0;
 
 import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
@@ -16,7 +16,7 @@ import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol"
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 /// @title Velodrome V2 Router
-/// @author velodrome.finance, @pegahcarter
+/// @author velodrome.finance, Solidly, Uniswap Labs, @pegahcarter
 /// @notice Router allows routes through any pools created by any factory adhering to univ2 interface.
 contract Router is IRouter, ERC2771Context {
     using SafeERC20 for IERC20;

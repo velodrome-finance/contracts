@@ -1,0 +1,53 @@
+This product bundles the constant product liquidity pool and router
+implementations which are available under the GNU General Public License v3.0.
+For details, see
+* contracts/Pool.sol
+* contracts/PoolFees.sol
+* contracts/Router.sol
+* contracts/RewardsDistributor.sol
+* contracts/Velo.sol
+* contracts/VeloForwarder.sol
+* LICENSE.GPL3
+
+
+This product bundles the VelodromeTimeLibrary library which is available under
+the MIT License. For details, see
+* contracts/libraries/VelodromeTimeLibrary.sol
+* LICENSE.MIT
+
+
+This product bundles interfaces for external smart contracts which are
+available under the MIT License. For details, see
+* contracts/governance/IGovernor.sol
+* contracts/governance/IVetoGovernor.sol
+* contracts/governance/IVotes.sol
+* contracts/interfaces/
+* LICENSE.MIT
+
+
+This product bundles the BokkyPooBah's DateTime library which is available under
+the MIT License. For details, see
+* contracts/art/BokkyPooBahsDateTimeLibrary.sol
+* LICENSE.MIT
+
+
+This product bundles the PerlinNoise library which is available under
+the MIT License. For details, see
+* contracts/art/PerlinNoise.sol
+* LICENSE.MIT
+
+
+This product bundles the Trig library which is available under
+the MIT License. For details, see
+* contracts/art/Trig.sol
+* LICENSE.MIT
+
+
+This product bundles the GSN Forwarder library which is available under
+the GNU General Public License v3.0. For details, see
+* lib/gsn/packages/contracts/LICENSE
+
+
+This product bundles the OpenZeppelin library which is available under
+the MIT license. For details, see
+* lib/openzeppelin-contracts

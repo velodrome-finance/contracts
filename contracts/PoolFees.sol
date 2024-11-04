@@ -1,11 +1,11 @@
-// SPDX-License-Identifier: BUSL-1.1
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity >=0.8.19 <0.9.0;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 /// @title PoolFees
-/// @notice Contract used as 1:1 pool relationship to split out fees.
+/// @author velodrome.finance, Solidly
 /// @notice Ensures curve does not need to be modified for LP shares.
 contract PoolFees {
     using SafeERC20 for IERC20;
