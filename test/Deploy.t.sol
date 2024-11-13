@@ -173,7 +173,6 @@ contract TestDeploy is BaseTest {
 
         assertEq(address(epochGovernor.token()), address(deployGovernors.escrow()));
         assertEq(epochGovernor.minter(), address(deployGovernors.minter()));
-        assertTrue(epochGovernor.isTrustedForwarder(address(deployGovernors.forwarder())));
         assertEq(address(governor.escrow()), address(deployGovernors.escrow()));
         assertEq(address(governor.voter()), address(deployGovernors.voter()));
     }

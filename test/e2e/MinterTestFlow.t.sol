@@ -3,6 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "./ExtendedBaseTest.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
+import {IGovernor} from "contracts/governance/IGovernor.sol";
 
 contract MinterTestFlow is ExtendedBaseTest {
     event Mint(address indexed _sender, uint256 _weekly, uint256 _circulating_supply, bool indexed _tail);
@@ -128,7 +129,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
 
         skipAndRoll(1); // epoch + 1 + 1
-        vm.expectRevert("GovernorSimple: vote not currently active");
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.castVote(pid, 1, 1);
         skipAndRoll(1); // epoch + 2 + 2
 

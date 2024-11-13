@@ -41,7 +41,7 @@ contract DeployGovernors is Script {
         vm.startBroadcast(deployerAddress);
 
         governor = new VeloGovernor(escrow, IVoter(voter));
-        epochGovernor = new EpochGovernor(address(forwarder), escrow, address(minter), IVoter(voter));
+        epochGovernor = new EpochGovernor(escrow, address(minter), IVoter(voter));
 
         governor.setVetoer(vetoer);
         governor.setTeam(team);

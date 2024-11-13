@@ -6,6 +6,8 @@ import {IGovernor as OZGovernor} from "@openzeppelin/contracts/governance/IGover
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IGovernor} from "contracts/governance/IGovernor.sol";
+import {GovernorCountingFractional} from "contracts/governance/GovernorCountingFractional.sol";
+import {GovernorSimpleVotes} from "contracts/governance/GovernorSimpleVotes.sol";
 
 contract EpochGovernorTest is BaseTest {
     using stdStorage for StdStorage;
@@ -38,12 +40,12 @@ contract EpochGovernorTest is BaseTest {
         stdstore.target(address(minter)).sig("weekly()").checked_write(4_999_999 * 1e18);
     }
 
-    function testInitialState() public {
+    function testInitialState() public view {
         assertEq(epochGovernor.votingDelay(), 1);
         assertEq(epochGovernor.votingPeriod(), 1 weeks);
     }
 
-    function testSupportInterfacesExcludesCancel() public {
+    function testSupportInterfacesExcludesCancel() public view {
         assertTrue(
             epochGovernor.supportsInterface(
                 type(IGovernor).interfaceId ^ type(IERC6372).interfaceId
@@ -76,7 +78,9 @@ contract EpochGovernorTest is BaseTest {
         calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
         string memory description = "";
 
-        vm.expectRevert("GovernorSimple: only minter allowed");
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+        );
         epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
@@ -89,7 +93,9 @@ contract EpochGovernorTest is BaseTest {
         calldatas[0] = abi.encodeWithSelector(minter.updatePeriod.selector);
         string memory description = "";
 
-        vm.expectRevert("GovernorSimple: only nudge allowed");
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+        );
         epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
@@ -110,7 +116,7 @@ contract EpochGovernorTest is BaseTest {
         skipAndRoll(1);
         assertEq(escrow.balanceOfNFT(1), 1994520516124422418); // voting power at proposal start
         assertEq(escrow.balanceOfNFT(2), 997260257999312010); // voting power at proposal start
-        vm.expectRevert("GovernorSimple: vote not currently active");
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.castVote(pid, 1, 1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
 
@@ -169,7 +175,7 @@ contract EpochGovernorTest is BaseTest {
         skipAndRoll(1);
         assertEq(escrow.balanceOfNFT(1), 1994520516124422418); // voting power at proposal start
         assertEq(escrow.balanceOfNFT(2), 997260257999312010); // voting power at proposal start
-        vm.expectRevert("GovernorSimple: vote not currently active");
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.castVote(pid, 1, 1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
 
@@ -227,7 +233,7 @@ contract EpochGovernorTest is BaseTest {
 
         skipAndRoll(1);
         assertEq(escrow.balanceOfNFT(2), 997260257999312010); // voting power at proposal start
-        vm.expectRevert("GovernorSimple: vote not currently active");
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.castVote(pid, 1, 1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
 
@@ -296,7 +302,7 @@ contract EpochGovernorTest is BaseTest {
         assertEq(escrow.balanceOfNFT(4), TOKEN_1);
         assertEq(escrow.getPastVotes(address(owner4), 4, block.timestamp), 0);
         assertEq(escrow.balanceOfNFT(2), 997260257999312010); // voting power at proposal start
-        vm.expectRevert("GovernorSimple: vote not currently active");
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.castVote(pid, 1, 1);
         assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
 
@@ -353,7 +359,7 @@ contract EpochGovernorTest is BaseTest {
         epochGovernor.propose(1, targets, values, calldatas, description);
 
         vm.prank(address(owner2));
-        vm.expectRevert("GovernorSimple: proposal already exists");
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.propose(2, targets, values, calldatas, description);
     }
 
@@ -368,7 +374,7 @@ contract EpochGovernorTest is BaseTest {
         uint256 pid = createProposal();
         skip(1); // allow voting
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
         vm.prank(address(owner));
         epochGovernor.castVote(pid, mTokenId, 1);
     }
@@ -497,7 +503,7 @@ contract EpochGovernorTest is BaseTest {
         uint256 pid = createProposal();
         skip(1); // allow voting
 
-        vm.expectRevert("GovernorVotingSimple: zero voting weight");
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 
@@ -591,7 +597,7 @@ contract EpochGovernorTest is BaseTest {
         escrow.delegate(mTokenId, delegateTokenId); // delegate on snapshot boundary
         skip(1); // allow voting
 
-        vm.expectRevert("GovernorVotingSimple: zero voting weight");
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 
@@ -654,16 +660,16 @@ contract EpochGovernorTest is BaseTest {
         uint256 pid = createProposal();
         skip(1); // allow voting
 
-        vm.expectRevert("GovernorVotingSimple: zero voting weight");
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
         epochGovernor.castVote(pid, mTokenId, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
         assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId2));
         epochGovernor.castVote(pid, mTokenId2, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId2, block.timestamp - 1), TOKEN_1);
         assertEq(epochGovernor.hasVoted(pid, mTokenId2), false);
@@ -690,16 +696,16 @@ contract EpochGovernorTest is BaseTest {
         uint256 pid = createProposal();
         skip(1); // allow voting
 
-        vm.expectRevert("GovernorVotingSimple: zero voting weight");
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
         epochGovernor.castVote(pid, mTokenId, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
         assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId2));
         epochGovernor.castVote(pid, mTokenId2, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId2, block.timestamp - 1), TOKEN_1 * 2);
         assertEq(epochGovernor.hasVoted(pid, mTokenId2), false);
@@ -731,11 +737,11 @@ contract EpochGovernorTest is BaseTest {
         uint256 pid = createProposal();
         skip(1); // allow voting
 
-        vm.expectRevert("GovernorVotingSimple: zero voting weight");
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
         epochGovernor.castVote(pid, mTokenId, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), TOKEN_1 * 2);
         assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
@@ -773,7 +779,7 @@ contract EpochGovernorTest is BaseTest {
         assertProposalVotes(pid, 0, TOKEN_1 * 2, 0); // votes with delegated power from delegateTokenId
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), true);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
         epochGovernor.castVote(pid, mTokenId, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
         assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
@@ -802,7 +808,7 @@ contract EpochGovernorTest is BaseTest {
         uint256 pid = createProposal();
         skip(1); // allow voting
 
-        vm.expectRevert("GovernorVotingSimple: zero voting weight");
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 
@@ -812,12 +818,12 @@ contract EpochGovernorTest is BaseTest {
         assertProposalVotes(pid, 0, TOKEN_1 * 3, 0); // votes with delegated power from mveNFT + locked contribution to mTokenId2
         assertEq(epochGovernor.hasVoted(pid, depositTokenId2), true);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
         epochGovernor.castVote(pid, mTokenId, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
         assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId2));
         epochGovernor.castVote(pid, mTokenId2, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId2, block.timestamp - 1), TOKEN_1 * 2);
         assertEq(epochGovernor.hasVoted(pid, mTokenId2), false);
@@ -839,7 +845,7 @@ contract EpochGovernorTest is BaseTest {
         uint256 pid = createProposal();
         skip(1); // allow voting
 
-        vm.expectRevert("GovernorVotingSimple: zero voting weight");
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 
@@ -849,7 +855,7 @@ contract EpochGovernorTest is BaseTest {
         assertProposalVotes(pid, 0, TOKEN_1 * 3, 0); // votes with delegated power from mveNFT
         assertEq(epochGovernor.hasVoted(pid, depositTokenId2), true);
 
-        vm.expectRevert("EpochGovernor: managed nft cannot vote");
+        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
         epochGovernor.castVote(pid, mTokenId, 1);
         assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
         assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
@@ -863,7 +869,7 @@ contract EpochGovernorTest is BaseTest {
         VELO.approve(address(escrow), 1);
         uint256 tokenId = escrow.createLock(1, MAXTIME);
 
-        vm.expectRevert("EpochGovernor: insufficient voting power");
+        vm.expectPartialRevert(IGovernor.GovernorInsufficientVotingPower.selector);
         epochGovernor.comment(pid, tokenId, "test");
     }
 
@@ -875,7 +881,7 @@ contract EpochGovernorTest is BaseTest {
         // skip 1 to exit active state
         skipAndRoll(1 weeks + 1);
 
-        vm.expectRevert("EpochGovernor: not active or pending");
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.comment(pid, 1, "test");
     }
 
@@ -885,6 +891,164 @@ contract EpochGovernorTest is BaseTest {
         vm.expectEmit(true, true, true, true, address(epochGovernor));
         emit Comment(pid, address(this), 1, "test");
         epochGovernor.comment(pid, 1, "test");
+    }
+
+    function testCannotNominalVoteWithFractionalParamsProvided() public {
+        uint256 pid = createProposal();
+
+        uint256 nftBalance1 = 1994520516124422418;
+        assertEq(escrow.balanceOfNFT(1), nftBalance1); // voting power at proposal start
+
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
+        epochGovernor.castVote(pid, 1, 1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+
+        skipAndRoll(1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+
+        // vote
+        bytes memory voteFractionsParam = abi.encodePacked(uint128(nftBalance1), uint128(nftBalance1 / 3), uint128(0));
+
+        vm.expectRevert(IGovernor.GovernorInvalidVoteParams.selector);
+        epochGovernor.castVoteWithReasonAndParams(pid, 1, 1, "", voteFractionsParam);
+    }
+
+    function testCannotVoteWithInvalidFractionCount() public {
+        uint256 pid = createProposal();
+
+        uint256 nftBalance1 = 1994520516124422418;
+        assertEq(escrow.balanceOfNFT(1), nftBalance1); // voting power at proposal start
+
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
+        epochGovernor.castVote(pid, 1, 1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+
+        skipAndRoll(1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+
+        // vote
+        bytes memory voteFractionsParam =
+            abi.encodePacked(uint128(nftBalance1), uint128(nftBalance1 / 3), uint128(0), uint128(0));
+
+        vm.expectRevert(IGovernor.GovernorInvalidVoteParams.selector);
+        epochGovernor.castVoteWithReasonAndParams(pid, 1, 255, "", voteFractionsParam);
+    }
+
+    function testCannotVoteWithInvalidVoteTypeOnFractionalVoting() public {
+        uint256 pid = createProposal();
+
+        uint256 nftBalance1 = 1994520516124422418;
+        assertEq(escrow.balanceOfNFT(1), nftBalance1); // voting power at proposal start
+
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
+        epochGovernor.castVote(pid, 1, 1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+
+        skipAndRoll(1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+
+        // vote
+        bytes memory voteFractionsParam = abi.encodePacked(uint128(nftBalance1), uint128(nftBalance1 / 3), uint128(0));
+
+        vm.expectRevert(IGovernor.GovernorInvalidVoteType.selector);
+        epochGovernor.castVoteWithReasonAndParams(pid, 1, 111, "", voteFractionsParam);
+    }
+
+    function testCannotVoteWithExceededWeightOnFractionalVoting() public {
+        uint256 pid = createProposal();
+
+        uint256 nftBalance1 = 1994520516124422418;
+        assertEq(escrow.balanceOfNFT(1), nftBalance1); // voting power at proposal start
+
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
+        epochGovernor.castVote(pid, 1, 1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+
+        skipAndRoll(1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+
+        // vote
+        bytes memory voteFractionsParam = abi.encodePacked(uint128(nftBalance1), uint128(nftBalance1 / 3), uint128(0));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                GovernorCountingFractional.GovernorExceedRemainingWeight.selector,
+                1,
+                nftBalance1 + nftBalance1 / 3,
+                nftBalance1
+            )
+        );
+        epochGovernor.castVoteWithReasonAndParams(pid, 1, 255, "", voteFractionsParam);
+    }
+
+    function testFractionalVoting() public {
+        address[] memory targets = new address[](1);
+        targets[0] = address(minter);
+        uint256[] memory values = new uint256[](1);
+        values[0] = 0;
+        bytes[] memory calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
+        string memory description = "";
+
+        // propose
+        uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
+
+        skipAndRoll(1);
+
+        uint256 nftBalance1 = 1994520516124422418;
+        uint256 nftBalance2 = 997260257999312010;
+        assertEq(escrow.balanceOfNFT(1), nftBalance1); // voting power at proposal start
+        assertEq(escrow.balanceOfNFT(2), nftBalance2); // voting power at proposal start
+
+        vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
+        epochGovernor.castVote(pid, 1, 1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Pending));
+
+        skipAndRoll(1);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+
+        // vote
+        bytes memory voteFractionsParam =
+            abi.encodePacked(uint128(nftBalance1 / 3), uint128(nftBalance1 / 3 * 2), uint128(0));
+        epochGovernor.castVoteWithReasonAndParams(pid, 1, 255, "", voteFractionsParam); // against: 1/3 for: 2/3
+        assertEq(epochGovernor.hasVoted(pid, 1), true);
+        assertApproxEqAbs(epochGovernor.usedVotes(pid, 1), nftBalance1, 1);
+        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = epochGovernor.proposalVotes(pid);
+        assertEq(againstVotes, nftBalance1 / 3);
+        assertEq(forVotes, nftBalance1 / 3 * 2);
+        assertEq(abstainVotes, 0);
+
+        voteFractionsParam = abi.encodePacked(uint128(nftBalance2 / 3 * 2), uint128(nftBalance2 / 3), uint128(0));
+        vm.prank(address(owner2));
+        epochGovernor.castVoteWithReasonAndParams(pid, 2, 255, "", voteFractionsParam); // against: 2/3 for: 1/3
+        assertEq(epochGovernor.hasVoted(pid, 2), true);
+        assertEq(epochGovernor.usedVotes(pid, 2), nftBalance2);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        assertEq(againstVotes, nftBalance1 / 3 + nftBalance2 / 3 * 2);
+        assertEq(forVotes, nftBalance1 / 3 * 2 + nftBalance2 / 3);
+        assertEq(abstainVotes, 0);
+
+        voteFractionsParam = abi.encodePacked(uint128(0), uint128(0), uint128(nftBalance2 / 2));
+        vm.prank(address(owner3));
+        epochGovernor.castVoteWithReasonAndParams(pid, 3, 255, "", voteFractionsParam); // abstain: 1/2
+        assertEq(epochGovernor.hasVoted(pid, 3), true);
+        assertEq(epochGovernor.usedVotes(pid, 3), nftBalance2 / 2);
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        assertEq(againstVotes, nftBalance1 / 3 + nftBalance2 / 3 * 2);
+        assertEq(forVotes, nftBalance1 / 3 * 2 + nftBalance2 / 3);
+        assertEq(abstainVotes, nftBalance2 / 2); // nft3 has the same amount of voting power as nft2
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Active));
+        assertEq(epochGovernor.hasVoted(pid, 4), false);
+
+        skipAndRoll(1 weeks);
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Succeeded));
+
+        // execute
+        epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
+        assertEq(uint256(epochGovernor.state(pid)), uint256(IGovernor.ProposalState.Executed));
+        assertEq(uint256(epochGovernor.result()), uint256(IGovernor.ProposalState.Succeeded));
+
+        assertEq(minter.tailEmissionRate(), 31);
     }
 
     // creates a proposal so we can vote on it for testing and skip to snapshot time
@@ -904,7 +1068,10 @@ contract EpochGovernorTest is BaseTest {
         skipAndRoll(1);
     }
 
-    function assertProposalVotes(uint256 pid, uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) internal {
+    function assertProposalVotes(uint256 pid, uint256 againstVotes, uint256 forVotes, uint256 abstainVotes)
+        internal
+        view
+    {
         (uint256 _againstVotes, uint256 _forVotes, uint256 _abstainVotes) = epochGovernor.proposalVotes(pid);
         assertApproxEqAbs(_againstVotes, againstVotes, 1);
         assertApproxEqAbs(_forVotes, forVotes, 1);

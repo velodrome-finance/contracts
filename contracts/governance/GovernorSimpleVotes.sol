@@ -2,8 +2,9 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
-import {IVotes} from "./IVotes.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+
+import {IVotes} from "./IVotes.sol";
 import {GovernorSimple} from "./GovernorSimple.sol";
 import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
 import {DelegationHelperLibrary} from "contracts/libraries/DelegationHelperLibrary.sol";
@@ -16,6 +17,11 @@ abstract contract GovernorSimpleVotes is GovernorSimple {
 
     IVotes public immutable token;
     IVotingEscrow public immutable ve;
+
+    /**
+     * @dev A fractional vote params uses more votes than are available for that user.
+     */
+    error GovernorManagedNftCannotVote(uint256 tokenId);
 
     constructor(IVotes tokenAddress) {
         token = IVotes(address(tokenAddress));
@@ -57,7 +63,7 @@ abstract contract GovernorSimpleVotes is GovernorSimple {
         returns (uint256)
     {
         IVotingEscrow.EscrowType escrowType = ve.escrowType(tokenId);
-        require(escrowType != IVotingEscrow.EscrowType.MANAGED, "EpochGovernor: managed nft cannot vote");
+        if (escrowType == IVotingEscrow.EscrowType.MANAGED) revert GovernorManagedNftCannotVote(tokenId);
 
         // If veNFT is not Managed or Locked, voting weight should be its balance at given `timepoint`
         if (escrowType == IVotingEscrow.EscrowType.NORMAL) {
