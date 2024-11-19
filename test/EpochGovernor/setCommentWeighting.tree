@@ -1,0 +1,10 @@
+SetCommentWeightingTest
+├── When caller is not owner
+│   └── It should revert with {OwnableUnauthorizedAccount}
+└── When caller is owner
+    ├── When comment weighting is higher than comment denominator
+    │   └── It should revert with {CommentWeightingTooHigh}
+    └── When comment is smaller or equal to comment denominator
+        ├── It should set comment weighting
+        └── It should emit a {SetCommentWeighting} event 
+

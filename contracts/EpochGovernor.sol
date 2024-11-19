@@ -18,10 +18,10 @@ import {GovernorCommentable} from "./governance/GovernorCommentable.sol";
  *      no values.
  */
 contract EpochGovernor is GovernorSimple, GovernorCountingFractional, GovernorSimpleVotes, GovernorCommentable {
-    constructor(IVotes _ve, address _minter, IVoter _voter)
+    constructor(IVotes _ve, address _minter, IVoter _voter, address _owner)
         GovernorSimple("Epoch Governor", _minter)
         GovernorSimpleVotes(_ve)
-        GovernorCommentable(_voter)
+        GovernorCommentable(_voter, _owner)
     {}
 
     function votingDelay() public pure override returns (uint256) {

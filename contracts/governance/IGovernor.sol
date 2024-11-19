@@ -326,13 +326,6 @@ interface IGovernor is IERC165, IERC6372 {
     ) external payable returns (uint256 proposalId);
 
     /**
-     * @dev Add a comment to a proposal
-     *
-     * Emits a {Comment} event.
-     */
-    function comment(uint256 proposalId, uint256 tokenId, string calldata message) external virtual;
-
-    /**
      * @dev Cast a vote
      *
      * Emits a {VoteCast} event.
