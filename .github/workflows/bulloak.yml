@@ -1,0 +1,43 @@
+name: bulloak
+
+on:
+  push:
+    branches: 
+      - main
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  check:
+    strategy:
+      fail-fast: true
+
+    name: Testing Tree Structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      - name: Install Bulloak
+        # Install Bulloak if it is not already installed
+        # Note if we change the version number, we will need to --force to update cache
+        run: (cargo install bulloak@0.7.1 || true)
+        id: install-bulloak
+
+      - name: Run Bulloak checks
+        run: bulloak check $(find test -type f -name "*.tree")
+        id: check
