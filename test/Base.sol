@@ -22,8 +22,9 @@ import {IVoter, Voter} from "contracts/Voter.sol";
 import {VeArtProxy} from "contracts/VeArtProxy.sol";
 import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
 import {VeloGovernor} from "contracts/VeloGovernor.sol";
-import {EpochGovernor} from "contracts/EpochGovernor.sol";
+import {IGovernor, EpochGovernor} from "contracts/EpochGovernor.sol";
 import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
+import {VelodromeTimeLibrary} from "contracts/libraries/VelodromeTimeLibrary.sol";
 import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -32,6 +33,7 @@ import {Forwarder} from "@opengsn/contracts/src/forwarder/Forwarder.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {GovernorCommentable} from "contracts/governance/GovernorCommentable.sol";
 import {IGovernorCommentable} from "contracts/governance/IGovernorCommentable.sol";
+import {IGovernorProposalWindow} from "contracts/governance/IGovernorProposalWindow.sol";
 
 import "forge-std/Script.sol";
 import "forge-std/Test.sol";

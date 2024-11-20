@@ -345,6 +345,7 @@ contract EpochGovernorTest is BaseTest {
     }
 
     function testCannotProposeWithAnExistingProposal() public {
+        skip(epochGovernor.proposalWindow()); // skip proposal window to allow proposal creation
         assertEq(minter.tailEmissionRate(), 30);
 
         address[] memory targets = new address[](1);

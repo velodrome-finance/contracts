@@ -2,6 +2,7 @@
 
 pragma solidity ^0.8.20;
 
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
@@ -9,7 +10,6 @@ import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
-import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
@@ -32,7 +32,7 @@ import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
  *
  * propose(...) creates a proposal for the following epoch. This proposal can only be executed during that epoch.
  */
-abstract contract GovernorSimple is ERC165, EIP712, Nonces, IGovernor, IERC721Receiver, IERC1155Receiver {
+abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, IERC721Receiver, IERC1155Receiver {
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
 
     bytes32 public constant BALLOT_TYPEHASH =
@@ -51,7 +51,7 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, IGovernor, IERC721Re
 
     bytes32 private constant ALL_PROPOSAL_STATES_BITMAP = bytes32((2 ** (uint8(type(ProposalState).max) + 1)) - 1);
     string private _name;
-    address public minter;
+    address public immutable minter;
 
     mapping(uint256 proposalId => ProposalCore) private _proposals;
     mapping(bytes32 epoch => bool) private _epochAlreadyActive;
@@ -84,8 +84,7 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, IGovernor, IERC721Re
     /**
      * @dev Sets the value for {name} and {version}
      */
-    constructor(string memory name_, address minter_) EIP712(name_, version()) {
-        _name = name_;
+    constructor(string memory name_, address minter_, address owner_) EIP712(name_, version()) Ownable(owner_) {
         _name = name_;
         minter = minter_;
     }
@@ -308,7 +307,7 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, IGovernor, IERC721Re
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        string memory, /* description */
+        string memory description,
         address proposer
     ) internal virtual returns (uint256 proposalId) {
         bytes32 epochStart = bytes32(VelodromeTimeLibrary.epochStart(block.timestamp) + (1 weeks));
@@ -343,7 +342,7 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, IGovernor, IERC721Re
             calldatas,
             snapshot,
             snapshot + duration,
-            Strings.toString(uint256(epochStart))
+            description
         );
 
         // Using a named return variable to avoid stack too deep errors

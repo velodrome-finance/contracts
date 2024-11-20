@@ -2,7 +2,6 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseTest.sol";
-import {VelodromeTimeLibrary} from "contracts/libraries/VelodromeTimeLibrary.sol";
 import {DelegationHelperLibrary} from "contracts/libraries/DelegationHelperLibrary.sol";
 
 contract GetVotesFuzzTest is BaseTest {

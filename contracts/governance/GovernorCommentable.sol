@@ -2,13 +2,12 @@
 
 pragma solidity ^0.8.20;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {GovernorSimple} from "./GovernorSimple.sol";
 import {IGovernorCommentable} from "./IGovernorCommentable.sol";
 import {IVoter} from "../interfaces/IVoter.sol";
 import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
 
-abstract contract GovernorCommentable is GovernorSimple, Ownable, IGovernorCommentable {
+abstract contract GovernorCommentable is GovernorSimple, IGovernorCommentable {
     /// @inheritdoc IGovernorCommentable
     uint256 public constant COMMENT_DENOMINATOR = 1_000_000_000;
 
@@ -17,7 +16,7 @@ abstract contract GovernorCommentable is GovernorSimple, Ownable, IGovernorComme
     /// @inheritdoc IGovernorCommentable
     uint256 public commentWeighting = 4_000;
 
-    constructor(IVoter _voter, address _owner) Ownable(_owner) {
+    constructor(IVoter _voter) {
         escrow = IVotingEscrow(_voter.ve());
     }
 

@@ -2,7 +2,6 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "../BaseTest.sol";
-import "contracts/libraries/VelodromeTimeLibrary.sol";
 
 contract ManagedNftVotingTest is BaseTest {
     address public token;

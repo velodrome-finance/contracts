@@ -1,0 +1,52 @@
+ProposeTest
+├── When timestamp is smaller than end of proposal window
+│   ├── When caller is not the owner
+│   │   └── It should revert with {OwnableUnauthorizedAccount}
+│   └── When caller is the owner
+│       ├── When the description is not valid
+│       │   └── It should revert with {GovernorRestrictedProposer}
+│       └── When the description is valid
+│           ├── When the proposer voting power is smaller than the proposal threshold
+│           │   └── It should revert with {GovernorInsufficientProposerVotes}
+│           └── When the proposer voting power is greater than or equal to the proposal threshold
+│               ├── When there is a proposal active for the current epoch
+│               │   └── It should revert with {GovernorUnexpectedProposalState}
+│               └── When there is no proposal active for the current epoch
+│                   ├── When the length of all parameters is not 1
+│                   │   └── It should revert with {GovernorInvalidProposalLength}
+│                   └── When the length of all parameters is 1
+│                       ├── When the target is not minter
+│                       │   └── It should revert with {GovernorInvalidTargetOrCalldata}
+│                       └── When the target is minter
+│                           ├── When function to call is not nudge
+│                           │   └── It should revert with {GovernorInvalidTargetOrCalldata}
+│                           └── When function to call is nudge
+│                               ├── It should set epochAlreadyActive to true for the current epoch
+│                               ├── It should store the proposer address
+│                               ├── It should store the vote start timestamp
+│                               ├── It should store the vote duration
+│                               └── It should emit a {ProposalCreated} event
+└── When timestamp is greater than or equal to end of proposal window
+    ├── When the description is not valid_
+    │   └── It should revert with {GovernorRestrictedProposer}
+    └── When the description is valid_
+        ├── When the proposer voting power is smaller than the proposal threshold_
+        │   └── It should revert with {GovernorInsufficientProposerVotes}
+        └── When the proposer voting power is greater than or equal to the proposal threshold_
+            ├── When there is a proposal active for the current epoch_
+            │   └── It should revert with {GovernorUnexpectedProposalState}
+            └── When there is no proposal active for the current epoch_
+                ├── When the length of all parameters is not 1_
+                │   └── It should revert with {GovernorInvalidProposalLength}
+                └── When the length of all parameters is 1_
+                    ├── When the target is not minter_
+                    │   └── It should revert with {GovernorInvalidTargetOrCalldata}
+                    └── When the target is minter_
+                        ├── When function to call is not nudge_
+                        │   └── It should revert with {GovernorInvalidTargetOrCalldata}
+                        └── When function to call is nudge_
+                            ├── It should set epochAlreadyActive to true for the current epoch
+                            ├── It should store the proposer address
+                            ├── It should store the vote start timestamp
+                            ├── It should store the vote duration
+                            └── It should emit a {ProposalCreated} event

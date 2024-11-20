@@ -2,7 +2,6 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "test/BaseTest.sol";
-import {VelodromeTimeLibrary} from "contracts/libraries/VelodromeTimeLibrary.sol";
 import {DelegationHelperLibrary} from "contracts/libraries/DelegationHelperLibrary.sol";
 
 contract GetVotesTest is BaseTest {
@@ -36,7 +35,7 @@ contract GetVotesTest is BaseTest {
         governor.getVotes(mTokenId, snapshotTime);
     }
 
-    function test_GivenVeNFTIsNormalEscrowType() external {
+    function test_GivenVeNFTIsNormalEscrowType() external view {
         assertTrue(escrow.escrowType(tokenId) == IVotingEscrow.EscrowType.NORMAL);
         // It should return Voting Weight at Proposal Snapshot
         uint256 weightAtSnapshot = escrow.getPastVotes(address(this), tokenId, snapshotTime);

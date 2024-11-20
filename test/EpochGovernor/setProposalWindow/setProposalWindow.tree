@@ -1,0 +1,10 @@
+SetProposalWindowTest
+├── When caller is not owner
+│   └── It should revert with {OwnableUnauthorizedAccount}
+└── When caller is owner
+    ├── When proposal window is greater than one day
+    │   └── It should revert with {InvalidProposalWindow}
+    └── When proposal window is smaller than or equal to one day
+        ├── It should set the proposal window length
+        └── It should emit a {ProposalWindowSet} event
+
