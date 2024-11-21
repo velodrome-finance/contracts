@@ -32,9 +32,12 @@ abstract contract GovernorCommentable is GovernorSimple, IGovernorCommentable {
 
         uint256 startTime = proposalSnapshot({proposalId: _proposalId});
         uint256 weight = _getVotes({account: msg.sender, tokenId: _tokenId, timepoint: startTime, params: params});
-        uint256 minimumWeight = (escrow.getPastTotalSupply(startTime) * commentWeighting) / COMMENT_DENOMINATOR;
+        uint256 minimumWeight =
+            (escrow.getPastTotalSupply({timestamp: startTime}) * commentWeighting) / COMMENT_DENOMINATOR;
 
-        if (weight < minimumWeight) revert GovernorInsufficientVotingPower(weight, minimumWeight);
+        if (weight < minimumWeight) {
+            revert GovernorInsufficientVotingPower({weight: weight, minimumWeight: minimumWeight});
+        }
 
         emit Comment({proposalId: _proposalId, account: msg.sender, tokenId: _tokenId, comment: _message});
     }
@@ -44,6 +47,6 @@ abstract contract GovernorCommentable is GovernorSimple, IGovernorCommentable {
         if (_commentWeighting > COMMENT_DENOMINATOR) revert CommentWeightingTooHigh();
         commentWeighting = _commentWeighting;
 
-        emit SetCommentWeighting(_commentWeighting);
+        emit SetCommentWeighting({_commentWeighting: _commentWeighting});
     }
 }
