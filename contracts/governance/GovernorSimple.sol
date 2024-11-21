@@ -8,6 +8,7 @@ import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Re
 import {EIP712} from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
+import {Math} from "@openzeppelin/contracts/utils/math/Math.sol";
 import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEndedQueue.sol";
 import {Address} from "@openzeppelin/contracts/utils/Address.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
@@ -54,7 +55,6 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
     address public immutable minter;
 
     mapping(uint256 proposalId => ProposalCore) private _proposals;
-    mapping(bytes32 epoch => bool) private _epochAlreadyActive;
 
     /// @dev Stores most recent voting result. Will be either Defeated, Succeeded or Expired.
     ///      Any contracts that wish to use this governor must read from this to determine results.
@@ -140,17 +140,14 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
      * same proposal (with same operation and same description) will have the same id if submitted on multiple governors
      * across multiple networks. This also means that in order to execute the same operation twice (on the same
      * governor) the proposer will have to change the description in order to avoid proposal id conflicts.
-     *
-     * The proposal id ignores description hash and uses the epoch start time for the following week. This ensures that only
-     * one proposal can be created per week.
      */
     function hashProposal(
         address[] memory targets,
         uint256[] memory values,
         bytes[] memory calldatas,
-        bytes32 epochStart
+        bytes32 descriptionHash
     ) public pure virtual returns (uint256) {
-        return uint256(keccak256(abi.encode(targets, values, calldatas, epochStart)));
+        return uint256(keccak256(abi.encode(targets, values, calldatas, descriptionHash)));
     }
 
     /**
@@ -310,10 +307,10 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
         string memory description,
         address proposer
     ) internal virtual returns (uint256 proposalId) {
-        bytes32 epochStart = bytes32(VelodromeTimeLibrary.epochStart(block.timestamp) + (1 weeks));
-        proposalId = hashProposal(targets, values, calldatas, epochStart);
+        uint256 epochVoteEnd = VelodromeTimeLibrary.epochVoteEnd(block.timestamp);
+        proposalId = hashProposal(targets, values, calldatas, bytes32(epochVoteEnd));
 
-        if (_epochAlreadyActive[epochStart]) {
+        if (_proposals[proposalId].voteStart != 0) {
             revert GovernorUnexpectedProposalState(proposalId, state(proposalId), bytes32(0));
         }
         if (targets.length != values.length || targets.length != calldatas.length || targets.length != 1) {
@@ -323,15 +320,12 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
             revert GovernorInvalidTargetOrCalldata(targets[0], bytes4(calldatas[0]));
         }
 
-        _epochAlreadyActive[epochStart] = true;
-
-        uint256 snapshot = clock() + votingDelay();
-        uint256 duration = votingPeriod();
-
         ProposalCore storage proposal = _proposals[proposalId];
         proposal.proposer = proposer;
-        proposal.voteStart = SafeCast.toUint48(snapshot);
-        proposal.voteDuration = SafeCast.toUint32(duration);
+
+        uint48 voteStart = SafeCast.toUint48(Math.max(clock(), VelodromeTimeLibrary.epochVoteStart(block.timestamp)));
+        proposal.voteStart = voteStart;
+        proposal.voteDuration = SafeCast.toUint32(epochVoteEnd - voteStart);
 
         emit ProposalCreated(
             proposalId,
@@ -340,8 +334,8 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
             values,
             new string[](targets.length),
             calldatas,
-            snapshot,
-            snapshot + duration,
+            voteStart,
+            epochVoteEnd,
             description
         );
 
@@ -357,8 +351,8 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
         bytes[] memory calldatas,
         bytes32 descriptionHash
     ) public payable virtual returns (uint256) {
-        bytes32 epochStart = bytes32(VelodromeTimeLibrary.epochStart(block.timestamp));
-        uint256 proposalId = hashProposal(targets, values, calldatas, epochStart);
+        uint256 proposalId =
+            hashProposal(targets, values, calldatas, bytes32(VelodromeTimeLibrary.epochVoteEnd(block.timestamp)));
 
         ProposalState status = _validateStateBitmap(
             proposalId,

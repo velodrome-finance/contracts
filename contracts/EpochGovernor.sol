@@ -49,4 +49,17 @@ contract EpochGovernor is
     function votingPeriod() public pure override returns (uint256) {
         return (1 weeks);
     }
+
+    /**
+     * The proposal id is produced by hashing the ABI encoded epochVoteEnd. It can be computed in
+     * advance, before the proposal is submitted with the help of the VelodromeTimeLibrary.
+     */
+    function hashProposal(
+        address[] memory, /* targets */
+        uint256[] memory, /* values */
+        bytes[] memory, /* calldatas */
+        bytes32 epochVoteEnd
+    ) public pure override returns (uint256) {
+        return uint256(keccak256(abi.encode(epochVoteEnd)));
+    }
 }

@@ -131,16 +131,20 @@ contract MinterTestFlow is ExtendedBaseTest {
         skipAndRoll(1); // epoch + 1 + 1
         vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.castVote(pid, 1, 1);
-        skipAndRoll(1); // epoch + 2 + 2
+        skipAndRoll(1 hours); // epoch + 2 + 1 + 1 hour
 
         /// expect 1 (for vote) to pass
         epochGovernor.castVote(pid, 1, 1);
         vm.prank(address(owner2));
         epochGovernor.castVote(pid, 2, 0);
 
-        skipAndRoll(1 weeks); // epoch + 2 + 2
+        skipToNextEpoch(0);
+        // rewind 30 minutes so we are in the blackout window
+        rewind(30 minutes);
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
         assertEq(minter.tailEmissionRate(), 31);
+
+        skipToNextEpoch(30 minutes); // epoch + 30 minutes
 
         minter.updatePeriod();
         /// total velo supply ~1008887347, tail emissions .30% of total supply
@@ -149,7 +153,7 @@ contract MinterTestFlow is ExtendedBaseTest {
 
         description = Strings.toString(block.timestamp);
         pid = epochGovernor.propose(1, targets, values, calldatas, description);
-        skipAndRoll(2); // epoch + 2 + 2
+        skipAndRoll(31 minutes); // epoch + 61 minutes
 
         /// expect 2 (no change vote) to pass
         epochGovernor.castVote(pid, 1, 2);
@@ -157,13 +161,17 @@ contract MinterTestFlow is ExtendedBaseTest {
         epochGovernor.castVote(pid, 2, 1);
 
         skipToNextEpoch(0);
-        // create new proposal immediately on epoch flip (i.e. two concurrent proposals)
+        // rewind 30 minutes so we are in the blackout window
+        rewind(30 minutes);
+        epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
+        assertEq(minter.tailEmissionRate(), 31);
+
+        skipToNextEpoch(0);
+        // create new proposal immediately on epoch flip
         string memory description2 = Strings.toString(block.timestamp);
         uint256 pid2 = epochGovernor.propose(1, targets, values, calldatas, description2);
 
-        skipAndRoll(5 minutes); // epoch + 5 minutes
-        epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description)));
-        assertEq(minter.tailEmissionRate(), 31);
+        skipAndRoll(5 minutes + 1 hours); // epoch + 5 minutes + 1 hours
 
         minter.updatePeriod();
         /// total velo supply ~1012328065, tail emissions .30% of total supply
@@ -175,9 +183,12 @@ contract MinterTestFlow is ExtendedBaseTest {
         vm.prank(address(owner2));
         epochGovernor.castVote(pid2, 2, 2);
 
-        skipAndRoll(1 weeks);
+        skipToNextEpoch(0);
+        // rewind 30 minutes so we are in the blackout window
+        rewind(30 minutes);
         epochGovernor.execute(targets, values, calldatas, keccak256(bytes(description2)));
         assertEq(minter.tailEmissionRate(), 30);
+        skipAndRoll(1 weeks);
 
         minter.updatePeriod();
         /// total velo supply ~1015678216, tail emissions .29% of total supply

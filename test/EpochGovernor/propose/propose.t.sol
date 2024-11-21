@@ -135,10 +135,9 @@ contract ProposeTest is BaseTest {
         calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
         string memory description = "";
 
-        bytes32 epochStart = bytes32(VelodromeTimeLibrary.epochStart(block.timestamp) + (1 weeks));
-        uint256 expectedPid = epochGovernor.hashProposal(targets, values, calldatas, epochStart);
-        uint256 expectedSnapshot = block.timestamp + epochGovernor.votingDelay();
-        uint256 expectedDeadline = expectedSnapshot + epochGovernor.votingPeriod();
+        uint256 expectedSnapshot = block.timestamp + 1 hours;
+        uint256 expectedDeadline = expectedSnapshot + 1 weeks - 2 hours;
+        uint256 expectedPid = epochGovernor.hashProposal(targets, values, calldatas, bytes32(expectedDeadline));
 
         vm.expectEmit(address(epochGovernor));
         emit IGovernor.ProposalCreated({
@@ -262,10 +261,9 @@ contract ProposeTest is BaseTest {
         calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
         string memory description = "";
 
-        bytes32 epochStart = bytes32(VelodromeTimeLibrary.epochStart(block.timestamp) + (1 weeks));
-        uint256 expectedPid = epochGovernor.hashProposal(targets, values, calldatas, epochStart);
-        uint256 expectedSnapshot = block.timestamp + epochGovernor.votingDelay();
-        uint256 expectedDeadline = expectedSnapshot + epochGovernor.votingPeriod();
+        uint256 expectedSnapshot = block.timestamp;
+        uint256 expectedDeadline = VelodromeTimeLibrary.epochVoteEnd(block.timestamp);
+        uint256 expectedPid = epochGovernor.hashProposal(targets, values, calldatas, bytes32(expectedDeadline));
 
         vm.expectEmit(address(epochGovernor));
         emit IGovernor.ProposalCreated({
