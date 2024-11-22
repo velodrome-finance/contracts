@@ -6,7 +6,7 @@ import {IGovernor as OZGovernor} from "@openzeppelin/contracts/governance/IGover
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Receiver.sol";
 import {IGovernor} from "contracts/governance/IGovernor.sol";
-import {GovernorCountingFractional} from "contracts/governance/GovernorCountingFractional.sol";
+import {EpochGovernorCountingFractional} from "contracts/governance/EpochGovernorCountingFractional.sol";
 import {GovernorSimpleVotes} from "contracts/governance/GovernorSimpleVotes.sol";
 
 contract EpochGovernorTest is BaseTest {
@@ -46,27 +46,9 @@ contract EpochGovernorTest is BaseTest {
     }
 
     function testSupportInterfacesExcludesCancel() public view {
-        assertTrue(
-            epochGovernor.supportsInterface(
-                type(IGovernor).interfaceId ^ type(IERC6372).interfaceId
-                    ^ IGovernor.castVoteWithReasonAndParams.selector ^ IGovernor.castVoteWithReasonAndParamsBySig.selector
-                    ^ IGovernor.getVotesWithParams.selector
-            )
-        );
-        assertTrue(epochGovernor.supportsInterface(type(IGovernor).interfaceId ^ type(IERC6372).interfaceId));
+        assertTrue(epochGovernor.supportsInterface(type(IGovernor).interfaceId ^ OZGovernor.cancel.selector));
+        assertFalse(epochGovernor.supportsInterface(OZGovernor.cancel.selector));
         assertTrue(epochGovernor.supportsInterface(type(IERC1155Receiver).interfaceId));
-        assertFalse(
-            epochGovernor.supportsInterface(
-                type(IGovernor).interfaceId ^ type(IERC6372).interfaceId ^ OZGovernor.cancel.selector
-            )
-        );
-        assertFalse(
-            epochGovernor.supportsInterface(
-                type(IGovernor).interfaceId ^ type(IERC6372).interfaceId ^ OZGovernor.cancel.selector
-                    ^ IGovernor.castVoteWithReasonAndParams.selector ^ IGovernor.castVoteWithReasonAndParamsBySig.selector
-                    ^ IGovernor.getVotesWithParams.selector
-            )
-        );
     }
 
     function testCannotProposeWithOtherTarget() public {
@@ -995,7 +977,7 @@ contract EpochGovernorTest is BaseTest {
 
         vm.expectRevert(
             abi.encodeWithSelector(
-                GovernorCountingFractional.GovernorExceedRemainingWeight.selector,
+                EpochGovernorCountingFractional.GovernorExceedRemainingWeight.selector,
                 1,
                 nftBalance1 + nftBalance1 / 3,
                 1994463470208646800

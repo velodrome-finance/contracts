@@ -7,7 +7,7 @@ import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
 /**
- * @dev Taken from OpenZeppelin's IGovernor. Excludes `cancel`, `quorum`, `queue`.
+ * @dev Taken from OpenZeppelin's IGovernor. Excludes `cancel`.
  *
  * NOTE: Event parameters lack the `indexed` keyword for compatibility with GovernorBravo events.
  * Making event parameters `indexed` affects how events are decoded, potentially breaking existing indexers.
@@ -92,6 +92,11 @@ interface IGovernor is IERC165, IERC6372 {
     error GovernorInvalidVoteParams();
 
     /**
+     * @dev Queue operation is not implemented for this governor. Execute should be called directly.
+     */
+    error GovernorQueueNotImplemented();
+
+    /**
      * @dev The provided signature is not valid for the expected `voter`.
      * If the `voter` is a contract, the signature is not valid using {IERC1271-isValidSignature}.
      */
@@ -121,6 +126,11 @@ interface IGovernor is IERC165, IERC6372 {
         uint256 voteEnd,
         string description
     );
+
+    /**
+     * @dev Emitted when a proposal is queued.
+     */
+    event ProposalQueued(uint256 proposalId, uint256 etaSeconds);
 
     /**
      * @dev Emitted when a proposal is executed.
@@ -264,6 +274,15 @@ interface IGovernor is IERC165, IERC6372 {
      * interface returns a uint256, the value it returns should fit in a uint32.
      */
     function votingPeriod() external view returns (uint256);
+
+    /**
+     * @notice module:user-config
+     * @dev Minimum number of cast voted required for a proposal to be successful.
+     *
+     * NOTE: The `timepoint` parameter corresponds to the snapshot used for counting vote. This allows to scale the
+     * quorum depending on values such as the totalSupply of a token at this timepoint (see {ERC20Votes}).
+     */
+    function quorum(uint256 timepoint) external view returns (uint256);
 
     /**
      * @notice module:reputation

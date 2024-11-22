@@ -32,7 +32,7 @@ import {GovernorSimple} from "./GovernorSimple.sol";
  *
  * _Available since v5.1._
  */
-abstract contract GovernorCountingFractional is GovernorSimple {
+abstract contract EpochGovernorCountingFractional is GovernorSimple {
     using Math for *;
 
     uint8 internal constant VOTE_TYPE_FRACTIONAL = 255;
@@ -93,7 +93,7 @@ abstract contract GovernorCountingFractional is GovernorSimple {
     /**
      * @dev Select winner of majority vote.
      */
-    function _selectWinner(uint256 proposalId) internal view override returns (ProposalState) {
+    function _selectWinner(uint256 proposalId) internal view returns (ProposalState) {
         ProposalVote storage proposalVote = _proposalVotes[proposalId];
         uint256 againstVotes = proposalVote.againstVotes;
         uint256 forVotes = proposalVote.forVotes;
