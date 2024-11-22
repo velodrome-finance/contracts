@@ -137,8 +137,8 @@ contract EpochGovernor is
         ProposalCore storage proposal = _proposals[proposalId];
         proposal.proposer = proposer;
 
-        uint48 voteStart = SafeCast.toUint48(Math.max(clock(), VelodromeTimeLibrary.epochVoteStart(block.timestamp)));
-        proposal.voteStart = voteStart;
+        uint256 voteStart = Math.max(clock(), VelodromeTimeLibrary.epochVoteStart(block.timestamp));
+        proposal.voteStart = SafeCast.toUint48(voteStart + votingDelay());
         proposal.voteDuration = SafeCast.toUint32(epochVoteEnd - voteStart);
 
         emit ProposalCreated(
@@ -211,7 +211,7 @@ contract EpochGovernor is
     }
 
     function votingDelay() public pure override returns (uint256) {
-        return 1;
+        return 2;
     }
 
     function votingPeriod() public pure override returns (uint256) {

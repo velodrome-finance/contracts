@@ -154,8 +154,8 @@ contract ProposeTest is BaseTest {
         uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
         assertEq(pid, expectedPid);
         assertEq(epochGovernor.proposalProposer(pid), address(owner));
-        assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot);
-        assertEq(epochGovernor.proposalDeadline(pid), expectedDeadline);
+        assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot + 2);
+        assertEq(epochGovernor.proposalDeadline(pid), expectedDeadline + 2);
     }
 
     modifier whenTimestampIsGreaterThanOrEqualToEndOfProposalWindow() {
@@ -280,7 +280,7 @@ contract ProposeTest is BaseTest {
         uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
         assertEq(pid, expectedPid);
         assertEq(epochGovernor.proposalProposer(pid), address(owner2));
-        assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot);
-        assertEq(epochGovernor.proposalDeadline(pid), expectedDeadline);
+        assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot + 2);
+        assertEq(epochGovernor.proposalDeadline(pid), expectedDeadline + 2);
     }
 }

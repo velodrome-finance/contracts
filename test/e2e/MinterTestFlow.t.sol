@@ -131,7 +131,7 @@ contract MinterTestFlow is ExtendedBaseTest {
         skipAndRoll(1); // epoch + 1 + 1
         vm.expectPartialRevert(IGovernor.GovernorUnexpectedProposalState.selector);
         epochGovernor.castVote(pid, 1, 1);
-        skipAndRoll(1 hours); // epoch + 2 + 1 + 1 hour
+        skipAndRoll(1 hours + 2); // epoch + 2 + 1 + 1 hour + 2
 
         /// expect 1 (for vote) to pass
         epochGovernor.castVote(pid, 1, 1);
