@@ -254,31 +254,28 @@ for managed veNFTs (mveNFTs). This is achieved by implementing the following fea
 
 ### EpochGovernor
 
-An epoch based governance contract modified lightly from OpenZeppelin's Governor
-contract to exclude the `cancel` function. It has been modified in such a way 
-that it continues to adhere with OpenZeppelin's `IGovernor` interface. Once tail
-emissions in the `Minter` are turned on, every epoch a proposal can be created
-to either increase, hold or decrease the Minter's emission for the following 
-epoch. The winning decision is selected via simple majority (also known as [plurality](https://en.wikipedia.org/wiki/Plurality_(voting))). Also uses timestamp based voting power 
-from VotingEscrow NFTs. Note that the very first nudge proposal must be initiated in 
-the epoch prior to the tail emission schedule starting. Votes are cast and counted
-on a per `tokenId` basis.
+An epoch based governance contract modified from OpenZeppelin's v5.2 Governor contracts to support 
+voting via veNFTs. Once tail emissions in the `Minter` are turned on, every epoch a 
+proposal can be created to either increase, hold or decrease the Minter's emission for the following 
+epoch. The winning decision is selected via simple majority (also known as 
+[plurality](https://en.wikipedia.org/wiki/Plurality_(voting))). 
 
-Notable changes:
-- No quorum.
+It features the following:
+- Support for voting and delegation of voting power using veNFTs.
+- A quorum of 0. 
 - No proposal threshold.
-- Cannot relay via the governor. 
-- Can only make a single proposal per epoch, to adjust the emissions in Minter once tail emissions have turned on. 
-- A proposal created in epoch `n` will be executable in epoch `n+1` once the proposal voting period has gone through.
-- Has three options (similar to Governor Bravo). The winner is selected based on which option has the most absolute votes at the end of the voting period. 
-- The proposer of a proposal cannot cancel the proposal.
-
-The votes contract, which has `getPastVotes` has been modified to provide better support
-for managed veNFTs (mveNFTs). This is achieved by implementing the following features:
-- mveNFTs are unable to vote directly (i.e. calls to `castVote` will revert).
-- mveNFTs are able to vote indirectly by vote delegation.
-- locked nfts (i.e. nfts that deposited into a mveNFT) are able to vote if the mveNFT is not delegating.
-    - The voting balance of the locked nft is equal to its initial contribution + the 
-    proportion of all unclaimed locked rewards (both rebases and compounded rewards) + any balances delegated to it.
-    - Note that this uses a custom `earned` function as it requires the "lag" from rewards to be removed.
-- normal nfts can vote as normal
+- `relay` and `cancel` are disabled.
+- Only a single proposal can be made per epoch, resulting in emissions either increasing, decreasing or
+staying the same.
+- For the first X hours of the epoch, the proposal can only be made by the team. X is modifiable 
+by the team, up to 24 hours.
+- Proposals can be voted on in the next block after they are created, and always end an hour before 
+the epoch flips.
+- It is assumed that there will always exist at least one proposal per epoch, and that it will be created
+in the first half of the epoch.
+- Proposals will be executed at the end of the epoch that they are created in, prior to epoch flip.
+- Support for voting via mveNFTs will be provided via support for EpochGovernorCountingFractional, a 
+modified version of OpenZeppelin's GovernorCountingFractional contract, changed to support simple 
+majority voting.
+- Proposal comments are supported via GovernorCommentable, allowing users with a certain amount of
+voting power to post comments on proposals.
