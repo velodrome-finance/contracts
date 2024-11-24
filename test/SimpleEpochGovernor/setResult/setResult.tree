@@ -1,0 +1,15 @@
+SetResultTest
+├── When caller is not governor
+│   └── It should revert with {NotGovernor}
+└── When caller is governor
+    ├── When new state is not valid
+    │   └── It should revert with {InvalidState}
+    ├── When new state is succeeded
+    │   ├── It should set the succeeded result
+    │   └── It should emit a {ResultSet} event
+    ├── When new state is defeated
+    │   ├── It should set the defeated result
+    │   └── It should emit a {ResultSet} event
+    └── When new state is expired
+        ├── It should set the expired result
+        └── It should emit a {ResultSet} event

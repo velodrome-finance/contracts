@@ -23,6 +23,7 @@ import {VeArtProxy} from "contracts/VeArtProxy.sol";
 import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
 import {VeloGovernor} from "contracts/VeloGovernor.sol";
 import {IGovernor, EpochGovernor} from "contracts/EpochGovernor.sol";
+import {SimpleEpochGovernor} from "contracts/SimpleEpochGovernor.sol";
 import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
 import {VelodromeTimeLibrary} from "contracts/libraries/VelodromeTimeLibrary.sol";
 import {IWETH} from "contracts/interfaces/IWETH.sol";

@@ -1,0 +1,16 @@
+ExecuteNudgeTest
+├── When caller is not governor
+│   └── It should revert with {NotGovernor}
+└── When caller is governor
+    ├── When result is succeeded
+    │   ├── It should execute nudge in minter
+    │   ├── It should increase tail emission rate by 1 bps
+    │   └── It should emit a {NudgeExecuted} event
+    ├── When result is defeated
+    │   ├── It should execute nudge in minter
+    │   ├── It should decrease tail emission rate by 1 bps
+    │   └── It should emit a {NudgeExecuted} event
+    └── When result is expired
+        ├── It should execute nudge in minter
+        ├── It should not update tail emission
+        └── It should emit a {NudgeExecuted} event
