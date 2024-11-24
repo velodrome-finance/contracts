@@ -132,21 +132,21 @@ contract EpochGovernor is
             _targets: _targets,
             _values: _values,
             _calldatas: _calldatas,
-            _epochVoteEnd: bytes32(epochVoteEnd)
+            _descriptionHash: bytes32(epochVoteEnd)
         });
 
-        if (_proposals[_proposalId].voteStart != 0) {
-            revert GovernorUnexpectedProposalState({
-                _proposalId: _proposalId,
-                _current: state({_proposalId: _proposalId}),
-                _expectedStates: bytes32(0)
-            });
-        }
         if (_targets.length != _values.length || _targets.length != _calldatas.length || _targets.length != 1) {
             revert GovernorInvalidProposalLength({
                 _targets: _targets.length,
                 _calldatas: _calldatas.length,
                 _values: _values.length
+            });
+        }
+        if (_proposals[_proposalId].voteStart != 0) {
+            revert GovernorUnexpectedProposalState({
+                _proposalId: _proposalId,
+                _current: state({_proposalId: _proposalId}),
+                _expectedStates: bytes32(0)
             });
         }
         if (_targets[0] != minter || bytes4(_calldatas[0]) != IMinter.nudge.selector) {
@@ -188,7 +188,7 @@ contract EpochGovernor is
             _targets: _targets,
             _values: _values,
             _calldatas: _calldatas,
-            _epochVoteEnd: bytes32(VelodromeTimeLibrary.epochVoteEnd({timestamp: block.timestamp}))
+            _descriptionHash: bytes32(VelodromeTimeLibrary.epochVoteEnd({timestamp: block.timestamp}))
         });
 
         ProposalState status = _validateStateBitmap({
@@ -260,34 +260,8 @@ contract EpochGovernor is
         address[] memory _targets,
         uint256[] memory _values,
         bytes[] memory _calldatas,
-        bytes32 _epochVoteEnd
+        bytes32 _descriptionHash
     ) public pure override returns (uint256) {
-        return uint256(keccak256(abi.encode(_epochVoteEnd)));
-    }
-
-    /**
-     * @dev Try to parse a character from a string as a hex value. Returns `(true, value)` if the char is in
-     * `[0-9a-fA-F]` and `(false, 0)` otherwise. Value is guaranteed to be in the range `0 <= value < 16`
-     */
-    function _tryHexToUint(bytes1 _char) private pure returns (bool _isHex, uint8 _value) {
-        uint8 c = uint8(_char);
-        unchecked {
-            // Case 0-9
-            if (47 < c && c < 58) {
-                return (true, c - 48);
-            }
-            // Case A-F
-            else if (64 < c && c < 71) {
-                return (true, c - 55);
-            }
-            // Case a-f
-            else if (96 < c && c < 103) {
-                return (true, c - 87);
-            }
-            // Else: not a hex char
-            else {
-                return (false, 0);
-            }
-        }
+        return uint256(keccak256(abi.encode(_descriptionHash)));
     }
 }

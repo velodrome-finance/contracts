@@ -147,7 +147,7 @@ contract ProposeTest is BaseTest {
             _targets: targets,
             _values: values,
             _calldatas: calldatas,
-            _epochVoteEnd: bytes32(expectedDeadline)
+            _descriptionHash: bytes32(expectedDeadline)
         });
 
         vm.expectEmit(address(epochGovernor));
@@ -284,7 +284,7 @@ contract ProposeTest is BaseTest {
             _targets: targets,
             _values: values,
             _calldatas: calldatas,
-            _epochVoteEnd: bytes32(expectedDeadline)
+            _descriptionHash: bytes32(expectedDeadline)
         });
 
         vm.expectEmit(address(epochGovernor));
