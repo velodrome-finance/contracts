@@ -266,53 +266,6 @@ contract EpochGovernor is
     }
 
     /**
-     * Read the voting weight from the token's built in snapshot mechanism (see {Governor-_getVotes}).
-     */
-    function _getVotes(address _account, uint256 _tokenId, uint256 _timepoint, bytes memory /*_params*/ )
-        internal
-        view
-        virtual
-        override(GovernorSimple, GovernorSimpleVotes)
-        returns (uint256)
-    {
-        IVotingEscrow.EscrowType escrowType = ve.escrowType({tokenId: _tokenId});
-        if (escrowType == IVotingEscrow.EscrowType.MANAGED) revert GovernorManagedNftCannotVote({_tokenId: _tokenId});
-
-        // If veNFT is not Managed or Locked, voting weight should be its balance at given `timepoint`
-        if (escrowType == IVotingEscrow.EscrowType.NORMAL) {
-            return
-                IVotes(address(token())).getPastVotes({_account: _account, _tokenId: _tokenId, _timepoint: _timepoint});
-        }
-
-        // only allow locked veNFT voting if underlying nft not delegating at `timepoint`
-        uint256 mTokenId = ve.idToManaged({tokenId: _tokenId});
-        uint48 index = ve.getPastCheckpointIndex({mTokenId: mTokenId, timepoint: _timepoint});
-        uint256 delegatee = ve.checkpoints({tokenId: mTokenId, index: index}).delegatee;
-        if (
-            delegatee == 0
-                && ve.userPointHistory({_tokenId: _tokenId, _loc: ve.userPointEpoch({_tokenId: _tokenId})}).ts <= _timepoint
-        ) {
-            index = ve.getPastCheckpointIndex({mTokenId: _tokenId, timepoint: _timepoint});
-            IVotingEscrow.Checkpoint memory lastCheckpoint = ve.checkpoints({tokenId: _tokenId, index: index});
-            // If `account` does not own veNFT with given `tokenId`
-            if (_account != lastCheckpoint.owner) return 0;
-            // veNFT will always have at least 1 checkpoint before `timepoint` as
-            // lock creation generates a delegation checkpoint
-
-            // else: mveNFT not delegating and deposit was before `timepoint`,
-            // voting balance = initial contribution to mveNFT + accrued locked rewards + delegated balance
-            uint256 weight = ve.weights({tokenId: _tokenId, managedTokenId: mTokenId}); // initial deposit weight
-            uint256 _earned = ve.earned({mTokenId: mTokenId, tokenId: _tokenId, timepoint: _timepoint}); // accrued rewards
-
-            return weight + _earned + lastCheckpoint.delegatedBalance;
-        }
-
-        // nft locked and underlying nft delegating
-        // balance will only be delegated balance
-        return IVotes(address(token())).getPastVotes({_account: _account, _tokenId: _tokenId, _timepoint: _timepoint});
-    }
-
-    /**
      * @dev Try to parse a character from a string as a hex value. Returns `(true, value)` if the char is in
      * `[0-9a-fA-F]` and `(false, 0)` otherwise. Value is guaranteed to be in the range `0 <= value < 16`
      */

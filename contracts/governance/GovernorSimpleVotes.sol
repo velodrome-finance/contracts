@@ -17,11 +17,6 @@ abstract contract GovernorSimpleVotes is GovernorSimple {
     IERC5805 private immutable _token;
     IVotingEscrow public immutable ve;
 
-    /**
-     * @dev A fractional vote params uses more votes than are available for that user.
-     */
-    error GovernorManagedNftCannotVote(uint256 _tokenId);
-
     constructor(IVotes _tokenAddress) {
         _token = IERC5805(address(_tokenAddress));
         ve = IVotingEscrow(address(_token));
@@ -68,6 +63,11 @@ abstract contract GovernorSimpleVotes is GovernorSimple {
         override
         returns (uint256)
     {
-        return token().getPastVotes({account: _account, timepoint: _timepoint});
+        return ve.getPastVotes({account: _account, tokenId: _tokenId, timestamp: _timepoint});
+    }
+
+    function getVotes(uint256 _tokenId, uint256 _timepoint) external view returns (uint256) {
+        address account = ve.ownerOf({tokenId: _tokenId});
+        return _getVotes(account, _tokenId, _timepoint, "");
     }
 }

@@ -1,0 +1,26 @@
+GetVotesManagedTest
+├── When veNFT is not delegating
+│   ├── When veNFT is not being delegated to
+│   │   └── It should return balance of nft at snapshot
+│   └── When veNFT is being delegated to
+│       ├── When veNFT received delegated balance before or at proposal snapshot
+│       │   └── It should return balance of nft at snapshot + delegated balance
+│       └── When veNFT received delegated balance after proposal snapshot
+│           └── It should return balance of nft at snapshot
+└── When veNFT is delegating
+    ├── When veNFT delegated before or at proposal snapshot
+    │   ├── When veNFT is not being delegated to_
+    │   │   └── It should return 0
+    │   └── When veNFT is being delegated to_
+    │       ├── When veNFT received delegated balance before or at proposal snapshot_
+    │       │   └── It should return delegated balance
+    │       └── When veNFT received delegated balance after proposal snapshot_
+    │           └── It should return 0
+    └── When veNFT delegated after proposal snapshot
+        ├── When veNFT is not being delegated to__
+        │   └── It should return balance of nft at snapshot
+        └── When veNFT is being delegated to__
+            ├── When veNFT received delegated balance before or at proposal snapshot__
+            │   └── It should return balance of nft at snapshot + delegated balance
+            └── When veNFT received delegated balance after proposal snapshot__
+                └── It should return balance of nft at snapshot

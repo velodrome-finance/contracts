@@ -354,22 +354,6 @@ contract EpochGovernorTest is BaseTest {
         epochGovernor.propose(2, targets, values, calldatas, description);
     }
 
-    function testCannotCastVoteIfManagedVeNFT() public {
-        skip(1 hours);
-
-        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
-        VELO.approve(address(escrow), TOKEN_1);
-        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        voter.depositManaged(tokenId, mTokenId);
-
-        uint256 pid = createProposal();
-        skip(1); // allow voting
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
-        vm.prank(address(owner));
-        epochGovernor.castVote(pid, mTokenId, 1);
-    }
-
     function testCastVoteWithLockedManagedVeNFTNotDelegating() public {
         // mveNFT not delegating, so vote with locked nft > 0, vote with mveNFT != 0
         skip(1 hours);
@@ -380,6 +364,13 @@ contract EpochGovernorTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
         uint256 tokenId2 = escrow.createLock(TOKEN_1 * 2, MAXTIME);
         voter.depositManaged(tokenId2, mTokenId);
+        // delegate to increase locked voting power
+        uint256 delegateTokenId = escrow.createLock(TOKEN_1 * 5, MAXTIME);
+        escrow.lockPermanent(delegateTokenId);
+        uint256 delegateTokenId2 = escrow.createLock(TOKEN_1 * 3, MAXTIME);
+        escrow.lockPermanent(delegateTokenId2);
+        escrow.delegate(delegateTokenId, tokenId);
+        escrow.delegate(delegateTokenId2, tokenId2);
 
         skipToNextEpoch(0);
         uint256 pid = createProposal();
@@ -388,15 +379,17 @@ contract EpochGovernorTest is BaseTest {
         epochGovernor.castVote(pid, tokenId, 1);
         // voting balances 0, but votes process on epochGovernor
         assertEq(escrow.balanceOfNFT(tokenId), 0);
-        assertEq(escrow.getPastVotes(address(owner), tokenId, block.timestamp - 1), 0);
-        assertProposalVotes(pid, 0, TOKEN_1, 0);
+        // voting power of locked nft is delegated balance
+        assertEq(escrow.getPastVotes(address(owner), tokenId, block.timestamp - 1), TOKEN_1 * 5);
+        assertProposalVotes(pid, 0, TOKEN_1 * 5, 0);
         assertEq(epochGovernor.hasVoted(pid, tokenId), true);
 
         epochGovernor.castVote(pid, tokenId2, 1);
         // voting balances 0, but votes process on epochGovernor
         assertEq(escrow.balanceOfNFT(tokenId2), 0);
-        assertEq(escrow.getPastVotes(address(owner), tokenId2, block.timestamp - 1), 0);
-        assertProposalVotes(pid, 0, TOKEN_1 * 3, 0); // increment by TOKEN_1 * 2
+        // voting power of locked nft is delegated balance
+        assertEq(escrow.getPastVotes(address(owner), tokenId2, block.timestamp - 1), TOKEN_1 * 3);
+        assertProposalVotes(pid, 0, TOKEN_1 * 8, 0); // increment by TOKEN_1 * 3
         assertEq(epochGovernor.hasVoted(pid, tokenId2), true);
     }
 
@@ -410,6 +403,13 @@ contract EpochGovernorTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
         uint256 tokenId2 = escrow.createLock(TOKEN_1 * 2, MAXTIME);
         voter.depositManaged(tokenId2, mTokenId);
+        // delegate to increase locked voting power
+        uint256 delegateTokenId = escrow.createLock(TOKEN_1 * 5, MAXTIME);
+        escrow.lockPermanent(delegateTokenId);
+        uint256 delegateTokenId2 = escrow.createLock(TOKEN_1 * 3, MAXTIME);
+        escrow.lockPermanent(delegateTokenId2);
+        escrow.delegate(delegateTokenId, tokenId);
+        escrow.delegate(delegateTokenId2, tokenId2);
 
         LockedManagedReward lmr = LockedManagedReward(escrow.managedToLocked(mTokenId));
 
@@ -426,17 +426,19 @@ contract EpochGovernorTest is BaseTest {
         epochGovernor.castVote(pid, tokenId, 1);
         // voting balances 0, but votes process on epochGovernor
         assertEq(escrow.balanceOfNFT(tokenId), 0);
-        assertEq(escrow.getPastVotes(address(owner), tokenId, block.timestamp - 1), 0);
+        // voting power of locked nft is delegated balance
+        assertEq(escrow.getPastVotes(address(owner), tokenId, block.timestamp - 1), TOKEN_1 * 5);
         assertEq(lmr.earned(address(VELO), tokenId), TOKEN_1 / 3);
-        assertProposalVotes(pid, 0, TOKEN_1 + TOKEN_1 / 3, 0);
+        assertProposalVotes(pid, 0, TOKEN_1 * 5, 0); // accrued managed rewards are not accounted for
         assertEq(epochGovernor.hasVoted(pid, tokenId), true);
 
         epochGovernor.castVote(pid, tokenId2, 1);
         // voting balances 0, but votes process on epochGovernor
         assertEq(escrow.balanceOfNFT(tokenId2), 0);
-        assertEq(escrow.getPastVotes(address(owner), tokenId2, block.timestamp - 1), 0);
+        // voting power of locked nft is delegated balance
+        assertEq(escrow.getPastVotes(address(owner), tokenId2, block.timestamp - 1), TOKEN_1 * 3);
         assertEq(lmr.earned(address(VELO), tokenId2), (TOKEN_1 * 2) / 3);
-        assertProposalVotes(pid, 0, TOKEN_1 * 4, 0); // increment by TOKEN_1 * 2 + TOKEN_1 * 2 /3
+        assertProposalVotes(pid, 0, TOKEN_1 * 8, 0); // increment by TOKEN_1 * 3
         assertEq(epochGovernor.hasVoted(pid, tokenId2), true);
     }
 
@@ -450,6 +452,13 @@ contract EpochGovernorTest is BaseTest {
         voter.depositManaged(tokenId, mTokenId);
         uint256 tokenId2 = escrow.createLock(TOKEN_1 * 2, MAXTIME);
         voter.depositManaged(tokenId2, mTokenId);
+        // delegate to increase locked voting power
+        uint256 delegateTokenId = escrow.createLock(TOKEN_1 * 5, MAXTIME);
+        escrow.lockPermanent(delegateTokenId);
+        uint256 delegateTokenId2 = escrow.createLock(TOKEN_1 * 3, MAXTIME);
+        escrow.lockPermanent(delegateTokenId2);
+        escrow.delegate(delegateTokenId, tokenId);
+        escrow.delegate(delegateTokenId2, tokenId2);
 
         LockedManagedReward lmr = LockedManagedReward(escrow.managedToLocked(mTokenId));
 
@@ -467,17 +476,19 @@ contract EpochGovernorTest is BaseTest {
         epochGovernor.castVote(pid, tokenId, 1);
         // voting balances 0, but votes process on epochGovernor
         assertEq(escrow.balanceOfNFT(tokenId), 0);
-        assertEq(escrow.getPastVotes(address(owner), tokenId, block.timestamp - 1), 0);
+        // voting power of locked nft is delegated balance
+        assertEq(escrow.getPastVotes(address(owner), tokenId, block.timestamp - 1), TOKEN_1 * 5);
         assertEq(lmr.earned(address(VELO), tokenId), TOKEN_1 / 3);
-        assertProposalVotes(pid, 0, TOKEN_1 + TOKEN_1 / 3, 0);
+        assertProposalVotes(pid, 0, TOKEN_1 * 5, 0); // accrued managed rewards are not accounted for
         assertEq(epochGovernor.hasVoted(pid, tokenId), true);
 
         epochGovernor.castVote(pid, tokenId2, 1);
         // voting balances 0, but votes process on epochGovernor
         assertEq(escrow.balanceOfNFT(tokenId2), 0);
-        assertEq(escrow.getPastVotes(address(owner), tokenId2, block.timestamp - 1), 0);
+        // voting balances 0, but votes process on epochGovernor
+        assertEq(escrow.getPastVotes(address(owner), tokenId2, block.timestamp - 1), TOKEN_1 * 3);
         assertEq(lmr.earned(address(VELO), tokenId2), (TOKEN_1 * 2) / 3);
-        assertProposalVotes(pid, 0, TOKEN_1 * 4, 0); // increment by TOKEN_1 * 2 + TOKEN_1 * 2 / 3
+        assertProposalVotes(pid, 0, TOKEN_1 * 8, 0); // increment by TOKEN_1 * 3
         assertEq(epochGovernor.hasVoted(pid, tokenId2), true);
     }
 
@@ -614,6 +625,9 @@ contract EpochGovernorTest is BaseTest {
         voter.depositManaged(depositTokenId, mTokenId);
         uint256 delegateTokenId = escrow.createLock(TOKEN_1, MAXTIME);
         escrow.lockPermanent(delegateTokenId);
+        uint256 delegateTokenId2 = escrow.createLock(TOKEN_1 * 3, MAXTIME);
+        escrow.lockPermanent(delegateTokenId2);
+        escrow.delegate(delegateTokenId2, depositTokenId);
 
         // seed locked rewards, then skip to next epoch
         VELO.approve(address(escrow), TOKEN_1);
@@ -629,237 +643,18 @@ contract EpochGovernorTest is BaseTest {
         // mveNFT not considered delegating, so locked depositor can vote
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(escrow.balanceOfNFT(depositTokenId), 0);
-        assertEq(escrow.getPastVotes(address(owner), depositTokenId, block.timestamp - 1), 0);
-        assertProposalVotes(pid, 0, TOKEN_1 * 2, 0);
+        // voting power of locked nft is delegated balance
+        assertEq(escrow.getPastVotes(address(owner), depositTokenId, block.timestamp - 1), TOKEN_1 * 3);
+        assertProposalVotes(pid, 0, TOKEN_1 * 3, 0);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), true);
 
         // mveNFT not considered delegating, so delegatee does not receive votes
         epochGovernor.castVote(pid, delegateTokenId, 1);
         assertEq(escrow.balanceOfNFT(delegateTokenId), TOKEN_1);
+        // voting power of locked nft is delegated balance
         assertEq(escrow.getPastVotes(address(owner), delegateTokenId, block.timestamp - 1), TOKEN_1);
-        assertProposalVotes(pid, 0, TOKEN_1 * 3, 0);
+        assertProposalVotes(pid, 0, TOKEN_1 * 4, 0);
         assertEq(epochGovernor.hasVoted(pid, delegateTokenId), true);
-    }
-
-    function testCastVoteWithLockedManagedVeNFTDelegatingToManaged() public {
-        skip(1 hours);
-
-        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
-        uint256 mTokenId2 = escrow.createManagedLockFor(address(owner));
-        VELO.approve(address(escrow), type(uint256).max);
-        uint256 depositTokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        voter.depositManaged(depositTokenId, mTokenId);
-
-        escrow.delegate(mTokenId, mTokenId2);
-
-        uint256 pid = createProposal();
-        skip(1); // allow voting
-
-        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
-        epochGovernor.castVote(pid, depositTokenId, 1);
-        assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
-        epochGovernor.castVote(pid, mTokenId, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId2));
-        epochGovernor.castVote(pid, mTokenId2, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId2, block.timestamp - 1), TOKEN_1);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId2), false);
-    }
-
-    function testCastVoteWithLockedManagedVeNFTDelegatingToNormalToManaged() public {
-        // delegation chain: managed => normal, normal => another managed
-        skip(1 hours);
-
-        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
-        uint256 mTokenId2 = escrow.createManagedLockFor(address(owner));
-        VELO.approve(address(escrow), type(uint256).max);
-        uint256 depositTokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        voter.depositManaged(depositTokenId, mTokenId);
-        uint256 delegateTokenId = escrow.createLock(TOKEN_1 * 2, MAXTIME);
-        escrow.lockPermanent(delegateTokenId);
-
-        skip(1);
-        escrow.delegate(mTokenId, delegateTokenId);
-        skip(1);
-        escrow.delegate(delegateTokenId, mTokenId2);
-        skip(1);
-
-        skipToNextEpoch(0);
-        uint256 pid = createProposal();
-        skip(1 hours + 2); // allow voting
-
-        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
-        epochGovernor.castVote(pid, depositTokenId, 1);
-        assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
-        epochGovernor.castVote(pid, mTokenId, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId2));
-        epochGovernor.castVote(pid, mTokenId2, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId2, block.timestamp - 1), TOKEN_1 * 2);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId2), false);
-
-        epochGovernor.castVote(pid, delegateTokenId, 1);
-        assertEq(escrow.balanceOfNFT(delegateTokenId), TOKEN_1 * 2);
-        assertEq(escrow.getPastVotes(address(owner), delegateTokenId, block.timestamp - 1), TOKEN_1);
-        assertProposalVotes(pid, 0, TOKEN_1, 0); // votes with delegated power from mveNFT
-        assertEq(epochGovernor.hasVoted(pid, delegateTokenId), true);
-    }
-
-    function testCastVoteWithLockedManagedVeNFTDelegatingToNormalToSameManaged() public {
-        // delegation chain: managed => normal, normal => same managed
-        skip(1 hours);
-
-        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
-        VELO.approve(address(escrow), type(uint256).max);
-        uint256 depositTokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        voter.depositManaged(depositTokenId, mTokenId);
-        uint256 delegateTokenId = escrow.createLock(TOKEN_1 * 2, MAXTIME);
-        escrow.lockPermanent(delegateTokenId);
-
-        skip(1);
-        escrow.delegate(mTokenId, delegateTokenId);
-        skip(1);
-        escrow.delegate(delegateTokenId, mTokenId);
-        skip(1);
-
-        skipToNextEpoch(0);
-        uint256 pid = createProposal();
-        skip(1 hours + 2); // allow voting
-
-        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
-        epochGovernor.castVote(pid, depositTokenId, 1);
-        assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
-        epochGovernor.castVote(pid, mTokenId, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), TOKEN_1 * 2);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
-
-        epochGovernor.castVote(pid, delegateTokenId, 1);
-        assertEq(escrow.balanceOfNFT(delegateTokenId), TOKEN_1 * 2);
-        assertEq(escrow.getPastVotes(address(owner), delegateTokenId, block.timestamp - 1), TOKEN_1);
-        assertProposalVotes(pid, 0, TOKEN_1, 0); // votes with delegated power from mveNFT
-        assertEq(epochGovernor.hasVoted(pid, delegateTokenId), true);
-    }
-
-    function testCastVoteWithLockedManagedVeNFTDelegatingToNormalToLocked() public {
-        // delegation chain: managed => normal, normal => locked
-        skip(1 hours);
-
-        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
-        VELO.approve(address(escrow), type(uint256).max);
-        uint256 depositTokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        voter.depositManaged(depositTokenId, mTokenId);
-        uint256 delegateTokenId = escrow.createLock(TOKEN_1 * 2, MAXTIME);
-        escrow.lockPermanent(delegateTokenId);
-
-        skip(1);
-        escrow.delegate(mTokenId, delegateTokenId);
-        skip(1);
-        escrow.delegate(delegateTokenId, depositTokenId);
-        skip(1);
-
-        skipToNextEpoch(0);
-        uint256 pid = createProposal();
-        skip(1 hours + 2); // allow voting
-
-        epochGovernor.castVote(pid, depositTokenId, 1);
-        assertEq(escrow.balanceOfNFT(depositTokenId), 0);
-        assertEq(escrow.getPastVotes(address(owner), depositTokenId, block.timestamp - 1), TOKEN_1 * 2);
-        assertProposalVotes(pid, 0, TOKEN_1 * 2, 0); // votes with delegated power from delegateTokenId
-        assertEq(epochGovernor.hasVoted(pid, depositTokenId), true);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
-        epochGovernor.castVote(pid, mTokenId, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
-
-        epochGovernor.castVote(pid, delegateTokenId, 1);
-        assertEq(escrow.balanceOfNFT(delegateTokenId), TOKEN_1 * 2);
-        assertEq(escrow.getPastVotes(address(owner), delegateTokenId, block.timestamp - 1), TOKEN_1);
-        assertProposalVotes(pid, 0, TOKEN_1 * 3, 0); // votes with delegated power from mveNFT
-        assertEq(epochGovernor.hasVoted(pid, delegateTokenId), true);
-    }
-
-    function testCastVoteWithLockedManagedVeNFTDelegatingToNormalDepositingIntoManaged() public {
-        skip(1 hours);
-
-        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
-        uint256 mTokenId2 = escrow.createManagedLockFor(address(owner));
-        VELO.approve(address(escrow), type(uint256).max);
-        uint256 depositTokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        voter.depositManaged(depositTokenId, mTokenId);
-        uint256 depositTokenId2 = escrow.createLock(TOKEN_1 * 2, MAXTIME);
-
-        escrow.delegate(mTokenId, depositTokenId2);
-        skip(1);
-        voter.depositManaged(depositTokenId2, mTokenId2);
-
-        skipToNextEpoch(0);
-
-        uint256 pid = createProposal();
-        skip(1 hours + 2); // allow voting
-
-        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId)); // zero voting weight
-        epochGovernor.castVote(pid, depositTokenId, 1);
-        assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
-
-        epochGovernor.castVote(pid, depositTokenId2, 1);
-        assertEq(escrow.balanceOfNFT(depositTokenId2), 0);
-        assertEq(escrow.getPastVotes(address(owner), depositTokenId2, block.timestamp - 1), TOKEN_1);
-        assertProposalVotes(pid, 0, TOKEN_1 * 3, 0); // votes with delegated power from mveNFT + locked contribution to mTokenId2
-        assertEq(epochGovernor.hasVoted(pid, depositTokenId2), true);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
-        epochGovernor.castVote(pid, mTokenId, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId2));
-        epochGovernor.castVote(pid, mTokenId2, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId2, block.timestamp - 1), TOKEN_1 * 2);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId2), false);
-    }
-
-    function testCastVoteWithLockedManagedVeNFTDelegatingToNormalDepositingIntoSameManaged() public {
-        skip(1 hours);
-
-        uint256 mTokenId = escrow.createManagedLockFor(address(owner));
-        VELO.approve(address(escrow), type(uint256).max);
-        uint256 depositTokenId = escrow.createLock(TOKEN_1, MAXTIME);
-        voter.depositManaged(depositTokenId, mTokenId);
-        uint256 depositTokenId2 = escrow.createLock(TOKEN_1 * 2, MAXTIME);
-
-        escrow.delegate(mTokenId, depositTokenId2);
-        skip(1);
-        voter.depositManaged(depositTokenId2, mTokenId);
-
-        skipToNextEpoch(0);
-        uint256 pid = createProposal();
-        skip(1 hours + 2); // allow voting
-
-        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
-        epochGovernor.castVote(pid, depositTokenId, 1);
-        assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
-
-        epochGovernor.castVote(pid, depositTokenId2, 1);
-        assertEq(escrow.balanceOfNFT(depositTokenId2), 0);
-        assertEq(escrow.getPastVotes(address(owner), depositTokenId2, block.timestamp - 1), TOKEN_1 * 3);
-        assertProposalVotes(pid, 0, TOKEN_1 * 3, 0); // votes with delegated power from mveNFT
-        assertEq(epochGovernor.hasVoted(pid, depositTokenId2), true);
-
-        vm.expectRevert(abi.encodeWithSelector(GovernorSimpleVotes.GovernorManagedNftCannotVote.selector, mTokenId));
-        epochGovernor.castVote(pid, mTokenId, 1);
-        assertEq(escrow.getPastVotes(address(owner), mTokenId, block.timestamp - 1), 0);
-        assertEq(epochGovernor.hasVoted(pid, mTokenId), false);
     }
 
     function testCannotCommentIfInsufficientVotingPower() public {
