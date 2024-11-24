@@ -12,17 +12,23 @@ abstract contract GovernorProposalWindow is GovernorSimple, IGovernorProposalWin
 
     /// @inheritdoc GovernorSimple
     function propose(
-        uint256 tokenId,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        string memory description
+        uint256 _tokenId,
+        address[] memory _targets,
+        uint256[] memory _values,
+        bytes[] memory _calldatas,
+        string memory _description
     ) public virtual override returns (uint256) {
         /// @dev Proposal creation is permissionless after `epochStart + proposalWindow`
-        if (block.timestamp < VelodromeTimeLibrary.epochStart(block.timestamp) + proposalWindow) {
+        if (block.timestamp < VelodromeTimeLibrary.epochStart({timestamp: block.timestamp}) + proposalWindow) {
             _checkOwner();
         }
-        return super.propose(tokenId, targets, values, calldatas, description);
+        return super.propose({
+            _tokenId: _tokenId,
+            _targets: _targets,
+            _values: _values,
+            _calldatas: _calldatas,
+            _description: _description
+        });
     }
 
     /// @inheritdoc IGovernorProposalWindow

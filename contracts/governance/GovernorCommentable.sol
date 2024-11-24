@@ -25,21 +25,21 @@ abstract contract GovernorCommentable is GovernorSimple, IGovernorCommentable {
         bytes memory params;
 
         _validateStateBitmap({
-            proposalId: _proposalId,
-            allowedStates: _encodeStateBitmap({proposalState: ProposalState.Active})
-                | _encodeStateBitmap({proposalState: ProposalState.Pending})
+            _proposalId: _proposalId,
+            _allowedStates: _encodeStateBitmap({_proposalState: ProposalState.Active})
+                | _encodeStateBitmap({_proposalState: ProposalState.Pending})
         });
 
-        uint256 startTime = proposalSnapshot({proposalId: _proposalId});
-        uint256 weight = _getVotes({account: msg.sender, tokenId: _tokenId, timepoint: startTime, params: params});
+        uint256 startTime = proposalSnapshot({_proposalId: _proposalId});
+        uint256 weight = _getVotes({_account: msg.sender, _tokenId: _tokenId, _timepoint: startTime, _params: params});
         uint256 minimumWeight =
             (escrow.getPastTotalSupply({timestamp: startTime}) * commentWeighting) / COMMENT_DENOMINATOR;
 
         if (weight < minimumWeight) {
-            revert GovernorInsufficientVotingPower({weight: weight, minimumWeight: minimumWeight});
+            revert GovernorInsufficientVotingPower({_weight: weight, _minimumWeight: minimumWeight});
         }
 
-        emit Comment({proposalId: _proposalId, account: msg.sender, tokenId: _tokenId, comment: _message});
+        emit Comment({_proposalId: _proposalId, _account: msg.sender, _tokenId: _tokenId, _comment: _message});
     }
 
     /// @inheritdoc IGovernorCommentable

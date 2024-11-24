@@ -52,7 +52,7 @@ abstract contract EpochGovernorCountingFractional is GovernorSimple {
     /**
      * @dev A fractional vote params uses more votes than are available for that user.
      */
-    error GovernorExceedRemainingWeight(uint256 tokenId, uint256 usedVotes, uint256 remainingWeight);
+    error GovernorExceedRemainingWeight(uint256 _tokenId, uint256 _usedVotes, uint256 _remainingWeight);
 
     /**
      * @dev See {IGovernor-COUNTING_MODE}.
@@ -65,36 +65,36 @@ abstract contract EpochGovernorCountingFractional is GovernorSimple {
     /**
      * @dev See {IGovernor-hasVoted}.
      */
-    function hasVoted(uint256 proposalId, uint256 tokenId) public view virtual override returns (bool) {
-        return usedVotes(proposalId, tokenId) > 0;
+    function hasVoted(uint256 _proposalId, uint256 _tokenId) public view virtual override returns (bool) {
+        return usedVotes({_proposalId: _proposalId, _tokenId: _tokenId}) > 0;
     }
 
     /**
      * @dev Get the number of votes already cast by `tokenId` for a proposal with `proposalId`. Useful for
      * integrations that allow delegates to cast rolling, partial votes.
      */
-    function usedVotes(uint256 proposalId, uint256 tokenId) public view virtual returns (uint256) {
-        return _proposalVotes[proposalId].usedVotes[tokenId];
+    function usedVotes(uint256 _proposalId, uint256 _tokenId) public view virtual returns (uint256) {
+        return _proposalVotes[_proposalId].usedVotes[_tokenId];
     }
 
     /**
      * @dev Get current distribution of votes for a given proposal.
      */
-    function proposalVotes(uint256 proposalId)
+    function proposalVotes(uint256 _proposalId)
         public
         view
         virtual
-        returns (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes)
+        returns (uint256 _againstVotes, uint256 _forVotes, uint256 _abstainVotes)
     {
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+        ProposalVote storage proposalVote = _proposalVotes[_proposalId];
         return (proposalVote.againstVotes, proposalVote.forVotes, proposalVote.abstainVotes);
     }
 
     /**
      * @dev Select winner of majority vote.
      */
-    function _selectWinner(uint256 proposalId) internal view returns (ProposalState) {
-        ProposalVote storage proposalVote = _proposalVotes[proposalId];
+    function _selectWinner(uint256 _proposalId) internal view returns (ProposalState) {
+        ProposalVote storage proposalVote = _proposalVotes[_proposalId];
         uint256 againstVotes = proposalVote.againstVotes;
         uint256 forVotes = proposalVote.forVotes;
         uint256 abstainVotes = proposalVote.abstainVotes;
@@ -134,16 +134,18 @@ abstract contract EpochGovernorCountingFractional is GovernorSimple {
      * remaining votes in a single operation using the traditional "bravo" vote.
      */
     // slither-disable-next-line cyclomatic-complexity
-    function _countVote(uint256 proposalId, uint256 tokenId, uint8 support, uint256 totalWeight, bytes memory params)
-        internal
-        virtual
-        override
-        returns (uint256)
-    {
+    function _countVote(
+        uint256 _proposalId,
+        uint256 _tokenId,
+        uint8 _support,
+        uint256 _totalWeight,
+        bytes memory _params
+    ) internal virtual override returns (uint256) {
         // Compute number of remaining votes. Returns 0 on overflow.
-        (, uint256 remainingWeight) = totalWeight.trySub(usedVotes(proposalId, tokenId));
+        (, uint256 remainingWeight) =
+            _totalWeight.trySub({b: usedVotes({_proposalId: _proposalId, _tokenId: _tokenId})});
         if (remainingWeight == 0) {
-            revert GovernorAlreadyCastVote(tokenId);
+            revert GovernorAlreadyCastVote({_tokenId: _tokenId});
         }
 
         uint256 againstVotes = 0;
@@ -156,41 +158,45 @@ abstract contract EpochGovernorCountingFractional is GovernorSimple {
         // Supported `support` value must be:
         // - "Full" voting: `support = 0` (Against), `1` (For) or `2` (Abstain), with empty params.
         // - "Fractional" voting: `support = 255`, with 48 bytes params.
-        if (support == uint8(GovernorCountingSimple.VoteType.Against)) {
-            if (params.length != 0) revert GovernorInvalidVoteParams();
+        if (_support == uint8(GovernorCountingSimple.VoteType.Against)) {
+            if (_params.length != 0) revert GovernorInvalidVoteParams();
             usedWeight = againstVotes = remainingWeight;
-        } else if (support == uint8(GovernorCountingSimple.VoteType.For)) {
-            if (params.length != 0) revert GovernorInvalidVoteParams();
+        } else if (_support == uint8(GovernorCountingSimple.VoteType.For)) {
+            if (_params.length != 0) revert GovernorInvalidVoteParams();
             usedWeight = forVotes = remainingWeight;
-        } else if (support == uint8(GovernorCountingSimple.VoteType.Abstain)) {
-            if (params.length != 0) revert GovernorInvalidVoteParams();
+        } else if (_support == uint8(GovernorCountingSimple.VoteType.Abstain)) {
+            if (_params.length != 0) revert GovernorInvalidVoteParams();
             usedWeight = abstainVotes = remainingWeight;
-        } else if (support == VOTE_TYPE_FRACTIONAL) {
+        } else if (_support == VOTE_TYPE_FRACTIONAL) {
             // The `params` argument is expected to be three packed `uint128`:
             // `abi.encodePacked(uint128(againstVotes), uint128(forVotes), uint128(abstainVotes))`
-            if (params.length != 0x30) revert GovernorInvalidVoteParams();
+            if (_params.length != 0x30) revert GovernorInvalidVoteParams();
 
             assembly ("memory-safe") {
-                againstVotes := shr(128, mload(add(params, 0x20)))
-                forVotes := shr(128, mload(add(params, 0x30)))
-                abstainVotes := shr(128, mload(add(params, 0x40)))
+                againstVotes := shr(128, mload(add(_params, 0x20)))
+                forVotes := shr(128, mload(add(_params, 0x30)))
+                abstainVotes := shr(128, mload(add(_params, 0x40)))
                 usedWeight := add(add(againstVotes, forVotes), abstainVotes) // inputs are uint128: cannot overflow
             }
 
             // check parsed arguments are valid
             if (usedWeight > remainingWeight) {
-                revert GovernorExceedRemainingWeight(tokenId, usedWeight, remainingWeight);
+                revert GovernorExceedRemainingWeight({
+                    _tokenId: _tokenId,
+                    _usedVotes: usedWeight,
+                    _remainingWeight: remainingWeight
+                });
             }
         } else {
             revert GovernorInvalidVoteType();
         }
 
         // update votes tracking
-        ProposalVote storage details = _proposalVotes[proposalId];
+        ProposalVote storage details = _proposalVotes[_proposalId];
         if (againstVotes > 0) details.againstVotes += againstVotes;
         if (forVotes > 0) details.forVotes += forVotes;
         if (abstainVotes > 0) details.abstainVotes += abstainVotes;
-        details.usedVotes[tokenId] += usedWeight;
+        details.usedVotes[_tokenId] += usedWeight;
 
         return usedWeight;
     }

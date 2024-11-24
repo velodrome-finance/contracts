@@ -20,10 +20,10 @@ abstract contract GovernorSimpleVotes is GovernorSimple {
     /**
      * @dev A fractional vote params uses more votes than are available for that user.
      */
-    error GovernorManagedNftCannotVote(uint256 tokenId);
+    error GovernorManagedNftCannotVote(uint256 _tokenId);
 
-    constructor(IVotes tokenAddress) {
-        _token = IERC5805(address(tokenAddress));
+    constructor(IVotes _tokenAddress) {
+        _token = IERC5805(address(_tokenAddress));
         ve = IVotingEscrow(address(_token));
     }
 
@@ -61,13 +61,13 @@ abstract contract GovernorSimpleVotes is GovernorSimple {
     /**
      * Read the voting weight from the token's built in snapshot mechanism (see {Governor-_getVotes}).
      */
-    function _getVotes(address account, uint256 tokenId, uint256 timepoint, bytes memory /*params*/ )
+    function _getVotes(address _account, uint256 _tokenId, uint256 _timepoint, bytes memory /*_params*/ )
         internal
         view
         virtual
         override
         returns (uint256)
     {
-        return token().getPastVotes(account, timepoint);
+        return token().getPastVotes({account: _account, timepoint: _timepoint});
     }
 }

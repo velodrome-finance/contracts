@@ -27,12 +27,12 @@ interface IGovernor is IERC165, IERC6372 {
     /**
      * @dev Empty proposal or a mismatch between the parameters length for a proposal call.
      */
-    error GovernorInvalidProposalLength(uint256 targets, uint256 calldatas, uint256 values);
+    error GovernorInvalidProposalLength(uint256 _targets, uint256 _calldatas, uint256 _values);
 
     /**
      * @dev The vote was already cast.
      */
-    error GovernorAlreadyCastVote(uint256 tokenId);
+    error GovernorAlreadyCastVote(uint256 _tokenId);
 
     /**
      * @dev Token deposits are disabled in this contract.
@@ -42,17 +42,17 @@ interface IGovernor is IERC165, IERC6372 {
     /**
      * @dev The `account` is not a proposer.
      */
-    error GovernorOnlyProposer(address account);
+    error GovernorOnlyProposer(address _account);
 
     /**
      * @dev The `account` is not the governance executor.
      */
-    error GovernorOnlyExecutor(address account);
+    error GovernorOnlyExecutor(address _account);
 
     /**
      * @dev The `proposalId` doesn't exist.
      */
-    error GovernorNonexistentProposal(uint256 proposalId);
+    error GovernorNonexistentProposal(uint256 _proposalId);
 
     /**
      * @dev The current state of a proposal is not the required for performing an operation.
@@ -64,22 +64,22 @@ interface IGovernor is IERC165, IERC6372 {
      *
      * See {Governor-_encodeStateBitmap}.
      */
-    error GovernorUnexpectedProposalState(uint256 proposalId, ProposalState current, bytes32 expectedStates);
+    error GovernorUnexpectedProposalState(uint256 _proposalId, ProposalState _current, bytes32 _expectedStates);
 
     /**
      * @dev The voting period set is not a valid period.
      */
-    error GovernorInvalidVotingPeriod(uint256 votingPeriod);
+    error GovernorInvalidVotingPeriod(uint256 _votingPeriod);
 
     /**
      * @dev The `proposer` does not have the required votes to create a proposal.
      */
-    error GovernorInsufficientProposerVotes(address proposer, uint256 votes, uint256 threshold);
+    error GovernorInsufficientProposerVotes(address _proposer, uint256 _votes, uint256 _threshold);
 
     /**
      * @dev The `proposer` is not allowed to create a proposal.
      */
-    error GovernorRestrictedProposer(address proposer);
+    error GovernorRestrictedProposer(address _proposer);
 
     /**
      * @dev The vote type used is not valid for the corresponding counting module.
@@ -100,42 +100,42 @@ interface IGovernor is IERC165, IERC6372 {
      * @dev The provided signature is not valid for the expected `voter`.
      * If the `voter` is a contract, the signature is not valid using {IERC1271-isValidSignature}.
      */
-    error GovernorInvalidSignature(address voter);
+    error GovernorInvalidSignature(address _voter);
 
     /**
      * @dev The target is not minter or calldata is not the nudge function
      */
-    error GovernorInvalidTargetOrCalldata(address target, bytes4 callData);
+    error GovernorInvalidTargetOrCalldata(address _target, bytes4 _callData);
 
     /**
      * @dev Not enough voting power to comment
      */
-    error GovernorInsufficientVotingPower(uint256 weight, uint256 minimumWeight);
+    error GovernorInsufficientVotingPower(uint256 _weight, uint256 _minimumWeight);
 
     /**
      * @dev Emitted when a proposal is created.
      */
     event ProposalCreated(
-        uint256 proposalId,
-        address proposer,
-        address[] targets,
-        uint256[] values,
-        string[] signatures,
-        bytes[] calldatas,
-        uint256 voteStart,
-        uint256 voteEnd,
-        string description
+        uint256 _proposalId,
+        address _proposer,
+        address[] _targets,
+        uint256[] _values,
+        string[] _signatures,
+        bytes[] _calldatas,
+        uint256 _voteStart,
+        uint256 _voteEnd,
+        string _description
     );
 
     /**
      * @dev Emitted when a proposal is queued.
      */
-    event ProposalQueued(uint256 proposalId, uint256 etaSeconds);
+    event ProposalQueued(uint256 _proposalId, uint256 _etaSeconds);
 
     /**
      * @dev Emitted when a proposal is executed.
      */
-    event ProposalExecuted(uint256 proposalId);
+    event ProposalExecuted(uint256 _proposalId);
 
     /**
      * @dev Emitted when a vote is cast without params.
@@ -143,7 +143,12 @@ interface IGovernor is IERC165, IERC6372 {
      * Note: `support` values should be seen as buckets. Their interpretation depends on the voting module used.
      */
     event VoteCast(
-        address indexed voter, uint256 indexed tokenId, uint256 proposalId, uint8 support, uint256 weight, string reason
+        address indexed _voter,
+        uint256 indexed _tokenId,
+        uint256 _proposalId,
+        uint8 _support,
+        uint256 _weight,
+        string _reason
     );
 
     /**
@@ -153,19 +158,19 @@ interface IGovernor is IERC165, IERC6372 {
      * `params` are additional encoded parameters. Their interpretation  also depends on the voting module used.
      */
     event VoteCastWithParams(
-        address indexed voter,
-        uint256 indexed tokenId,
-        uint256 proposalId,
-        uint8 support,
-        uint256 weight,
-        string reason,
-        bytes params
+        address indexed _voter,
+        uint256 indexed _tokenId,
+        uint256 _proposalId,
+        uint8 _support,
+        uint256 _weight,
+        string _reason,
+        bytes _params
     );
 
     /**
      * @dev Emitted when a comment is cast on a certain proposal.
      */
-    event Comment(uint256 indexed proposalId, address indexed account, uint256 indexed tokenId, string comment);
+    event Comment(uint256 indexed _proposalId, address indexed _account, uint256 indexed _tokenId, string _comment);
 
     /**
      * @notice module:core
@@ -209,17 +214,17 @@ interface IGovernor is IERC165, IERC6372 {
      * @dev Hashing function used to (re)build the proposal id from the proposal details..
      */
     function hashProposal(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
+        address[] memory _targets,
+        uint256[] memory _values,
+        bytes[] memory _calldatas,
+        bytes32 _descriptionHash
     ) external pure returns (uint256);
 
     /**
      * @notice module:core
      * @dev Current state of a proposal, following Compound's convention
      */
-    function state(uint256 proposalId) external view returns (ProposalState);
+    function state(uint256 _proposalId) external view returns (ProposalState);
 
     /**
      * @notice module:core
@@ -233,20 +238,20 @@ interface IGovernor is IERC165, IERC6372 {
      * snapshot is performed at the end of this block. Hence, voting for this proposal starts at the beginning of the
      * following block.
      */
-    function proposalSnapshot(uint256 proposalId) external view returns (uint256);
+    function proposalSnapshot(uint256 _proposalId) external view returns (uint256);
 
     /**
      * @notice module:core
      * @dev Timepoint at which votes close. If using block number, votes close at the end of this block, so it is
      * possible to cast a vote during this block.
      */
-    function proposalDeadline(uint256 proposalId) external view returns (uint256);
+    function proposalDeadline(uint256 _proposalId) external view returns (uint256);
 
     /**
      * @notice module:core
      * @dev The account that created a proposal.
      */
-    function proposalProposer(uint256 proposalId) external view returns (address);
+    function proposalProposer(uint256 _proposalId) external view returns (address);
 
     /**
      * @notice module:user-config
@@ -282,7 +287,7 @@ interface IGovernor is IERC165, IERC6372 {
      * NOTE: The `timepoint` parameter corresponds to the snapshot used for counting vote. This allows to scale the
      * quorum depending on values such as the totalSupply of a token at this timepoint (see {ERC20Votes}).
      */
-    function quorum(uint256 timepoint) external view returns (uint256);
+    function quorum(uint256 _timepoint) external view returns (uint256);
 
     /**
      * @notice module:reputation
@@ -291,13 +296,13 @@ interface IGovernor is IERC165, IERC6372 {
      * Note: this can be implemented in a number of ways, for example by reading the delegated balance from one (or
      * multiple), {ERC20Votes} tokens.
      */
-    function getVotes(address account, uint256 tokenId, uint256 timepoint) external view returns (uint256);
+    function getVotes(address _account, uint256 _tokenId, uint256 _timepoint) external view returns (uint256);
 
     /**
      * @notice module:reputation
      * @dev Voting power of an `tokenId` at a specific `timepoint` given additional encoded parameters.
      */
-    function getVotesWithParams(address account, uint256 tokenId, uint256 timepoint, bytes memory params)
+    function getVotesWithParams(address _account, uint256 _tokenId, uint256 _timepoint, bytes memory _params)
         external
         view
         returns (uint256);
@@ -306,7 +311,7 @@ interface IGovernor is IERC165, IERC6372 {
      * @notice module:voting
      * @dev Returns whether `tokenId` has cast a vote on `proposalId`.
      */
-    function hasVoted(uint256 proposalId, uint256 tokenId) external view returns (bool);
+    function hasVoted(uint256 _proposalId, uint256 _tokenId) external view returns (bool);
 
     /**
      * @dev Create a new proposal. Vote start after a delay specified by {IGovernor-votingDelay} and lasts for a
@@ -321,12 +326,12 @@ interface IGovernor is IERC165, IERC6372 {
      * value to cover a proposal with multiple transfers).
      */
     function propose(
-        uint256 tokenId,
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        string memory description
-    ) external returns (uint256 proposalId);
+        uint256 _tokenId,
+        address[] memory _targets,
+        uint256[] memory _values,
+        bytes[] memory _calldatas,
+        string memory _description
+    ) external returns (uint256 _proposalId);
 
     /**
      * @dev Execute a successful proposal. This requires the quorum to be reached, the vote to be successful, and the
@@ -338,27 +343,27 @@ interface IGovernor is IERC165, IERC6372 {
      * NOTE: Some modules can modify the requirements for execution, for example by adding an additional timelock.
      */
     function execute(
-        address[] memory targets,
-        uint256[] memory values,
-        bytes[] memory calldatas,
-        bytes32 descriptionHash
-    ) external payable returns (uint256 proposalId);
+        address[] memory _targets,
+        uint256[] memory _values,
+        bytes[] memory _calldatas,
+        bytes32 _descriptionHash
+    ) external payable returns (uint256 _proposalId);
 
     /**
      * @dev Cast a vote
      *
      * Emits a {VoteCast} event.
      */
-    function castVote(uint256 proposalId, uint256 tokenId, uint8 support) external returns (uint256 balance);
+    function castVote(uint256 _proposalId, uint256 _tokenId, uint8 _support) external returns (uint256 _balance);
 
     /**
      * @dev Cast a vote with a reason
      *
      * Emits a {VoteCast} event.
      */
-    function castVoteWithReason(uint256 proposalId, uint256 tokenId, uint8 support, string calldata reason)
+    function castVoteWithReason(uint256 _proposalId, uint256 _tokenId, uint8 _support, string calldata _reason)
         external
-        returns (uint256 balance);
+        returns (uint256 _balance);
 
     /**
      * @dev Cast a vote with a reason and additional encoded parameters
@@ -366,21 +371,25 @@ interface IGovernor is IERC165, IERC6372 {
      * Emits a {VoteCast} or {VoteCastWithParams} event depending on the length of params.
      */
     function castVoteWithReasonAndParams(
-        uint256 proposalId,
-        uint256 tokenId,
-        uint8 support,
-        string calldata reason,
-        bytes memory params
-    ) external returns (uint256 balance);
+        uint256 _proposalId,
+        uint256 _tokenId,
+        uint8 _support,
+        string calldata _reason,
+        bytes memory _params
+    ) external returns (uint256 _balance);
 
     /**
      * @dev Cast a vote using the voter's signature, including ERC-1271 signature support.
      *
      * Emits a {VoteCast} event.
      */
-    function castVoteBySig(uint256 proposalId, uint256 tokenId, uint8 support, address voter, bytes memory signature)
-        external
-        returns (uint256 balance);
+    function castVoteBySig(
+        uint256 _proposalId,
+        uint256 _tokenId,
+        uint8 _support,
+        address _voter,
+        bytes memory _signature
+    ) external returns (uint256 _balance);
 
     /**
      * @dev Cast a vote with a reason and additional encoded parameters using the voter's signature,
@@ -389,12 +398,12 @@ interface IGovernor is IERC165, IERC6372 {
      * Emits a {VoteCast} or {VoteCastWithParams} event depending on the length of params.
      */
     function castVoteWithReasonAndParamsBySig(
-        uint256 proposalId,
-        uint256 tokenId,
-        uint8 support,
-        address voter,
-        string calldata reason,
-        bytes memory params,
-        bytes memory signature
-    ) external returns (uint256 balance);
+        uint256 _proposalId,
+        uint256 _tokenId,
+        uint8 _support,
+        address _voter,
+        string calldata _reason,
+        bytes memory _params,
+        bytes memory _signature
+    ) external returns (uint256 _balance);
 }

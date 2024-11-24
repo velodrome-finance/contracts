@@ -21,7 +21,13 @@ contract ProposeTest is BaseTest {
 
         vm.prank(address(owner2));
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(owner2)));
-        epochGovernor.propose(1, targets, values, calldatas, description);
+        epochGovernor.propose({
+            _tokenId: 1,
+            _targets: targets,
+            _values: values,
+            _calldatas: calldatas,
+            _description: description
+        });
     }
 
     modifier whenCallerIsTheOwner() {
@@ -137,21 +143,32 @@ contract ProposeTest is BaseTest {
 
         uint256 expectedSnapshot = block.timestamp + 1 hours;
         uint256 expectedDeadline = expectedSnapshot + 1 weeks - 2 hours;
-        uint256 expectedPid = epochGovernor.hashProposal(targets, values, calldatas, bytes32(expectedDeadline));
+        uint256 expectedPid = epochGovernor.hashProposal({
+            _targets: targets,
+            _values: values,
+            _calldatas: calldatas,
+            _epochVoteEnd: bytes32(expectedDeadline)
+        });
 
         vm.expectEmit(address(epochGovernor));
         emit IGovernor.ProposalCreated({
-            proposalId: expectedPid,
-            proposer: address(owner),
-            targets: targets,
-            values: values,
-            signatures: new string[](targets.length),
-            calldatas: calldatas,
-            voteStart: expectedSnapshot,
-            voteEnd: expectedDeadline,
-            description: description
+            _proposalId: expectedPid,
+            _proposer: address(owner),
+            _targets: targets,
+            _values: values,
+            _signatures: new string[](targets.length),
+            _calldatas: calldatas,
+            _voteStart: expectedSnapshot,
+            _voteEnd: expectedDeadline,
+            _description: description
         });
-        uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
+        uint256 pid = epochGovernor.propose({
+            _tokenId: 1,
+            _targets: targets,
+            _values: values,
+            _calldatas: calldatas,
+            _description: description
+        });
         assertEq(pid, expectedPid);
         assertEq(epochGovernor.proposalProposer(pid), address(owner));
         assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot + 2);
@@ -263,21 +280,32 @@ contract ProposeTest is BaseTest {
 
         uint256 expectedSnapshot = block.timestamp;
         uint256 expectedDeadline = VelodromeTimeLibrary.epochVoteEnd(block.timestamp);
-        uint256 expectedPid = epochGovernor.hashProposal(targets, values, calldatas, bytes32(expectedDeadline));
+        uint256 expectedPid = epochGovernor.hashProposal({
+            _targets: targets,
+            _values: values,
+            _calldatas: calldatas,
+            _epochVoteEnd: bytes32(expectedDeadline)
+        });
 
         vm.expectEmit(address(epochGovernor));
         emit IGovernor.ProposalCreated({
-            proposalId: expectedPid,
-            proposer: address(owner2),
-            targets: targets,
-            values: values,
-            signatures: new string[](targets.length),
-            calldatas: calldatas,
-            voteStart: expectedSnapshot,
-            voteEnd: expectedDeadline,
-            description: description
+            _proposalId: expectedPid,
+            _proposer: address(owner2),
+            _targets: targets,
+            _values: values,
+            _signatures: new string[](targets.length),
+            _calldatas: calldatas,
+            _voteStart: expectedSnapshot,
+            _voteEnd: expectedDeadline,
+            _description: description
         });
-        uint256 pid = epochGovernor.propose(1, targets, values, calldatas, description);
+        uint256 pid = epochGovernor.propose({
+            _tokenId: 1,
+            _targets: targets,
+            _values: values,
+            _calldatas: calldatas,
+            _description: description
+        });
         assertEq(pid, expectedPid);
         assertEq(epochGovernor.proposalProposer(pid), address(owner2));
         assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot + 2);
