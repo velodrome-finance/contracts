@@ -6,7 +6,7 @@
 - Can create a Normal veNFT.
 - Can deposit VELO into an existing Normal veNFT.
 - Can poke the balance of an existing veNFT to sync the balance.
-- Can bribe a Velodrome liquidity pool through its' linked BribeVotingRewards contract.
+- Can incentivize a Velodrome liquidity pool through its' linked IncentiveVotingRewards contract.
 - Can skim a stable or volatile liquidity pool to rebalance the reserves.
 - Can sync a liquidity pool to record historical price
 - Can trigger the emission of VELO at the start of an epoch
@@ -25,7 +25,7 @@
 - Can transfer ownership of the veNFT
 - Can increase amount locked
 - Can vote weekly on pool(s)
-    - Earns bribes and trading fees
+    - Earns incentives and trading fees
     - Earns weekly distribution of VELO rebases
 - Can vote on VeloGovernor proposals
 - Can vote on EpochGovernor proposals
@@ -162,7 +162,7 @@ In addition to defined admin roles, various contracts within Velodrome protocol 
     - `Voter.distribute()`
 - Can claim fees and rewards earned by Normal veNFTs
     - `Voter.claimFees()`
-    - `Voter.claimBribes()`
+    - `Voter.claimIncentives()`
 - Can deposit a Normal veNFT into a Managed veNFT
     - `Voter.depositManaged()`
 - Can withdraw a Locked veNFT from a Managed veNFT
@@ -170,7 +170,7 @@ In addition to defined admin roles, various contracts within Velodrome protocol 
 - Can set voting status of a veNFT
     - `Voter.vote()`
     - `Voter.reset()`
-- Can deposit and withdraw balances from `BribeVotingReward` and `FeesVotingReward`
+- Can deposit and withdraw balances from `IncentiveVotingReward` and `FeesVotingReward`
     - `Voter.vote()`
     - `Voter.reset()`
 

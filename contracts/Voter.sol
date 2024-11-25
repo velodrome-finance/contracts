@@ -59,7 +59,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     /// @inheritdoc IVoter
     mapping(address => address) public gaugeToFees;
     /// @inheritdoc IVoter
-    mapping(address => address) public gaugeToBribe;
+    mapping(address => address) public gaugeToIncentive;
     /// @inheritdoc IVoter
     mapping(address => uint256) public weights;
     /// @inheritdoc IVoter
@@ -180,7 +180,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 weights[_pool] -= _votes;
                 delete votes[_tokenId][_pool];
                 IReward(gaugeToFees[gauges[_pool]])._withdraw(_votes, _tokenId);
-                IReward(gaugeToBribe[gauges[_pool]])._withdraw(_votes, _tokenId);
+                IReward(gaugeToIncentive[gauges[_pool]])._withdraw(_votes, _tokenId);
                 _totalWeight += _votes;
                 emit Abstained(_msgSender(), _pool, _tokenId, _votes, weights[_pool], block.timestamp);
             }
@@ -237,7 +237,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
                 weights[_pool] += _poolWeight;
                 votes[_tokenId][_pool] += _poolWeight;
                 IReward(gaugeToFees[_gauge])._deposit(_poolWeight, _tokenId);
-                IReward(gaugeToBribe[_gauge])._deposit(_poolWeight, _tokenId);
+                IReward(gaugeToIncentive[_gauge])._deposit(_poolWeight, _tokenId);
                 _usedWeight += _poolWeight;
                 _totalWeight += _poolWeight;
                 emit Voted(_msgSender(), _pool, _tokenId, _poolWeight, weights[_pool], block.timestamp);
@@ -346,14 +346,14 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
             }
         }
 
-        (address _feeVotingReward, address _bribeVotingReward) =
+        (address _feeVotingReward, address _incentiveVotingReward) =
             IVotingRewardsFactory(votingRewardsFactory).createRewards(forwarder, rewards);
 
         address _gauge =
             IGaugeFactory(gaugeFactory).createGauge(forwarder, _pool, _feeVotingReward, rewardToken, isPool);
 
         gaugeToFees[_gauge] = _feeVotingReward;
-        gaugeToBribe[_gauge] = _bribeVotingReward;
+        gaugeToIncentive[_gauge] = _incentiveVotingReward;
         gauges[_pool] = _gauge;
         poolForGauge[_gauge] = _pool;
         isGauge[_gauge] = true;
@@ -366,7 +366,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
             votingRewardsFactory,
             gaugeFactory,
             _pool,
-            _bribeVotingReward,
+            _incentiveVotingReward,
             _feeVotingReward,
             _gauge,
             sender
@@ -463,11 +463,11 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
     }
 
     /// @inheritdoc IVoter
-    function claimBribes(address[] memory _bribes, address[][] memory _tokens, uint256 _tokenId) external {
+    function claimIncentives(address[] memory _incentives, address[][] memory _tokens, uint256 _tokenId) external {
         if (!IVotingEscrow(ve).isApprovedOrOwner(_msgSender(), _tokenId)) revert NotApprovedOrOwner();
-        uint256 _length = _bribes.length;
+        uint256 _length = _incentives.length;
         for (uint256 i = 0; i < _length; i++) {
-            IReward(_bribes[i]).getReward(_tokenId, _tokens[i]);
+            IReward(_incentives[i]).getReward(_tokenId, _tokens[i]);
         }
     }
 

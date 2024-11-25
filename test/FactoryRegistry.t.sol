@@ -235,20 +235,20 @@ contract FactoryRegistryTest is BaseTest {
             address(newPool2)
         );
         address newFeesVotingReward = voter.gaugeToFees(newGauge);
-        address newBribeVotingReward = voter.gaugeToBribe(newGauge);
+        address newIncentiveVotingReward = voter.gaugeToIncentive(newGauge);
 
         // ensure that the contracts created are not address(0)
         assertGt(uint256(uint160(newGauge)), 0);
         assertGt(uint256(uint160(newFeesVotingReward)), 0);
-        assertGt(uint256(uint160(newBribeVotingReward)), 0);
+        assertGt(uint256(uint160(newIncentiveVotingReward)), 0);
 
         // voting reward validation
         address token0 = newPool2.token0();
         assertTrue(Reward(newFeesVotingReward).isReward(token0));
-        assertTrue(Reward(newBribeVotingReward).isReward(token0));
+        assertTrue(Reward(newIncentiveVotingReward).isReward(token0));
         address token1 = newPool2.token1();
         assertTrue(Reward(newFeesVotingReward).isReward(token1));
-        assertTrue(Reward(newBribeVotingReward).isReward(token1));
+        assertTrue(Reward(newIncentiveVotingReward).isReward(token1));
 
         // gauge validation
         assertEq(address(newPool2), Gauge(newGauge).stakingToken());
@@ -274,20 +274,20 @@ contract FactoryRegistryTest is BaseTest {
 
         address newGauge = voter.createGauge(address(factory2), address(newPool2));
         address newFeesVotingReward = voter.gaugeToFees(newGauge);
-        address newBribeVotingReward = voter.gaugeToBribe(newGauge);
+        address newIncentiveVotingReward = voter.gaugeToIncentive(newGauge);
 
         // ensure that the contracts created are not address(0)
         assertGt(uint256(uint160(newGauge)), 0);
         assertGt(uint256(uint160(newFeesVotingReward)), 0);
-        assertGt(uint256(uint160(newBribeVotingReward)), 0);
+        assertGt(uint256(uint160(newIncentiveVotingReward)), 0);
 
         // voting validation
         address token0 = newPool2.token0();
         assertTrue(Reward(newFeesVotingReward).isReward(token0));
-        assertTrue(Reward(newBribeVotingReward).isReward(token0));
+        assertTrue(Reward(newIncentiveVotingReward).isReward(token0));
         address token1 = newPool2.token1();
         assertTrue(Reward(newFeesVotingReward).isReward(token1));
-        assertTrue(Reward(newBribeVotingReward).isReward(token1));
+        assertTrue(Reward(newIncentiveVotingReward).isReward(token1));
 
         // gauge validation
         assertEq(address(newPool2), Gauge(newGauge).stakingToken());
@@ -313,20 +313,20 @@ contract FactoryRegistryTest is BaseTest {
 
         address newGauge = voter.createGauge(address(factory2), address(newPool2));
         address newFeesVotingReward = voter.gaugeToFees(newGauge);
-        address newBribeVotingReward = voter.gaugeToBribe(newGauge);
+        address newIncentiveVotingReward = voter.gaugeToIncentive(newGauge);
 
         // ensure that the contracts created are not address(0)
         assertGt(uint256(uint160(newGauge)), 0);
         assertGt(uint256(uint160(newFeesVotingReward)), 0);
-        assertGt(uint256(uint160(newBribeVotingReward)), 0);
+        assertGt(uint256(uint160(newIncentiveVotingReward)), 0);
 
         // voting validation
         address token0 = newPool2.token0();
         assertTrue(Reward(newFeesVotingReward).isReward(token0));
-        assertTrue(Reward(newBribeVotingReward).isReward(token0));
+        assertTrue(Reward(newIncentiveVotingReward).isReward(token0));
         address token1 = newPool2.token1();
         assertTrue(Reward(newFeesVotingReward).isReward(token1));
-        assertTrue(Reward(newBribeVotingReward).isReward(token1));
+        assertTrue(Reward(newIncentiveVotingReward).isReward(token1));
 
         // gauge validation
         assertEq(address(newPool2), Gauge(newGauge).stakingToken());

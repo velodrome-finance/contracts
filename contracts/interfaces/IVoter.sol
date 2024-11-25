@@ -32,7 +32,7 @@ interface IVoter {
         address indexed votingRewardsFactory,
         address indexed gaugeFactory,
         address pool,
-        address bribeVotingReward,
+        address incentiveVotingReward,
         address feeVotingReward,
         address gauge,
         address creator
@@ -97,8 +97,8 @@ interface IVoter {
     /// @dev Gauge => Fees Voting Reward
     function gaugeToFees(address gauge) external view returns (address);
 
-    /// @dev Gauge => Bribes Voting Reward
-    function gaugeToBribe(address gauge) external view returns (address);
+    /// @dev Gauge => Incentives Voting Reward
+    function gaugeToIncentive(address gauge) external view returns (address);
 
     /// @dev Pool => Weights
     function weights(address pool) external view returns (uint256);
@@ -185,12 +185,12 @@ interface IVoter {
     /// @param _gauges Array of gauges to collect emissions from.
     function claimRewards(address[] memory _gauges) external;
 
-    /// @notice Claim bribes for a given NFT.
-    /// @dev Utility to help batch bribe claims.
-    /// @param _bribes  Array of BribeVotingReward contracts to collect from.
-    /// @param _tokens  Array of tokens that are used as bribes.
-    /// @param _tokenId Id of veNFT that you wish to claim bribes for.
-    function claimBribes(address[] memory _bribes, address[][] memory _tokens, uint256 _tokenId) external;
+    /// @notice Claim incentives for a given NFT.
+    /// @dev Utility to help batch incentive claims.
+    /// @param _incentives  Array of IncentiveVotingReward contracts to collect from.
+    /// @param _tokens  Array of tokens that are used as incentives.
+    /// @param _tokenId Id of veNFT that you wish to claim incentives for.
+    function claimIncentives(address[] memory _incentives, address[][] memory _tokens, uint256 _tokenId) external;
 
     /// @notice Claim fees for a given NFT.
     /// @dev Utility to help batch fee claims.
@@ -221,7 +221,7 @@ interface IVoter {
     /// @param _maxVotingNum .
     function setMaxVotingNum(uint256 _maxVotingNum) external;
 
-    /// @notice Whitelist (or unwhitelist) token for use in bribes.
+    /// @notice Whitelist (or unwhitelist) token for use in incentives.
     /// @dev Throws if not called by governor.
     /// @param _token .
     /// @param _bool .

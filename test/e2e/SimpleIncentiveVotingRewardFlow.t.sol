@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "./ExtendedBaseTest.sol";
 
-contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
+contract SimpleIncentiveVotingRewardFlow is ExtendedBaseTest {
     function _setUp() public override {
         skip(1 hours);
         VELO.approve(address(escrow), TOKEN_1);
@@ -25,7 +25,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         skip(1);
     }
 
-    function testMultiEpochBribeVotingRewardFlow() public {
+    function testMultiEpochIncentiveVotingRewardFlow() public {
         // set up votes and rewards
         address[] memory pools = new address[](1);
         pools[0] = address(pool);
@@ -45,10 +45,10 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         // owner + owner 4 votes
         // owner has max lock time
         // owner4 has quarter of max lock time
-        uint256 currentBribe = TOKEN_1;
-        uint256 usdcBribe = USDC_1;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
+        uint256 currentIncentive = TOKEN_1;
+        uint256 usdcIncentive = USDC_1;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), usdcIncentive);
         voter.vote(1, pools, weights); // balance: 997231719186530010
         vm.prank(address(owner4));
         voter.vote(4, pools, weights); // balance: 249286513795874010
@@ -60,27 +60,27 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         uint256 pre = LR.balanceOf(address(owner));
         uint256 usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         uint256 post = LR.balanceOf(address(owner));
         uint256 usdcPost = USDC.balanceOf(address(owner));
-        assertApproxEqRel(post - pre, (currentBribe * 800014) / 1000000, 1e13);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 800014) / 1000000, 1e13);
+        assertApproxEqRel(post - pre, (currentIncentive * 800014) / 1000000, 1e13);
+        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 800014) / 1000000, 1e13);
 
         pre = LR.balanceOf(address(owner4));
         usdcPre = USDC.balanceOf(address(owner4));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(4, rewards);
+        incentiveVotingReward.getReward(4, rewards);
         post = LR.balanceOf(address(owner4));
         usdcPost = USDC.balanceOf(address(owner4));
-        assertApproxEqRel(post - pre, (currentBribe * 1999862) / 10000000, 1e13);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 1999862) / 10000000, 1e13);
+        assertApproxEqRel(post - pre, (currentIncentive * 1999862) / 10000000, 1e13);
+        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 1999862) / 10000000, 1e13);
 
-        // test bribe delivered late in the week
+        // test incentive delivered late in the week
         skip(1 weeks / 2);
-        currentBribe = TOKEN_1 * 2;
-        usdcBribe = USDC_1 * 2;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
+        currentIncentive = TOKEN_1 * 2;
+        usdcIncentive = USDC_1 * 2;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), usdcIncentive);
         skip(1);
 
         voter.vote(1, pools, weights);
@@ -95,26 +95,26 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         pre = LR.balanceOf(address(owner));
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         post = LR.balanceOf(address(owner));
         usdcPost = USDC.balanceOf(address(owner));
-        assertEq(post - pre, currentBribe / 2);
-        assertEq(usdcPost - usdcPre, usdcBribe / 2);
+        assertEq(post - pre, currentIncentive / 2);
+        assertEq(usdcPost - usdcPre, usdcIncentive / 2);
 
         pre = LR.balanceOf(address(owner2));
         usdcPre = USDC.balanceOf(address(owner2));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(2, rewards);
+        incentiveVotingReward.getReward(2, rewards);
         post = LR.balanceOf(address(owner2));
         usdcPost = USDC.balanceOf(address(owner2));
-        assertEq(post - pre, currentBribe / 2);
-        assertEq(usdcPost - usdcPre, usdcBribe / 2);
+        assertEq(post - pre, currentIncentive / 2);
+        assertEq(usdcPost - usdcPre, usdcIncentive / 2);
 
-        // test deferred claiming of bribes
-        uint256 deferredBribe = TOKEN_1 * 3;
-        uint256 deferredUsdcBribe = USDC_1 * 3;
-        _createBribeWithAmount(bribeVotingReward, address(LR), deferredBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), deferredUsdcBribe);
+        // test deferred claiming of incentives
+        uint256 deferredIncentive = TOKEN_1 * 3;
+        uint256 deferredUsdcIncentive = USDC_1 * 3;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), deferredIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), deferredUsdcIncentive);
         skip(1 hours);
 
         voter.vote(1, pools, weights);
@@ -125,21 +125,21 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         skipToNextEpoch(1);
 
         // test multiple reward tokens for pool2
-        currentBribe = TOKEN_1 * 4;
-        usdcBribe = USDC_1 * 4;
-        _createBribeWithAmount(bribeVotingReward2, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward2, address(USDC), usdcBribe);
+        currentIncentive = TOKEN_1 * 4;
+        usdcIncentive = USDC_1 * 4;
+        _createIncentiveWithAmount(incentiveVotingReward2, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward2, address(USDC), usdcIncentive);
         skip(1);
 
         // skip claiming this epoch, but check earned
-        uint256 earned = bribeVotingReward.earned(address(LR), 1);
-        assertEq(earned, deferredBribe / 2);
-        earned = bribeVotingReward.earned(address(USDC), 1);
-        assertEq(earned, deferredUsdcBribe / 2);
-        earned = bribeVotingReward.earned(address(LR), 2);
-        assertEq(earned, deferredBribe / 2);
-        earned = bribeVotingReward.earned(address(USDC), 2);
-        assertEq(earned, deferredUsdcBribe / 2);
+        uint256 earned = incentiveVotingReward.earned(address(LR), 1);
+        assertEq(earned, deferredIncentive / 2);
+        earned = incentiveVotingReward.earned(address(USDC), 1);
+        assertEq(earned, deferredUsdcIncentive / 2);
+        earned = incentiveVotingReward.earned(address(LR), 2);
+        assertEq(earned, deferredIncentive / 2);
+        earned = incentiveVotingReward.earned(address(USDC), 2);
+        assertEq(earned, deferredUsdcIncentive / 2);
         skip(1 hours);
 
         // vote for pool2 instead with owner3
@@ -155,46 +155,46 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         pre = LR.balanceOf(address(owner));
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward2.getReward(1, rewards);
+        incentiveVotingReward2.getReward(1, rewards);
         post = LR.balanceOf(address(owner));
         usdcPost = USDC.balanceOf(address(owner));
-        assertEq(post - pre, currentBribe / 2);
-        assertEq(usdcPost - usdcPre, usdcBribe / 2);
+        assertEq(post - pre, currentIncentive / 2);
+        assertEq(usdcPost - usdcPre, usdcIncentive / 2);
 
         // claim for second voter
         pre = LR.balanceOf(address(owner3));
         usdcPre = USDC.balanceOf(address(owner3));
         vm.prank(address(voter));
-        bribeVotingReward2.getReward(3, rewards);
+        incentiveVotingReward2.getReward(3, rewards);
         post = LR.balanceOf(address(owner3));
         usdcPost = USDC.balanceOf(address(owner3));
-        assertEq(post - pre, currentBribe / 2);
-        assertEq(usdcPost - usdcPre, usdcBribe / 2);
+        assertEq(post - pre, currentIncentive / 2);
+        assertEq(usdcPost - usdcPre, usdcIncentive / 2);
 
-        // claim deferred bribe
+        // claim deferred incentive
         pre = LR.balanceOf(address(owner));
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         post = LR.balanceOf(address(owner));
         usdcPost = USDC.balanceOf(address(owner));
-        assertEq(post - pre, deferredBribe / 2);
-        assertEq(usdcPost - usdcPre, deferredUsdcBribe / 2);
+        assertEq(post - pre, deferredIncentive / 2);
+        assertEq(usdcPost - usdcPre, deferredUsdcIncentive / 2);
 
         pre = LR.balanceOf(address(owner2));
         usdcPre = USDC.balanceOf(address(owner2));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(2, rewards);
+        incentiveVotingReward.getReward(2, rewards);
         post = LR.balanceOf(address(owner2));
         usdcPost = USDC.balanceOf(address(owner2));
-        assertEq(post - pre, deferredBribe / 2);
-        assertEq(usdcPost - usdcPre, deferredUsdcBribe / 2);
+        assertEq(post - pre, deferredIncentive / 2);
+        assertEq(usdcPost - usdcPre, deferredUsdcIncentive / 2);
 
         // test staggered votes
-        currentBribe = TOKEN_1 * 5;
-        usdcBribe = USDC_1 * 5;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
+        currentIncentive = TOKEN_1 * 5;
+        usdcIncentive = USDC_1 * 5;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), usdcIncentive);
         skip(1 hours);
 
         // owner re-locks to max time, is currently 4 weeks ahead
@@ -213,26 +213,26 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         pre = LR.balanceOf(address(owner));
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         post = LR.balanceOf(address(owner));
         usdcPost = USDC.balanceOf(address(owner));
-        assertApproxEqRel(post - pre, (currentBribe * 504683) / 1000000, PRECISION);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 504683) / 1000000, PRECISION);
+        assertApproxEqRel(post - pre, (currentIncentive * 504683) / 1000000, PRECISION);
+        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 504683) / 1000000, PRECISION);
 
         // owner2 share: 978082175809808010/(978082175809808010+996575326492544010) ~= .495
         pre = LR.balanceOf(address(owner2));
         usdcPre = USDC.balanceOf(address(owner2));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(2, rewards);
+        incentiveVotingReward.getReward(2, rewards);
         post = LR.balanceOf(address(owner2));
         usdcPost = USDC.balanceOf(address(owner2));
-        assertApproxEqRel(post - pre, (currentBribe * 495317) / 1000000, PRECISION);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 495317) / 1000000, PRECISION);
+        assertApproxEqRel(post - pre, (currentIncentive * 495317) / 1000000, PRECISION);
+        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 495317) / 1000000, PRECISION);
 
-        currentBribe = TOKEN_1 * 6;
-        usdcBribe = USDC_1 * 6;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
+        currentIncentive = TOKEN_1 * 6;
+        usdcIncentive = USDC_1 * 6;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), usdcIncentive);
 
         // test votes with different vote size
         // owner2 increases amount
@@ -254,34 +254,34 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         pre = LR.balanceOf(address(owner));
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         post = LR.balanceOf(address(owner));
         usdcPost = USDC.balanceOf(address(owner));
-        assertApproxEqRel(post - pre, (currentBribe * 338) / 1000, 1e15); // 3 decimal places
-        assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 338) / 1000, 1e15);
+        assertApproxEqRel(post - pre, (currentIncentive * 338) / 1000, 1e15); // 3 decimal places
+        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 338) / 1000, 1e15);
 
         // owner2 share: 1946575326502534409/(992465745379384005+1946575326502534409) ~= .662
         pre = LR.balanceOf(address(owner2));
         usdcPre = USDC.balanceOf(address(owner2));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(2, rewards);
+        incentiveVotingReward.getReward(2, rewards);
         post = LR.balanceOf(address(owner2));
         usdcPost = USDC.balanceOf(address(owner2));
-        assertApproxEqRel(post - pre, (currentBribe * 662) / 1000, 1e15);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 662) / 1000, 1e15);
+        assertApproxEqRel(post - pre, (currentIncentive * 662) / 1000, 1e15);
+        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 662) / 1000, 1e15);
 
         skip(1 hours);
         // stop voting with owner2
         vm.prank(address(owner2));
         voter.reset(2);
 
-        // test multiple pools. only bribe pool1 with LR, pool2 with USDC
-        // create normal bribes for pool
-        currentBribe = TOKEN_1 * 7;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        // create usdc bribe for pool2
-        usdcBribe = USDC_1 * 7;
-        _createBribeWithAmount(bribeVotingReward2, address(USDC), usdcBribe);
+        // test multiple pools. only incentive pool1 with LR, pool2 with USDC
+        // create normal incentives for pool
+        currentIncentive = TOKEN_1 * 7;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        // create usdc incentive for pool2
+        usdcIncentive = USDC_1 * 7;
+        _createIncentiveWithAmount(incentiveVotingReward2, address(USDC), usdcIncentive);
         skip(1);
 
         // re-lock owner + owner3
@@ -305,41 +305,41 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
 
         skipToNextEpoch(1);
 
-        // owner should receive 1/5, owner3 should receive 4/5 of pool bribes
+        // owner should receive 1/5, owner3 should receive 4/5 of pool incentives
         pre = LR.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         post = LR.balanceOf(address(owner));
-        assertEq(post - pre, currentBribe / 5);
+        assertEq(post - pre, currentIncentive / 5);
 
         pre = LR.balanceOf(address(owner3));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(3, rewards);
+        incentiveVotingReward.getReward(3, rewards);
         post = LR.balanceOf(address(owner3));
-        assertEq(post - pre, (currentBribe * 4) / 5);
+        assertEq(post - pre, (currentIncentive * 4) / 5);
 
-        // owner should receive 4/5, owner3 should receive 1/5 of pool2 bribes
+        // owner should receive 4/5, owner3 should receive 1/5 of pool2 incentives
         rewards[0] = address(USDC);
         delete rewards[1];
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward2.getReward(1, rewards);
+        incentiveVotingReward2.getReward(1, rewards);
         usdcPost = USDC.balanceOf(address(owner));
-        assertEq(usdcPost - usdcPre, (usdcBribe * 4) / 5);
+        assertEq(usdcPost - usdcPre, (usdcIncentive * 4) / 5);
 
         usdcPre = USDC.balanceOf(address(owner3));
         vm.prank(address(voter));
-        bribeVotingReward2.getReward(3, rewards);
+        incentiveVotingReward2.getReward(3, rewards);
         usdcPost = USDC.balanceOf(address(owner3));
-        assertEq(usdcPost - usdcPre, usdcBribe / 5);
+        assertEq(usdcPost - usdcPre, usdcIncentive / 5);
 
         skipToNextEpoch(1);
 
         // test passive voting
-        currentBribe = TOKEN_1 * 8;
-        usdcBribe = USDC_1 * 8;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
+        currentIncentive = TOKEN_1 * 8;
+        usdcIncentive = USDC_1 * 8;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), usdcIncentive);
         skip(1 hours);
 
         pools = new address[](1);
@@ -355,59 +355,59 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         skipToNextEpoch(1);
 
         // check earned
-        earned = bribeVotingReward.earned(address(LR), 1);
-        assertEq(earned, currentBribe / 2);
-        earned = bribeVotingReward.earned(address(USDC), 1);
-        assertEq(earned, usdcBribe / 2);
-        earned = bribeVotingReward.earned(address(LR), 3);
-        assertEq(earned, currentBribe / 2);
-        earned = bribeVotingReward.earned(address(USDC), 3);
-        assertEq(earned, usdcBribe / 2);
+        earned = incentiveVotingReward.earned(address(LR), 1);
+        assertEq(earned, currentIncentive / 2);
+        earned = incentiveVotingReward.earned(address(USDC), 1);
+        assertEq(earned, usdcIncentive / 2);
+        earned = incentiveVotingReward.earned(address(LR), 3);
+        assertEq(earned, currentIncentive / 2);
+        earned = incentiveVotingReward.earned(address(USDC), 3);
+        assertEq(earned, usdcIncentive / 2);
 
-        currentBribe = TOKEN_1 * 9;
-        usdcBribe = USDC_1 * 9;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
+        currentIncentive = TOKEN_1 * 9;
+        usdcIncentive = USDC_1 * 9;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), usdcIncentive);
 
         uint256 expected = (TOKEN_1 * 8) / 2;
-        // check earned remains the same even if bribe gets re-deposited
-        earned = bribeVotingReward.earned(address(LR), 1);
+        // check earned remains the same even if incentive gets re-deposited
+        earned = incentiveVotingReward.earned(address(LR), 1);
         assertEq(earned, expected);
-        earned = bribeVotingReward.earned(address(LR), 3);
+        earned = incentiveVotingReward.earned(address(LR), 3);
         assertEq(earned, expected);
         expected = (USDC_1 * 8) / 2;
-        earned = bribeVotingReward.earned(address(USDC), 1);
+        earned = incentiveVotingReward.earned(address(USDC), 1);
         assertEq(earned, expected);
-        earned = bribeVotingReward.earned(address(USDC), 3);
+        earned = incentiveVotingReward.earned(address(USDC), 3);
         assertEq(earned, expected);
 
         skipToNextEpoch(1);
 
-        currentBribe = TOKEN_1 * 10;
-        usdcBribe = USDC_1 * 10;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
+        currentIncentive = TOKEN_1 * 10;
+        usdcIncentive = USDC_1 * 10;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), usdcIncentive);
 
         expected = (TOKEN_1 * 8 + TOKEN_1 * 9) / 2;
-        earned = bribeVotingReward.earned(address(LR), 1);
+        earned = incentiveVotingReward.earned(address(LR), 1);
         assertEq(earned, expected);
-        earned = bribeVotingReward.earned(address(LR), 3);
+        earned = incentiveVotingReward.earned(address(LR), 3);
         assertEq(earned, expected);
         expected = (USDC_1 * 8 + USDC_1 * 9) / 2;
-        earned = bribeVotingReward.earned(address(USDC), 1);
+        earned = incentiveVotingReward.earned(address(USDC), 1);
         assertEq(earned, expected);
-        earned = bribeVotingReward.earned(address(USDC), 3);
+        earned = incentiveVotingReward.earned(address(USDC), 3);
         assertEq(earned, expected);
 
         skipToNextEpoch(1);
 
-        currentBribe = TOKEN_1 * 11;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
+        currentIncentive = TOKEN_1 * 11;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
 
         pre = LR.balanceOf(address(owner));
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         post = LR.balanceOf(address(owner));
         usdcPost = USDC.balanceOf(address(owner));
         expected = (TOKEN_1 * 8 + TOKEN_1 * 9 + TOKEN_1 * 10) / 2;
@@ -418,7 +418,7 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         pre = LR.balanceOf(address(owner3));
         usdcPre = USDC.balanceOf(address(owner3));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(3, rewards);
+        incentiveVotingReward.getReward(3, rewards);
         post = LR.balanceOf(address(owner3));
         usdcPost = USDC.balanceOf(address(owner3));
         expected = (TOKEN_1 * 8 + TOKEN_1 * 9 + TOKEN_1 * 10) / 2;
@@ -437,10 +437,10 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         rewards[0] = address(LR);
         rewards[1] = address(USDC);
 
-        uint256 currentBribe = TOKEN_1;
-        uint256 usdcBribe = USDC_1;
-        _createBribeWithAmount(bribeVotingReward, address(LR), currentBribe);
-        _createBribeWithAmount(bribeVotingReward, address(USDC), usdcBribe);
+        uint256 currentIncentive = TOKEN_1;
+        uint256 usdcIncentive = USDC_1;
+        _createIncentiveWithAmount(incentiveVotingReward, address(LR), currentIncentive);
+        _createIncentiveWithAmount(incentiveVotingReward, address(USDC), usdcIncentive);
         voter.vote(1, pools, weights);
         vm.prank(address(owner4));
         voter.vote(4, pools, weights);
@@ -460,19 +460,19 @@ contract SimpleBribeVotingRewardFlow is ExtendedBaseTest {
         uint256 pre = LR.balanceOf(address(owner3));
         uint256 usdcPre = USDC.balanceOf(address(owner3));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         uint256 post = LR.balanceOf(address(owner3));
         uint256 usdcPost = USDC.balanceOf(address(owner3));
-        assertApproxEqRel(post - pre, (currentBribe * 800014) / 1000000, 1e13);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 800014) / 1000000, 1e13);
+        assertApproxEqRel(post - pre, (currentIncentive * 800014) / 1000000, 1e13);
+        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 800014) / 1000000, 1e13);
 
         pre = LR.balanceOf(address(owner4));
         usdcPre = USDC.balanceOf(address(owner4));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(4, rewards);
+        incentiveVotingReward.getReward(4, rewards);
         post = LR.balanceOf(address(owner4));
         usdcPost = USDC.balanceOf(address(owner4));
-        assertApproxEqRel(post - pre, (currentBribe * 1999862) / 10000000, 1e13);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcBribe * 1999862) / 10000000, 1e13);
+        assertApproxEqRel(post - pre, (currentIncentive * 1999862) / 10000000, 1e13);
+        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 1999862) / 10000000, 1e13);
     }
 }

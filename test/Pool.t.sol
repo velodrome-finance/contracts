@@ -263,7 +263,7 @@ contract PoolTest is BaseTest {
 
         address gaugeAddress = voter.gauges(address(pool));
         address feesVotingRewardAddress = voter.gaugeToFees(gaugeAddress);
-        address bribeVotingRewardAddress = voter.gaugeToBribe(gaugeAddress);
+        address incentiveVotingRewardAddress = voter.gaugeToIncentive(gaugeAddress);
 
         address gaugeAddress2 = voter.gauges(address(pool2));
         address feesVotingRewardAddress2 = voter.gaugeToFees(gaugeAddress2);
@@ -276,7 +276,7 @@ contract PoolTest is BaseTest {
         gauge3 = Gauge(gaugeAddress3);
 
         feesVotingReward = FeesVotingReward(feesVotingRewardAddress);
-        bribeVotingReward = BribeVotingReward(bribeVotingRewardAddress);
+        incentiveVotingReward = IncentiveVotingReward(incentiveVotingRewardAddress);
         feesVotingReward2 = FeesVotingReward(feesVotingRewardAddress2);
         feesVotingReward3 = FeesVotingReward(feesVotingRewardAddress3);
 
@@ -316,9 +316,9 @@ contract PoolTest is BaseTest {
 
         _addRewardToGauge(address(voter), address(gauge), POOL_1);
 
-        VELO.approve(address(bribeVotingReward), POOL_1);
+        VELO.approve(address(incentiveVotingReward), POOL_1);
 
-        bribeVotingReward.notifyRewardAmount(address(VELO), POOL_1);
+        incentiveVotingReward.notifyRewardAmount(address(VELO), POOL_1);
 
         assertEq(gauge.rewardRate(), 1653);
     }
@@ -389,7 +389,7 @@ contract PoolTest is BaseTest {
         assertEq(voter.votes(1, address(pool)), 0);
     }
 
-    function gaugeVoteAndBribeBalanceOf() public {
+    function gaugeVoteAndIncentiveBalanceOf() public {
         gaugePokeHacking();
 
         address[] memory pools = new address[](2);
@@ -410,7 +410,7 @@ contract PoolTest is BaseTest {
     }
 
     function gaugePokeHacking2() public {
-        gaugeVoteAndBribeBalanceOf();
+        gaugeVoteAndIncentiveBalanceOf();
 
         uint256 weightBefore = voter.usedWeights(1);
         uint256 votesBefore = voter.votes(1, address(pool));
@@ -646,7 +646,7 @@ contract PoolTest is BaseTest {
         address[] memory reward = new address[](1);
         reward[0] = address(DAI);
         rewards[0] = reward;
-        voter.claimBribes(feesVotingRewards_, rewards, 1);
+        voter.claimIncentives(feesVotingRewards_, rewards, 1);
         voter.claimFees(feesVotingRewards_, rewards, 1);
         uint256 supply = escrow.totalSupply();
         assertGt(supply, 0);

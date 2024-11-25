@@ -222,7 +222,7 @@ contract WashTradeTest is BaseTest {
         gauges[0] = address(gauge3);
     }
 
-    function testBribeClaimRewards() public {
+    function testIncentiveClaimRewards() public {
         distributeAndClaimFees();
 
         console2.log(feesVotingReward3.earned(address(FRAX), 1));

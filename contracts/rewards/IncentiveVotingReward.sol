@@ -4,8 +4,8 @@ pragma solidity >=0.8.19 <0.9.0;
 import {IVoter} from "../interfaces/IVoter.sol";
 import {VotingReward} from "./VotingReward.sol";
 
-/// @notice Bribes pay out rewards for a given pool based on the votes that were received from the user (goes hand in hand with Voter.vote())
-contract BribeVotingReward is VotingReward {
+/// @notice Incentives pay out rewards for a given pool based on the votes that were received from the user (goes hand in hand with Voter.vote())
+contract IncentiveVotingReward is VotingReward {
     constructor(address _forwarder, address _voter, address[] memory _rewards)
         VotingReward(_forwarder, _voter, _rewards)
     {}

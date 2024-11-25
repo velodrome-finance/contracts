@@ -14,7 +14,7 @@ See `SPECIFICATION.md` for more detail.
 | `Router.sol` | Handles multi-pool swaps, deposit/withdrawal, similar to Uniswap V2 Router interface |
 | `PoolFees.sol` | Stores the liquidity pool trading fees, these are kept separate from the reserves |
 | `VelodromeLibrary.sol` | Provides router-related helpers, eg. for price-impact calculations |
-| `FactoryRegistry.sol` | Registry of factories approved for creation of pools, gauges, bribes and managed rewards. |
+| `FactoryRegistry.sol` | Registry of factories approved for creation of pools, gauges, incentives and managed rewards. |
 
 ### Tokenomy contracts
 
@@ -34,9 +34,9 @@ See `SPECIFICATION.md` for more detail.
 | `Gauge.sol` | Gauges are attached to a Pool and based on the (ve)NFT votes it receives, it distributes proportional emissions in the form of protocol tokens. Deposits to the gauge take the form of LP tokens for the Pool. In exchange for receiving protocol emissions, claims on fees from the pool are relinquished to the gauge. Standard rewards contract. |
 | `rewards/` | |
 | `Reward.sol` | Base reward contract to be inherited for distribution of rewards to stakers.
-| `VotingReward.sol` | Rewards contracts used by `FeesVotingReward.sol` and `BribeVotingReward.sol` which inherits `Reward.sol`. Rewards are distributed in the following epoch proportionally based on the last checkpoint created by the user, and are earned through "voting" for a pool or gauge. |
+| `VotingReward.sol` | Rewards contracts used by `FeesVotingReward.sol` and `IncentiveVotingReward.sol` which inherits `Reward.sol`. Rewards are distributed in the following epoch proportionally based on the last checkpoint created by the user, and are earned through "voting" for a pool or gauge. |
 | `FeesVotingReward.sol` | Stores LP fees (from the gauge via `PoolFees.sol`) to be distributed for the current voting epoch to it's voters. |
-| `BribeVotingReward.sol` | Stores the users/externally provided rewards for the current voting epoch to it's voters. These are deposited externally every week. |
+| `IncentiveVotingReward.sol` | Stores the users/externally provided rewards for the current voting epoch to it's voters. These are deposited externally every week. |
 | `ManagedReward.sol` | Staking implementation for managed veNFTs used by `LockedManagedReward.sol` and `FreeManagedReward.sol` which inherits `Reward.sol`.  Rewards can be earned passively by veNFTs who delegate their voting power to a "managed" veNFT.
 | `LockedManagedReward.sol` | Handles "locked" rewards (i.e. Velo rewards / rebases that are compounded) for managed NFTs. Rewards are not distributed and only returned to `VotingEscrow.sol` when the user withdraws from the managed NFT. | 
 | `FreeManagedReward.sol` | Handles "free" (i.e. unlocked) rewards for managed NFTs. Any rewards earned by a managed NFT that a manager passes on will be distributed to the users that deposited into the managed NFT. | 

@@ -893,9 +893,9 @@ contract VotingEscrowTest is BaseTest {
     function testMergeWithVotedToVeNFT() public {
         skip(1 weeks / 2);
 
-        // create a bribe
-        LR.approve(address(bribeVotingReward), TOKEN_1);
-        bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
+        // create an incentive
+        LR.approve(address(incentiveVotingReward), TOKEN_1);
+        incentiveVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
 
         // first veNFT max lock time (4yrs)
         VELO.approve(address(escrow), type(uint256).max);
@@ -940,7 +940,7 @@ contract VotingEscrowTest is BaseTest {
 
         uint256 pre = LR.balanceOf(address(owner));
         vm.prank(address(voter));
-        bribeVotingReward.getReward(1, rewards);
+        incentiveVotingReward.getReward(1, rewards);
         uint256 post = LR.balanceOf(address(owner));
         assertEq(post - pre, TOKEN_1);
     }

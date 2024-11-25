@@ -47,13 +47,13 @@ abstract contract BaseTest is Base, TestOwner {
     Pool pool3;
 
     FeesVotingReward feesVotingReward;
-    BribeVotingReward bribeVotingReward;
+    IncentiveVotingReward incentiveVotingReward;
     Gauge gauge2;
     FeesVotingReward feesVotingReward2;
-    BribeVotingReward bribeVotingReward2;
+    IncentiveVotingReward incentiveVotingReward2;
     Gauge gauge3;
     FeesVotingReward feesVotingReward3;
-    BribeVotingReward bribeVotingReward3;
+    IncentiveVotingReward incentiveVotingReward3;
 
     SigUtils sigUtils;
 
@@ -134,17 +134,17 @@ abstract contract BaseTest is Base, TestOwner {
         // USDC - FRAX stable
         gauge = Gauge(voter.createGauge(address(factory), address(pool)));
         feesVotingReward = FeesVotingReward(voter.gaugeToFees(address(gauge)));
-        bribeVotingReward = BribeVotingReward(voter.gaugeToBribe(address(gauge)));
+        incentiveVotingReward = IncentiveVotingReward(voter.gaugeToIncentive(address(gauge)));
 
         // USDC - FRAX unstable
         gauge2 = Gauge(voter.createGauge(address(factory), address(pool2)));
         feesVotingReward2 = FeesVotingReward(voter.gaugeToFees(address(gauge2)));
-        bribeVotingReward2 = BribeVotingReward(voter.gaugeToBribe(address(gauge2)));
+        incentiveVotingReward2 = IncentiveVotingReward(voter.gaugeToIncentive(address(gauge2)));
 
         // FRAX - DAI stable
         gauge3 = Gauge(voter.createGauge(address(factory), address(pool3)));
         feesVotingReward3 = FeesVotingReward(voter.gaugeToFees(address(gauge3)));
-        bribeVotingReward3 = BribeVotingReward(voter.gaugeToBribe(address(gauge3)));
+        incentiveVotingReward3 = IncentiveVotingReward(voter.gaugeToIncentive(address(gauge3)));
 
         bytes32 domainSeparator = keccak256(
             abi.encode(
@@ -166,7 +166,7 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(FRAX), "FRAX");
         vm.label(address(DAI), "DAI");
         vm.label(address(WETH), "WETH");
-        vm.label(address(LR), "Bribe Voting Reward");
+        vm.label(address(LR), "Incentive Voting Reward");
         vm.label(address(factory), "Pool Factory");
         vm.label(address(factoryRegistry), "Factory Registry");
         vm.label(address(router), "Router");
@@ -183,13 +183,13 @@ abstract contract BaseTest is Base, TestOwner {
         vm.label(address(gauge), "Gauge");
         vm.label(address(governor), "Governor");
         vm.label(address(feesVotingReward), "Fees Voting Reward");
-        vm.label(address(bribeVotingReward), "Bribe Voting Reward");
+        vm.label(address(incentiveVotingReward), "Incentive Voting Reward");
         vm.label(address(gauge2), "Gauge 2");
         vm.label(address(feesVotingReward2), "Fees Voting Reward 2");
-        vm.label(address(bribeVotingReward2), "Bribe Voting Reward 2");
+        vm.label(address(incentiveVotingReward2), "Incentive Voting Reward 2");
         vm.label(address(gauge3), "Gauge 3");
         vm.label(address(feesVotingReward3), "Fees Voting Reward 3");
-        vm.label(address(bribeVotingReward3), "Bribe Voting Reward 3");
+        vm.label(address(incentiveVotingReward3), "Incentive Voting Reward 3");
     }
 
     function _forkSetupBefore() public {

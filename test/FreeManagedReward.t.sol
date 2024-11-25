@@ -74,7 +74,7 @@ contract FreeManagedRewardTest is BaseTest {
 
         uint256 reward = TOKEN_1;
 
-        // create a bribe
+        // create an incentive
         LR.approve(address(freeManagedReward), reward);
         freeManagedReward.notifyRewardAmount((address(LR)), reward);
 
@@ -96,7 +96,7 @@ contract FreeManagedRewardTest is BaseTest {
 
         uint256 reward = TOKEN_1;
 
-        // create a bribe
+        // create an incentive
         LR.approve(address(freeManagedReward), reward);
         freeManagedReward.notifyRewardAmount((address(LR)), reward);
 

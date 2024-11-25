@@ -212,9 +212,9 @@ contract VoterTest is BaseTest {
         VELO.approve(address(escrow), TOKEN_1);
         escrow.createLock(TOKEN_1, MAXTIME);
 
-        // create a bribe
-        LR.approve(address(bribeVotingReward), TOKEN_1);
-        bribeVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
+        // create an incentive
+        LR.approve(address(incentiveVotingReward), TOKEN_1);
+        incentiveVotingReward.notifyRewardAmount(address(LR), TOKEN_1);
         // vote
         address[] memory pools = new address[](1);
         pools[0] = address(pool);
@@ -224,22 +224,22 @@ contract VoterTest is BaseTest {
 
         skipToNextEpoch(1 hours + 1);
 
-        assertEq(bribeVotingReward.earned(address(LR), 1), TOKEN_1);
+        assertEq(incentiveVotingReward.earned(address(LR), 1), TOKEN_1);
 
         voter.reset(1);
 
         skip(1 days);
 
-        LR.approve(address(bribeVotingReward2), TOKEN_1);
-        bribeVotingReward2.notifyRewardAmount(address(LR), TOKEN_1);
+        LR.approve(address(incentiveVotingReward2), TOKEN_1);
+        incentiveVotingReward2.notifyRewardAmount(address(LR), TOKEN_1);
         pools[0] = address(pool2);
         voter.vote(1, pools, weights);
 
         skipToNextEpoch(1);
 
         // rewards only occur for pool2, not pool
-        assertEq(bribeVotingReward.earned(address(LR), 1), TOKEN_1);
-        assertEq(bribeVotingReward2.earned(address(LR), 1), TOKEN_1);
+        assertEq(incentiveVotingReward.earned(address(LR), 1), TOKEN_1);
+        assertEq(incentiveVotingReward2.earned(address(LR), 1), TOKEN_1);
     }
 
     function testVote() public {

@@ -121,7 +121,7 @@ contract ManagedNftTest is BaseTest {
         voter.vote(tokenId, pools, weights);
 
         assertEq(voter.usedWeights(tokenId), 997231719186530010);
-        assertEq(bribeVotingReward.totalSupply(), 997231719186530010);
+        assertEq(incentiveVotingReward.totalSupply(), 997231719186530010);
         assertEq(feesVotingReward.totalSupply(), 997231719186530010);
 
         skipToNextEpoch(1 hours + 1);
@@ -132,7 +132,7 @@ contract ManagedNftTest is BaseTest {
 
         assertEq(voter.usedWeights(tokenId), 0);
         assertEq(voter.usedWeights(mTokenId), TOKEN_1);
-        assertEq(bribeVotingReward.totalSupply(), TOKEN_1);
+        assertEq(incentiveVotingReward.totalSupply(), TOKEN_1);
         assertEq(feesVotingReward.totalSupply(), TOKEN_1);
     }
 

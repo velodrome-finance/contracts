@@ -10,7 +10,7 @@ import {Pool} from "contracts/Pool.sol";
 import {IMinter, Minter} from "contracts/Minter.sol";
 import {IReward, Reward} from "contracts/rewards/Reward.sol";
 import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
-import {BribeVotingReward} from "contracts/rewards/BribeVotingReward.sol";
+import {IncentiveVotingReward} from "contracts/rewards/IncentiveVotingReward.sol";
 import {FreeManagedReward} from "contracts/rewards/FreeManagedReward.sol";
 import {LockedManagedReward} from "contracts/rewards/LockedManagedReward.sol";
 import {IGauge, Gauge} from "contracts/gauges/Gauge.sol";

@@ -13,8 +13,10 @@ abstract contract ExtendedBaseTest is BaseTest {
     uint256 public immutable PRECISION = 1e12;
     uint256 public immutable MAX_TIME = 4 * 365 * 86400;
 
-    function _createBribeWithAmount(BribeVotingReward _bribeVotingReward, address _token, uint256 _amount) internal {
-        IERC20(_token).approve(address(_bribeVotingReward), _amount);
-        _bribeVotingReward.notifyRewardAmount(address(_token), _amount);
+    function _createIncentiveWithAmount(IncentiveVotingReward _incentiveVotingReward, address _token, uint256 _amount)
+        internal
+    {
+        IERC20(_token).approve(address(_incentiveVotingReward), _amount);
+        _incentiveVotingReward.notifyRewardAmount(address(_token), _amount);
     }
 }

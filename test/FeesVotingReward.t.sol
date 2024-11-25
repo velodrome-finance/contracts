@@ -1368,7 +1368,7 @@ contract FeesVotingRewardTest is BaseTest {
         pools[0] = address(pool);
         weights[0] = 10000;
 
-        // create a bribe for pool in epoch 0
+        // create an incentive for pool in epoch 0
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), TOKEN_1);
         feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
@@ -1389,7 +1389,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         uint256 reward = TOKEN_1;
 
-        // create a bribe
+        // create an incentive
         vm.startPrank(address(gauge));
         FRAX.approve(address(feesVotingReward), reward);
         feesVotingReward.notifyRewardAmount((address(FRAX)), reward);
