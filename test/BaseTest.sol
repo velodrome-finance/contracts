@@ -3,14 +3,62 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/Test.sol";
 import "forge-std/console2.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {Forwarder} from "@opengsn/contracts/src/forwarder/Forwarder.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
-import "./Base.sol";
+import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
+import {IncentiveVotingReward} from "contracts/rewards/IncentiveVotingReward.sol";
+import {IGauge, Gauge} from "contracts/gauges/Gauge.sol";
+import {IWETH} from "contracts/interfaces/IWETH.sol";
+import {IVelo, Velo} from "contracts/Velo.sol";
+import {IRouter, Router} from "contracts/Router.sol";
+import {IVoter, Voter} from "contracts/Voter.sol";
+import {VeArtProxy} from "contracts/VeArtProxy.sol";
+import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
+import {ManagedRewardsFactory} from "contracts/factories/ManagedRewardsFactory.sol";
+import {VotingRewardsFactory} from "contracts/factories/VotingRewardsFactory.sol";
+import {GaugeFactory} from "contracts/factories/GaugeFactory.sol";
+import {PoolFactory, IPoolFactory} from "contracts/factories/PoolFactory.sol";
+import {IFactoryRegistry, FactoryRegistry} from "contracts/factories/FactoryRegistry.sol";
+import {Pool} from "contracts/Pool.sol";
+import {IMinter, Minter} from "contracts/Minter.sol";
+import {IReward, Reward} from "contracts/rewards/Reward.sol";
+import {RewardsDistributor, IRewardsDistributor} from "contracts/RewardsDistributor.sol";
+import {VeloGovernor} from "contracts/VeloGovernor.sol";
+import {IGovernor, EpochGovernor} from "contracts/EpochGovernor.sol";
+import {SimpleEpochGovernor} from "contracts/SimpleEpochGovernor.sol";
+import {SafeCastLibrary} from "contracts/libraries/SafeCastLibrary.sol";
+import {VelodromeTimeLibrary} from "contracts/libraries/VelodromeTimeLibrary.sol";
+
+import {FreeManagedReward} from "contracts/rewards/FreeManagedReward.sol";
+import {LockedManagedReward} from "contracts/rewards/LockedManagedReward.sol";
+
+import {GovernorCommentable} from "contracts/governance/GovernorCommentable.sol";
+import {IGovernorCommentable} from "contracts/governance/IGovernorCommentable.sol";
+import {IGovernorProposalWindow} from "contracts/governance/IGovernorProposalWindow.sol";
+
 import {IPool, Pool} from "contracts/Pool.sol";
 import {TestOwner} from "test/utils/TestOwner.sol";
 import {MockERC20} from "test/utils/MockERC20.sol";
 import {MockWETH} from "test/utils/MockWETH.sol";
+import {SigUtils} from "test/utils/SigUtils.sol";
 
-abstract contract BaseTest is Base, TestOwner {
+import {DeployVelodromeV2} from "../script/DeployVelodromeV2.s.sol";
+
+abstract contract BaseTest is Test, TestOwner {
+    using stdStorage for StdStorage;
+
+    enum Deployment {
+        DEFAULT,
+        FORK,
+        CUSTOM
+    }
+
+    /// @dev Determines whether or not to use the base set up configuration
+    ///      Local v2 deployment used by default
+    Deployment deploymentType;
+
     uint256 constant USDC_1 = 1e6;
     uint256 constant USDC_10K = 1e10; // 1e4 = 10K tokens with 6 decimals
     uint256 constant USDC_100K = 1e11; // 1e5 = 100K tokens with 6 decimals
@@ -55,6 +103,33 @@ abstract contract BaseTest is Base, TestOwner {
     FeesVotingReward feesVotingReward3;
     IncentiveVotingReward incentiveVotingReward3;
 
+    DeployVelodromeV2 deployVelodromeV2;
+
+    address[] public tokens;
+
+    IWETH public WETH;
+    Velo public VELO;
+
+    Forwarder public forwarder;
+    Pool public implementation;
+    Router public router;
+    VotingEscrow public escrow;
+    VeArtProxy public artProxy;
+    PoolFactory public factory;
+    FactoryRegistry public factoryRegistry;
+    GaugeFactory public gaugeFactory;
+    VotingRewardsFactory public votingRewardsFactory;
+    ManagedRewardsFactory public managedRewardsFactory;
+    Voter public voter;
+    RewardsDistributor public distributor;
+    Minter public minter;
+    Gauge public gauge;
+    VeloGovernor public governor;
+    EpochGovernor public epochGovernor;
+
+    /// @dev Global address to set
+    address public allowedManager;
+
     SigUtils sigUtils;
 
     uint256 optimismFork;
@@ -84,13 +159,65 @@ abstract contract BaseTest is Base, TestOwner {
     /// @dev Note that most permissions are given to owner
     function _testSetup() public {
         _testSetupBefore();
-        _coreSetup();
+        _deployAndSet();
         _testSetupAfter();
     }
 
     function _forkSetup() public {
         _forkSetupBefore();
         _testSetup();
+    }
+
+    function _deployAndSet() public {
+        deployVelodromeV2 = new DeployVelodromeV2();
+        stdstore.target(address(deployVelodromeV2)).sig("isTest()").checked_write(true);
+        stdstore.target(address(deployVelodromeV2)).sig("deployerAddress()").checked_write(address(owner));
+        stdstore.target(address(deployVelodromeV2)).sig("allowedManager()").checked_write(address(allowedManager)); //owner
+        stdstore.target(address(deployVelodromeV2)).sig("WETH()").checked_write(address(WETH));
+
+        deployVelodromeV2.run();
+
+        implementation = deployVelodromeV2.implementation();
+        factory = deployVelodromeV2.factory();
+        votingRewardsFactory = deployVelodromeV2.votingRewardsFactory();
+        gaugeFactory = deployVelodromeV2.gaugeFactory();
+        factoryRegistry = deployVelodromeV2.factoryRegistry();
+        managedRewardsFactory = deployVelodromeV2.managedRewardsFactory();
+
+        forwarder = deployVelodromeV2.forwarder();
+        router = deployVelodromeV2.router();
+        escrow = deployVelodromeV2.escrow();
+        artProxy = deployVelodromeV2.artProxy();
+        voter = deployVelodromeV2.voter();
+        distributor = deployVelodromeV2.distributor();
+        minter = deployVelodromeV2.minter();
+
+        VELO = deployVelodromeV2.VELO();
+
+        uint256[] memory amounts = new uint256[](5);
+        amounts[0] = TOKEN_10M;
+        amounts[1] = TOKEN_10M;
+        amounts[2] = TOKEN_10M;
+        amounts[3] = TOKEN_10M;
+        amounts[4] = TOKEN_10M;
+        mintToken(address(VELO), owners, amounts);
+        tokens.push(address(VELO));
+
+        // re-initialize voter with the test tokens
+        vm.prank(address(minter));
+        voter.initialize(tokens, address(minter));
+    }
+
+    function deployFactories() public {
+        implementation = new Pool();
+        factory = new PoolFactory(address(implementation));
+
+        votingRewardsFactory = new VotingRewardsFactory();
+        gaugeFactory = new GaugeFactory();
+        managedRewardsFactory = new ManagedRewardsFactory();
+        factoryRegistry = new FactoryRegistry(
+            address(factory), address(votingRewardsFactory), address(gaugeFactory), address(managedRewardsFactory)
+        );
     }
 
     function _testSetupBefore() public {
@@ -106,13 +233,11 @@ abstract contract BaseTest is Base, TestOwner {
         amounts[2] = TOKEN_10M;
         amounts[3] = TOKEN_10M;
         amounts[4] = TOKEN_10M;
-        mintToken(address(VELO), owners, amounts);
         mintToken(address(LR), owners, amounts);
 
         tokens.push(address(USDC));
         tokens.push(address(FRAX));
         tokens.push(address(DAI));
-        tokens.push(address(VELO));
         tokens.push(address(LR));
         tokens.push(address(WETH));
 
@@ -227,7 +352,6 @@ abstract contract BaseTest is Base, TestOwner {
             WETH = IWETH(new MockWETH());
             FRAX = new MockERC20("FRAX", "FRAX", 18);
         }
-        VELO = new Velo();
         LR = new MockERC20("LR", "LR", 18);
     }
 

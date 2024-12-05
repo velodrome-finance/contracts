@@ -3,8 +3,6 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
-import "../script/DeployVelodromeV2.s.sol";
-import "../script/DeployGaugesAndPoolsV2.s.sol";
 import "../script/DeployGovernors.s.sol";
 
 import "./BaseTest.sol";
@@ -13,29 +11,14 @@ contract TestDeploy is BaseTest {
     using stdJson for string;
     using stdStorage for StdStorage;
 
-    string public constantsFilename = vm.envString("CONSTANTS_FILENAME");
-    string public jsonConstants;
-
     address public feeManager;
     address public team;
     address public notifyAdmin;
     address public emergencyCouncil;
+    address public _weth;
     address public constant testDeployer = address(1);
 
-    struct PoolV2 {
-        bool stable;
-        address tokenA;
-        address tokenB;
-    }
-
-    struct PoolVeloV2 {
-        bool stable;
-        address token;
-    }
-
     // Scripts to test
-    DeployVelodromeV2 deployVelodromeV2;
-    DeployGaugesAndPoolsV2 deployGaugesAndPoolsV2;
     DeployGovernors deployGovernors;
 
     constructor() {
@@ -46,24 +29,21 @@ contract TestDeploy is BaseTest {
         _forkSetupBefore();
 
         deployVelodromeV2 = new DeployVelodromeV2();
-        deployGaugesAndPoolsV2 = new DeployGaugesAndPoolsV2();
         deployGovernors = new DeployGovernors();
 
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/script/constants/");
-        path = string.concat(path, constantsFilename);
+        stdstore.target(address(deployVelodromeV2)).sig("isTest()").checked_write(true);
+        stdstore.target(address(deployGovernors)).sig("isTest()").checked_write(true);
 
-        jsonConstants = vm.readFile(path);
+        DeployVelodromeV2.DeploymentParameters memory params = deployVelodromeV2.params();
 
-        WETH = IWETH(abi.decode(vm.parseJson(jsonConstants, ".WETH"), (address)));
-        team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
-        notifyAdmin = abi.decode(vm.parseJson(jsonConstants, ".notifyAdmin"), (address));
-        feeManager = abi.decode(vm.parseJson(jsonConstants, ".feeManager"), (address));
-        emergencyCouncil = abi.decode(vm.parseJson(jsonConstants, ".emergencyCouncil"), (address));
+        WETH = IWETH(params.WETH);
+        feeManager = params.feeManager;
+        emergencyCouncil = params.emergencyCouncil;
+        team = params.team;
+        notifyAdmin = params.notifyAdmin;
 
         // Use test account for deployment
         stdstore.target(address(deployVelodromeV2)).sig("deployerAddress()").checked_write(testDeployer);
-        stdstore.target(address(deployGaugesAndPoolsV2)).sig("deployerAddress()").checked_write(testDeployer);
         stdstore.target(address(deployGovernors)).sig("deployerAddress()").checked_write(testDeployer);
         vm.deal(testDeployer, TOKEN_10K);
     }
@@ -80,7 +60,6 @@ contract TestDeploy is BaseTest {
 
     function testDeployScript() public {
         deployVelodromeV2.run();
-        deployGaugesAndPoolsV2.run();
 
         assertEq(deployVelodromeV2.voter().epochGovernor(), team);
         assertEq(deployVelodromeV2.voter().governor(), team);
@@ -88,7 +67,7 @@ contract TestDeploy is BaseTest {
         // DeployVelodromeV2 checks
 
         // ensure all tokens are added to voter
-        address[] memory _tokens = abi.decode(vm.parseJson(jsonConstants, ".whitelistTokens"), (address[]));
+        address[78] memory _tokens = deployVelodromeV2.whitelistTokens();
         for (uint256 i = 0; i < _tokens.length; i++) {
             address token = _tokens[i];
             assertTrue(deployVelodromeV2.voter().isWhitelistedToken(token));
@@ -132,28 +111,6 @@ contract TestDeploy is BaseTest {
         assertEq(deployVelodromeV2.factory().poolAdmin(), team);
         assertEq(deployVelodromeV2.factory().feeManager(), feeManager);
         assertEq(deployVelodromeV2.gaugeFactory().notifyAdmin(), notifyAdmin);
-
-        // DeployGaugesAndPoolsV2 checks
-
-        // Validate non-VELO pools and gauges
-        PoolV2[] memory poolsV2 = abi.decode(jsonConstants.parseRaw(".poolsV2"), (PoolV2[]));
-        for (uint256 i = 0; i < poolsV2.length; i++) {
-            PoolV2 memory p = poolsV2[i];
-            address poolAddr = deployVelodromeV2.factory().getPool(p.tokenA, p.tokenB, p.stable);
-            assertTrue(poolAddr != address(0));
-            address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
-            assertTrue(gaugeAddr != address(0));
-        }
-
-        // validate VELO pools and gauges
-        PoolVeloV2[] memory poolsVeloV2 = abi.decode(jsonConstants.parseRaw(".poolsVeloV2"), (PoolVeloV2[]));
-        for (uint256 i = 0; i < poolsVeloV2.length; i++) {
-            PoolVeloV2 memory p = poolsVeloV2[i];
-            address poolAddr = deployVelodromeV2.factory().getPool(address(deployVelodromeV2.VELO()), p.token, p.stable);
-            assertTrue(poolAddr != address(0));
-            address gaugeAddr = deployVelodromeV2.voter().gauges(poolAddr);
-            assertTrue(gaugeAddr != address(0));
-        }
     }
 
     function testDeployGovernors() public {

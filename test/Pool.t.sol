@@ -14,6 +14,7 @@ contract PoolTest is BaseTest {
         deployOwners();
         deployCoins();
         mintStables();
+        VELO = new Velo();
         uint256[] memory amounts = new uint256[](3);
         amounts[0] = 2e25;
         amounts[1] = 1e25;

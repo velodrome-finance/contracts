@@ -2,55 +2,39 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/StdJson.sol";
-import "../test/Base.sol";
 
-contract DeployGovernors is Script {
+import "./DeployBase.s.sol";
+
+contract DeployGovernors is DeployBase {
     using stdJson for string;
-
-    uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    address public deployerAddress = vm.addr(deployPrivateKey);
-    string public constantsFilename = vm.envString("CONSTANTS_FILENAME");
-    string public outputFilename = vm.envString("OUTPUT_FILENAME");
-    string public jsonConstants;
 
     address public vetoer;
     address public team;
 
-    IVoter public voter;
-    VotingEscrow public escrow;
-    Forwarder public forwarder;
-    Minter public minter;
-    VeloGovernor public governor;
-    EpochGovernor public epochGovernor;
-
     function run() public {
-        string memory root = vm.projectRoot();
-        string memory basePath = string.concat(root, "/script/constants/");
-
-        string memory path = string.concat(basePath, constantsFilename);
-        jsonConstants = vm.readFile(path);
-        vetoer = abi.decode(vm.parseJson(jsonConstants, ".vetoer"), (address));
-        team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
-        escrow = VotingEscrow(abi.decode(vm.parseJson(jsonConstants, ".current.VotingEscrow"), (address)));
-        voter = IVoter(abi.decode(vm.parseJson(jsonConstants, ".current.Voter"), (address)));
-        forwarder = Forwarder(abi.decode(vm.parseJson(jsonConstants, ".current.Forwarder"), (address)));
-        minter = Minter(abi.decode(vm.parseJson(jsonConstants, ".current.Minter"), (address)));
+        vetoer = _params.vetoer;
+        team = _params.team;
+        escrow = VotingEscrow(_params.votingEscrow);
+        voter = Voter(_params.voter);
+        forwarder = Forwarder(payable(_params.forwarder));
+        minter = Minter(_params.minter);
 
         require(address(escrow) != address(0)); // sanity check for constants file fillled out correctly
 
         vm.startBroadcast(deployerAddress);
 
-        governor = new VeloGovernor(escrow, IVoter(voter));
-        epochGovernor = new EpochGovernor(escrow, address(minter), IVoter(voter), team);
+        governor = new VeloGovernor(escrow, voter);
+        epochGovernor = new EpochGovernor(escrow, address(_params.minter), voter, team);
 
         governor.setVetoer(vetoer);
         governor.setTeam(team);
 
         vm.stopBroadcast();
 
+        if (isTest) return;
         // write to file
-        path = string.concat(basePath, "output/DeployGovernors-");
-        path = string.concat(path, outputFilename);
+        string memory root = vm.projectRoot();
+        string memory path = string(abi.encodePacked(root, "/deployment-addresses/governors/", _params.outputFilename));
         vm.writeJson(vm.serializeAddress("v2", "Governor", address(governor)), path);
         vm.writeJson(vm.serializeAddress("v2", "EpochGovernor", address(epochGovernor)), path);
     }

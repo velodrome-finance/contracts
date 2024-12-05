@@ -14,6 +14,7 @@ contract WashTradeTest is BaseTest {
         deployOwners();
         deployCoins();
         mintStables();
+        VELO = new Velo();
         uint256[] memory amounts = new uint256[](1);
         amounts[0] = 1e25;
         mintToken(address(VELO), owners, amounts);

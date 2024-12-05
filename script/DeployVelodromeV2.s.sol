@@ -2,88 +2,54 @@
 pragma solidity >=0.8.19 <0.9.0;
 
 import "forge-std/StdJson.sol";
-import "../test/Base.sol";
 
-contract DeployVelodromeV2 is Base {
+import "./DeployBase.s.sol";
+
+contract DeployVelodromeV2 is DeployBase {
     using stdJson for string;
 
-    string public basePath;
-    string public path;
-
-    uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    address public deployerAddress = vm.addr(deployPrivateKey);
-    string public constantsFilename = vm.envString("CONSTANTS_FILENAME");
-    string public outputFilename = vm.envString("OUTPUT_FILENAME");
-    string public jsonConstants;
-    string public jsonOutput;
-
-    // Vars to be set in each deploy script
-    address feeManager;
-    address team;
-    address emergencyCouncil;
-    address notifyAdmin;
-
-    constructor() {
-        string memory root = vm.projectRoot();
-        basePath = string.concat(root, "/script/constants/");
-
-        // load constants
-        path = string.concat(basePath, constantsFilename);
-        jsonConstants = vm.readFile(path);
-        WETH = IWETH(abi.decode(vm.parseJson(jsonConstants, ".WETH"), (address)));
-        allowedManager = abi.decode(vm.parseJson(jsonConstants, ".allowedManager"), (address));
-        team = abi.decode(vm.parseJson(jsonConstants, ".team"), (address));
-        notifyAdmin = abi.decode(vm.parseJson(jsonConstants, ".notifyAdmin"), (address));
-        feeManager = abi.decode(vm.parseJson(jsonConstants, ".feeManager"), (address));
-        emergencyCouncil = abi.decode(vm.parseJson(jsonConstants, ".emergencyCouncil"), (address));
-    }
-
     function run() public {
+        vm.startBroadcast(deployerAddress);
+
         _deploySetupBefore();
         _coreSetup();
         _deploySetupAfter();
+
+        vm.stopBroadcast();
     }
 
     function _deploySetupBefore() public {
         // more constants loading - this needs to be done in-memory and not storage
-        address[] memory _tokens = abi.decode(vm.parseJson(jsonConstants, ".whitelistTokens"), (address[]));
+        address[78] memory _tokens = _whitelistTokens;
         for (uint256 i = 0; i < _tokens.length; i++) {
             tokens.push(_tokens[i]);
         }
-
-        // Loading output and use output path to later save deployed contracts
-        basePath = string.concat(basePath, "output/");
-        path = string.concat(basePath, "DeployVelodromeV2-");
-        path = string.concat(path, outputFilename);
-
-        // start broadcasting transactions
-        vm.startBroadcast(deployerAddress);
-
-        // deploy VELO
-        VELO = new Velo();
-
-        tokens.push(address(VELO));
     }
 
+    /// @notice only executed if called from TestDeploy or actual deploy
     function _deploySetupAfter() public {
-        // Set protocol state to team
-        escrow.setTeam(team);
-        minter.setTeam(team);
-        factory.setPauser(team);
-        factory.setPoolAdmin(team);
-        voter.setEmergencyCouncil(emergencyCouncil);
-        voter.setEpochGovernor(team);
-        voter.setGovernor(team);
-        factoryRegistry.transferOwnership(team);
+        if (deployerAddress != address(1)) return;
+        // Set protocol state to _params.team
+        escrow.setTeam(_params.team);
+        minter.setTeam(_params.team);
+        factory.setPauser(_params.team);
+        factory.setPoolAdmin(_params.team);
+        voter.setEmergencyCouncil(_params.emergencyCouncil);
+        voter.setEpochGovernor(_params.team);
+        voter.setGovernor(_params.team);
+        factoryRegistry.transferOwnership(_params.team);
 
         // Set notifyAdmin in gauge factory
-        gaugeFactory.setNotifyAdmin(notifyAdmin);
+        gaugeFactory.setNotifyAdmin(_params.notifyAdmin);
 
         // Set contract vars
-        factory.setFeeManager(feeManager);
+        factory.setFeeManager(_params.feeManager);
 
-        // finish broadcasting transactions
-        vm.stopBroadcast();
+        if (isTest) return;
+
+        // Loading output and use output path to later save deployed contracts
+        string memory root = vm.projectRoot();
+        string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
 
         // write to file
         vm.writeJson(vm.serializeAddress("v2", "VELO", address(VELO)), path);
