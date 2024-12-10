@@ -4,6 +4,24 @@ pragma solidity >=0.8.19 <0.9.0;
 import "test/BaseTest.sol";
 
 contract ProposeTest is BaseTest {
+    address[] public targets;
+    uint256[] public values;
+    bytes[] public calldatas;
+    string public description;
+
+    function _setUp() public override {
+        targets = new address[](1);
+        targets[0] = address(minter);
+
+        values = new uint256[](1);
+        values[0] = 0;
+
+        calldatas = new bytes[](1);
+        calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
+
+        description = "";
+    }
+
     modifier whenTimestampIsSmallerThanEndOfProposalWindow() {
         skipToNextEpoch(0);
         _;
@@ -11,14 +29,6 @@ contract ProposeTest is BaseTest {
 
     function test_WhenCallerIsNotTheOwner() external whenTimestampIsSmallerThanEndOfProposalWindow {
         // It should revert with {OwnableUnauthorizedAccount}
-        address[] memory targets = new address[](1);
-        targets[0] = address(minter);
-        uint256[] memory values = new uint256[](1);
-        values[0] = 0;
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
-        string memory description = "";
-
         vm.prank(address(owner2));
         vm.expectRevert(abi.encodeWithSelector(Ownable.OwnableUnauthorizedAccount.selector, address(owner2)));
         epochGovernor.propose({
@@ -41,9 +51,14 @@ contract ProposeTest is BaseTest {
         whenCallerIsTheOwner
     {
         // It should revert with {GovernorRestrictedProposer}
+        description = "#proposer=0x0000000000000000000000000000000000000000";
+
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorRestrictedProposer.selector, address(owner)));
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenTheDescriptionIsValid() {
+        // set already in setUp()
         _;
     }
 
@@ -54,6 +69,8 @@ contract ProposeTest is BaseTest {
         whenTheDescriptionIsValid
     {
         // It should revert with {GovernorInsufficientProposerVotes}
+
+        // note: proposalThreshold() is 0 so we can't test this
     }
 
     modifier whenTheProposerVotingPowerIsGreaterThanOrEqualToTheProposalThreshold() {
@@ -68,6 +85,16 @@ contract ProposeTest is BaseTest {
         whenTheProposerVotingPowerIsGreaterThanOrEqualToTheProposalThreshold
     {
         // It should revert with {GovernorUnexpectedProposalState}
+        epochGovernor.propose(1, targets, values, calldatas, description);
+
+        uint256 expectedSnapshot = block.timestamp + 1 hours;
+        uint256 expectedDeadline = expectedSnapshot + 1 weeks - 2 hours;
+        uint256 expectedPid = epochGovernor.hashProposal(targets, values, calldatas, bytes32(expectedDeadline));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorUnexpectedProposalState.selector, expectedPid, 0, bytes32(0))
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenThereIsNoProposalActiveForTheCurrentEpoch() {
@@ -83,9 +110,16 @@ contract ProposeTest is BaseTest {
         whenThereIsNoProposalActiveForTheCurrentEpoch
     {
         // It should revert with {GovernorInvalidProposalLength}
+        targets = new address[](2);
+        values = new uint256[](2);
+        calldatas = new bytes[](2);
+
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorInvalidProposalLength.selector, 2, 2, 2));
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenTheLengthOfAllParametersIs1() {
+        // set already in setUp()
         _;
     }
 
@@ -99,9 +133,16 @@ contract ProposeTest is BaseTest {
         whenTheLengthOfAllParametersIs1
     {
         // It should revert with {GovernorInvalidTargetOrCalldata}
+        targets[0] = address(0);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenTheTargetIsMinter() {
+        // set already in setUp()
         _;
     }
 
@@ -116,6 +157,12 @@ contract ProposeTest is BaseTest {
         whenTheTargetIsMinter
     {
         // It should revert with {GovernorInvalidTargetOrCalldata}
+        calldatas[0] = abi.encodeWithSelector(minter.updatePeriod.selector);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     function test_WhenFunctionToCallIsNudge()
@@ -133,13 +180,6 @@ contract ProposeTest is BaseTest {
         // It should store the vote start timestamp
         // It should store the vote duration
         // It should emit a {ProposalCreated} event
-        address[] memory targets = new address[](1);
-        targets[0] = address(minter);
-        uint256[] memory values = new uint256[](1);
-        values[0] = 0;
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
-        string memory description = "";
 
         uint256 expectedSnapshot = block.timestamp + 1 hours;
         uint256 expectedDeadline = expectedSnapshot + 1 weeks - 2 hours;
@@ -184,9 +224,14 @@ contract ProposeTest is BaseTest {
 
     function test_WhenTheDescriptionIsNotValid_() external whenTimestampIsGreaterThanOrEqualToEndOfProposalWindow {
         // It should revert with {GovernorRestrictedProposer}
+        description = "#proposer=0x0000000000000000000000000000000000000000";
+
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorRestrictedProposer.selector, address(owner2)));
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenTheDescriptionIsValid_() {
+        // set already in setUp()
         _;
     }
 
@@ -196,6 +241,8 @@ contract ProposeTest is BaseTest {
         whenTheDescriptionIsValid_
     {
         // It should revert with {GovernorInsufficientProposerVotes}
+
+        // note: proposalThreshold() is 0 so we can't test this
     }
 
     modifier whenTheProposerVotingPowerIsGreaterThanOrEqualToTheProposalThreshold_() {
@@ -209,6 +256,16 @@ contract ProposeTest is BaseTest {
         whenTheProposerVotingPowerIsGreaterThanOrEqualToTheProposalThreshold_
     {
         // It should revert with {GovernorUnexpectedProposalState}
+
+        epochGovernor.propose(1, targets, values, calldatas, description);
+
+        uint256 expectedDeadline = VelodromeTimeLibrary.epochVoteEnd(block.timestamp);
+        uint256 expectedPid = epochGovernor.hashProposal(targets, values, calldatas, bytes32(expectedDeadline));
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorUnexpectedProposalState.selector, expectedPid, 0, bytes32(0))
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenThereIsNoProposalActiveForTheCurrentEpoch_() {
@@ -223,9 +280,16 @@ contract ProposeTest is BaseTest {
         whenThereIsNoProposalActiveForTheCurrentEpoch_
     {
         // It should revert with {GovernorInvalidProposalLength}
+        targets = new address[](2);
+        values = new uint256[](2);
+        calldatas = new bytes[](2);
+
+        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorInvalidProposalLength.selector, 2, 2, 2));
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenTheLengthOfAllParametersIs1_() {
+        // set already in setUp()
         _;
     }
 
@@ -238,6 +302,12 @@ contract ProposeTest is BaseTest {
         whenTheLengthOfAllParametersIs1_
     {
         // It should revert with {GovernorInvalidTargetOrCalldata}
+        targets[0] = address(0);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenTheTargetIsMinter_() {
@@ -254,6 +324,12 @@ contract ProposeTest is BaseTest {
         whenTheTargetIsMinter_
     {
         // It should revert with {GovernorInvalidTargetOrCalldata}
+        calldatas[0] = abi.encodeWithSelector(minter.updatePeriod.selector);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     function test_WhenFunctionToCallIsNudge_()
@@ -270,13 +346,6 @@ contract ProposeTest is BaseTest {
         // It should store the vote start timestamp
         // It should store the vote duration
         // It should emit a {ProposalCreated} event
-        address[] memory targets = new address[](1);
-        targets[0] = address(minter);
-        uint256[] memory values = new uint256[](1);
-        values[0] = 0;
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
-        string memory description = "";
 
         uint256 expectedSnapshot = block.timestamp;
         uint256 expectedDeadline = VelodromeTimeLibrary.epochVoteEnd(block.timestamp);

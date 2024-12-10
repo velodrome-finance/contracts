@@ -1,0 +1,19 @@
+CountVoteTest
+├── When remaining weight is 0
+│   └── It should revert with {GovernorAlreadyCastVote}
+└── When remaining weight is greater than 0
+    ├── When casting a nominal vote
+    │   ├── When params length is not empty
+    │   │   └── It should revert with {GovernorInvalidVoteParams}
+    │   └── When params is empty
+    │       └── It should cast a nominal vote for the selected option
+    ├── When casting a fractional vote
+    │   ├── When params length is invalid
+    │   │   └── It should revert with {GovernorInvalidVoteParams}
+    │   └── When params length is valid
+    │       ├── When used weight is more than remaining weight
+    │       │   └── It should revert with {GovernorExceedRemainingWeight}
+    │       └── When used weight is less than remaining weight
+    │           └── It should update proposal vote details
+    └── When casting an invalid vote type
+        └── It should revert with {GovernorInvalidVoteType}

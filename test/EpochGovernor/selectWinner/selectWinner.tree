@@ -1,0 +1,9 @@
+SelectWinnerTest
+├── When against votes are the highest
+│   └── It should return defeated
+├── When for votes are the highest
+│   └── It should return succeeded
+├── When abstain votes are the highest
+│   └── It should return expired
+└── When for and against votes are the same
+    └── It should return expired

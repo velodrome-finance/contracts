@@ -1,0 +1,8 @@
+CommentTest
+├── When proposal is not active or pending
+│   └── It reverts with {GovernorUnexpectedProposalState}
+└── When proposal is active or pending
+    ├── When voter has insufficient voting power
+    │   └── It should revert with {GovernorInsufficientVotingPower}
+    └── When voter has enough voting power
+        └── It should emit a {Comment} event
