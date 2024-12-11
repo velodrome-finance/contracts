@@ -251,17 +251,4 @@ contract EpochGovernor is
     function quorum(uint256 _timepoint) public view virtual override returns (uint256) {
         return 0;
     }
-
-    /**
-     * The proposal id is produced by hashing the ABI encoded epochVoteEnd. It can be computed in
-     * advance, before the proposal is submitted with the help of the VelodromeTimeLibrary.
-     */
-    function hashProposal(
-        address[] memory _targets,
-        uint256[] memory _values,
-        bytes[] memory _calldatas,
-        bytes32 _descriptionHash
-    ) public pure override returns (uint256) {
-        return uint256(keccak256(abi.encode(_descriptionHash)));
-    }
 }
