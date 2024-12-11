@@ -32,9 +32,9 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
 
     bytes32 public constant BALLOT_TYPEHASH =
-        keccak256("Ballot(uint256 proposalId,uint8 support,address voter,uint256 nonce)");
+        keccak256("Ballot(uint256 proposalId,uint256 tokenId,uint8 support,address voter,uint256 nonce)");
     bytes32 public constant EXTENDED_BALLOT_TYPEHASH = keccak256(
-        "ExtendedBallot(uint256 proposalId,uint8 support,address voter,uint256 nonce,string reason,bytes params)"
+        "ExtendedBallot(uint256 proposalId,uint256 tokenId,uint8 support,address voter,uint256 nonce,string reason,bytes params)"
     );
 
     struct ProposalCore {
@@ -596,7 +596,9 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
         bool valid = SignatureChecker.isValidSignatureNow({
             signer: _voter,
             hash: _hashTypedDataV4({
-                structHash: keccak256(abi.encode(BALLOT_TYPEHASH, _proposalId, _support, _voter, _useNonce({owner: _voter})))
+                structHash: keccak256(
+                    abi.encode(BALLOT_TYPEHASH, _proposalId, _tokenId, _support, _voter, _useNonce({owner: _voter}))
+                )
             }),
             signature: _signature
         });
@@ -628,6 +630,7 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
                     abi.encode(
                         EXTENDED_BALLOT_TYPEHASH,
                         _proposalId,
+                        _tokenId,
                         _support,
                         _voter,
                         _useNonce({owner: _voter}),

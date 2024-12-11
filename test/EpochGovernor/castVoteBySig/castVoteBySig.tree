@@ -1,0 +1,6 @@
+CastVoteBySigTest
+├── When the signature is invalid
+│   └── It should revert with {GovernorInvalidSignature}
+└── When the signature is valid
+    ├── It should cast vote
+    └── It should emit {VoteCast}
