@@ -16,16 +16,22 @@ ProposeTest
 │                   │   └── It should revert with {GovernorInvalidProposalLength}
 │                   └── When the length of all parameters is 1
 │                       ├── When the target is not minter
-│                       │   └── It should revert with {GovernorInvalidTargetOrCalldata}
+│                       │   └── It should revert with {GovernorInvalidTargetOrValueOrCalldata}
 │                       └── When the target is minter
-│                           ├── When function to call is not nudge
-│                           │   └── It should revert with {GovernorInvalidTargetOrCalldata}
-│                           └── When function to call is nudge
-│                               ├── It should set epochAlreadyActive to true for the current epoch
-│                               ├── It should store the proposer address
-│                               ├── It should store the vote start timestamp
-│                               ├── It should store the vote duration
-│                               └── It should emit a {ProposalCreated} event
+│                           ├── When the value is not 0
+│                           │   └── It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+│                           └── When the value is 0
+│                               ├── When the calldata length is not 4
+│                               │   └── It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+│                               └── When the calldata length is 4
+│                                   ├── When function to call is not nudge
+│                                   │   └── It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+│                                   └── When function to call is nudge
+│                                       ├── It should set epochAlreadyActive to true for the current epoch
+│                                       ├── It should store the proposer address
+│                                       ├── It should store the vote start timestamp
+│                                       ├── It should store the vote duration
+│                                       └── It should emit a {ProposalCreated} event
 └── When timestamp is greater than or equal to end of proposal window
     ├── When the description is not valid_
     │   └── It should revert with {GovernorRestrictedProposer}
@@ -40,13 +46,19 @@ ProposeTest
                 │   └── It should revert with {GovernorInvalidProposalLength}
                 └── When the length of all parameters is 1_
                     ├── When the target is not minter_
-                    │   └── It should revert with {GovernorInvalidTargetOrCalldata}
+                    │   └── It should revert with {GovernorInvalidTargetOrValueOrCalldata}
                     └── When the target is minter_
-                        ├── When function to call is not nudge_
-                        │   └── It should revert with {GovernorInvalidTargetOrCalldata}
-                        └── When function to call is nudge_
-                            ├── It should set epochAlreadyActive to true for the current epoch
-                            ├── It should store the proposer address
-                            ├── It should store the vote start timestamp
-                            ├── It should store the vote duration
-                            └── It should emit a {ProposalCreated} event
+                        ├── When the value is not 0_
+                        │   └── It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+                        └── When the value is 0_
+                            ├── When the calldata length is not 4_
+                            │   └── It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+                            └── When the calldata length is 4_
+                                ├── When function to call is not nudge_
+                                │   └── It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+                                └── When function to call is nudge_
+                                    ├── It should set epochAlreadyActive to true for the current epoch
+                                    ├── It should store the proposer address
+                                    ├── It should store the vote start timestamp
+                                    ├── It should store the vote duration
+                                    └── It should emit a {ProposalCreated} event

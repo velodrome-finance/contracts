@@ -103,9 +103,9 @@ interface IGovernor is IERC165, IERC6372 {
     error GovernorInvalidSignature(address _voter);
 
     /**
-     * @dev The target is not minter or calldata is not the nudge function
+     * @dev The target is not minter or value is not 0 or calldata is not the nudge function
      */
-    error GovernorInvalidTargetOrCalldata(address _target, bytes4 _callData);
+    error GovernorInvalidTargetOrValueOrCalldata(address _target, uint256 _value, bytes4 _callData);
 
     /**
      * @dev Not enough voting power to comment

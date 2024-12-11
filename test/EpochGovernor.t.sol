@@ -49,36 +49,6 @@ contract EpochGovernorTest is BaseTest {
         assertTrue(epochGovernor.supportsInterface(type(IERC1155Receiver).interfaceId));
     }
 
-    function testCannotProposeWithOtherTarget() public {
-        address[] memory targets = new address[](1);
-        targets[0] = address(0);
-        uint256[] memory values = new uint256[](1);
-        values[0] = 0;
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(minter.nudge.selector);
-        string memory description = "";
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
-        );
-        epochGovernor.propose(1, targets, values, calldatas, description);
-    }
-
-    function testCannotProposeWithOtherCalldata() public {
-        address[] memory targets = new address[](1);
-        targets[0] = address(minter);
-        uint256[] memory values = new uint256[](1);
-        values[0] = 0;
-        bytes[] memory calldatas = new bytes[](1);
-        calldatas[0] = abi.encodeWithSelector(minter.updatePeriod.selector);
-        string memory description = "";
-
-        vm.expectRevert(
-            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
-        );
-        epochGovernor.propose(1, targets, values, calldatas, description);
-    }
-
     function testEpochGovernorCanExecuteSucceeded() public {
         assertEq(minter.tailEmissionRate(), 30);
 

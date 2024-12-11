@@ -149,8 +149,15 @@ contract EpochGovernor is
                 _expectedStates: bytes32(0)
             });
         }
-        if (_targets[0] != minter || bytes4(_calldatas[0]) != IMinter.nudge.selector) {
-            revert GovernorInvalidTargetOrCalldata({_target: _targets[0], _callData: bytes4(_calldatas[0])});
+        if (
+            _targets[0] != minter || _values[0] != 0 || _calldatas[0].length != 4
+                || bytes4(_calldatas[0]) != IMinter.nudge.selector
+        ) {
+            revert GovernorInvalidTargetOrValueOrCalldata({
+                _target: _targets[0],
+                _value: _values[0],
+                _callData: bytes4(_calldatas[0])
+            });
         }
 
         ProposalCore storage proposal = _proposals[_proposalId];

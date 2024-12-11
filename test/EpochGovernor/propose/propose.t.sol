@@ -132,16 +132,71 @@ contract ProposeTest is BaseTest {
         whenThereIsNoProposalActiveForTheCurrentEpoch
         whenTheLengthOfAllParametersIs1
     {
-        // It should revert with {GovernorInvalidTargetOrCalldata}
+        // It should revert with {GovernorInvalidTargetOrValueOrCalldata}
         targets[0] = address(0);
 
         vm.expectRevert(
-            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+            abi.encodeWithSelector(
+                IGovernor.GovernorInvalidTargetOrValueOrCalldata.selector, targets[0], values[0], bytes4(calldatas[0])
+            )
         );
         epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenTheTargetIsMinter() {
+        // set already in setUp()
+        _;
+    }
+
+    function test_WhenTheValueIsNot0()
+        external
+        whenTimestampIsSmallerThanEndOfProposalWindow
+        whenCallerIsTheOwner
+        whenTheDescriptionIsValid
+        whenTheProposerVotingPowerIsGreaterThanOrEqualToTheProposalThreshold
+        whenThereIsNoProposalActiveForTheCurrentEpoch
+        whenTheLengthOfAllParametersIs1
+        whenTheTargetIsMinter
+    {
+        // It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+        values[0] = 1;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGovernor.GovernorInvalidTargetOrValueOrCalldata.selector, targets[0], values[0], bytes4(calldatas[0])
+            )
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
+    }
+
+    modifier whenTheValueIs0() {
+        // set already in setUp()
+        _;
+    }
+
+    function test_WhenTheCalldataLengthIsNot4()
+        external
+        whenTimestampIsSmallerThanEndOfProposalWindow
+        whenCallerIsTheOwner
+        whenTheDescriptionIsValid
+        whenTheProposerVotingPowerIsGreaterThanOrEqualToTheProposalThreshold
+        whenThereIsNoProposalActiveForTheCurrentEpoch
+        whenTheLengthOfAllParametersIs1
+        whenTheTargetIsMinter
+        whenTheValueIs0
+    {
+        // It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+        calldatas[0] = abi.encodeWithSelector(minter.nudge.selector, 111);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGovernor.GovernorInvalidTargetOrValueOrCalldata.selector, targets[0], values[0], bytes4(calldatas[0])
+            )
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
+    }
+
+    modifier whenTheCalldataLengthIs4() {
         // set already in setUp()
         _;
     }
@@ -155,12 +210,16 @@ contract ProposeTest is BaseTest {
         whenThereIsNoProposalActiveForTheCurrentEpoch
         whenTheLengthOfAllParametersIs1
         whenTheTargetIsMinter
+        whenTheValueIs0
+        whenTheCalldataLengthIs4
     {
-        // It should revert with {GovernorInvalidTargetOrCalldata}
+        // It should revert with {GovernorInvalidTargetOrValueOrCalldata}
         calldatas[0] = abi.encodeWithSelector(minter.updatePeriod.selector);
 
         vm.expectRevert(
-            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+            abi.encodeWithSelector(
+                IGovernor.GovernorInvalidTargetOrValueOrCalldata.selector, targets[0], values[0], bytes4(calldatas[0])
+            )
         );
         epochGovernor.propose(1, targets, values, calldatas, description);
     }
@@ -174,6 +233,8 @@ contract ProposeTest is BaseTest {
         whenThereIsNoProposalActiveForTheCurrentEpoch
         whenTheLengthOfAllParametersIs1
         whenTheTargetIsMinter
+        whenTheValueIs0
+        whenTheCalldataLengthIs4
     {
         // It should set epochAlreadyActive to true for the current epoch
         // It should store the proposer address
@@ -301,16 +362,71 @@ contract ProposeTest is BaseTest {
         whenThereIsNoProposalActiveForTheCurrentEpoch_
         whenTheLengthOfAllParametersIs1_
     {
-        // It should revert with {GovernorInvalidTargetOrCalldata}
+        // It should revert with {GovernorInvalidTargetOrValueOrCalldata}
         targets[0] = address(0);
 
         vm.expectRevert(
-            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+            abi.encodeWithSelector(
+                IGovernor.GovernorInvalidTargetOrValueOrCalldata.selector, targets[0], values[0], bytes4(calldatas[0])
+            )
         );
         epochGovernor.propose(1, targets, values, calldatas, description);
     }
 
     modifier whenTheTargetIsMinter_() {
+        // set already in setUp()
+        _;
+    }
+
+    function test_WhenTheValueIsNot0_()
+        external
+        whenTimestampIsGreaterThanOrEqualToEndOfProposalWindow
+        whenTheDescriptionIsValid_
+        whenTheProposerVotingPowerIsGreaterThanOrEqualToTheProposalThreshold_
+        whenThereIsNoProposalActiveForTheCurrentEpoch_
+        whenTheLengthOfAllParametersIs1_
+        whenTheTargetIsMinter_
+    {
+        // It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+
+        values[0] = 1;
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGovernor.GovernorInvalidTargetOrValueOrCalldata.selector, targets[0], values[0], bytes4(calldatas[0])
+            )
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
+    }
+
+    modifier whenTheValueIs0_() {
+        // set already in setUp()
+        _;
+    }
+
+    function test_WhenTheCalldataLengthIsNot4_()
+        external
+        whenTimestampIsGreaterThanOrEqualToEndOfProposalWindow
+        whenTheDescriptionIsValid_
+        whenTheProposerVotingPowerIsGreaterThanOrEqualToTheProposalThreshold_
+        whenThereIsNoProposalActiveForTheCurrentEpoch_
+        whenTheLengthOfAllParametersIs1_
+        whenTheTargetIsMinter_
+        whenTheValueIs0_
+    {
+        // It should revert with {GovernorInvalidTargetOrValueOrCalldata}
+        calldatas[0] = abi.encodeWithSelector(minter.nudge.selector, 111);
+
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                IGovernor.GovernorInvalidTargetOrValueOrCalldata.selector, targets[0], values[0], bytes4(calldatas[0])
+            )
+        );
+        epochGovernor.propose(1, targets, values, calldatas, description);
+    }
+
+    modifier whenTheCalldataLengthIs4_() {
+        // set already in setUp()
         _;
     }
 
@@ -322,12 +438,16 @@ contract ProposeTest is BaseTest {
         whenThereIsNoProposalActiveForTheCurrentEpoch_
         whenTheLengthOfAllParametersIs1_
         whenTheTargetIsMinter_
+        whenTheValueIs0_
+        whenTheCalldataLengthIs4_
     {
-        // It should revert with {GovernorInvalidTargetOrCalldata}
+        // It should revert with {GovernorInvalidTargetOrValueOrCalldata}
         calldatas[0] = abi.encodeWithSelector(minter.updatePeriod.selector);
 
         vm.expectRevert(
-            abi.encodeWithSelector(IGovernor.GovernorInvalidTargetOrCalldata.selector, targets[0], bytes4(calldatas[0]))
+            abi.encodeWithSelector(
+                IGovernor.GovernorInvalidTargetOrValueOrCalldata.selector, targets[0], values[0], bytes4(calldatas[0])
+            )
         );
         epochGovernor.propose(1, targets, values, calldatas, description);
     }
@@ -340,6 +460,8 @@ contract ProposeTest is BaseTest {
         whenThereIsNoProposalActiveForTheCurrentEpoch_
         whenTheLengthOfAllParametersIs1_
         whenTheTargetIsMinter_
+        whenTheValueIs0_
+        whenTheCalldataLengthIs4_
     {
         // It should set epochAlreadyActive to true for the current epoch
         // It should store the proposer address
