@@ -242,8 +242,8 @@ contract ProposeTest is BaseTest {
         // It should store the vote duration
         // It should emit a {ProposalCreated} event
 
-        uint256 expectedSnapshot = block.timestamp + 1 hours;
-        uint256 expectedDeadline = expectedSnapshot + 1 weeks - 2 hours;
+        uint256 expectedSnapshot = block.timestamp + 1 hours + 2;
+        uint256 expectedDeadline = expectedSnapshot + 1 weeks - 2 hours - 2;
         uint256 expectedPid = epochGovernor.hashProposal({
             _targets: targets,
             _values: values,
@@ -272,8 +272,8 @@ contract ProposeTest is BaseTest {
         });
         assertEq(pid, expectedPid);
         assertEq(epochGovernor.proposalProposer(pid), address(owner));
-        assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot + 2);
-        assertEq(epochGovernor.proposalDeadline(pid), expectedDeadline + 2);
+        assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot);
+        assertEq(epochGovernor.proposalDeadline(pid), expectedDeadline);
     }
 
     modifier whenTimestampIsGreaterThanOrEqualToEndOfProposalWindow() {
@@ -499,7 +499,7 @@ contract ProposeTest is BaseTest {
         });
         assertEq(pid, expectedPid);
         assertEq(epochGovernor.proposalProposer(pid), address(owner2));
-        assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot + 2);
-        assertEq(epochGovernor.proposalDeadline(pid), expectedDeadline + 2);
+        assertEq(epochGovernor.proposalSnapshot(pid), expectedSnapshot);
+        assertEq(epochGovernor.proposalDeadline(pid), expectedDeadline);
     }
 }

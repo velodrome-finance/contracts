@@ -40,7 +40,7 @@ contract EpochGovernorTest is BaseTest {
 
     function testInitialState() public view {
         assertEq(epochGovernor.votingDelay(), 2);
-        assertEq(epochGovernor.votingPeriod(), 1 weeks);
+        assertEq(epochGovernor.votingPeriod(), 1 weeks - 2 hours - 2 seconds);
     }
 
     function testSupportInterfacesExcludesCancel() public view {

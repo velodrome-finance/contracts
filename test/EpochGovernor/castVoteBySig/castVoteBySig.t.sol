@@ -38,7 +38,6 @@ contract CastVoteBySigTest is BaseTest {
 
         pid = epochGovernor.propose(tokenId, targets, values, calldatas, description);
 
-        skipAndRoll(2);
         nftBalance = escrow.balanceOfNFT(tokenId);
         skipAndRoll(1); // allow voting
     }
