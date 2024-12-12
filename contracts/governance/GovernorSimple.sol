@@ -15,7 +15,6 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
 import {IERC165, ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
-import {IGovernor as IOZGovernor} from "@openzeppelin/contracts/governance/IGovernor.sol";
 
 import {IGovernor, IERC6372} from "./IGovernor.sol";
 
@@ -92,8 +91,8 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 _interfaceId) public view virtual override(IERC165, ERC165) returns (bool) {
-        return (_interfaceId == type(IGovernor).interfaceId ^ IOZGovernor.cancel.selector)
-            || _interfaceId == type(IERC1155Receiver).interfaceId || super.supportsInterface({interfaceId: _interfaceId});
+        return _interfaceId == type(IGovernor).interfaceId || _interfaceId == type(IERC1155Receiver).interfaceId
+            || super.supportsInterface({interfaceId: _interfaceId});
     }
 
     /**

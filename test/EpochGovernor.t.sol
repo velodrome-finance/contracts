@@ -44,7 +44,7 @@ contract EpochGovernorTest is BaseTest {
     }
 
     function testSupportInterfacesExcludesCancel() public view {
-        assertTrue(epochGovernor.supportsInterface(type(IGovernor).interfaceId ^ OZGovernor.cancel.selector));
+        assertTrue(epochGovernor.supportsInterface(type(IGovernor).interfaceId));
         assertFalse(epochGovernor.supportsInterface(OZGovernor.cancel.selector));
         assertTrue(epochGovernor.supportsInterface(type(IERC1155Receiver).interfaceId));
     }
