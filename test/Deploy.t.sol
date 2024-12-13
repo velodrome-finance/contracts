@@ -128,7 +128,7 @@ contract TestDeploy is BaseTest {
         assertEq(address(governor.escrow()), address(deployGovernors.escrow()));
         assertEq(address(governor.voter()), address(deployGovernors.voter()));
 
-        assertEq(address(epochGovernor.token()), address(deployGovernors.escrow()));
+        assertEq(address(epochGovernor.ve()), address(deployGovernors.escrow()));
         assertEq(epochGovernor.minter(), address(deployGovernors.minter()));
         assertEq(address(governor.escrow()), address(deployGovernors.escrow()));
         assertEq(address(governor.voter()), address(deployGovernors.voter()));

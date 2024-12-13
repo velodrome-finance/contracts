@@ -6,5 +6,5 @@ SetCommentWeightingTest
     │   └── It should revert with {CommentWeightingTooHigh}
     └── When comment is smaller or equal to comment denominator
         ├── It should set comment weighting
-        └── It should emit a {SetCommentWeighting} event 
+        └── It should emit a {CommentWeightingSet} event
 

@@ -10,6 +10,10 @@ abstract contract GovernorProposalWindow is GovernorSimple, IGovernorProposalWin
     /// @inheritdoc IGovernorProposalWindow
     uint256 public proposalWindow = 24 hours;
 
+    constructor() {
+        emit ProposalWindowSet({_oldProposalWindow: 0, _newProposalWindow: proposalWindow});
+    }
+
     /// @inheritdoc GovernorSimple
     function propose(
         uint256 _tokenId,
@@ -36,6 +40,6 @@ abstract contract GovernorProposalWindow is GovernorSimple, IGovernorProposalWin
         if (_proposalWindow > 24) revert InvalidProposalWindow();
         uint256 oldProposalWindow = proposalWindow;
         proposalWindow = _proposalWindow * 1 hours;
-        emit ProposalWindowSet({oldProposalWindow: oldProposalWindow / 1 hours, newProposalWindow: _proposalWindow});
+        emit ProposalWindowSet({_oldProposalWindow: oldProposalWindow / 1 hours, _newProposalWindow: _proposalWindow});
     }
 }

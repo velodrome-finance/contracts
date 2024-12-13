@@ -6,7 +6,7 @@ interface IGovernorProposalWindow {
     error InvalidProposalWindow();
 
     /// @notice Emitted when the proposal window length is updated.
-    event ProposalWindowSet(uint256 indexed oldProposalWindow, uint256 indexed newProposalWindow);
+    event ProposalWindowSet(uint256 indexed _oldProposalWindow, uint256 indexed _newProposalWindow);
 
     /// @notice Duration of proposal window, measured in hours.
     /// @dev Proposals can only be created by owner during proposal window.

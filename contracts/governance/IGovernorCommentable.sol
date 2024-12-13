@@ -7,13 +7,10 @@ import {IVotingEscrow} from "../VotingEscrow.sol";
 interface IGovernorCommentable {
     error CommentWeightingTooHigh();
 
-    event SetCommentWeighting(uint256 _commentWeighting);
+    event CommentWeightingSet(uint256 _commentWeighting);
 
     /// @notice Denominator used to calculate minimum voting power required to comment.
     function COMMENT_DENOMINATOR() external view returns (uint256);
-
-    /// @notice Contract whose total supply / voting power is being used.
-    function escrow() external view returns (IVotingEscrow);
 
     /// @notice Numerator used to calculate minimum voting power required to comment.
     function commentWeighting() external view returns (uint256);

@@ -6,6 +6,8 @@ pragma solidity ^0.8.20;
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 import {IERC6372} from "@openzeppelin/contracts/interfaces/IERC6372.sol";
 
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+
 /**
  * @dev Taken from OpenZeppelin's IGovernor. Excludes `cancel`.
  *
@@ -113,6 +115,11 @@ interface IGovernor is IERC165, IERC6372 {
     error GovernorInsufficientVotingPower(uint256 _weight, uint256 _minimumWeight);
 
     /**
+     * @dev The voting power for the given `tokenId` and `account` is zero.
+     */
+    error GovernorZeroVotingPower(address _account, uint256 _tokenId);
+
+    /**
      * @dev Emitted when a proposal is created.
      */
     event ProposalCreated(
@@ -183,6 +190,11 @@ interface IGovernor is IERC165, IERC6372 {
      * @dev Version of the governor instance (used in building the EIP-712 domain separator). Default: "1"
      */
     function version() external view returns (string memory);
+
+    /**
+     * @dev Contract whose total supply / voting power is being used.
+     */
+    function ve() external view returns (IVotingEscrow);
 
     /**
      * @notice module:voting

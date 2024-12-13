@@ -4,7 +4,6 @@ pragma solidity ^0.8.20;
 
 import {GovernorSimple} from "./GovernorSimple.sol";
 import {IGovernorCommentable} from "./IGovernorCommentable.sol";
-import {IVoter} from "../interfaces/IVoter.sol";
 import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
 
 abstract contract GovernorCommentable is GovernorSimple, IGovernorCommentable {
@@ -12,12 +11,10 @@ abstract contract GovernorCommentable is GovernorSimple, IGovernorCommentable {
     uint256 public constant COMMENT_DENOMINATOR = 1_000_000_000;
 
     /// @inheritdoc IGovernorCommentable
-    IVotingEscrow public immutable escrow;
-    /// @inheritdoc IGovernorCommentable
     uint256 public commentWeighting = 4_000;
 
-    constructor(IVoter _voter) {
-        escrow = IVotingEscrow(_voter.ve());
+    constructor() {
+        emit CommentWeightingSet({_commentWeighting: commentWeighting});
     }
 
     /// @inheritdoc IGovernorCommentable
@@ -32,8 +29,7 @@ abstract contract GovernorCommentable is GovernorSimple, IGovernorCommentable {
 
         uint256 startTime = proposalSnapshot({_proposalId: _proposalId});
         uint256 weight = _getVotes({_account: msg.sender, _tokenId: _tokenId, _timepoint: startTime, _params: params});
-        uint256 minimumWeight =
-            (escrow.getPastTotalSupply({timestamp: startTime}) * commentWeighting) / COMMENT_DENOMINATOR;
+        uint256 minimumWeight = (ve.getPastTotalSupply({timestamp: startTime}) * commentWeighting) / COMMENT_DENOMINATOR;
 
         if (weight < minimumWeight) {
             revert GovernorInsufficientVotingPower({_weight: weight, _minimumWeight: minimumWeight});
@@ -47,6 +43,6 @@ abstract contract GovernorCommentable is GovernorSimple, IGovernorCommentable {
         if (_commentWeighting > COMMENT_DENOMINATOR) revert CommentWeightingTooHigh();
         commentWeighting = _commentWeighting;
 
-        emit SetCommentWeighting({_commentWeighting: _commentWeighting});
+        emit CommentWeightingSet({_commentWeighting: _commentWeighting});
     }
 }

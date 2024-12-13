@@ -32,10 +32,10 @@ contract SetCommentWeightingFuzzTest is BaseTest {
         whenCallerIsOwner
     {
         // It should set comment weighting
-        // It should emit a {SetCommentWeighting} event
+        // It should emit a {CommentWeightingSet} event
         commentWeighting = bound(commentWeighting, 0, 1_000_000_000);
         vm.expectEmit(address(epochGovernor));
-        emit IGovernorCommentable.SetCommentWeighting({_commentWeighting: commentWeighting});
+        emit IGovernorCommentable.CommentWeightingSet({_commentWeighting: commentWeighting});
         epochGovernor.setCommentWeighting({_commentWeighting: commentWeighting});
         assertEq(epochGovernor.commentWeighting(), commentWeighting);
     }

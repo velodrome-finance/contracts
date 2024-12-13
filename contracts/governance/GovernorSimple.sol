@@ -17,6 +17,7 @@ import {Nonces} from "@openzeppelin/contracts/utils/Nonces.sol";
 import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 import {IGovernor, IERC6372} from "./IGovernor.sol";
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 
 /**
  * @dev Modified lightly from OpenZeppelin's Governor contract to support three option voting via callback.
@@ -45,7 +46,6 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
         uint48 etaSeconds;
     }
 
-    bytes32 private constant ALL_PROPOSAL_STATES_BITMAP = bytes32((2 ** (uint8(type(ProposalState).max) + 1)) - 1);
     string private _name;
 
     mapping(uint256 proposalId => ProposalCore) internal _proposals;
@@ -72,10 +72,16 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
     }
 
     /**
-     * @dev Sets the value for {name} and {version}
+     * @inheritdoc IGovernor
      */
-    constructor(string memory name_, address _owner) EIP712(name_, version()) Ownable(_owner) {
+    IVotingEscrow public immutable ve;
+
+    /**
+     * @dev Sets the value for {name} and {version}. Sets the value for voting escrow.
+     */
+    constructor(string memory name_, address _owner, address _ve) EIP712(name_, version()) Ownable(_owner) {
         _name = name_;
+        ve = IVotingEscrow(_ve);
     }
 
     /**
@@ -656,7 +662,7 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
     }
 
     /**
-     * @dev Internal vote casting mechanism: Check that the vote is pending, that it has not been cast yet, retrieve
+     * @dev Internal vote casting mechanism: Check that the vote is active, that it has not been cast yet, retrieve
      * voting weight using {IGovernor-getVotes} and call the {_countVote} internal function. Uses the _defaultParams().
      *
      * Emits a {IGovernor-VoteCast} event.
@@ -677,7 +683,7 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
     }
 
     /**
-     * @dev Internal vote casting mechanism: Check that the vote is pending, that it has not been cast yet, retrieve
+     * @dev Internal vote casting mechanism: Check that the vote is active, that it has not been cast yet, retrieve
      * voting weight using {IGovernor-getVotes} and call the {_countVote} internal function.
      *
      * Emits a {IGovernor-VoteCast} event.
@@ -701,6 +707,10 @@ abstract contract GovernorSimple is ERC165, EIP712, Nonces, Ownable, IGovernor, 
             _timepoint: proposalSnapshot({_proposalId: _proposalId}),
             _params: _params
         });
+        if (totalWeight == 0) {
+            revert GovernorZeroVotingPower({_account: _account, _tokenId: _tokenId});
+        }
+
         uint256 votedWeight = _countVote({
             _proposalId: _proposalId,
             _tokenId: _tokenId,

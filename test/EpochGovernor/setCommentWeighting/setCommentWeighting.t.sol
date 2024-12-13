@@ -24,9 +24,9 @@ contract SetCommentWeightingTest is BaseTest {
 
     function test_WhenCommentIsSmallerOrEqualToCommentDenominator() external whenCallerIsOwner {
         // It should set comment weighting
-        // It should emit a {SetCommentWeighting} event
+        // It should emit a {CommentWeightingSet} event
         vm.expectEmit(address(epochGovernor));
-        emit IGovernorCommentable.SetCommentWeighting({_commentWeighting: 1_000_000_000});
+        emit IGovernorCommentable.CommentWeightingSet({_commentWeighting: 1_000_000_000});
         epochGovernor.setCommentWeighting({_commentWeighting: 1_000_000_000});
         assertEq(epochGovernor.commentWeighting(), 1_000_000_000);
     }

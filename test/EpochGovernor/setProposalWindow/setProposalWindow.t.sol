@@ -26,7 +26,7 @@ contract SetProposalWindowTest is BaseTest {
         // It should set the proposal window length
         // It should emit a {ProposalWindowSet} event
         vm.expectEmit(address(epochGovernor));
-        emit IGovernorProposalWindow.ProposalWindowSet({oldProposalWindow: 24, newProposalWindow: 20});
+        emit IGovernorProposalWindow.ProposalWindowSet({_oldProposalWindow: 24, _newProposalWindow: 20});
         epochGovernor.setProposalWindow({_proposalWindow: 20});
         assertEq(epochGovernor.proposalWindow(), 20 hours);
     }

@@ -477,7 +477,9 @@ contract EpochGovernorTest is BaseTest {
         uint256 pid = createProposal();
         skip(1 hours + 2); // allow voting
 
-        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorZeroVotingPower.selector, address(this), depositTokenId)
+        );
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 
@@ -572,7 +574,9 @@ contract EpochGovernorTest is BaseTest {
         escrow.delegate(mTokenId, delegateTokenId); // delegate on snapshot boundary
         skip(1 hours + 2); // allow voting
 
-        vm.expectRevert(abi.encodeWithSelector(IGovernor.GovernorAlreadyCastVote.selector, depositTokenId));
+        vm.expectRevert(
+            abi.encodeWithSelector(IGovernor.GovernorZeroVotingPower.selector, address(this), depositTokenId)
+        );
         epochGovernor.castVote(pid, depositTokenId, 1);
         assertEq(epochGovernor.hasVoted(pid, depositTokenId), false);
 

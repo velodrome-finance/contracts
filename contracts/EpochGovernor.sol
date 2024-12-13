@@ -8,7 +8,6 @@ import {DoubleEndedQueue} from "@openzeppelin/contracts/utils/structs/DoubleEnde
 import {IVotes} from "./governance/IVotes.sol";
 import {IVoter} from "./interfaces/IVoter.sol";
 import {IMinter} from "./interfaces/IMinter.sol";
-import {IVotingEscrow} from "contracts/interfaces/IVotingEscrow.sol";
 import {GovernorSimple, IGovernor} from "./governance/GovernorSimple.sol";
 import {EpochGovernorCountingFractional} from "./governance/EpochGovernorCountingFractional.sol";
 import {GovernorSimpleVotes} from "./governance/GovernorSimpleVotes.sol";
@@ -34,7 +33,6 @@ contract EpochGovernor is
     GovernorProposalWindow
 {
     using DoubleEndedQueue for DoubleEndedQueue.Bytes32Deque;
-    using DelegationHelperLibrary for IVotingEscrow;
 
     error GovernorRelayNotSupported();
 
@@ -44,11 +42,7 @@ contract EpochGovernor is
     ///      Any contracts that wish to use this governor must read from this to determine results.
     ProposalState public result;
 
-    constructor(IVotes _ve, address _minter, IVoter _voter, address _owner)
-        GovernorSimple("Epoch Governor", _owner)
-        GovernorSimpleVotes(_ve)
-        GovernorCommentable(_voter)
-    {
+    constructor(IVotes _ve, address _minter, address _owner) GovernorSimple("Epoch Governor", _owner, address(_ve)) {
         minter = _minter;
     }
 

@@ -24,7 +24,7 @@ contract DeployGovernors is DeployBase {
         vm.startBroadcast(deployerAddress);
 
         governor = new VeloGovernor(escrow, voter);
-        epochGovernor = new EpochGovernor(escrow, address(_params.minter), voter, team);
+        epochGovernor = new EpochGovernor(escrow, address(_params.minter), team);
 
         governor.setVetoer(vetoer);
         governor.setTeam(team);
