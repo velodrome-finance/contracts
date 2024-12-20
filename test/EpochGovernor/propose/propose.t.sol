@@ -469,7 +469,7 @@ contract ProposeTest is BaseTest {
         // It should store the vote duration
         // It should emit a {ProposalCreated} event
 
-        uint256 expectedSnapshot = block.timestamp;
+        uint256 expectedSnapshot = block.timestamp + 2;
         uint256 expectedDeadline = VelodromeTimeLibrary.epochVoteEnd(block.timestamp);
         uint256 expectedPid = epochGovernor.hashProposal({
             _targets: targets,

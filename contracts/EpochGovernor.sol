@@ -158,7 +158,7 @@ contract EpochGovernor is
         proposal.proposer = _proposer;
 
         uint256 voteStart =
-            Math.max({a: clock(), b: VelodromeTimeLibrary.epochVoteStart({timestamp: block.timestamp}) + votingDelay()});
+            Math.max({a: clock(), b: VelodromeTimeLibrary.epochVoteStart({timestamp: block.timestamp})}) + votingDelay();
         proposal.voteStart = SafeCast.toUint48({value: voteStart});
         proposal.voteDuration = SafeCast.toUint32(epochVoteEnd - voteStart);
 

@@ -22,6 +22,7 @@ contract CastVoteBySigTest is BaseTest {
 
         VELO.approve(address(escrow), TOKEN_1);
         tokenId = escrow.createLock(TOKEN_1, MAXTIME); // 1
+        escrow.lockPermanent(tokenId);
         vm.roll(block.number + 1);
 
         skipToNextEpoch(0);
@@ -39,7 +40,7 @@ contract CastVoteBySigTest is BaseTest {
         pid = epochGovernor.propose(tokenId, targets, values, calldatas, description);
 
         nftBalance = escrow.balanceOfNFT(tokenId);
-        skipAndRoll(1); // allow voting
+        skipAndRoll(3); // allow voting
     }
 
     function test_WhenTheSignatureIsInvalid() external {
