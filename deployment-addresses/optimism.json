@@ -1,0 +1,21 @@
+{
+  "VELO":"",
+  "VotingEscrow":"",
+  "Forwarder":"",
+  "ArtProxy":"",
+  "Distributor":"",
+  "Voter":"",
+  "Router":"",
+  "Minter":"",
+  "PoolFactory":"",
+  "VotingRewardsFactory":"",
+  "GaugeFactory":"",
+  "ManagedRewardsFactory":"",
+  "FactoryRegistry":"",
+  "Governor":"",
+  "EpochGovernor":"",
+  "SinkGauge": "",
+  "SinkGaugeFactory": "",
+  "SinkPool": "",
+  "SinkPoolFactory": ""
+}

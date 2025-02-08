@@ -4,6 +4,7 @@ pragma solidity >=0.8.19 <0.9.0;
 import "forge-std/Test.sol";
 import "forge-std/StdJson.sol";
 import "../script/DeployGovernors.s.sol";
+import "../script/DeploySink.s.sol";
 
 import "./BaseTest.sol";
 
@@ -16,10 +17,14 @@ contract TestDeploy is BaseTest {
     address public notifyAdmin;
     address public emergencyCouncil;
     address public _weth;
+
+    address public rewardToken;
+
     address public constant testDeployer = address(1);
 
     // Scripts to test
     DeployGovernors deployGovernors;
+    DeploySink deploySink;
 
     constructor() {
         deploymentType = Deployment.CUSTOM;
@@ -30,9 +35,11 @@ contract TestDeploy is BaseTest {
 
         deployVelodromeV2 = new DeployVelodromeV2();
         deployGovernors = new DeployGovernors();
+        deploySink = new DeploySink();
 
         stdstore.target(address(deployVelodromeV2)).sig("isTest()").checked_write(true);
         stdstore.target(address(deployGovernors)).sig("isTest()").checked_write(true);
+        stdstore.target(address(deploySink)).sig("isTest()").checked_write(true);
 
         DeployVelodromeV2.DeploymentParameters memory params = deployVelodromeV2.params();
 
@@ -45,6 +52,7 @@ contract TestDeploy is BaseTest {
         // Use test account for deployment
         stdstore.target(address(deployVelodromeV2)).sig("deployerAddress()").checked_write(testDeployer);
         stdstore.target(address(deployGovernors)).sig("deployerAddress()").checked_write(testDeployer);
+        stdstore.target(address(deploySink)).sig("deployerAddress()").checked_write(testDeployer);
         vm.deal(testDeployer, TOKEN_10K);
     }
 
@@ -132,5 +140,33 @@ contract TestDeploy is BaseTest {
         assertEq(epochGovernor.minter(), address(deployGovernors.minter()));
         assertEq(address(governor.escrow()), address(deployGovernors.escrow()));
         assertEq(address(governor.voter()), address(deployGovernors.voter()));
+    }
+
+    function testDeploySink() public {
+        deploySink.run();
+
+        sinkPoolFactory = SinkPoolFactory(deploySink.sinkPoolFactory());
+        sinkGaugeFactory = SinkGaugeFactory(deploySink.sinkGaugeFactory());
+        sinkGauge = SinkGauge(sinkGaugeFactory.gauge());
+
+        voter = Voter(0x41C914ee0c7E1A5edCD0295623e6dC557B5aBf3C);
+        minter = Minter(0x6dc9E1C04eE59ed3531d73a72256C0da46D10982);
+
+        rewardToken = address(minter.velo());
+
+        assertNotEq(address(sinkPoolFactory), address(0));
+        assertNotEq(address(sinkGaugeFactory), address(0));
+
+        assertNotEq(sinkPoolFactory.pool(), address(0));
+        assertFalse(sinkPoolFactory.isPool(sinkPoolFactory.pool()));
+
+        assertNotEq(sinkGaugeFactory.gauge(), address(0));
+        assertEq(
+            sinkGaugeFactory.createGauge(address(0), address(0), address(0), address(0), false), address(sinkGauge)
+        );
+
+        assertEq(sinkGauge.rewardToken(), rewardToken);
+        assertEq(sinkGauge.voter(), address(voter));
+        assertEq(sinkGauge.minter(), address(minter));
     }
 }

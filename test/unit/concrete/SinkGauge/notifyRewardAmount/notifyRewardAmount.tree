@@ -1,0 +1,12 @@
+NotifyRewardAmountTest
+├── When caller is not voter
+│   └── It should revert with {NotVoter}
+└── When caller is voter
+    ├── When amount is zero
+    │   └── It should revert with {ZeroAmount}
+    └── When amount is greater than zero
+        ├── It should transfer rewards from voter to minter
+        ├── It should update locked rewards
+        ├── It should update token rewards per epoch
+        ├── It should emit a {NotifyReward} event
+        └── It should emit a {ClaimRewards} event

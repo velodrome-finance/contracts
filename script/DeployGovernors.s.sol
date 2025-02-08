@@ -34,8 +34,8 @@ contract DeployGovernors is DeployBase {
         if (isTest) return;
         // write to file
         string memory root = vm.projectRoot();
-        string memory path = string(abi.encodePacked(root, "/deployment-addresses/governors/", _params.outputFilename));
-        vm.writeJson(vm.serializeAddress("v2", "Governor", address(governor)), path);
-        vm.writeJson(vm.serializeAddress("v2", "EpochGovernor", address(epochGovernor)), path);
+        string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
+        vm.writeJson(vm.toString(address(governor)), path, ".Governor");
+        vm.writeJson(vm.toString(address(epochGovernor)), path, ".EpochGovernor");
     }
 }

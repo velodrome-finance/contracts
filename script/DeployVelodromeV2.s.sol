@@ -28,23 +28,23 @@ contract DeployVelodromeV2 is DeployBase {
 
     /// @notice only executed if called from TestDeploy or actual deploy
     function _deploySetupAfter() public {
-        if (deployerAddress != address(1)) return;
-        // Set protocol state to _params.team
-        escrow.setTeam(_params.team);
-        minter.setTeam(_params.team);
-        factory.setPauser(_params.team);
-        factory.setPoolAdmin(_params.team);
-        voter.setEmergencyCouncil(_params.emergencyCouncil);
-        voter.setEpochGovernor(_params.team);
-        voter.setGovernor(_params.team);
-        factoryRegistry.transferOwnership(_params.team);
+        if (deployerAddress == address(1)) {
+            // Set protocol state to _params.team
+            escrow.setTeam(_params.team);
+            minter.setTeam(_params.team);
+            factory.setPauser(_params.team);
+            factory.setPoolAdmin(_params.team);
+            voter.setEmergencyCouncil(_params.emergencyCouncil);
+            voter.setEpochGovernor(_params.team);
+            voter.setGovernor(_params.team);
+            factoryRegistry.transferOwnership(_params.team);
 
-        // Set notifyAdmin in gauge factory
-        gaugeFactory.setNotifyAdmin(_params.notifyAdmin);
+            // Set notifyAdmin in gauge factory
+            gaugeFactory.setNotifyAdmin(_params.notifyAdmin);
 
-        // Set contract vars
-        factory.setFeeManager(_params.feeManager);
-
+            // Set contract vars
+            factory.setFeeManager(_params.feeManager);
+        }
         if (isTest) return;
 
         // Loading output and use output path to later save deployed contracts
@@ -52,18 +52,18 @@ contract DeployVelodromeV2 is DeployBase {
         string memory path = string(abi.encodePacked(root, "/deployment-addresses/", _params.outputFilename));
 
         // write to file
-        vm.writeJson(vm.serializeAddress("v2", "VELO", address(VELO)), path);
-        vm.writeJson(vm.serializeAddress("v2", "VotingEscrow", address(escrow)), path);
-        vm.writeJson(vm.serializeAddress("v2", "Forwarder", address(forwarder)), path);
-        vm.writeJson(vm.serializeAddress("v2", "ArtProxy", address(artProxy)), path);
-        vm.writeJson(vm.serializeAddress("v2", "Distributor", address(distributor)), path);
-        vm.writeJson(vm.serializeAddress("v2", "Voter", address(voter)), path);
-        vm.writeJson(vm.serializeAddress("v2", "Router", address(router)), path);
-        vm.writeJson(vm.serializeAddress("v2", "Minter", address(minter)), path);
-        vm.writeJson(vm.serializeAddress("v2", "PoolFactory", address(factory)), path);
-        vm.writeJson(vm.serializeAddress("v2", "VotingRewardsFactory", address(votingRewardsFactory)), path);
-        vm.writeJson(vm.serializeAddress("v2", "GaugeFactory", address(gaugeFactory)), path);
-        vm.writeJson(vm.serializeAddress("v2", "ManagedRewardsFactory", address(managedRewardsFactory)), path);
-        vm.writeJson(vm.serializeAddress("v2", "FactoryRegistry", address(factoryRegistry)), path);
+        vm.writeJson(vm.toString(address(VELO)), path, ".VELO");
+        vm.writeJson(vm.toString(address(escrow)), path, ".VotingEscrow");
+        vm.writeJson(vm.toString(address(forwarder)), path, ".Forwarder");
+        vm.writeJson(vm.toString(address(artProxy)), path, ".ArtProxy");
+        vm.writeJson(vm.toString(address(distributor)), path, ".Distributor");
+        vm.writeJson(vm.toString(address(voter)), path, ".Voter");
+        vm.writeJson(vm.toString(address(router)), path, ".Router");
+        vm.writeJson(vm.toString(address(minter)), path, ".Minter");
+        vm.writeJson(vm.toString(address(factory)), path, ".PoolFactory");
+        vm.writeJson(vm.toString(address(votingRewardsFactory)), path, ".VotingRewardsFactory");
+        vm.writeJson(vm.toString(address(gaugeFactory)), path, ".GaugeFactory");
+        vm.writeJson(vm.toString(address(managedRewardsFactory)), path, ".ManagedRewardsFactory");
+        vm.writeJson(vm.toString(address(factoryRegistry)), path, ".FactoryRegistry");
     }
 }

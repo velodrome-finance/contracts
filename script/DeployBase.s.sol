@@ -44,8 +44,8 @@ contract DeployBase is Script {
         string outputFilename;
     }
 
-    uint256 public deployPrivateKey = vm.envUint("PRIVATE_KEY_DEPLOY");
-    address public deployerAddress = vm.addr(deployPrivateKey);
+    uint256 temp; // temp var to force deployerAddress into a new package slot for checked_write
+    address public deployerAddress = 0x4994DacdB9C57A811aFfbF878D92E00EF2E5C4C2;
 
     DeploymentParameters public _params;
     address[78] internal _whitelistTokens;
@@ -70,7 +70,7 @@ contract DeployBase is Script {
     VeloGovernor public governor;
     EpochGovernor public epochGovernor;
 
-    uint256 temp; // temp var to force isTest into a new package slot for checked_write
+    uint256 temp2; // temp var to force isTest into a new package slot for checked_write
     /// @dev Used by tests to disable logging of output
     bool public isTest;
 

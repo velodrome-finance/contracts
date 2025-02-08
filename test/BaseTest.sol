@@ -10,6 +10,7 @@ import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {FeesVotingReward} from "contracts/rewards/FeesVotingReward.sol";
 import {IncentiveVotingReward} from "contracts/rewards/IncentiveVotingReward.sol";
 import {IGauge, Gauge} from "contracts/gauges/Gauge.sol";
+import {ISinkGauge, SinkGauge} from "contracts/gauges/sink/SinkGauge.sol";
 import {IWETH} from "contracts/interfaces/IWETH.sol";
 import {IVelo, Velo} from "contracts/Velo.sol";
 import {IRouter, Router} from "contracts/Router.sol";
@@ -19,9 +20,12 @@ import {IVotingEscrow, VotingEscrow} from "contracts/VotingEscrow.sol";
 import {ManagedRewardsFactory} from "contracts/factories/ManagedRewardsFactory.sol";
 import {VotingRewardsFactory} from "contracts/factories/VotingRewardsFactory.sol";
 import {GaugeFactory} from "contracts/factories/GaugeFactory.sol";
+import {SinkGaugeFactory} from "contracts/factories/sink/SinkGaugeFactory.sol";
 import {PoolFactory, IPoolFactory} from "contracts/factories/PoolFactory.sol";
+import {SinkPoolFactory} from "contracts/factories/sink/SinkPoolFactory.sol";
 import {IFactoryRegistry, FactoryRegistry} from "contracts/factories/FactoryRegistry.sol";
 import {Pool} from "contracts/Pool.sol";
+import {SinkPool} from "contracts/sink/SinkPool.sol";
 import {IMinter, Minter} from "contracts/Minter.sol";
 import {IReward, Reward} from "contracts/rewards/Reward.sol";
 import {RewardsDistributor, IRewardsDistributor} from "contracts/RewardsDistributor.sol";
@@ -102,6 +106,11 @@ abstract contract BaseTest is Test, TestOwner {
     Gauge gauge3;
     FeesVotingReward feesVotingReward3;
     IncentiveVotingReward incentiveVotingReward3;
+
+    SinkPoolFactory sinkPoolFactory;
+    SinkPool sinkPool;
+    SinkGaugeFactory sinkGaugeFactory;
+    SinkGauge sinkGauge;
 
     DeployVelodromeV2 deployVelodromeV2;
 
