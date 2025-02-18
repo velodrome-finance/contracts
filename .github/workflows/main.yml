@@ -18,7 +18,7 @@ jobs:
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly
+          version: v1.0.0
 
       - name: "Build the contracts and print their size"
         run: |
