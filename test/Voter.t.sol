@@ -1094,4 +1094,39 @@ contract VoterTest is BaseTest {
         weights[1] = 1;
         voter.vote(tokenId, pools, weights);
     }
+
+    function testGas_poke() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        escrow.createLock(TOKEN_1, MAXTIME);
+        skipAndRoll(1 hours);
+
+        voter.poke(1);
+        vm.snapshotGasLastCall("Voter_poke");
+    }
+
+    function testGas_reset() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        skipAndRoll(1 hours + 1);
+
+        voter.reset(tokenId);
+        vm.snapshotGasLastCall("Voter_reset");
+    }
+
+    function testGas_vote() public {
+        skip(1 hours + 1);
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        // vote
+        address[] memory pools = new address[](2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
+        uint256[] memory weights = new uint256[](2);
+        weights[0] = 1;
+        weights[1] = 2;
+
+        voter.vote(tokenId, pools, weights);
+        vm.snapshotGasLastCall("Voter_vote");
+    }
 }

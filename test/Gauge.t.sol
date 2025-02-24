@@ -640,4 +640,25 @@ contract GaugeTest is BaseTest {
 
         assertApproxEqRel(post - pre, reward / 7, 1e6);
     }
+
+    function testGas_getReward() public {
+        // add deposits
+        pool.approve(address(gauge), POOL_1);
+        gauge.deposit(POOL_1);
+
+        _addLiquidityToPool(address(owner2), address(router), address(FRAX), address(USDC), true, TOKEN_1, USDC_1);
+
+        vm.prank(address(owner2));
+        pool.approve(address(gauge), POOL_1);
+        vm.prank(address(owner2));
+        gauge.deposit(POOL_1);
+
+        uint256 reward = TOKEN_1;
+        _addRewardToGauge(address(voter), address(gauge), reward);
+
+        skip(1 weeks / 2);
+
+        gauge.getReward(address(owner));
+        vm.snapshotGasLastCall("Gauge_getReward");
+    }
 }

@@ -3,7 +3,7 @@ pragma solidity >=0.8.19 <0.9.0;
 
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {IVoter} from "../../interfaces/IVoter.sol";
 import {IMinter} from "../../interfaces/IMinter.sol";
 import {ISinkGauge} from "../../interfaces/sink/ISinkGauge.sol";
@@ -11,7 +11,7 @@ import {VelodromeTimeLibrary} from "../../libraries/VelodromeTimeLibrary.sol";
 
 /// @title Velodrome Sink Gauge
 /// @notice Sink Gauge contract to send emissions back to minter
-contract SinkGauge is ISinkGauge, ReentrancyGuard {
+contract SinkGauge is ISinkGauge, ReentrancyGuardTransient {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc ISinkGauge

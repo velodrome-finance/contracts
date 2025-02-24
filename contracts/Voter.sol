@@ -15,14 +15,15 @@ import {IFactoryRegistry} from "./interfaces/factories/IFactoryRegistry.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
+
 import {VelodromeTimeLibrary} from "./libraries/VelodromeTimeLibrary.sol";
 
 /// @title Velodrome V2 Voter
 /// @author velodrome.finance, Solidly, @figs999, @pegahcarter
 /// @notice Manage votes, emission distribution, and gauge creation within the Velodrome ecosystem.
 ///         Also provides support for depositing and withdrawing from managed veNFTs.
-contract Voter is IVoter, ERC2771Context, ReentrancyGuard {
+contract Voter is IVoter, ERC2771Context, ReentrancyGuardTransient {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc IVoter

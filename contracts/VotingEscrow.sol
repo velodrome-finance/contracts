@@ -12,7 +12,7 @@ import {IReward} from "./interfaces/IReward.sol";
 import {IFactoryRegistry} from "./interfaces/factories/IFactoryRegistry.sol";
 import {IManagedRewardsFactory} from "./interfaces/factories/IManagedRewardsFactory.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {DelegationLogicLibrary} from "./libraries/DelegationLogicLibrary.sol";
 import {BalanceLogicLibrary} from "./libraries/BalanceLogicLibrary.sol";
 import {SafeCastLibrary} from "./libraries/SafeCastLibrary.sol";
@@ -24,7 +24,7 @@ import {SafeCastLibrary} from "./libraries/SafeCastLibrary.sol";
 /// @author Modified from Curve (https://github.com/curvefi/curve-dao-contracts/blob/master/contracts/VotingEscrow.vy)
 /// @author velodrome.finance, Solidly, @figs999, @pegahcarter
 /// @dev Vote weight decays linearly over time. Lock time cannot be more than `MAXTIME` (4 years).
-contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuard {
+contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuardTransient {
     using SafeERC20 for IERC20;
     using SafeCastLibrary for uint256;
     using SafeCastLibrary for int128;

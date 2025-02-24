@@ -10,14 +10,14 @@ import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 import {IGaugeFactory} from "../interfaces/factories/IGaugeFactory.sol";
 
 /// @title Velodrome V2 Gauge
 /// @author veldorome.finance, @figs999, @pegahcarter
 /// @notice Gauge contract for distribution of emissions by address
-contract Gauge is IGauge, ERC2771Context, ReentrancyGuard {
+contract Gauge is IGauge, ERC2771Context, ReentrancyGuardTransient {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc IGauge

@@ -7,13 +7,13 @@ import {IVoter} from "../interfaces/IVoter.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ERC2771Context} from "@openzeppelin/contracts/metatx/ERC2771Context.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuardTransient} from "@openzeppelin/contracts/utils/ReentrancyGuardTransient.sol";
 import {VelodromeTimeLibrary} from "../libraries/VelodromeTimeLibrary.sol";
 
 /// @title Reward
 /// @author velodrome.finance, @figs999, @pegahcarter
 /// @notice Base reward contract for distribution of rewards
-abstract contract Reward is IReward, ERC2771Context, ReentrancyGuard {
+abstract contract Reward is IReward, ERC2771Context, ReentrancyGuardTransient {
     using SafeERC20 for IERC20;
 
     /// @inheritdoc IReward

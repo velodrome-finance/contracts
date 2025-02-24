@@ -2235,4 +2235,54 @@ contract VotingEscrowTest is BaseTest {
 
         assertEq(escrow.artProxy(), address(artProxy2));
     }
+
+    function testGas_createLock() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        vm.snapshotGasLastCall("VotingEscrow_createLock");
+    }
+
+    function testGas_depositFor() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        IVotingEscrow.LockedBalance memory preLocked = escrow.locked(tokenId);
+        VELO.approve(address(escrow), TOKEN_1);
+
+        escrow.depositFor(tokenId, TOKEN_1);
+        vm.snapshotGasLastCall("VotingEscrow_depositFor");
+    }
+
+    function testGas_withdraw() public {
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 lockDuration = 7 * 24 * 3600; // 1 week
+        escrow.createLock(TOKEN_1, lockDuration);
+        uint256 preBalance = VELO.balanceOf(address(owner));
+
+        skipAndRoll(lockDuration);
+        escrow.withdraw(1);
+        vm.snapshotGasLastCall("VotingEscrow_withdraw");
+    }
+
+    function testGas_merge() public {
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+        assertEq(escrow.slopeChanges(126403200), -7927447995);
+        uint256 tokenId2 = escrow.createLock(TOKEN_1 * 2, MAXTIME);
+        escrow.lockPermanent(tokenId2);
+
+        skipAndRoll(1);
+
+        escrow.merge(tokenId, tokenId2);
+        vm.snapshotGasLastCall("VotingEscrow_merge");
+    }
+
+    function testGas_split() public {
+        escrow.toggleSplit(address(0), true);
+        VELO.approve(address(escrow), type(uint256).max);
+        uint256 tokenId = escrow.createLock(TOKEN_1, MAXTIME);
+
+        escrow.split(tokenId, TOKEN_1 / 2);
+        vm.snapshotGasLastCall("VotingEscrow_split");
+    }
 }
