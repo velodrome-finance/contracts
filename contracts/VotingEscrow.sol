@@ -82,7 +82,6 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuardTransient
         team = _msgSender();
         voter = _msgSender();
 
-        _pointHistory[0].blk = block.number;
         _pointHistory[0].ts = block.timestamp;
 
         supportedInterfaces[ERC165_INTERFACE_ID] = true;
@@ -548,7 +547,6 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuardTransient
     uint256 internal constant WEEK = 1 weeks;
     uint256 internal constant MAXTIME = 4 * 365 * 86400;
     int128 internal constant iMAXTIME = 4 * 365 * 86400;
-    uint256 internal constant MULTIPLIER = 1 ether;
 
     /// @inheritdoc IVotingEscrow
     uint256 public epoch;
@@ -621,26 +619,11 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuardTransient
             }
         }
 
-        GlobalPoint memory lastPoint =
-            GlobalPoint({bias: 0, slope: 0, ts: block.timestamp, blk: block.number, permanentLockBalance: 0});
+        GlobalPoint memory lastPoint = GlobalPoint({bias: 0, slope: 0, ts: block.timestamp, permanentLockBalance: 0});
         if (_epoch > 0) {
             lastPoint = _pointHistory[_epoch];
         }
         uint256 lastCheckpoint = lastPoint.ts;
-        // initialLastPoint is used for extrapolation to calculate block number
-        // (approximately, for *At methods) and save them
-        // as we cannot figure that out exactly from inside the contract
-        GlobalPoint memory initialLastPoint = GlobalPoint({
-            bias: lastPoint.bias,
-            slope: lastPoint.slope,
-            ts: lastPoint.ts,
-            blk: lastPoint.blk,
-            permanentLockBalance: lastPoint.permanentLockBalance
-        });
-        uint256 blockSlope = 0; // dblock/dt
-        if (block.timestamp > lastPoint.ts) {
-            blockSlope = (MULTIPLIER * (block.number - lastPoint.blk)) / (block.timestamp - lastPoint.ts);
-        }
         // If last point is already recorded in this block, slope=0
         // But that's ok b/c we know the block in such case
 
@@ -669,10 +652,8 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuardTransient
                 }
                 lastCheckpoint = t_i;
                 lastPoint.ts = t_i;
-                lastPoint.blk = initialLastPoint.blk + (blockSlope * (t_i - initialLastPoint.ts)) / MULTIPLIER;
                 _epoch += 1;
                 if (t_i == block.timestamp) {
-                    lastPoint.blk = block.number;
                     break;
                 } else {
                     _pointHistory[_epoch] = lastPoint;
@@ -735,7 +716,6 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuardTransient
             // Else record the new user point into history
             // Exclude epoch 0
             uNew.ts = block.timestamp;
-            uNew.blk = block.number;
             uint256 userEpoch = userPointEpoch[_tokenId];
             if (userEpoch != 0 && _userPointHistory[_tokenId][userEpoch].ts == block.timestamp) {
                 _userPointHistory[_tokenId][userEpoch] = uNew;

@@ -31,7 +31,7 @@ contract RewardsDistributorTest is BaseTest {
     }
 
     function testClaim() public {
-        skipToNextEpoch(1 days); // epoch 1, ts: 1296000, blk: 2
+        skipToNextEpoch(1 days); // epoch 1, ts: 1296000
 
         VELO.approve(address(escrow), TOKEN_1M);
         uint256 tokenId = escrow.createLock(TOKEN_1M, MAXTIME);
@@ -46,7 +46,6 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(convert(userPoint.slope), TOKEN_1M / MAXTIME); // TOKEN_1M / MAXTIME
         assertEq(convert(userPoint.bias), 996575342465753345952000); // (TOKEN_1M / MAXTIME) * (127008000 - 1296000)
         assertEq(userPoint.ts, 1296000);
-        assertEq(userPoint.blk, 2);
 
         vm.startPrank(address(owner2));
         VELO.approve(address(escrow), TOKEN_1M);
@@ -63,7 +62,6 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(convert(userPoint.slope), TOKEN_1M / MAXTIME); // TOKEN_1M / MAXTIME
         assertEq(convert(userPoint.bias), 996575342465753345952000); // (TOKEN_1M / MAXTIME) * (127008000 - 1296000)
         assertEq(userPoint.ts, 1296000);
-        assertEq(userPoint.blk, 2);
 
         // epoch 2
         skipToNextEpoch(0); // distribute epoch 1's rebases
@@ -100,7 +98,7 @@ contract RewardsDistributorTest is BaseTest {
     }
 
     function testClaimWithPermanentLocks() public {
-        skipToNextEpoch(1 days); // epoch 1, ts: 1296000, blk: 2
+        skipToNextEpoch(1 days); // epoch 1, ts: 1296000
 
         VELO.approve(address(escrow), TOKEN_1M);
         uint256 tokenId = escrow.createLock(TOKEN_1M, MAXTIME);
@@ -116,7 +114,6 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(convert(userPoint.slope), 0);
         assertEq(convert(userPoint.bias), 0);
         assertEq(userPoint.ts, 1296000);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, TOKEN_1M);
 
         vm.startPrank(address(owner2));
@@ -135,7 +132,6 @@ contract RewardsDistributorTest is BaseTest {
         assertEq(convert(userPoint.slope), 0);
         assertEq(convert(userPoint.bias), 0);
         assertEq(userPoint.ts, 1296000);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, TOKEN_1M);
 
         // epoch 2
@@ -173,7 +169,7 @@ contract RewardsDistributorTest is BaseTest {
     }
 
     function testClaimWithBothLocks() public {
-        skipToNextEpoch(1 days); // epoch 1, ts: 1296000, blk: 2
+        skipToNextEpoch(1 days); // epoch 1, ts: 1296000
 
         VELO.approve(address(escrow), TOKEN_1M);
         uint256 tokenId = escrow.createLock(TOKEN_1M, MAXTIME);

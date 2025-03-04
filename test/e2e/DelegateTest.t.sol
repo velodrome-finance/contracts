@@ -15,7 +15,7 @@ contract DelegateTest is ExtendedBaseTest {
         // create lock 1 and check state
         // 1: +1 user point, +1 voting checkpoint
         // +1 global point
-        // blk: 1, ts: 604801
+        // ts: 604801
         // nft id               1   2   3   4   5
         // user points:         1 | 0 | 0 | 0 | 0
         // voting checkpoints:  1 | 0 | 0 | 0 | 0
@@ -34,7 +34,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 997260265926760005); // (TOKEN_1 / MAXTIME) * (126403200 - 604801)
         assertEq(userPoint.slope, 7927447995); // TOKEN_1 / MAXTIME
         assertEq(userPoint.ts, 604801);
-        assertEq(userPoint.blk, 1);
         assertEq(userPoint.permanent, 0);
 
         assertEq(escrow.epoch(), 1);
@@ -42,7 +41,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 997260265926760005); // (TOKEN_1 / MAXTIME) * (126403200 - 604801)
         assertEq(globalPoint.slope, 7927447995); // TOKEN_1 / MAXTIME
         assertEq(globalPoint.ts, 604801);
-        assertEq(globalPoint.blk, 1);
         assertEq(globalPoint.permanentLockBalance, 0);
 
         assertEq(escrow.delegates(1), 0);
@@ -58,7 +56,7 @@ contract DelegateTest is ExtendedBaseTest {
         // create lock 2
         // 2: +1 user point, +1 voting checkpoint
         // global point overwritten
-        // blk: 1, ts: 604801
+        // ts: 604801
         // nft id               1   2   3   4   5
         // user points:         1 | 1 | 0 | 0 | 0
         // voting checkpoints:  1 | 1 | 0 | 0 | 0
@@ -79,7 +77,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 997260265926760005);
         assertEq(userPoint.slope, 7927447995);
         assertEq(userPoint.ts, 604801);
-        assertEq(userPoint.blk, 1);
         assertEq(userPoint.permanent, 0);
 
         assertEq(escrow.epoch(), 1);
@@ -87,7 +84,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 997260265926760005 * 2);
         assertEq(globalPoint.slope, 7927447995 * 2);
         assertEq(globalPoint.ts, 604801);
-        assertEq(globalPoint.blk, 1);
         assertEq(globalPoint.permanentLockBalance, 0);
 
         assertEq(escrow.delegates(2), 0);
@@ -106,7 +102,7 @@ contract DelegateTest is ExtendedBaseTest {
 
         // lock permanent lock 1 in same block as creation
         // user point and global point overwritten
-        // blk: 1, ts: 604801
+        // ts: 604801
         // nft id               1   2   3   4   5
         // user points:         1 | 1 | 0 | 0 | 0
         // voting checkpoints:  1 | 1 | 0 | 0 | 0
@@ -124,7 +120,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 0);
         assertEq(userPoint.slope, 0);
         assertEq(userPoint.ts, 604801);
-        assertEq(userPoint.blk, 1);
         assertEq(userPoint.permanent, TOKEN_1);
 
         assertEq(escrow.epoch(), 1);
@@ -132,7 +127,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 997260265926760005);
         assertEq(globalPoint.slope, 7927447995);
         assertEq(globalPoint.ts, 604801);
-        assertEq(globalPoint.blk, 1);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1);
         assertEq(escrow.permanentLockBalance(), TOKEN_1);
 
@@ -152,7 +146,7 @@ contract DelegateTest is ExtendedBaseTest {
 
         // delegate 1 to 2 in same block as lock creation
         // no new voting checkpoints, overwritten
-        // blk: 1, ts: 604801
+        // ts: 604801
         // nft id               1   2   3   4   5
         // user points:         1 | 1 | 0 | 0 | 0
         // voting checkpoints:  1 | 1 | 0 | 0 | 0
@@ -187,7 +181,7 @@ contract DelegateTest is ExtendedBaseTest {
         // no new voting checkpoints, overwritten
         // 1: +1 user point
         // +1 global point
-        // blk: 1, ts: 604801
+        // ts: 604801
         // nft id               1   2   3   4   5
         // user points:         1 | 1 | 0 | 0 | 0
         // voting checkpoints:  1 | 1 | 0 | 0 | 0
@@ -205,7 +199,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 0);
         assertEq(userPoint.slope, 0);
         assertEq(userPoint.ts, 604801);
-        assertEq(userPoint.blk, 1);
         assertEq(userPoint.permanent, TOKEN_1 * 10);
 
         assertEq(escrow.epoch(), 1);
@@ -213,7 +206,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 997260265926760005);
         assertEq(globalPoint.slope, 7927447995);
         assertEq(globalPoint.ts, 604801);
-        assertEq(globalPoint.blk, 1);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 10);
         assertEq(escrow.permanentLockBalance(), TOKEN_1 * 10);
 
@@ -243,7 +235,7 @@ contract DelegateTest is ExtendedBaseTest {
 
         // 1 dedelegates in same block as increase amount
         // no new voting checkpoints, overwritten
-        // blk: 1, ts: 604801
+        // ts: 604801
         // nft id               1   2   3   4   5
         // user points:         1 | 1 | 0 | 0 | 0
         // voting checkpoints:  1 | 1 | 0 | 0 | 0
@@ -276,7 +268,7 @@ contract DelegateTest is ExtendedBaseTest {
 
         // 1 redelegates to 2 in same block as dedelegate
         // no new voting checkpoints, overwritten
-        // blk: 1, ts: 604801
+        // ts: 604801
         // nft id               1   2   3   4   5
         // user points:         1 | 1 | 0 | 0 | 0
         // voting checkpoints:  1 | 1 | 0 | 0 | 0
@@ -312,7 +304,7 @@ contract DelegateTest is ExtendedBaseTest {
         // create lock 3 a day later
         // 3: +1 user point, +1 voting checkpoint
         // +1 global point
-        // blk: 2, ts: 691201
+        // ts: 691201
         // nft id               1   2   3   4   5
         // user points:         1 | 1 | 1 | 0 | 0
         // voting checkpoints:  1 | 1 | 1 | 0 | 0
@@ -333,7 +325,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 996575334419992005); // (TOKEN_1 / MAXTIME) * (126403200 - 691201)
         assertEq(userPoint.slope, 7927447995); // TOKEN_1 / MAXTIME
         assertEq(userPoint.ts, 691201);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         assertEq(escrow.epoch(), 2);
@@ -341,7 +332,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 996575334419992005 * 2); // 1 has decayed to the same bias of 3
         assertEq(globalPoint.slope, 7927447995 * 2);
         assertEq(globalPoint.ts, 691201);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 10);
 
         assertEq(escrow.delegates(3), 0);
@@ -362,7 +352,7 @@ contract DelegateTest is ExtendedBaseTest {
         // permanent lock 2
         // 2: +1 user point
         // global point overwritten
-        // blk: 2, ts: 691201
+        // ts: 691201
         // nft id               1   2   3   4   5
         // user points:         1 | 2 | 1 | 0 | 0
         // voting checkpoints:  1 | 1 | 1 | 0 | 0
@@ -381,7 +371,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 0);
         assertEq(userPoint.slope, 0);
         assertEq(userPoint.ts, 691201);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, TOKEN_1);
 
         assertEq(escrow.epoch(), 2);
@@ -389,7 +378,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 996575334419992005);
         assertEq(globalPoint.slope, 7927447995);
         assertEq(globalPoint.ts, 691201);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 11);
         assertEq(escrow.permanentLockBalance(), TOKEN_1 * 11);
 
@@ -412,7 +400,7 @@ contract DelegateTest is ExtendedBaseTest {
         // 2 delegates to 3
         // 2: +1 voting checkpoint
         // 3: +1 voting checkpoint
-        // blk: 3, ts: 691202
+        // ts: 691202
         // nft id               1   2   3   4   5
         // user points:         1 | 2 | 1 | 0 | 0
         // voting checkpoints:  1 | 2 | 2 | 0 | 0
@@ -455,7 +443,7 @@ contract DelegateTest is ExtendedBaseTest {
         // 2: +1 user point
         // 3: +1 voting checkpoint
         // +1 global point
-        // blk: 4, ts: 694802
+        // ts: 694802
         // nft id               1   2   3   4   5
         // user points:         1 | 3 | 1 | 0 | 0
         // voting checkpoints:  1 | 2 | 3 | 0 | 0
@@ -473,7 +461,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 0);
         assertEq(userPoint.slope, 0);
         assertEq(userPoint.ts, 694802);
-        assertEq(userPoint.blk, 4);
         assertEq(userPoint.permanent, TOKEN_1 * 5);
 
         assertEq(escrow.epoch(), 3);
@@ -482,7 +469,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 996546787679762010);
         assertEq(globalPoint.slope, 7927447995);
         assertEq(globalPoint.ts, 694802);
-        assertEq(globalPoint.blk, 4);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 15);
         assertEq(escrow.permanentLockBalance(), TOKEN_1 * 15);
 
@@ -517,7 +503,7 @@ contract DelegateTest is ExtendedBaseTest {
         // 2: +1 voting checkpoint (delegated balance decreased)
         // 3: +1 voting checkpoint (delegated balance increased)
         // +2 global points (one for last epoch, one for current action)
-        // blk: 5, ts: 1299602
+        // ts: 1299602
         // nft id               1   2   3   4   5
         // user points:         1 | 3 | 1 | 0 | 0
         // voting checkpoints:  2 | 3 | 4 | 0 | 0
@@ -562,7 +548,7 @@ contract DelegateTest is ExtendedBaseTest {
         // 1: +1 user point, voting checkpoint overwritten (dedelegate)
         // 3: voting checkpoint overwritten (dedelegate)
         // +2 global points (one for last epoch, one for current action)
-        // blk: 5, ts: 1299602
+        // ts: 1299602
         // nft id               1   2   3   4   5
         // user points:         2 | 3 | 1 | 0 | 0
         // voting checkpoints:  2 | 3 | 4 | 0 | 0
@@ -581,7 +567,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 9965467877928995682); // (TOKEN_1 * 10 / MAXTIME) * (127008000 - 1299602)
         assertEq(userPoint.slope, 79274479959); // TOKEN_1 * 10 / MAXTIME
         assertEq(userPoint.ts, 1299602);
-        assertEq(userPoint.blk, 5);
         assertEq(userPoint.permanent, 0);
 
         assertEq(escrow.epoch(), 5);
@@ -590,7 +575,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 9965467877928995682 + 991752267132386010); // bias of 1 + bias of 3
         assertEq(globalPoint.slope, 79274479959 + 7927447995); // slope of 1 + slope of 3
         assertEq(globalPoint.ts, 1299602);
-        assertEq(globalPoint.blk, 5);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 5);
         assertEq(escrow.permanentLockBalance(), TOKEN_1 * 5);
 
@@ -634,7 +618,7 @@ contract DelegateTest is ExtendedBaseTest {
         // 3: +1 user point, +1 voting checkpoint (burn)
         // + 209 global points (one per week, + one for action)
         // delegatedBalance on 3 still exists as 2 is still delegating to 3
-        // blk: 213, ts: 127098002
+        // ts: 127098002
         // nft id               1   2   3   4   5
         // user points:         2 | 3 | 2 | 0 | 0
         // voting checkpoints:  2 | 3 | 5 | 0 | 0
@@ -657,7 +641,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 0);
         assertEq(userPoint.slope, 0);
         assertEq(userPoint.ts, 127098002);
-        assertEq(userPoint.blk, 213);
         assertEq(userPoint.permanent, 0);
 
         assertEq(escrow.epoch(), 214);
@@ -665,7 +648,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 0);
         assertEq(globalPoint.slope, 0);
         assertEq(globalPoint.ts, 127098002);
-        assertEq(globalPoint.blk, 213);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 5);
 
         // voting checkpoint for 2 unchanged
@@ -700,7 +682,7 @@ contract DelegateTest is ExtendedBaseTest {
         // 1 global points created, overwritten twice for 4 and 5
         // new voting checkpoint for 2 (as burn)
         // new voting checkpoint for burned delegatee 3 (delegated balance decreased)
-        // blk: 214, ts: 127098003
+        // ts: 127098003
         // nft id               1   2   3   4   5
         // user points:         3 | 4 | 2 | 1 | 1
         // voting checkpoints:  2 | 4 | 5 | 1 | 1
@@ -720,7 +702,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 0);
         assertEq(userPoint.slope, 0);
         assertEq(userPoint.ts, 127098003);
-        assertEq(userPoint.blk, 214);
         assertEq(userPoint.permanent, 0);
 
         assertEq(escrow.epoch(), 215);
@@ -728,7 +709,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(globalPoint.bias, 0);
         assertEq(globalPoint.slope, 0);
         assertEq(globalPoint.ts, 127098003);
-        assertEq(globalPoint.blk, 214);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 5);
         assertEq(escrow.permanentLockBalance(), TOKEN_1 * 5);
 
@@ -761,7 +741,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 0);
         assertEq(userPoint.slope, 0);
         assertEq(userPoint.ts, 127098003);
-        assertEq(userPoint.blk, 214);
         assertEq(userPoint.permanent, TOKEN_1 * 4);
 
         // new nft points (5)
@@ -775,7 +754,6 @@ contract DelegateTest is ExtendedBaseTest {
         assertEq(userPoint.bias, 0);
         assertEq(userPoint.slope, 0);
         assertEq(userPoint.ts, 127098003);
-        assertEq(userPoint.blk, 214);
         assertEq(userPoint.permanent, TOKEN_1);
 
         assertEq(escrow.totalSupply(), escrow.balanceOfNFT(4) + escrow.balanceOfNFT(5));

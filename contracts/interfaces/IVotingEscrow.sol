@@ -18,7 +18,6 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
         int128 bias;
         int128 slope; // # -dweight / dt
         uint256 ts;
-        uint256 blk; // block
         uint256 permanent;
     }
 
@@ -26,7 +25,6 @@ interface IVotingEscrow is IVotes, IERC4906, IERC6372, IERC721Metadata {
         int128 bias;
         int128 slope; // # -dweight / dt
         uint256 ts;
-        uint256 blk; // block
         uint256 permanentLockBalance;
     }
 

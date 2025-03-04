@@ -46,9 +46,9 @@ LockedBalance has several valid states:
 A token's `LockedBalance` is updated whenever `amount`, `end` or `isPermanent` changes. 
 
 UserPoint has several valid states:
-- `UserPoint(slope, bias, ts, blk, 0)` when an nft is in normal state.
-- `UserPoint(0, 0, ts, blk, permanent)` when an nft is in permanent state, with the value of `permanent` equal to the nft's `LockedBalance.amount`.
-- `UserPoint(0, 0, ts, blk, 0)` when an nft is burnt.
+- `UserPoint(slope, bias, ts, 0)` when an nft is in normal state.
+- `UserPoint(0, 0, ts, permanent)` when an nft is in permanent state, with the value of `permanent` equal to the nft's `LockedBalance.amount`.
+- `UserPoint(0, 0, ts, 0)` when an nft is burnt.
 
 A token's UserPoint is updated whenever `LockedBalance` changes. The global point is also updated at the 
 same time. If there are multiple writes to a token's UserPoint or the GlobalPoint in one block, it will 

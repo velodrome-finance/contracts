@@ -587,7 +587,6 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1814401);
-        assertEq(userPoint.blk, 3);
         assertEq(userPoint.permanent, 1000344487112962951212020); // TOKEN_1M + rebase
         assertEq(escrow.balanceOfNFT(mTokenId), 1000344487112962951212020);
 
@@ -598,7 +597,6 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(convert(globalPoint.bias), 2963013674496024015); // (TOKEN_1 * 3 / MAXTIME) * (126403200 - 1814401)
         assertEq(convert(globalPoint.slope), 23782343985); // TOKEN_1 * 3 / MAXTIME
         assertEq(globalPoint.ts, 1814401);
-        assertEq(globalPoint.blk, 3);
         assertEq(globalPoint.permanentLockBalance, 2000344487112962951212020); // TOKEN_1M * 2 + rebase
         assertEq(escrow.totalSupply(), 2000344487112962951212020 + 2963013674496024015); // TOKEN_1M * 2 + rebase + bias
 
@@ -635,7 +633,6 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 2419201);
-        assertEq(userPoint.blk, 4);
         assertEq(userPoint.permanent, tokenAmount + rebase);
         assertEq(escrow.balanceOfNFT(mTokenId), tokenAmount + rebase);
 
@@ -646,7 +643,6 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(convert(globalPoint.bias), 2948630112853896015); // (TOKEN_1 * 3 / MAXTIME) * (126403200 - 2419201)
         assertEq(convert(globalPoint.slope), 23782343985); // TOKEN_1 * 3 / MAXTIME
         assertEq(globalPoint.ts, 2419201);
-        assertEq(globalPoint.blk, 4);
         assertEq(globalPoint.permanentLockBalance, tokenAmount * 2 + rebase);
         assertEq(escrow.totalSupply(), tokenAmount * 2 + rebase + 2948630112853896015);
 

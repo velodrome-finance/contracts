@@ -44,7 +44,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 604801);
-        assertEq(userPoint.blk, 1);
         assertEq(userPoint.permanent, 0);
 
         // check global point updates correctly
@@ -53,7 +52,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 0);
         assertEq(convert(globalPoint.slope), 0);
         assertEq(globalPoint.ts, 604801);
-        assertEq(globalPoint.blk, 1);
         assertEq(globalPoint.permanentLockBalance, 0);
 
         // check voting checkpoints
@@ -172,7 +170,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         // transfer deposit to managed nft, max lock
@@ -187,7 +184,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, TOKEN_1);
 
         // check global point updates correctly
@@ -196,7 +192,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 0);
         assertEq(convert(globalPoint.slope), 0);
         assertEq(globalPoint.ts, 1213201);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1);
 
         // check voting checkpoints
@@ -260,7 +255,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         // transfer deposit to managed nft
@@ -275,7 +269,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, TOKEN_1);
 
         // check global point updates correctly
@@ -284,7 +277,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 992437206566602005); // TOKEN_1 / MAXTIME * (126403200 - 1213201)
         assertEq(convert(globalPoint.slope), 7927447995); // TOKEN_1 / MAXTIME
         assertEq(globalPoint.ts, 1213201);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1);
 
         // check voting checkpoints of managed nft
@@ -360,7 +352,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         // transfer deposit to managed nft
@@ -375,7 +366,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, TOKEN_1);
 
         // check global point
@@ -384,7 +374,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 0);
         assertEq(convert(globalPoint.slope), 0);
         assertEq(globalPoint.ts, 1213201);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1);
 
         // check deposit represented in ve
@@ -446,7 +435,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
-        assertEq(userPoint.blk, 3);
         assertEq(userPoint.permanent, 0);
 
         // transfer deposit to managed nft, max lock
@@ -461,7 +449,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1213201);
-        assertEq(userPoint.blk, 3);
         assertEq(userPoint.permanent, TOKEN_1);
 
         // check global point
@@ -470,7 +457,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 992437206566602005); // nft 2 decayed by one week
         assertEq(convert(globalPoint.slope), 7927447995);
         assertEq(globalPoint.ts, 1213201);
-        assertEq(globalPoint.blk, 3);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1);
 
         // check deposit represented in ve
@@ -776,7 +762,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 997231727113978005); // (TOKEN_1 / MAXTIME) * (127612800 - 1818001)
         assertEq(convert(userPoint.slope), 7927447995); // TOKEN_1 / MAXTIME
         assertEq(userPoint.ts, 1818001);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         locked = escrow.locked(mTokenId);
@@ -790,7 +775,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1818001);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         // check global point updates correctly
@@ -799,7 +783,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 997231727113978005);
         assertEq(convert(globalPoint.slope), 7927447995);
         assertEq(globalPoint.ts, 1818001);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, 0);
 
         // check voting checkpoints
@@ -852,7 +835,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 608401);
-        assertEq(userPoint.blk, 1);
         assertEq(userPoint.permanent, TOKEN_1 * 2);
 
         // check global point updates correctly on increaseAmount
@@ -861,7 +843,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 0);
         assertEq(convert(globalPoint.slope), 0);
         assertEq(globalPoint.ts, 608401);
-        assertEq(globalPoint.blk, 1);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 2);
         assertEq(escrow.balanceOfNFT(mTokenId), TOKEN_1 * 2);
 
@@ -893,7 +874,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 1994463454353750809); // (TOKEN_1 / MAXTIME) * (127612800 - 1818001)
         assertEq(convert(userPoint.slope), 15854895991); // TOKEN_1 * 2 / MAXTIME
         assertEq(userPoint.ts, 1818001);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         locked = escrow.locked(mTokenId);
@@ -907,7 +887,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1818001);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         // check global point updates correctly
@@ -916,7 +895,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 1994463454353750809);
         assertEq(convert(globalPoint.slope), 15854895991);
         assertEq(globalPoint.ts, 1818001);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, 0);
 
         // check voting checkpoints
@@ -992,7 +970,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 997231727113978005); // (TOKEN_1 / MAXTIME) * (127612800 - 1818001)
         assertEq(convert(userPoint.slope), 7927447995); // TOKEN_1 / MAXTIME
         assertEq(userPoint.ts, 1818001);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         locked = escrow.locked(mTokenId);
@@ -1006,7 +983,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1818001);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         // check global point updates correctly
@@ -1015,7 +991,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 997231727113978005);
         assertEq(convert(globalPoint.slope), 7927447995);
         assertEq(globalPoint.ts, 1818001);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, 0);
 
         // check voting checkpoints
@@ -1080,7 +1055,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 608401);
-        assertEq(userPoint.blk, 1);
         assertEq(userPoint.permanent, TOKEN_1 * 2);
 
         // check global point updates correctly on increaseAmount
@@ -1089,7 +1063,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 997231727113978005); // (TOKEN_1 / MAXTIME) * (126403200 - 608401)
         assertEq(convert(globalPoint.slope), 7927447995); // TOKEN_1 / MAXTIME
         assertEq(globalPoint.ts, 608401);
-        assertEq(globalPoint.blk, 1);
         assertEq(globalPoint.permanentLockBalance, TOKEN_1 * 2);
         assertEq(escrow.balanceOfNFT(mTokenId), TOKEN_1 * 2);
 
@@ -1119,7 +1092,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 1994463454353750809);
         assertEq(convert(userPoint.slope), 15854895991);
         assertEq(userPoint.ts, 1818001);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         locked = escrow.locked(mTokenId);
@@ -1133,7 +1105,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(userPoint.bias), 0);
         assertEq(convert(userPoint.slope), 0);
         assertEq(userPoint.ts, 1818001);
-        assertEq(userPoint.blk, 2);
         assertEq(userPoint.permanent, 0);
 
         // check global point updates correctly
@@ -1142,7 +1113,6 @@ contract ManagedNftTest is BaseTest {
         assertEq(convert(globalPoint.bias), 2982106140372976814); // tokenId + tokenId2 bias
         assertEq(convert(globalPoint.slope), 23782343986);
         assertEq(globalPoint.ts, 1818001);
-        assertEq(globalPoint.blk, 2);
         assertEq(globalPoint.permanentLockBalance, 0);
 
         // check voting checkpoints
