@@ -21,7 +21,7 @@ interface ISinkGauge {
     function lockedRewards() external view returns (uint256);
 
     /// @notice Amount of rewards for a given epoch
-    /// @param _epochStart Startime of rewards epoch
+    /// @param _epochStart Start time of rewards epoch
     /// @return Amount of token
     function tokenRewardsPerEpoch(uint256 _epochStart) external view returns (uint256);
 

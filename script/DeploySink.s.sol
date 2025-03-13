@@ -17,9 +17,6 @@ contract DeploySink is Script {
         string outputFilename;
     }
 
-    uint256 temp; // temp var to force deployerAddress into a new package slot for checked_write
-    address public deployerAddress = 0x4994DacdB9C57A811aFfbF878D92E00EF2E5C4C2;
-
     SinkDeploymentParameters public _params;
 
     // emission sink contracts
@@ -28,7 +25,7 @@ contract DeploySink is Script {
     SinkPool public sinkPool;
     SinkGauge public sinkGauge;
 
-    uint256 temp2; // temp var to force isTest into a new package slot for checked_write
+    uint256 temp; // temp var to force isTest into a new package slot for checked_write
     /// @dev Used by tests to disable logging of output
     bool public isTest;
 
@@ -40,7 +37,7 @@ contract DeploySink is Script {
     }
 
     function run() public {
-        vm.startBroadcast(deployerAddress);
+        vm.startBroadcast();
 
         require(address(_params.voter) != address(0), "voter not set");
 

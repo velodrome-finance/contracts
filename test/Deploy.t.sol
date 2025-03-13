@@ -52,7 +52,6 @@ contract TestDeploy is BaseTest {
         // Use test account for deployment
         stdstore.target(address(deployVelodromeV2)).sig("deployerAddress()").checked_write(testDeployer);
         stdstore.target(address(deployGovernors)).sig("deployerAddress()").checked_write(testDeployer);
-        stdstore.target(address(deploySink)).sig("deployerAddress()").checked_write(testDeployer);
         vm.deal(testDeployer, TOKEN_10K);
     }
 

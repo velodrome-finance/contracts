@@ -99,7 +99,7 @@ guideline for licensing. See LICENSE and NOTICE files.
 | FactoryRegistry               | [0xF4c67CdEAaB8360370F41514d06e32CcD8aA1d7B](https://optimistic.etherscan.io/address/0xF4c67CdEAaB8360370F41514d06e32CcD8aA1d7B#code) |
 | Forwarder               | [0x06824df38D1D77eADEB6baFCB03904E27429Ab74](https://optimistic.etherscan.io/address/0x06824df38D1D77eADEB6baFCB03904E27429Ab74#code) |
 | GaugeFactory               | [0x8391fE399640E7228A059f8Fa104b8a7B4835071](https://optimistic.etherscan.io/address/0x8391fE399640E7228A059f8Fa104b8a7B4835071#code) |
-| ManagedRewardsFactory               | [0xcDd9585005095ac7447d1fDbC990C5CFB805cff0](https://optimistic.etherscan.io/address/0xcDd9585005095ac7447d1fDbC990C5CFB805cff0#code) |
+| ManagedRewardsFactory               | [0x3F468e35f5c262a6E796bfe3be831Bf8b9142e9c](https://optimistic.etherscan.io/address/0x3F468e35f5c262a6E796bfe3be831Bf8b9142e9c#code) |
 | Minter               | [0x6dc9E1C04eE59ed3531d73a72256C0da46D10982](https://optimistic.etherscan.io/address/0x6dc9E1C04eE59ed3531d73a72256C0da46D10982#code) |
 | PoolFactory               | [0xF1046053aa5682b4F9a81b5481394DA16BE5FF5a](https://optimistic.etherscan.io/address/0xF1046053aa5682b4F9a81b5481394DA16BE5FF5a#code) |
 | Router               | [0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858](https://optimistic.etherscan.io/address/0xa062aE8A9c5e11aaA026fc2670B0D65cCc8B2858#code) |
@@ -108,4 +108,7 @@ guideline for licensing. See LICENSE and NOTICE files.
 | VotingEscrow               | [0xFAf8FD17D9840595845582fCB047DF13f006787d](https://optimistic.etherscan.io/address/0xFAf8FD17D9840595845582fCB047DF13f006787d#code) |
 | VotingRewardsFactory               | [0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec](https://optimistic.etherscan.io/address/0x756E7C245C69d351FfFBfb88bA234aa395AdA8ec#code) |
 | Pool               | [0x95885af5492195f0754be71ad1545fe81364e531](https://optimistic.etherscan.io/address/0x95885af5492195f0754be71ad1545fe81364e531#code) |
-
+| SinkGauge               | [0x3B59a6B600f912260048a0f3a834C1039aEcD367](https://optimistic.etherscan.io/address/0x3B59a6B600f912260048a0f3a834C1039aEcD367#code) |
+| SinkGaugeFactory               | [0xe62b4BC24eB6446675A1cB3facA2339676E9e5a2](https://optimistic.etherscan.io/address/0xe62b4BC24eB6446675A1cB3facA2339676E9e5a2#code) |
+| SinkPool               | [0x333030A736B47D20346d82A473680658ac1C2b88](https://optimistic.etherscan.io/address/0x333030A736B47D20346d82A473680658ac1C2b88#code) |
+| SinkPoolFactory               | [0xd173B8d1A91bA0D434f393ad7A1680515a069091](https://optimistic.etherscan.io/address/0xd173B8d1A91bA0D434f393ad7A1680515a069091#code) |
