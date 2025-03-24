@@ -194,7 +194,7 @@ contract WashTradeTest is BaseTest {
         weights[1] = 5000;
         voter.vote(1, pools, weights);
         assertFalse(voter.totalWeight() == 0);
-        assertFalse(feesVotingReward3.balanceOf(1) == 0);
+        assertFalse(feesVotingReward3.balanceOfNFTAt(1, block.timestamp) == 0);
     }
 
     function feesVotingRewardClaimRewards() public {

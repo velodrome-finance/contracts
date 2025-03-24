@@ -66,7 +66,7 @@ contract FeesVotingRewardTest is BaseTest {
         pools[0] = address(pool2);
         voter.vote(1, pools, weights);
 
-        assertEq(feesVotingReward.totalSupply(), 0);
+        assertEq(feesVotingReward.supplyAt(block.timestamp), 0);
 
         skipToNextEpoch(1);
 
@@ -707,17 +707,17 @@ contract FeesVotingRewardTest is BaseTest {
         vm.prank(address(voter));
         feesVotingReward.getReward(1, rewards);
         uint256 post = FRAX.balanceOf(address(owner));
-        assertGt(post - pre, TOKEN_1 / 2); // 500172176312657261
+        assertEq(post - pre, TOKEN_1 / 2);
         uint256 diff = post - pre;
 
         pre = FRAX.balanceOf(address(owner2));
         vm.prank(address(voter));
         feesVotingReward.getReward(2, rewards);
         post = FRAX.balanceOf(address(owner2));
-        assertLt(post - pre, TOKEN_1 / 2); // 499827823687342738
+        assertEq(post - pre, TOKEN_1 / 2);
         uint256 diff2 = post - pre;
 
-        assertEq(diff + diff2, TOKEN_1 - 1); // -1 for rounding
+        assertEq(diff + diff2, TOKEN_1);
     }
 
     function testGetRewardWithSkippedClaims() public {
@@ -785,6 +785,7 @@ contract FeesVotingRewardTest is BaseTest {
 
         // poked into voting for same pool
         voter.poke(1);
+        vm.prank(address(owner2));
         voter.poke(2);
 
         skipToNextEpoch(1);
@@ -1481,12 +1482,17 @@ contract FeesVotingRewardTest is BaseTest {
     function testDepositAndWithdrawCreatesCheckpoints() public {
         skip(1 weeks / 2);
 
-        uint256 numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 0); // no existing checkpoints
+        uint256 epoch = feesVotingReward.epoch();
+        assertEq(epoch, 0); // no existing checkpoints
 
-        (uint256 ts, uint256 balance) = feesVotingReward.checkpoints(1, 0);
-        assertEq(ts, 0);
-        assertEq(balance, 0);
+        IVotingEscrow.GlobalPoint memory grp = feesVotingReward.globalRewardPointHistory(1); // starts from 1
+        assertEq(grp.bias, 0);
+        assertEq(grp.slope, 0);
+        assertEq(grp.ts, 0);
+        assertEq(grp.permanentLockBalance, 0);
+
+        uint256 userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 0);
 
         // deposit by voting
         address[] memory pools = new address[](1);
@@ -1497,17 +1503,31 @@ contract FeesVotingRewardTest is BaseTest {
 
         uint256 expectedTs = block.timestamp;
         uint256 expectedBal = escrow.balanceOfNFT(1);
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(1);
 
         // check single user and supply checkpoint created
-        numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 1);
-        (uint256 sTs, uint256 sBalance) = feesVotingReward.supplyCheckpoints(0);
-        assertEq(sTs, expectedTs);
-        assertEq(sBalance, expectedBal);
+        epoch = feesVotingReward.epoch();
+        assertEq(epoch, 1);
 
-        (ts, balance) = feesVotingReward.checkpoints(1, 0);
-        assertEq(ts, expectedTs);
-        assertEq(balance, expectedBal);
+        uint256 slope = expectedBal / (locked.end - expectedTs); // this should not change in this test
+
+        grp = feesVotingReward.globalRewardPointHistory(1);
+        assertEq(grp.ts, expectedTs);
+        assertEq(convert(grp.bias), expectedBal);
+        assertEq(convert(grp.slope), slope);
+        assertEq(grp.permanentLockBalance, 0);
+
+        userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 1);
+        IVotingEscrow.UserPoint memory urp = feesVotingReward.userRewardPointHistory(1, 1);
+        assertEq(convert(urp.bias), expectedBal);
+        assertEq(convert(urp.slope), slope);
+        assertEq(urp.permanent, 0);
+        assertEq(feesVotingReward.lockExpiry(1), locked.end);
+        assertEq(urp.ts, expectedTs);
+
+        assertEq(feesVotingReward.slopeChanges(locked.end), -toInt128(slope));
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
 
         skipToNextEpoch(1 hours + 1);
 
@@ -1515,18 +1535,55 @@ contract FeesVotingRewardTest is BaseTest {
         pools[0] = address(pool2);
         voter.vote(1, pools, weights);
 
-        numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 2);
+        uint256 expectedTs2 = block.timestamp;
+        int128 prevBias = grp.bias;
 
-        expectedTs = block.timestamp;
+        epoch = feesVotingReward.epoch();
+        assertEq(epoch, 2);
 
         // check new checkpoint created
-        (ts, balance) = feesVotingReward.checkpoints(1, 1);
-        assertEq(ts, expectedTs);
-        assertEq(balance, 0); // balance 0 on withdraw
-        (sTs, sBalance) = feesVotingReward.supplyCheckpoints(1);
-        assertEq(sTs, expectedTs);
-        assertEq(sBalance, 0);
+        // should withdraw the full weight
+        grp = feesVotingReward.globalRewardPointHistory(2); // checkpoint at current timestamp
+        assertEq(grp.ts, expectedTs2);
+        assertEq(convert(grp.bias), 0);
+        assertEq(convert(grp.slope), 0);
+        assertEq(grp.permanentLockBalance, 0);
+
+        // next user checkpoint should be zero weight
+        userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 2);
+        urp = feesVotingReward.userRewardPointHistory(1, 2);
+        assertEq(convert(urp.bias), 0);
+        assertEq(convert(urp.slope), 0);
+        assertEq(urp.permanent, 0);
+        assertEq(urp.ts, expectedTs2);
+        assertEq(feesVotingReward.lockExpiry(1), 0);
+
+        assertEq(feesVotingReward.slopeChanges(locked.end), 0);
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
+
+        // validate the other pool where we voted too
+        epoch = feesVotingReward2.epoch();
+        assertEq(epoch, 1);
+        expectedBal = escrow.balanceOfNFT(1);
+
+        grp = feesVotingReward2.globalRewardPointHistory(1);
+        assertEq(grp.ts, expectedTs2);
+        assertEq(convert(grp.bias), expectedBal);
+        assertEq(convert(grp.slope), slope);
+        assertEq(grp.permanentLockBalance, 0);
+
+        userEpoch = feesVotingReward2.userRewardEpoch(1);
+        assertEq(userEpoch, 1);
+        urp = feesVotingReward2.userRewardPointHistory(1, 1);
+        assertEq(convert(urp.bias), expectedBal);
+        assertEq(convert(urp.slope), slope);
+        assertEq(urp.permanent, 0);
+        assertEq(urp.ts, expectedTs2);
+        assertEq(feesVotingReward2.lockExpiry(1), locked.end);
+
+        assertEq(feesVotingReward2.slopeChanges(locked.end), -toInt128(slope));
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
     }
 
     function testDepositAndWithdrawWithinSameEpochOverwritesCheckpoints() public {
@@ -1543,18 +1600,32 @@ contract FeesVotingRewardTest is BaseTest {
 
         uint256 expectedTs = block.timestamp;
         uint256 expectedBal = escrow.balanceOfNFT(1);
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(1);
 
-        // check single user and supply checkpoint created
-        uint256 numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 1);
+        uint256 slope = expectedBal / (locked.end - expectedTs); // this should not change in this test
 
-        (uint256 sTs, uint256 sBalance) = feesVotingReward.supplyCheckpoints(0);
-        assertEq(sTs, expectedTs);
-        assertEq(sBalance, expectedBal);
+        uint256 epoch = feesVotingReward.epoch();
+        assertEq(epoch, 1);
 
-        (uint256 ts, uint256 balance) = feesVotingReward.checkpoints(1, 0);
-        assertEq(ts, expectedTs);
-        assertEq(balance, expectedBal);
+        IVotingEscrow.GlobalPoint memory grp = feesVotingReward.globalRewardPointHistory(1); // starts from 1
+        assertEq(grp.ts, expectedTs);
+        assertEq(convert(grp.bias), expectedBal);
+        assertEq(convert(grp.slope), slope);
+        assertEq(grp.permanentLockBalance, 0);
+
+        uint256 userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 1);
+
+        IVotingEscrow.UserPoint memory urp = feesVotingReward.userRewardPointHistory(1, 1);
+
+        assertEq(convert(urp.bias), expectedBal);
+        assertEq(convert(urp.slope), slope);
+        assertEq(urp.permanent, 0);
+        assertEq(feesVotingReward.lockExpiry(1), locked.end);
+        assertEq(urp.ts, expectedTs);
+
+        assertEq(feesVotingReward.slopeChanges(locked.end), -toInt128(slope));
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
 
         // poked after one day. any checkpoints created should overwrite prior checkpoints.
         skip(1 days);
@@ -1563,15 +1634,27 @@ contract FeesVotingRewardTest is BaseTest {
         expectedTs = block.timestamp;
         expectedBal = escrow.balanceOfNFT(1);
 
-        numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 1);
-        (sTs, sBalance) = feesVotingReward.supplyCheckpoints(0);
-        assertEq(sTs, expectedTs);
-        assertEq(sBalance, expectedBal);
+        epoch = feesVotingReward.epoch();
+        assertEq(epoch, 1);
 
-        (ts, balance) = feesVotingReward.checkpoints(1, 0);
-        assertEq(ts, expectedTs);
-        assertEq(sBalance, expectedBal);
+        grp = feesVotingReward.globalRewardPointHistory(1);
+        assertEq(grp.ts, expectedTs);
+        assertEq(convert(grp.bias), expectedBal);
+        assertEq(convert(grp.slope), slope);
+        assertEq(grp.permanentLockBalance, 0);
+
+        userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 1);
+
+        urp = feesVotingReward.userRewardPointHistory(1, 1);
+        assertEq(convert(urp.bias), expectedBal);
+        assertEq(convert(urp.slope), slope);
+        assertEq(urp.permanent, 0);
+        assertEq(feesVotingReward.lockExpiry(1), locked.end);
+        assertEq(urp.ts, expectedTs);
+
+        assertEq(feesVotingReward.slopeChanges(locked.end), -toInt128(slope));
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
 
         // check poke and reset/withdraw overwrites checkpoints
         skipToNextEpoch(1 hours + 1);
@@ -1580,28 +1663,45 @@ contract FeesVotingRewardTest is BaseTest {
         voter.poke(1);
 
         // check old checkpoints are not overridden
-        numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 2);
-        (sTs, sBalance) = feesVotingReward.supplyCheckpoints(0);
-        assertEq(sTs, expectedTs);
-        assertEq(sBalance, expectedBal);
+        grp = feesVotingReward.globalRewardPointHistory(1);
+        assertEq(grp.ts, expectedTs);
+        assertEq(convert(grp.bias), expectedBal);
+        assertEq(convert(grp.slope), slope);
+        assertEq(grp.permanentLockBalance, 0);
 
-        (ts, balance) = feesVotingReward.checkpoints(1, 0);
-        assertEq(ts, expectedTs);
-        assertEq(sBalance, expectedBal);
+        urp = feesVotingReward.userRewardPointHistory(1, 1);
+        assertEq(convert(urp.bias), expectedBal);
+        assertEq(convert(urp.slope), slope);
+        assertEq(urp.permanent, 0);
+        assertEq(feesVotingReward.lockExpiry(1), locked.end);
+        assertEq(urp.ts, expectedTs);
 
-        expectedTs = block.timestamp;
+        uint256 expectedTs2 = block.timestamp;
+        int128 prevBias = grp.bias;
         expectedBal = escrow.balanceOfNFT(1);
 
-        numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 2);
-        (sTs, sBalance) = feesVotingReward.supplyCheckpoints(1);
-        assertEq(sTs, expectedTs);
-        assertEq(sBalance, expectedBal);
+        // check new checkpoints
+        epoch = feesVotingReward.epoch();
+        assertEq(epoch, 2);
 
-        (ts, balance) = feesVotingReward.checkpoints(1, 1);
-        assertEq(ts, expectedTs);
-        assertEq(sBalance, expectedBal);
+        grp = feesVotingReward.globalRewardPointHistory(2);
+        assertEq(grp.ts, expectedTs2);
+        assertEq(convert(grp.bias), expectedBal);
+        assertEq(convert(grp.slope), slope);
+        assertEq(grp.permanentLockBalance, 0);
+
+        userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 2);
+
+        urp = feesVotingReward.userRewardPointHistory(1, 2);
+        assertEq(convert(urp.bias), expectedBal);
+        assertEq(convert(urp.slope), slope);
+        assertEq(urp.permanent, 0);
+        assertEq(feesVotingReward.lockExpiry(1), locked.end);
+        assertEq(urp.ts, expectedTs2);
+
+        assertEq(feesVotingReward.slopeChanges(locked.end), -toInt128(slope));
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
 
         // withdraw via reset after one day, expect supply to be zero
         skip(1 days);
@@ -1609,15 +1709,27 @@ contract FeesVotingRewardTest is BaseTest {
 
         expectedTs = block.timestamp;
 
-        numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 2);
-        (sTs, sBalance) = feesVotingReward.supplyCheckpoints(1);
-        assertEq(sTs, expectedTs);
-        assertEq(sBalance, 0);
+        // overwrite checkpoint should be zero weight
+        epoch = feesVotingReward.epoch();
+        assertEq(epoch, 2);
+        grp = feesVotingReward.globalRewardPointHistory(2);
+        assertEq(grp.ts, expectedTs);
+        assertEq(convert(grp.bias), 0);
+        assertEq(convert(grp.slope), 0);
+        assertEq(grp.permanentLockBalance, 0);
 
-        (ts, balance) = feesVotingReward.checkpoints(1, 1);
-        assertEq(ts, expectedTs);
-        assertEq(sBalance, 0);
+        // overwrite checkpoint should be zero weight
+        userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 2);
+        urp = feesVotingReward.userRewardPointHistory(1, 2);
+        assertEq(convert(urp.bias), 0);
+        assertEq(convert(urp.slope), 0);
+        assertEq(urp.permanent, 0);
+        assertEq(urp.ts, expectedTs);
+        assertEq(feesVotingReward.lockExpiry(1), 0);
+
+        assertEq(feesVotingReward.slopeChanges(locked.end), 0);
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
     }
 
     function testDepositFromManyUsersInSameTimestampOverwritesSupplyCheckpoint() public {
@@ -1634,31 +1746,64 @@ contract FeesVotingRewardTest is BaseTest {
 
         uint256 ownerBal = escrow.balanceOfNFT(1);
         uint256 owner2Bal = escrow.balanceOfNFT(2);
-        uint256 totalSupply = ownerBal + owner2Bal;
+        uint256 expectedTs = block.timestamp;
+
+        // same end for both nft
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(1);
+
+        uint256 slope = ownerBal / (locked.end - expectedTs);
 
         // check single user and supply checkpoint created
-        uint256 numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 1);
-        (uint256 sTs, uint256 sBalance) = feesVotingReward.supplyCheckpoints(0);
-        assertEq(sTs, block.timestamp);
-        assertEq(sBalance, ownerBal);
+        uint256 epoch = feesVotingReward.epoch();
+        assertEq(epoch, 1);
 
-        (uint256 ts, uint256 balance) = feesVotingReward.checkpoints(1, 0);
-        assertEq(ts, block.timestamp);
-        assertEq(balance, ownerBal);
+        IVotingEscrow.GlobalPoint memory grp = feesVotingReward.globalRewardPointHistory(1); // starts from 1
+        assertEq(grp.ts, expectedTs);
+        assertEq(convert(grp.bias), ownerBal);
+        assertEq(convert(grp.slope), slope);
+        assertEq(grp.permanentLockBalance, 0);
+
+        uint256 userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 1);
+
+        IVotingEscrow.UserPoint memory urp = feesVotingReward.userRewardPointHistory(1, 1);
+
+        assertEq(convert(urp.bias), ownerBal);
+        assertEq(convert(urp.slope), slope);
+        assertEq(urp.permanent, 0);
+        assertEq(feesVotingReward.lockExpiry(1), locked.end);
+        assertEq(urp.ts, expectedTs);
+
+        assertEq(feesVotingReward.slopeChanges(locked.end), -toInt128(slope));
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
 
         vm.prank(address(owner2));
         voter.vote(2, pools, weights);
 
-        numSupply = feesVotingReward.supplyNumCheckpoints();
-        assertEq(numSupply, 1);
-        (sTs, sBalance) = feesVotingReward.supplyCheckpoints(0);
-        assertEq(sTs, block.timestamp);
-        assertEq(sBalance, totalSupply);
+        // check owner2 vote overwrites checkpoint correctly
+        epoch = feesVotingReward.epoch();
+        assertEq(epoch, 1);
 
-        (ts, balance) = feesVotingReward.checkpoints(2, 0);
-        assertEq(ts, block.timestamp);
-        assertEq(balance, owner2Bal);
+        grp = feesVotingReward.globalRewardPointHistory(1); // starts from 1
+        assertEq(grp.ts, expectedTs);
+        assertEq(convert(grp.bias), ownerBal + owner2Bal);
+        assertEq(convert(grp.slope), slope * 2);
+        assertEq(grp.permanentLockBalance, 0);
+
+        // creates user rewardpoint for owner 2
+        userEpoch = feesVotingReward.userRewardEpoch(1);
+        assertEq(userEpoch, 1);
+
+        urp = feesVotingReward.userRewardPointHistory(2, 1);
+
+        assertEq(convert(urp.bias), ownerBal);
+        assertEq(convert(urp.slope), slope);
+        assertEq(urp.permanent, 0);
+        assertEq(feesVotingReward.lockExpiry(2), locked.end);
+        assertEq(urp.ts, expectedTs);
+
+        assertEq(feesVotingReward.slopeChanges(locked.end), -toInt128(slope * 2));
+        assertEq(feesVotingReward.biasCorrections(locked.end), 0);
     }
 
     function testGetRewardWithSeparateRewardClaims() public {
@@ -1750,5 +1895,98 @@ contract FeesVotingRewardTest is BaseTest {
 
         assertEq(feesVotingReward.tokenRewardsPerEpoch(address(FRAX), 604800), TOKEN_1 * 3);
         assertEq(FRAX.balanceOf(address(feesVotingReward)), TOKEN_1 * 3);
+    }
+
+    function testGetRewardAfterExpiration() public {
+        vm.startPrank(address(owner4));
+        VELO.approve(address(escrow), TOKEN_1);
+        uint256 tokenId = escrow.createLock(TOKEN_1, 1 weeks);
+        vm.stopPrank();
+
+        skip(1 weeks / 2);
+
+        // create a FRAX reward
+        vm.startPrank(address(gauge));
+        FRAX.approve(address(feesVotingReward), TOKEN_1);
+        feesVotingReward.notifyRewardAmount(address(FRAX), TOKEN_1);
+        vm.stopPrank();
+
+        // vote
+        address[] memory pools = new address[](1);
+        pools[0] = address(pool);
+        uint256[] memory weights = new uint256[](1);
+        weights[0] = 10000;
+        vm.prank(address(owner4));
+        voter.vote(tokenId, pools, weights);
+
+        skipToNextEpoch(1);
+
+        // validate nft expired
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(tokenId);
+        assertTrue(locked.end < block.timestamp);
+
+        uint256 earned = feesVotingReward.earned(address(FRAX), tokenId);
+        assertEq(earned, TOKEN_1);
+
+        // rewards
+        address[] memory rewards = new address[](1);
+        rewards[0] = address(FRAX);
+
+        // claim FRAX reward
+        uint256 pre = FRAX.balanceOf(address(owner4));
+        vm.prank(address(voter));
+        feesVotingReward.getReward(tokenId, rewards);
+        uint256 post = FRAX.balanceOf(address(owner4));
+        assertEq(post - pre, TOKEN_1);
+
+        skipToNextEpoch(1);
+
+        earned = feesVotingReward.earned(address(FRAX), tokenId);
+        assertEq(earned, 0);
+    }
+
+    function testLockExpiryAndBiasCorrectionIsCorrectOnWithdrawAndDeposit() public {
+        skip(1 weeks / 2);
+
+        // vote
+        address[] memory pools = new address[](2);
+        uint256[] memory weights = new uint256[](2);
+        pools[0] = address(pool);
+        pools[1] = address(pool2);
+        weights[0] = 7000;
+        weights[1] = 3000;
+
+        voter.vote(1, pools, weights);
+
+        skipToNextEpoch(0);
+        rewind(1); // we are at epochflip - 1
+
+        IVotingEscrow.LockedBalance memory locked = escrow.locked(1);
+        IReward.LockExpiryAndBiasCorrection memory lebc = feesVotingReward.lockExpiryAndBiasCorrection(1);
+        IReward.LockExpiryAndBiasCorrection memory lebc2 = feesVotingReward2.lockExpiryAndBiasCorrection(1);
+
+        uint256 rewardBias = feesVotingReward.balanceOfNFTAt(1, block.timestamp);
+        uint256 rewardBias2 = feesVotingReward2.balanceOfNFTAt(1, block.timestamp);
+
+        uint256 totalBias = escrow.balanceOfNFT(1);
+
+        assertEq(lebc.lockExpiry, locked.end);
+        assertEq(convert(lebc.biasCorrection), totalBias - rewardBias);
+
+        assertEq(lebc2.lockExpiry, locked.end);
+        assertEq(convert(lebc2.biasCorrection), totalBias / 3 - rewardBias2);
+
+        skipToNextEpoch(1 hours + 1);
+
+        voter.reset(1);
+
+        lebc = feesVotingReward.lockExpiryAndBiasCorrection(1);
+        lebc2 = feesVotingReward2.lockExpiryAndBiasCorrection(1);
+
+        assertEq(lebc.lockExpiry, 0);
+        assertEq(convert(lebc.biasCorrection), 0);
+
+        assertEq(lebc2.lockExpiry, 0);
+        assertEq(convert(lebc2.biasCorrection), 0);
     }
 }

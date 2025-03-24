@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {IVotingEscrow} from "../interfaces/IVotingEscrow.sol";
+
 interface IReward {
     error InvalidReward();
     error NotAuthorized();
@@ -16,16 +18,9 @@ interface IReward {
     event NotifyReward(address indexed from, address indexed reward, uint256 indexed epoch, uint256 amount);
     event ClaimRewards(address indexed from, address indexed reward, uint256 amount);
 
-    /// @notice A checkpoint for marking balance
-    struct Checkpoint {
-        uint256 timestamp;
-        uint256 balanceOf;
-    }
-
-    /// @notice A checkpoint for marking supply
-    struct SupplyCheckpoint {
-        uint256 timestamp;
-        uint256 supply;
+    struct LockExpiryAndBiasCorrection {
+        uint256 lockExpiry;
+        int128 biasCorrection;
     }
 
     /// @notice Epoch duration constant (7 days)
@@ -39,12 +34,6 @@ interface IReward {
 
     /// @dev Address which has permission to externally call _deposit() & _withdraw()
     function authorized() external view returns (address);
-
-    /// @notice Total amount currently deposited via _deposit()
-    function totalSupply() external view returns (uint256);
-
-    /// @notice Current amount deposited by tokenId
-    function balanceOf(uint256 tokenId) external view returns (uint256);
 
     /// @notice Amount of tokens to reward depositors for a given epoch
     /// @param token Address of token to reward
@@ -61,11 +50,9 @@ interface IReward {
     /// @notice True if a token is or has been an active reward token, else false
     function isReward(address token) external view returns (bool);
 
-    /// @notice The number of checkpoints for each tokenId deposited
-    function numCheckpoints(uint256 tokenId) external view returns (uint256);
-
-    /// @notice The total number of checkpoints
-    function supplyNumCheckpoints() external view returns (uint256);
+    /// @notice User -> UserPoint[userRewardEpoch]
+    /// @param tokenId nft id corresponding to the latest stored user's epoch index
+    function userRewardEpoch(uint256 tokenId) external view returns (uint256);
 
     /// @notice Deposit an amount into the rewards contract to earn future rewards associated to a veNFT
     /// @dev Internal notation used as only callable internally by `authorized`.
@@ -90,10 +77,9 @@ interface IReward {
     function notifyRewardAmount(address token, uint256 amount) external;
 
     /// @notice Determine the prior balance for an account as of a block number
-    /// @dev Block number must be a finalized block or else this function will revert to prevent misinformation.
     /// @param tokenId      The token of the NFT to check
     /// @param timestamp    The timestamp to get the balance at
-    /// @return The balance the account had as of the given block
+    /// @return The balance the account had as of the given timestamp
     function getPriorBalanceIndex(uint256 tokenId, uint256 timestamp) external view returns (uint256);
 
     /// @notice Determine the prior index of supply staked by of a timestamp
@@ -111,7 +97,55 @@ interface IReward {
     /// @return Amount of token earned in rewards
     function earned(address token, uint256 tokenId) external view returns (uint256);
 
-    function checkpoints(uint256 tokenId, uint256 index) external view returns (uint256 timestamp, uint256 balanceOf);
+    /// @notice Aggregate permanent locked balances
+    function permanentLockBalance() external view returns (uint256);
 
-    function supplyCheckpoints(uint256 index) external view returns (uint256 timestamp, uint256 supply);
+    /// @notice Total count of epochs witnessed since contract creation
+    function epoch() external view returns (uint256);
+
+    /// @notice time -> signed bias correction
+    /// @dev behaves similary to slopeChanges
+    /// @param timestamp The timestamp where the bias correction is stored
+    function biasCorrections(uint256 timestamp) external view returns (int128);
+
+    /// @notice time -> signed slope change
+    /// @param timestamp The timestamp where the slope change is store
+    function slopeChanges(uint256 timestamp) external view returns (int128);
+
+    /// @notice Stores the latest expiration time for an nft
+    /// @param tokenId The nft id corresponding to the stored expiration time
+    function lockExpiry(uint256 tokenId) external view returns (uint256);
+
+    /// @notice Stores the latest bias correction for an nft
+    /// @param tokenId The nft id corresponding to the stored bias correction
+    function biasCorrection(uint256 tokenId) external view returns (int128);
+
+    /// @notice Returns the lock expiry and bias correction corresponding to the tokenId
+    /// @param tokenId The nft id corresponding to the stored LockExpiryAndBiasCorrection
+    function lockExpiryAndBiasCorrection(uint256 tokenId) external view returns (LockExpiryAndBiasCorrection memory);
+
+    /// @notice User -> UserPoint[userRewardEpoch]
+    /// @dev    we can reuse the struct from IVotingEscrow since we run the same calculations on a subset
+    /// @param tokenId .
+    /// @param _userRewardEpoch The user epoch to get the reward specific UserPoint from
+    function userRewardPointHistory(uint256 tokenId, uint256 _userRewardEpoch)
+        external
+        view
+        returns (IVotingEscrow.UserPoint memory);
+
+    /// @notice Global reward point history at a given index
+    /// @dev    we can reuse the struct from IVotingEscrow since we run the same calculations on a subset
+    /// @param _epoch The epoch to get the reward specific GlobalPoint from
+    function globalRewardPointHistory(uint256 _epoch) external view returns (IVotingEscrow.GlobalPoint memory);
+
+    /// @notice Get the voting power for _tokenId at a given timestamp inside the reward contract
+    /// @param tokenId .
+    /// @param timestamp Timestamp to query voting power
+    /// @return Voting power
+    function balanceOfNFTAt(uint256 tokenId, uint256 timestamp) external view returns (uint256);
+
+    /// @notice Calculate total voting power at a given timestamp inside the reward contract
+    /// @param timestamp Timestamp to query total voting power
+    /// @return Total voting power at given timestamp
+    function supplyAt(uint256 timestamp) external view returns (uint256);
 }

@@ -63,18 +63,46 @@ contract SimpleIncentiveVotingRewardFlow is ExtendedBaseTest {
         incentiveVotingReward.getReward(1, rewards);
         uint256 post = LR.balanceOf(address(owner));
         uint256 usdcPost = USDC.balanceOf(address(owner));
-        assertApproxEqRel(post - pre, (currentIncentive * 800014) / 1000000, 1e13);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 800014) / 1000000, 1e13);
 
-        pre = LR.balanceOf(address(owner4));
-        usdcPre = USDC.balanceOf(address(owner4));
-        vm.prank(address(voter));
-        incentiveVotingReward.getReward(4, rewards);
-        post = LR.balanceOf(address(owner4));
-        usdcPost = USDC.balanceOf(address(owner4));
-        assertApproxEqRel(post - pre, (currentIncentive * 1999862) / 10000000, 1e13);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 1999862) / 10000000, 1e13);
+        uint256 tokenId1CurrentBalance;
+        {
+            // tokenId4CurrentBalance only used in this scope
+            uint256 tokenId4CurrentBalance;
+            uint256 lockEnd = incentiveVotingReward.lockExpiry(1);
 
+            IVotingEscrow.UserPoint memory urp1 = incentiveVotingReward.userRewardPointHistory(1, 1);
+            tokenId1CurrentBalance = convert(urp1.slope) * (lockEnd - block.timestamp + 2);
+
+            lockEnd = incentiveVotingReward.lockExpiry(4);
+
+            IVotingEscrow.UserPoint memory urp4 = incentiveVotingReward.userRewardPointHistory(4, 1);
+            tokenId4CurrentBalance = convert(urp4.slope) * (lockEnd - block.timestamp + 2);
+
+            assertEq(
+                post - pre,
+                (currentIncentive * tokenId1CurrentBalance) / (tokenId1CurrentBalance + tokenId4CurrentBalance)
+            );
+            assertEq(
+                usdcPost - usdcPre,
+                (usdcIncentive * tokenId1CurrentBalance) / (tokenId1CurrentBalance + tokenId4CurrentBalance)
+            );
+
+            pre = LR.balanceOf(address(owner4));
+            usdcPre = USDC.balanceOf(address(owner4));
+            vm.prank(address(voter));
+            incentiveVotingReward.getReward(4, rewards);
+            post = LR.balanceOf(address(owner4));
+            usdcPost = USDC.balanceOf(address(owner4));
+
+            assertEq(
+                post - pre,
+                (currentIncentive * tokenId4CurrentBalance) / (tokenId1CurrentBalance + tokenId4CurrentBalance)
+            );
+            assertEq(
+                usdcPost - usdcPre,
+                (usdcIncentive * tokenId4CurrentBalance) / (tokenId1CurrentBalance + tokenId4CurrentBalance)
+            );
+        }
         // test incentive delivered late in the week
         skip(1 weeks / 2);
         currentIncentive = TOKEN_1 * 2;
@@ -131,16 +159,18 @@ contract SimpleIncentiveVotingRewardFlow is ExtendedBaseTest {
         _createIncentiveWithAmount(incentiveVotingReward2, address(USDC), usdcIncentive);
         skip(1);
 
-        // skip claiming this epoch, but check earned
-        uint256 earned = incentiveVotingReward.earned(address(LR), 1);
-        assertEq(earned, deferredIncentive / 2);
-        earned = incentiveVotingReward.earned(address(USDC), 1);
-        assertEq(earned, deferredUsdcIncentive / 2);
-        earned = incentiveVotingReward.earned(address(LR), 2);
-        assertEq(earned, deferredIncentive / 2);
-        earned = incentiveVotingReward.earned(address(USDC), 2);
-        assertEq(earned, deferredUsdcIncentive / 2);
-        skip(1 hours);
+        {
+            // skip claiming this epoch, but check earned
+            uint256 earned_ = incentiveVotingReward.earned(address(LR), 1);
+            assertEq(earned_, deferredIncentive / 2);
+            earned_ = incentiveVotingReward.earned(address(USDC), 1);
+            assertEq(earned_, deferredUsdcIncentive / 2);
+            earned_ = incentiveVotingReward.earned(address(LR), 2);
+            assertEq(earned_, deferredIncentive / 2);
+            earned_ = incentiveVotingReward.earned(address(USDC), 2);
+            assertEq(earned_, deferredUsdcIncentive / 2);
+            skip(1 hours);
+        }
 
         // vote for pool2 instead with owner3
         pools[0] = address(pool2);
@@ -202,32 +232,60 @@ contract SimpleIncentiveVotingRewardFlow is ExtendedBaseTest {
 
         pools[0] = address(pool);
         vm.prank(address(owner2));
-        voter.vote(2, pools, weights); // balance: 978082175809808010
+        voter.vote(2, pools, weights); // balance: 978053644924474005
         skip(1 days);
-        voter.vote(1, pools, weights); // balance: 996575326492544010
+        voter.vote(1, pools, weights); // balance: 996546795607210005
 
         /// epoch five
         skipToNextEpoch(1);
 
-        // owner share: 996575326492544010/(978082175809808010+996575326492544010) ~= .505
+        // owner share: 992465745379384005/(973287663189880005+992465745379384005) ~= .505 note: decay included
         pre = LR.balanceOf(address(owner));
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
         incentiveVotingReward.getReward(1, rewards);
         post = LR.balanceOf(address(owner));
         usdcPost = USDC.balanceOf(address(owner));
-        assertApproxEqRel(post - pre, (currentIncentive * 504683) / 1000000, PRECISION);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 504683) / 1000000, PRECISION);
 
-        // owner2 share: 978082175809808010/(978082175809808010+996575326492544010) ~= .495
+        uint256 tokenId2CurrentBalance;
+        {
+            uint256 lockEnd = incentiveVotingReward.lockExpiry(1);
+
+            IVotingEscrow.UserPoint memory urp1 =
+                incentiveVotingReward.userRewardPointHistory(1, incentiveVotingReward.userRewardEpoch(1));
+            tokenId1CurrentBalance = convert(urp1.slope) * (lockEnd - block.timestamp + 2);
+
+            lockEnd = incentiveVotingReward.lockExpiry(2);
+
+            IVotingEscrow.UserPoint memory urp2 =
+                incentiveVotingReward.userRewardPointHistory(2, incentiveVotingReward.userRewardEpoch(2));
+            tokenId2CurrentBalance = convert(urp2.slope) * (lockEnd - block.timestamp + 2);
+        }
+
+        assertEq(
+            post - pre, (currentIncentive * tokenId1CurrentBalance) / (tokenId1CurrentBalance + tokenId2CurrentBalance)
+        );
+
+        assertEq(
+            usdcPost - usdcPre,
+            (usdcIncentive * tokenId1CurrentBalance) / (tokenId1CurrentBalance + tokenId2CurrentBalance)
+        );
+
+        // owner2 share: 973287663189880005/(992465745379384005+973287663189880005) ~= .495 note: decay included
         pre = LR.balanceOf(address(owner2));
         usdcPre = USDC.balanceOf(address(owner2));
         vm.prank(address(voter));
         incentiveVotingReward.getReward(2, rewards);
         post = LR.balanceOf(address(owner2));
         usdcPost = USDC.balanceOf(address(owner2));
-        assertApproxEqRel(post - pre, (currentIncentive * 495317) / 1000000, PRECISION);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 495317) / 1000000, PRECISION);
+        assertEq(
+            post - pre, (currentIncentive * tokenId2CurrentBalance) / (tokenId1CurrentBalance + tokenId2CurrentBalance)
+        );
+
+        assertEq(
+            usdcPost - usdcPre,
+            (usdcIncentive * tokenId2CurrentBalance) / (tokenId1CurrentBalance + tokenId2CurrentBalance)
+        );
 
         currentIncentive = TOKEN_1 * 6;
         usdcIncentive = USDC_1 * 6;
@@ -243,14 +301,14 @@ contract SimpleIncentiveVotingRewardFlow is ExtendedBaseTest {
 
         skip(1 hours);
 
-        voter.vote(1, pools, weights); // balance: 992465745379384005
+        voter.vote(1, pools, weights); // balance: 992437206566602005
         vm.prank(address(owner2));
-        voter.vote(2, pools, weights); // balance: 1946575326502534409
+        voter.vote(2, pools, weights); // balance: 1946518248876966809
 
         /// epoch six
         skipToNextEpoch(1);
 
-        // owner share: 992465745379384005/(992465745379384005+1946575326502534409) ~= .338
+        // owner share: 992437206566602005/(992437206566602005+1946518248876966809) ~= .338
         pre = LR.balanceOf(address(owner));
         usdcPre = USDC.balanceOf(address(owner));
         vm.prank(address(voter));
@@ -260,7 +318,7 @@ contract SimpleIncentiveVotingRewardFlow is ExtendedBaseTest {
         assertApproxEqRel(post - pre, (currentIncentive * 338) / 1000, 1e15); // 3 decimal places
         assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 338) / 1000, 1e15);
 
-        // owner2 share: 1946575326502534409/(992465745379384005+1946575326502534409) ~= .662
+        // owner2 share: 1946518248876966809/(992437206566602005+1946518248876966809) ~= .662
         pre = LR.balanceOf(address(owner2));
         usdcPre = USDC.balanceOf(address(owner2));
         vm.prank(address(voter));
@@ -355,7 +413,7 @@ contract SimpleIncentiveVotingRewardFlow is ExtendedBaseTest {
         skipToNextEpoch(1);
 
         // check earned
-        earned = incentiveVotingReward.earned(address(LR), 1);
+        uint256 earned = incentiveVotingReward.earned(address(LR), 1);
         assertEq(earned, currentIncentive / 2);
         earned = incentiveVotingReward.earned(address(USDC), 1);
         assertEq(earned, usdcIncentive / 2);
@@ -463,16 +521,54 @@ contract SimpleIncentiveVotingRewardFlow is ExtendedBaseTest {
         incentiveVotingReward.getReward(1, rewards);
         uint256 post = LR.balanceOf(address(owner3));
         uint256 usdcPost = USDC.balanceOf(address(owner3));
-        assertApproxEqRel(post - pre, (currentIncentive * 800014) / 1000000, 1e13);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 800014) / 1000000, 1e13);
 
+        uint256 tokenId1LRBalance = post - pre;
+        uint256 tokenId1USDCBalance = usdcPost - usdcPre;
+
+        uint256 tokenId1CurrentBalance;
+        uint256 tokenId4CurrentBalance;
+        {
+            uint256 lockEnd = incentiveVotingReward.lockExpiry(1);
+
+            IVotingEscrow.UserPoint memory urp1 = incentiveVotingReward.userRewardPointHistory(1, 1);
+            tokenId1CurrentBalance = convert(urp1.slope) * (lockEnd - block.timestamp + 2);
+
+            lockEnd = incentiveVotingReward.lockExpiry(4);
+
+            IVotingEscrow.UserPoint memory urp2 = incentiveVotingReward.userRewardPointHistory(4, 1);
+            tokenId4CurrentBalance = convert(urp2.slope) * (lockEnd - block.timestamp + 2);
+        }
+
+        assertEq(
+            tokenId1LRBalance,
+            (currentIncentive * tokenId1CurrentBalance) / (tokenId1CurrentBalance + tokenId4CurrentBalance)
+        );
+        assertEq(
+            tokenId1USDCBalance,
+            (usdcIncentive * tokenId1CurrentBalance) / (tokenId1CurrentBalance + tokenId4CurrentBalance)
+        );
+
+        // check tokenId4
         pre = LR.balanceOf(address(owner4));
         usdcPre = USDC.balanceOf(address(owner4));
         vm.prank(address(voter));
         incentiveVotingReward.getReward(4, rewards);
         post = LR.balanceOf(address(owner4));
         usdcPost = USDC.balanceOf(address(owner4));
-        assertApproxEqRel(post - pre, (currentIncentive * 1999862) / 10000000, 1e13);
-        assertApproxEqRel(usdcPost - usdcPre, (usdcIncentive * 1999862) / 10000000, 1e13);
+
+        uint256 tokenId4LRBalance = post - pre;
+        uint256 tokenId4USDCBalance = usdcPost - usdcPre;
+
+        assertEq(
+            tokenId4LRBalance,
+            (currentIncentive * tokenId4CurrentBalance) / (tokenId1CurrentBalance + tokenId4CurrentBalance)
+        );
+        assertEq(
+            tokenId4USDCBalance,
+            (usdcIncentive * tokenId4CurrentBalance) / (tokenId1CurrentBalance + tokenId4CurrentBalance)
+        );
+
+        assertApproxEqAbs(tokenId1LRBalance + tokenId4LRBalance, TOKEN_1, 1);
+        assertApproxEqAbs(tokenId1USDCBalance + tokenId4USDCBalance, USDC_1, 1);
     }
 }

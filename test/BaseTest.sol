@@ -465,4 +465,10 @@ abstract contract BaseTest is Test, TestOwner {
     function convert(int128 _amount) internal pure returns (uint256) {
         return uint256(uint128(_amount));
     }
+
+    /// @dev Used to convert uint256 to int128s
+    ///      Can be negative
+    function toInt128(uint256 value) internal pure returns (int128) {
+        return int128(uint128(value));
+    }
 }

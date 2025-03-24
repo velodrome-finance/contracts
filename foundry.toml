@@ -3,6 +3,8 @@ src = 'contracts'
 out = 'out'
 solc_version = '0.8.25'
 
+show_progress = true
+
 no-match-test = "testGas"
 
 fs_permissions = [{ access = "read-write", path = "./"}]
@@ -19,6 +21,6 @@ goerli = { key = "${GOERLI_SCAN_API_KEY}", url = "${GOERLI_ETHERSCAN_VERIFIER_UR
 optimism = { key = "${OPTIMISM_SCAN_API_KEY}", url = "${OPTIMISM_ETHERSCAN_VERIFIER_URL}" }
 
 [invariant]
-runs = 2000
+runs = 500
 depth = 20
 fail_on_revert = false

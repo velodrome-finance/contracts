@@ -370,14 +370,14 @@ contract PoolTest is BaseTest {
 
         voter.vote(1, pools, weights);
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
+        assertEq(feesVotingReward.balanceOfNFTAt(1, block.timestamp), uint256(voter.votes(1, address(pool))));
         skip(1 weeks);
 
         voter.reset(1);
         assertLt(voter.usedWeights(1), escrow.balanceOfNFT(1));
         assertEq(voter.usedWeights(1), 0);
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
-        assertEq(feesVotingReward.balanceOf(1), 0);
+        assertEq(feesVotingReward.balanceOfNFTAt(1, block.timestamp), uint256(voter.votes(1, address(pool))));
+        assertEq(feesVotingReward.balanceOfNFTAt(1, block.timestamp), 0);
     }
 
     function gaugePokeHacking() public {
@@ -407,7 +407,7 @@ contract PoolTest is BaseTest {
 
         voter.vote(4, pools, weights);
         assertFalse(voter.totalWeight() == 0);
-        assertFalse(feesVotingReward.balanceOf(1) == 0);
+        assertFalse(feesVotingReward.balanceOfNFTAt(1, block.timestamp) == 0);
     }
 
     function gaugePokeHacking2() public {
@@ -432,7 +432,7 @@ contract PoolTest is BaseTest {
         voter.vote(1, pools, weights);
 
         assertEq(voter.usedWeights(1), escrow.balanceOfNFT(1)); // within 1000
-        assertEq(feesVotingReward.balanceOf(1), uint256(voter.votes(1, address(pool))));
+        assertEq(feesVotingReward.balanceOfNFTAt(1, block.timestamp), uint256(voter.votes(1, address(pool))));
     }
 
     function gaugePokeHacking3() public {
@@ -651,10 +651,22 @@ contract PoolTest is BaseTest {
         voter.claimFees(feesVotingRewards_, rewards, 1);
         uint256 supply = escrow.totalSupply();
         assertGt(supply, 0);
+
+        uint256 lockEnd = feesVotingReward.lockExpiry(1);
+        // grab latest UserRewardPoint to calculate bias
+        IVotingEscrow.UserPoint memory urp =
+            feesVotingReward.userRewardPointHistory(1, feesVotingReward.userRewardEpoch(1));
+        uint256 currentBalance = convert(urp.slope) * (lockEnd - block.timestamp);
+
+        assertEq(feesVotingReward.balanceOfNFTAt(1, block.timestamp), currentBalance);
+
         skip(MAXTIME);
         vm.roll(block.number + 1);
         assertEq(escrow.balanceOfNFT(1), 0);
         assertEq(escrow.totalSupply(), 0);
+
+        assertEq(feesVotingReward.balanceOfNFTAt(1, block.timestamp), 0);
+
         skip(1 weeks);
 
         voter.reset(1);

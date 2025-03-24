@@ -146,6 +146,7 @@ interface IVoter {
     function distribute(address[] memory _gauges) external;
 
     /// @notice Called by users to update voting balances in voting rewards contracts.
+    /// @dev Throws if not approved or owner
     /// @param _tokenId Id of veNFT whose balance you wish to update.
     function poke(uint256 _tokenId) external;
 

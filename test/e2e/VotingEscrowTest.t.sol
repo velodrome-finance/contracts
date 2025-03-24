@@ -49,7 +49,7 @@ contract VotingEscrowTest is ExtendedBaseTest {
 
         assertEq(escrow.epoch(), 1);
         globalPoint = escrow.pointHistory(1);
-        assertEq(globalPoint.bias, 997260265926760005); // (TOKEN_1 / MAXTIME) * (127008000 - 1209600)
+        assertEq(globalPoint.bias, 997260265926760005); // (TOKEN_1 / MAXTIME) * (126403200 - 604801) no update
         assertEq(globalPoint.slope, 7927447995); // TOKEN_1 / MAXTIME
         assertEq(globalPoint.ts, 604801);
         assertEq(globalPoint.permanentLockBalance, 0);
@@ -148,17 +148,17 @@ contract VotingEscrowTest is ExtendedBaseTest {
         assertEq(globalPoint.permanentLockBalance, 0);
 
         globalPoint = escrow.pointHistory(3);
-        assertEq(globalPoint.bias, 2977397260170883200);
+        assertEq(globalPoint.bias, 2977397260170883200); // 2991695181593523613 - (23782343987 * (1209600-608401))
         assertEq(globalPoint.slope, 23782343987);
         assertEq(globalPoint.ts, 1209600);
         assertEq(globalPoint.permanentLockBalance, 0);
         globalPoint = escrow.pointHistory(4);
-        assertEq(globalPoint.bias, 2963013698527545600);
+        assertEq(globalPoint.bias, 2963013698527545600); // 2977397260170883200 - (23782343987 * (1814400-1209600))
         assertEq(globalPoint.slope, 23782343987);
         assertEq(globalPoint.ts, 1814400);
         assertEq(globalPoint.permanentLockBalance, 0);
         globalPoint = escrow.pointHistory(5);
-        assertEq(globalPoint.bias, 2962928058306848413);
+        assertEq(globalPoint.bias, 2962928058306848413); // 2963013698527545600 - (23782343987 * (1818001-1814400))
         assertEq(globalPoint.slope, 23782343987);
         assertEq(globalPoint.ts, 1818001);
         assertEq(globalPoint.permanentLockBalance, 0);
@@ -193,12 +193,12 @@ contract VotingEscrowTest is ExtendedBaseTest {
         assertEq(userPoint.permanent, 0);
 
         assertEq(escrow.epoch(), 5);
-        globalPoint = escrow.pointHistory(4);
+        globalPoint = escrow.pointHistory(4); // previous gp
         assertEq(globalPoint.bias, 2963013698527545600);
         assertEq(globalPoint.slope, 23782343987);
         assertEq(globalPoint.ts, 1814400);
         assertEq(globalPoint.permanentLockBalance, 0);
-        globalPoint = escrow.pointHistory(5);
+        globalPoint = escrow.pointHistory(5); // new gp
         assertEq(globalPoint.bias, 2991695181593523613);
         assertEq(globalPoint.slope, 23782343987);
         assertEq(globalPoint.ts, 1818001);
@@ -219,8 +219,8 @@ contract VotingEscrowTest is ExtendedBaseTest {
         assertEq(globalPoint.slope, 23782343987);
         assertEq(globalPoint.ts, 1818001);
         assertEq(globalPoint.permanentLockBalance, 0);
-        globalPoint = escrow.pointHistory(6);
-        assertEq(globalPoint.bias, 2977397260170883200); // slope * (127612800 - 2419200)
+        globalPoint = escrow.pointHistory(6); // new gp
+        assertEq(globalPoint.bias, 2977397260170883200); // 2991695181593523613 - (23782343987 * (2419200-1818001))
         assertEq(globalPoint.slope, 23782343987);
         assertEq(globalPoint.ts, 2419200);
         assertEq(globalPoint.permanentLockBalance, 0);

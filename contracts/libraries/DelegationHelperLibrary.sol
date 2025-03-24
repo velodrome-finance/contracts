@@ -52,7 +52,7 @@ library DelegationHelperLibrary {
         returns (uint256)
     {
         IReward lmr = IReward(ve.managedToLocked(mTokenId));
-        if (lmr.numCheckpoints(tokenId) == 0) {
+        if (lmr.userRewardEpoch(tokenId) == 0) {
             return 0;
         }
 
@@ -61,25 +61,20 @@ library DelegationHelperLibrary {
         uint256 _supply = 1;
         uint256 _currTs = VelodromeTimeLibrary.epochStart(lmr.lastEarn(_rewardToken, tokenId)); // take epoch last claimed in as starting point
         uint256 _index = lmr.getPriorBalanceIndex(tokenId, _currTs);
-        (uint256 _cpTs, uint256 _cpBalanceOf) = lmr.checkpoints(tokenId, _index);
 
         // accounts for case where lastEarn is before first checkpoint
-        _currTs = Math.max(_currTs, VelodromeTimeLibrary.epochStart(_cpTs));
+        _currTs = Math.max(_currTs, VelodromeTimeLibrary.epochStart(lmr.userRewardPointHistory(tokenId, _index).ts));
 
         // get epochs between end of the current epoch and first checkpoint in same epoch as last claim
         uint256 numEpochs = (VelodromeTimeLibrary.epochNext(timepoint) - _currTs) / DURATION;
-        uint256 _priorSupply;
 
+        uint256 balance;
         if (numEpochs > 0) {
             for (uint256 i = 0; i < numEpochs; i++) {
-                // get index of last checkpoint in this epoch
-                _index = lmr.getPriorBalanceIndex(tokenId, _currTs + DURATION - 1);
-                // get checkpoint in this epoch
-                (_cpTs, _cpBalanceOf) = lmr.checkpoints(tokenId, _index);
-                // get supply of last checkpoint in this epoch
-                (, _priorSupply) = lmr.supplyCheckpoints(lmr.getPriorSupplyIndex(_currTs + DURATION - 1));
-                _supply = Math.max(_priorSupply, 1);
-                reward += (_cpBalanceOf * lmr.tokenRewardsPerEpoch(_rewardToken, _currTs)) / _supply;
+                balance = lmr.balanceOfNFTAt(tokenId, _currTs + DURATION - 1);
+                _supply = Math.max(lmr.supplyAt(_currTs + DURATION - 1), 1);
+                reward += (balance * lmr.tokenRewardsPerEpoch(_rewardToken, _currTs)) / _supply;
+
                 _currTs += DURATION;
             }
         }

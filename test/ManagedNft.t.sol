@@ -119,8 +119,8 @@ contract ManagedNftTest is BaseTest {
         voter.vote(tokenId, pools, weights);
 
         assertEq(voter.usedWeights(tokenId), 997231719186530010);
-        assertEq(incentiveVotingReward.totalSupply(), 997231719186530010);
-        assertEq(feesVotingReward.totalSupply(), 997231719186530010);
+        assertEq(incentiveVotingReward.supplyAt(block.timestamp), 997231719186530010);
+        assertEq(feesVotingReward.supplyAt(block.timestamp), 997231719186530010);
 
         skipToNextEpoch(1 hours + 1);
 
@@ -130,8 +130,8 @@ contract ManagedNftTest is BaseTest {
 
         assertEq(voter.usedWeights(tokenId), 0);
         assertEq(voter.usedWeights(mTokenId), TOKEN_1);
-        assertEq(incentiveVotingReward.totalSupply(), TOKEN_1);
-        assertEq(feesVotingReward.totalSupply(), TOKEN_1);
+        assertEq(incentiveVotingReward.supplyAt(block.timestamp), TOKEN_1);
+        assertEq(feesVotingReward.supplyAt(block.timestamp), TOKEN_1);
     }
 
     function testDepositManagedWithNormalNFT() public {
@@ -211,11 +211,11 @@ contract ManagedNftTest is BaseTest {
 
         // check deposit represented in locked / free managed rewards
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
-        assertEq(lockedManagedReward.balanceOf(tokenId), TOKEN_1);
-        assertEq(lockedManagedReward.totalSupply(), TOKEN_1);
+        assertEq(lockedManagedReward.balanceOfNFTAt(tokenId, block.timestamp), TOKEN_1);
+        assertEq(lockedManagedReward.supplyAt(block.timestamp), TOKEN_1);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
-        assertEq(freeManagedReward.balanceOf(tokenId), TOKEN_1);
-        assertEq(freeManagedReward.totalSupply(), TOKEN_1);
+        assertEq(freeManagedReward.balanceOfNFTAt(tokenId, block.timestamp), TOKEN_1);
+        assertEq(freeManagedReward.supplyAt(block.timestamp), TOKEN_1);
         assertEq(escrow.slopeChanges(126403200), 0);
     }
 
@@ -306,11 +306,11 @@ contract ManagedNftTest is BaseTest {
 
         // check deposit represented in locked / free managed rewards
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
-        assertEq(lockedManagedReward.balanceOf(tokenId), TOKEN_1);
-        assertEq(lockedManagedReward.totalSupply(), TOKEN_1);
+        assertEq(lockedManagedReward.balanceOfNFTAt(tokenId, block.timestamp), TOKEN_1);
+        assertEq(lockedManagedReward.supplyAt(block.timestamp), TOKEN_1);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
-        assertEq(freeManagedReward.balanceOf(tokenId), TOKEN_1);
-        assertEq(freeManagedReward.totalSupply(), TOKEN_1);
+        assertEq(freeManagedReward.balanceOfNFTAt(tokenId, block.timestamp), TOKEN_1);
+        assertEq(freeManagedReward.supplyAt(block.timestamp), TOKEN_1);
         assertEq(escrow.slopeChanges(126403200), -7927447995);
     }
 
@@ -385,11 +385,11 @@ contract ManagedNftTest is BaseTest {
 
         // check deposit represented in locked / free managed rewards
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
-        assertEq(lockedManagedReward.balanceOf(tokenId), TOKEN_1);
-        assertEq(lockedManagedReward.totalSupply(), TOKEN_1);
+        assertEq(lockedManagedReward.balanceOfNFTAt(tokenId, block.timestamp), TOKEN_1);
+        assertEq(lockedManagedReward.supplyAt(block.timestamp), TOKEN_1);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
-        assertEq(freeManagedReward.balanceOf(tokenId), TOKEN_1);
-        assertEq(freeManagedReward.totalSupply(), TOKEN_1);
+        assertEq(freeManagedReward.balanceOfNFTAt(tokenId, block.timestamp), TOKEN_1);
+        assertEq(freeManagedReward.supplyAt(block.timestamp), TOKEN_1);
         assertEq(escrow.numCheckpoints(tokenId), 1);
         assertEq(escrow.slopeChanges(126403200), 0);
     }
@@ -469,11 +469,11 @@ contract ManagedNftTest is BaseTest {
 
         // check deposit represented in locked / free managed rewards
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
-        assertEq(lockedManagedReward.balanceOf(tokenId), TOKEN_1);
-        assertEq(lockedManagedReward.totalSupply(), TOKEN_1);
+        assertEq(lockedManagedReward.balanceOfNFTAt(tokenId, block.timestamp), TOKEN_1);
+        assertEq(lockedManagedReward.supplyAt(block.timestamp), TOKEN_1);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
-        assertEq(freeManagedReward.balanceOf(tokenId), TOKEN_1);
-        assertEq(freeManagedReward.totalSupply(), TOKEN_1);
+        assertEq(freeManagedReward.balanceOfNFTAt(tokenId, block.timestamp), TOKEN_1);
+        assertEq(freeManagedReward.supplyAt(block.timestamp), TOKEN_1);
 
         // check depositor delegation reset
         assertEq(escrow.numCheckpoints(tokenId), 3);
@@ -803,11 +803,11 @@ contract ManagedNftTest is BaseTest {
 
         // check withdrawal represented in locked / free managed rewards
         lockedManagedReward = LockedManagedReward(escrow.managedToLocked(mTokenId));
-        assertEq(lockedManagedReward.balanceOf(tokenId), 0);
-        assertEq(lockedManagedReward.totalSupply(), 0);
+        assertEq(lockedManagedReward.balanceOfNFTAt(tokenId, block.timestamp), 0);
+        assertEq(lockedManagedReward.supplyAt(block.timestamp), 0);
         freeManagedReward = FreeManagedReward(escrow.managedToFree(mTokenId));
-        assertEq(freeManagedReward.balanceOf(tokenId), 0);
-        assertEq(freeManagedReward.totalSupply(), 0);
+        assertEq(freeManagedReward.balanceOfNFTAt(tokenId, block.timestamp), 0);
+        assertEq(freeManagedReward.supplyAt(block.timestamp), 0);
     }
 
     function testWithdrawManagedWithLockedReward() public {
@@ -914,10 +914,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.NORMAL));
 
         // check withdrawal represented in locked managed rewards
-        assertEq(lockedManagedReward.balanceOf(tokenId), 0);
-        assertEq(lockedManagedReward.totalSupply(), 0);
-        assertEq(freeManagedReward.balanceOf(tokenId), 0);
-        assertEq(freeManagedReward.totalSupply(), 0);
+        assertEq(lockedManagedReward.balanceOfNFTAt(tokenId, block.timestamp), 0);
+        assertEq(lockedManagedReward.supplyAt(block.timestamp), 0);
+        assertEq(freeManagedReward.balanceOfNFTAt(tokenId, block.timestamp), 0);
+        assertEq(freeManagedReward.supplyAt(block.timestamp), 0);
 
         assertEq(VELO.balanceOf(address(escrow)), TOKEN_1 * 2);
         assertEq(VELO.balanceOf(address(lockedManagedReward)), 0);
@@ -1009,10 +1009,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(escrow.totalSupply(), 997231727113978005);
         assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.NORMAL));
         // check withdrawal represented in locked managed rewards
-        assertEq(lockedManagedReward.balanceOf(tokenId), 0);
-        assertEq(lockedManagedReward.totalSupply(), 0);
-        assertEq(freeManagedReward.balanceOf(tokenId), 0);
-        assertEq(freeManagedReward.totalSupply(), 0);
+        assertEq(lockedManagedReward.balanceOfNFTAt(tokenId, block.timestamp), 0);
+        assertEq(lockedManagedReward.supplyAt(block.timestamp), 0);
+        assertEq(freeManagedReward.balanceOfNFTAt(tokenId, block.timestamp), 0);
+        assertEq(freeManagedReward.supplyAt(block.timestamp), 0);
 
         assertEq(VELO.balanceOf(address(escrow)), TOKEN_1);
         assertEq(VELO.balanceOf(address(lockedManagedReward)), 0);
@@ -1143,10 +1143,10 @@ contract ManagedNftTest is BaseTest {
         assertEq(uint256(escrow.escrowType(tokenId)), uint256(IVotingEscrow.EscrowType.NORMAL));
 
         // check withdrawal represented in locked managed rewards
-        assertEq(lockedManagedReward.balanceOf(tokenId), 0);
-        assertEq(lockedManagedReward.totalSupply(), 0);
-        assertEq(freeManagedReward.balanceOf(tokenId), 0);
-        assertEq(freeManagedReward.totalSupply(), 0);
+        assertEq(lockedManagedReward.balanceOfNFTAt(tokenId, block.timestamp), 0);
+        assertEq(lockedManagedReward.supplyAt(block.timestamp), 0);
+        assertEq(freeManagedReward.balanceOfNFTAt(tokenId, block.timestamp), 0);
+        assertEq(freeManagedReward.supplyAt(block.timestamp), 0);
 
         assertEq(VELO.balanceOf(address(escrow)), TOKEN_1 * 3);
         assertEq(VELO.balanceOf(address(lockedManagedReward)), 0);

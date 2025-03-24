@@ -114,4 +114,25 @@ contract FreeManagedRewardTest is BaseTest {
 
         assertEq(post - pre, TOKEN_1);
     }
+
+    function testGas_GetReward() public {
+        skip(1 weeks / 2);
+
+        uint256 reward = TOKEN_1;
+
+        // create an incentive
+        LR.approve(address(freeManagedReward), reward);
+        freeManagedReward.notifyRewardAmount((address(LR)), reward);
+
+        voter.depositManaged(1, mTokenId);
+
+        skipToNextEpoch(1);
+
+        // rewards
+        address[] memory rewards = new address[](1);
+        rewards[0] = address(LR);
+
+        freeManagedReward.getReward(1, rewards);
+        vm.snapshotGasLastCall("FreeManagedReward_getReward");
+    }
 }

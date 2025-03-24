@@ -84,6 +84,7 @@ contract PokeVoteFlow is ExtendedBaseTest {
 
         // final poke occurs at same time, expect rewards to be the same
         voter.poke(1);
+        vm.prank(address(owner2));
         voter.poke(2);
 
         skipToNextEpoch(1);

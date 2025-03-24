@@ -194,6 +194,8 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuardTransient {
 
     /// @inheritdoc IVoter
     function poke(uint256 _tokenId) external nonReentrant {
+        address _sender = _msgSender();
+        if (!IVotingEscrow(ve).isApprovedOrOwner(_sender, _tokenId)) revert NotApprovedOrOwner();
         if (block.timestamp <= VelodromeTimeLibrary.epochVoteStart(block.timestamp)) revert DistributeWindow();
         uint256 _weight = IVotingEscrow(ve).balanceOfNFT(_tokenId);
         _poke(_tokenId, _weight);

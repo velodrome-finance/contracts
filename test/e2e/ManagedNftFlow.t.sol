@@ -119,6 +119,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(locked.isPermanent, true);
 
         // must be poked after ve balance change or votes in incentive won't update
+        vm.prank(address(owner4));
         voter.poke(mTokenId);
 
         skipToNextEpoch(1);
@@ -134,15 +135,37 @@ contract ManagedNftFlow is ExtendedBaseTest {
         /// mTokenId contribution ~= 3 / 4
         /// tokenId3 contribution ~= 1 / 4
         /// mTokenId voting weight = TOKEN_1 * 3 (permanent lock)
-        /// tokenId3 voting weight = 997260257999312010 (balance at deposit time)
+        /// tokenId3 voting weight = 997231719186530010 (balance at deposit time)
 
         // collect rewards from incentive
         uint256 pre = VELO.balanceOf(address(owner4));
         vm.prank(address(voter));
         incentiveVotingReward.getReward(mTokenId, rewards);
         uint256 post = VELO.balanceOf(address(owner4));
+        uint256 mTokenIdCollected = post - pre;
+
+        uint256 decreasedTokenId3Balance;
+        IVotingEscrow.UserPoint memory urp;
+        {
+            uint256 lockEnd = incentiveVotingReward.lockExpiry(tokenId3);
+
+            urp = incentiveVotingReward.userRewardPointHistory(tokenId3, 1);
+            decreasedTokenId3Balance = convert(urp.slope) * (lockEnd - block.timestamp + 2); // +2 because we skipped 1 to the epoch and we -1 in earned
+        }
         // ~= 3 / 4 go to managed nft. note that managed is perma locked but tokenId3 is not
-        assertApproxEqRel(post - pre, ((TOKEN_1 * 2) * 750_514) / 1_000_000, 1e13);
+        assertEq(mTokenIdCollected, ((TOKEN_1 * 2) * 3e18) / (3e18 + decreasedTokenId3Balance));
+
+        // collect for tokenId3 too
+        pre = VELO.balanceOf(address(owner3));
+        vm.prank(address(owner3));
+        incentiveVotingReward.getReward(tokenId3, rewards);
+        post = VELO.balanceOf(address(owner3));
+
+        uint256 tokenId3dCollected = post - pre;
+        assertEq(tokenId3dCollected, ((TOKEN_1 * 2) * decreasedTokenId3Balance) / (3e18 + decreasedTokenId3Balance));
+
+        // validate total collected
+        assertApproxEqAbs(TOKEN_1 * 2, mTokenIdCollected + tokenId3dCollected, 1);
 
         // distribute reward to managed nft depositors
         vm.startPrank(address(owner4));
@@ -173,6 +196,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         _createIncentiveWithAmount(incentiveVotingReward, address(USDC), USDC_1);
 
         skip(1 hours);
+        vm.prank(address(owner4));
         voter.poke(mTokenId);
 
         skipToNextEpoch(1);
@@ -194,9 +218,26 @@ contract ManagedNftFlow is ExtendedBaseTest {
         vm.prank(address(voter));
         incentiveVotingReward.getReward(mTokenId, rewards);
         post = USDC.balanceOf(address(owner4));
-        // allow additional looser error band as USDC is only 6 dec
-        assertApproxEqRel(post - pre, (USDC_1 * 4) / 5, 1e15);
-        assertEq(post - pre, usdcReward);
+        mTokenIdCollected = post - pre;
+        {
+            uint256 lockEnd = incentiveVotingReward.lockExpiry(tokenId3);
+            // no new userRewardPoint because of passive voting so we use the original and calculate bias from that
+            decreasedTokenId3Balance = convert(urp.slope) * (lockEnd - block.timestamp + 2);
+
+            assertEq(mTokenIdCollected, (USDC_1 * 4e18) / (4e18 + decreasedTokenId3Balance));
+            assertEq(mTokenIdCollected, usdcReward);
+
+            // collect for tokenId3 too
+            pre = USDC.balanceOf(address(owner3));
+            vm.prank(address(owner3));
+            incentiveVotingReward.getReward(tokenId3, rewards);
+            post = USDC.balanceOf(address(owner3));
+
+            tokenId3dCollected = post - pre;
+            assertEq(tokenId3dCollected, (USDC_1 * decreasedTokenId3Balance) / (4e18 + decreasedTokenId3Balance));
+        }
+        // validate total collected
+        assertApproxEqAbs(USDC_1, mTokenIdCollected + tokenId3dCollected, 1);
 
         // distribute reward to managed nft depositors
         vm.startPrank(address(owner4));
@@ -240,6 +281,7 @@ contract ManagedNftFlow is ExtendedBaseTest {
         assertEq(freeManagedReward.earned(address(USDC), tokenId2), 0);
 
         skip(1 hours);
+        vm.prank(address(owner4));
         voter.poke(mTokenId);
 
         // owner 2 claims rewards
@@ -330,14 +372,27 @@ contract ManagedNftFlow is ExtendedBaseTest {
 
         // test normal nft behavior post withdrawal
         // ~= approx TOKEN_1 * 3 / 4, some drift due to voting power decay
-        assertEq(incentiveVotingReward.earned(address(VELO), tokenId), 749095271054930289);
+        assertEq(incentiveVotingReward.earned(address(VELO), tokenId), 752740560285901343);
 
         pre = VELO.balanceOf(address(owner));
         vm.prank(address(voter));
         incentiveVotingReward.getReward(tokenId, rewards);
         post = VELO.balanceOf(address(owner));
+        uint256 tokenId1Collected = post - pre;
 
-        assertEq(post - pre, 749095271054930289);
+        assertEq(tokenId1Collected, 752740560285901343);
+
+        // collect for tokenId3 too
+        pre = VELO.balanceOf(address(owner3));
+        vm.prank(address(owner3));
+        incentiveVotingReward.getReward(tokenId3, rewards);
+        post = VELO.balanceOf(address(owner3));
+        tokenId3dCollected = post - pre;
+
+        assertEq(tokenId3dCollected, 247259439714098656);
+
+        // validate total collected
+        assertApproxEqAbs(TOKEN_1, tokenId1Collected + tokenId3dCollected, 1);
     }
 
     function testTransferManagedNftFlow() public {
