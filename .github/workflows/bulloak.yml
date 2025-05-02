@@ -13,7 +13,7 @@ jobs:
       fail-fast: true
 
     name: Testing Tree Structure
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-4vcpu-ubuntu-2204
     steps:
       - uses: actions/checkout@v4
         with:
@@ -22,7 +22,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
-      - uses: actions/cache@v3
+      - uses: useblacksmith/cache@v5
         with:
           path: |
             ~/.cargo/bin/
