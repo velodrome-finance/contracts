@@ -47,6 +47,7 @@ import {TestOwner} from "test/utils/TestOwner.sol";
 import {MockERC20} from "test/utils/MockERC20.sol";
 import {MockWETH} from "test/utils/MockWETH.sol";
 import {SigUtils} from "test/utils/SigUtils.sol";
+import {MockRelay} from "test/utils/MockRelay.sol";
 
 import {DeployVelodromeV2} from "../script/DeployVelodromeV2.s.sol";
 

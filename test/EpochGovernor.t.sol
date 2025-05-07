@@ -8,6 +8,7 @@ import {IERC1155Receiver} from "@openzeppelin/contracts/token/ERC1155/IERC1155Re
 import {IGovernor} from "contracts/governance/IGovernor.sol";
 import {EpochGovernorCountingFractional} from "contracts/governance/EpochGovernorCountingFractional.sol";
 import {GovernorSimpleVotes} from "contracts/governance/GovernorSimpleVotes.sol";
+import {MockRelay} from "./utils/MockRelay.sol";
 
 contract EpochGovernorTest is BaseTest {
     using stdStorage for StdStorage;
@@ -627,6 +628,146 @@ contract EpochGovernorTest is BaseTest {
         assertEq(escrow.getPastVotes(address(owner), delegateTokenId, block.timestamp - 1), TOKEN_1);
         assertProposalVotes(pid, 0, TOKEN_1 * 4, 0);
         assertEq(epochGovernor.hasVoted(pid, delegateTokenId), true);
+    }
+
+    function testCastFractionalVoteWithManagedVeNFT() public {
+        // Create a managed lock
+        uint256 mTokenId = escrow.createManagedLockFor({_to: address(this)});
+
+        // Deploy MockRelay and transfer managed lock
+        MockRelay relay = new MockRelay({_escrow: address(escrow)});
+        escrow.safeTransferFrom({_from: address(this), _to: address(relay), _tokenId: mTokenId});
+
+        // Create two lock NFTs with different amounts
+        VELO.approve(address(escrow), 1500 * TOKEN_1);
+        uint256 tokenId1 = escrow.createLock({_value: 1000 * TOKEN_1, _lockDuration: MAXTIME});
+        uint256 tokenId2 = escrow.createLock({_value: 500 * TOKEN_1, _lockDuration: MAXTIME});
+
+        // Skip to allow for proper voting period
+        skipToNextEpoch(0);
+        skip(1 hours + 2); // allow voting
+
+        // Deposit the NFTs into the managed lock
+        // Must be done BEFORE creating the proposal to pass the deposit time check
+        voter.depositManaged({_tokenId: tokenId1, _mTokenId: mTokenId});
+        voter.depositManaged({_tokenId: tokenId2, _mTokenId: mTokenId});
+
+        // Verify the NFTs are now deposited in the managed lock
+        assertEq(relay.managedLockId(), mTokenId);
+        assertEq(escrow.idToManaged(tokenId1), mTokenId);
+        assertEq(escrow.idToManaged(tokenId2), mTokenId);
+
+        // Now create the proposal AFTER deposits
+        uint256 pid = createProposal();
+        skip(2);
+
+        // Variables for vote weights and verification
+        uint256 weight;
+        uint256 against;
+        uint256 forVote;
+        uint256 abstain;
+
+        // Register first vote (40% against, 30% for, 30% abstain)
+        weight = 1000 * TOKEN_1;
+        against = (weight * 40) / 100;
+        forVote = (weight * 30) / 100;
+        abstain = (weight * 30) / 100;
+        relay.registerVote({
+            _governor: address(epochGovernor),
+            proposalId: pid,
+            tokenId: tokenId1,
+            againstWeight: against,
+            forWeight: forVote,
+            abstainWeight: abstain
+        });
+
+        // Verify first vote registration on relay
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 0), against);
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 1), forVote);
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 2), abstain);
+        assertEq(relay.hasVoted(address(epochGovernor), pid, tokenId1), true);
+        assertEq(relay.hasVoted(address(epochGovernor), pid, tokenId2), false);
+
+        // Verify no votes yet registered on governor
+        assertFalse(epochGovernor.hasVoted({_proposalId: pid, _tokenId: mTokenId}));
+        assertFalse(epochGovernor.hasVoted({_proposalId: pid, _tokenId: tokenId1}));
+        assertFalse(epochGovernor.hasVoted({_proposalId: pid, _tokenId: tokenId2}));
+
+        // Execute vote
+        relay.executeVote({_governor: address(epochGovernor), proposalId: pid});
+
+        // Verify relay state after first vote
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 0), 0);
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 1), 0);
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 2), 0);
+        assertEq(relay.hasVoted({_governor: address(epochGovernor), _proposalId: pid, _tokenId: tokenId1}), true);
+        assertEq(relay.hasVoted({_governor: address(epochGovernor), _proposalId: pid, _tokenId: tokenId2}), false);
+
+        // Verify governor state after first vote
+        (uint256 againstVotes, uint256 forVotes, uint256 abstainVotes) = epochGovernor.proposalVotes(pid);
+        assertEq(againstVotes, against);
+        assertEq(forVotes, forVote);
+        assertEq(abstainVotes, abstain);
+        assertTrue(epochGovernor.hasVoted(pid, mTokenId));
+        assertFalse(epochGovernor.hasVoted(pid, tokenId1));
+        assertFalse(epochGovernor.hasVoted(pid, tokenId2));
+
+        // Keep track of total votes
+        uint256 totalAgainst = against;
+        uint256 totalFor = forVote;
+        uint256 totalAbstain = abstain;
+
+        // Register second vote (20% against, 60% for, 20% abstain)
+        weight = 500 * TOKEN_1;
+        against = (weight * 20) / 100;
+        forVote = (weight * 60) / 100;
+        abstain = (weight * 20) / 100;
+        relay.registerVote({
+            _governor: address(epochGovernor),
+            proposalId: pid,
+            tokenId: tokenId2,
+            againstWeight: against,
+            forWeight: forVote,
+            abstainWeight: abstain
+        });
+
+        // Update total expected votes
+        totalAgainst += against;
+        totalFor += forVote;
+        totalAbstain += abstain;
+
+        // Verify second vote registration - should start from zero since executeVote cleared previous votes
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 0), against);
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 1), forVote);
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 2), abstain);
+        // tokenId hardcoded to avoid via ir error (tokenId1 == 6; tokenId2 == 7)
+        assertEq(relay.hasVoted({_governor: address(epochGovernor), _proposalId: pid, _tokenId: 6}), true);
+        assertEq(relay.hasVoted({_governor: address(epochGovernor), _proposalId: pid, _tokenId: 7}), true);
+
+        // Verify votes registered on governor
+        assertTrue(epochGovernor.hasVoted(pid, 5)); // mTokenId hardcoded to avoid via ir error
+        assertFalse(epochGovernor.hasVoted(pid, 6));
+        assertFalse(epochGovernor.hasVoted(pid, 7));
+
+        // Execute vote again
+        relay.executeVote(address(epochGovernor), pid);
+
+        // Verify final vote tally - totalVotes should include both votes despite clearing between executions
+        (againstVotes, forVotes, abstainVotes) = epochGovernor.proposalVotes(pid);
+        assertEq(againstVotes, totalAgainst);
+        assertEq(forVotes, totalFor);
+        assertEq(abstainVotes, totalAbstain);
+
+        // Verify relay state after second vote
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 0), 0);
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 1), 0);
+        assertEq(relay.totalVotes(address(epochGovernor), pid, 2), 0);
+        assertEq(relay.hasVoted({_governor: address(epochGovernor), _proposalId: pid, _tokenId: 6}), true);
+        assertEq(relay.hasVoted({_governor: address(epochGovernor), _proposalId: pid, _tokenId: 7}), true);
+
+        assertTrue(epochGovernor.hasVoted(pid, 5));
+        assertFalse(epochGovernor.hasVoted(pid, 6));
+        assertFalse(epochGovernor.hasVoted(pid, 7));
     }
 
     // creates a proposal so we can vote on it for testing and skip to snapshot time
