@@ -771,6 +771,7 @@ contract VotingEscrow is IVotingEscrow, ERC2771Context, ReentrancyGuardTransient
     }
 
     /// @inheritdoc IVotingEscrow
+    /// @notice Records a global checkpoint
     function checkpoint() external nonReentrant {
         _checkpoint(0, LockedBalance(0, 0, false), LockedBalance(0, 0, false));
     }

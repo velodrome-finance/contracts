@@ -14,6 +14,13 @@
     "solhint-plugin-prettier": "^0.0.5",
     "solidity-coverage": "^0.8.2"
   },
+  "keywords": [
+    "amm",
+    "defi",
+    "optimism",
+    "velodrome",
+    "solidity"
+  ],
   "scripts": {
     "format": "prettier --write 'contracts/**/*.(sol|json)' 'test/**/*.(sol|json)' 'script/**/*.(sol|ts)'",
     "format:check": "prettier --check 'contracts/**/*.*(sol|json)' 'test/**/*.(sol|json)' 'script/**/*.(sol|ts)'",

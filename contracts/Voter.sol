@@ -123,6 +123,7 @@ contract Voter is IVoter, ERC2771Context, ReentrancyGuardTransient {
     }
 
     /// @dev requires initialization with at least rewardToken
+    /// @notice Initializes the Voter contract
     function initialize(address[] calldata _tokens, address _minter) external {
         if (_msgSender() != minter) revert NotMinter();
         uint256 _length = _tokens.length;

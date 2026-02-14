@@ -122,6 +122,7 @@ contract Minter is IMinter {
     }
 
     /// @inheritdoc IMinter
+    /// @notice Updates the period and manages emissions
     function updatePeriod() external returns (uint256 _period) {
         _period = activePeriod;
         if (block.timestamp >= _period + WEEK) {

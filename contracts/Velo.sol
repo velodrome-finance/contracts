@@ -24,6 +24,7 @@ contract Velo is IVelo, ERC20Permit {
         minter = _minter;
     }
 
+    /// @notice Mints new tokens to the account
     function mint(address account, uint256 amount) external returns (bool) {
         if (msg.sender != minter) revert NotMinter();
         _mint(account, amount);

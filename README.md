@@ -112,3 +112,7 @@ guideline for licensing. See LICENSE and NOTICE files.
 | SinkGaugeFactory               | [0xe62b4BC24eB6446675A1cB3facA2339676E9e5a2](https://optimistic.etherscan.io/address/0xe62b4BC24eB6446675A1cB3facA2339676E9e5a2#code) |
 | SinkPool               | [0x333030A736B47D20346d82A473680658ac1C2b88](https://optimistic.etherscan.io/address/0x333030A736B47D20346d82A473680658ac1C2b88#code) |
 | SinkPoolFactory               | [0xd173B8d1A91bA0D434f393ad7A1680515a069091](https://optimistic.etherscan.io/address/0xd173B8d1A91bA0D434f393ad7A1680515a069091#code) |
+
+## Community
+
+For support and discussion, join the Velodrome community on [Discord](https://discord.com/invite/velodrome) and follow us on [Twitter](https://twitter.com/velodromefi).
